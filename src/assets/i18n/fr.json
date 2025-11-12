@@ -1,0 +1,59 @@
+{
+  "common": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "create": "Créer",
+    "update": "Mettre à jour",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "reset": "Réinitialiser",
+    "submit": "Soumettre",
+    "close": "Fermer",
+    "confirm": "Confirmer",
+    "yes": "Oui",
+    "no": "Non",
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "warning": "Avertissement",
+    "info": "Information"
+  },
+  "language": {
+    "english": "Anglais",
+    "french": "Français",
+    "selectLanguage": "Sélectionner la langue"
+  },
+  "theme": {
+    "light": "Clair",
+    "dark": "Sombre",
+    "switchToLight": "Passer en mode clair",
+    "switchToDark": "Passer en mode sombre"
+  },
+  "menu": {
+    "dashboard": "Tableau de bord",
+    "settings": "Paramètres",
+    "home": "Accueil"
+  },
+  "sidebar": {
+    "expand": "Développer la barre latérale",
+    "collapse": "Réduire la barre latérale"
+  },
+  "page": {
+    "dashboard": {
+      "title": "Bienvenue sur le tableau de bord",
+      "description": "Ceci est votre zone de contenu du tableau de bord. Vous pouvez ajouter vos widgets, graphiques et autres composants ici."
+    },
+    "card": {
+      "card1": "Carte 1",
+      "card2": "Carte 2",
+      "card3": "Carte 3",
+      "content": "Le contenu de la carte va ici"
+    }
+  },
+  "breadcrumb": {
+    "home": "Accueil"
+  }
+}
+

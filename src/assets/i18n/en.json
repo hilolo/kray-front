@@ -1,0 +1,59 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "update": "Update",
+    "search": "Search",
+    "filter": "Filter",
+    "reset": "Reset",
+    "submit": "Submit",
+    "close": "Close",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "warning": "Warning",
+    "info": "Info"
+  },
+  "language": {
+    "english": "English",
+    "french": "French",
+    "selectLanguage": "Select Language"
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "switchToLight": "Switch to light mode",
+    "switchToDark": "Switch to dark mode"
+  },
+  "menu": {
+    "dashboard": "Dashboard",
+    "settings": "Settings",
+    "home": "Home"
+  },
+  "sidebar": {
+    "expand": "Expand sidebar",
+    "collapse": "Collapse sidebar"
+  },
+  "page": {
+    "dashboard": {
+      "title": "Welcome to Dashboard",
+      "description": "This is your dashboard content area. You can add your widgets, charts, and other components here."
+    },
+    "card": {
+      "card1": "Card 1",
+      "card2": "Card 2",
+      "card3": "Card 3",
+      "content": "Card content goes here"
+    }
+  },
+  "breadcrumb": {
+    "home": "Home"
+  }
+}
+

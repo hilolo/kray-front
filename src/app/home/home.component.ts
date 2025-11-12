@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
 import { ZardPageComponent } from '@shared/components/page/page.component';
 import { ZardBreadcrumbModule } from '@shared/components/breadcrumb/breadcrumb.module';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [ZardPageComponent, ZardBreadcrumbModule],
+  imports: [ZardPageComponent, ZardBreadcrumbModule, TranslateModule],
   template: `
     <z-page zTitle="Dashboard">
       <div class="space-y-6">
@@ -13,35 +14,35 @@ import { ZardBreadcrumbModule } from '@shared/components/breadcrumb/breadcrumb.m
         <z-breadcrumb>
           <z-breadcrumb-list>
             <z-breadcrumb-item>
-              <z-breadcrumb-link zLink="/">Home</z-breadcrumb-link>
+              <z-breadcrumb-link zLink="/">{{ 'breadcrumb.home' | translate }}</z-breadcrumb-link>
             </z-breadcrumb-item>
             <z-breadcrumb-separator />
             <z-breadcrumb-item>
-              <z-breadcrumb-page>Dashboard</z-breadcrumb-page>
+              <z-breadcrumb-page>{{ 'menu.dashboard' | translate }}</z-breadcrumb-page>
             </z-breadcrumb-item>
           </z-breadcrumb-list>
         </z-breadcrumb>
 
         <!-- Main Content -->
         <div>
-          <h2 class="text-3xl font-bold mb-2">Welcome to Dashboard</h2>
+          <h2 class="text-3xl font-bold mb-2">{{ 'page.dashboard.title' | translate }}</h2>
           <p class="text-muted-foreground">
-            This is your dashboard content area. You can add your widgets, charts, and other components here.
+            {{ 'page.dashboard.description' | translate }}
           </p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div class="p-6 rounded-lg border bg-card">
-            <h3 class="text-lg font-semibold mb-2">Card 1</h3>
-            <p class="text-sm text-muted-foreground">Card content goes here</p>
+            <h3 class="text-lg font-semibold mb-2">{{ 'page.card.card1' | translate }}</h3>
+            <p class="text-sm text-muted-foreground">{{ 'page.card.content' | translate }}</p>
           </div>
           <div class="p-6 rounded-lg border bg-card">
-            <h3 class="text-lg font-semibold mb-2">Card 2</h3>
-            <p class="text-sm text-muted-foreground">Card content goes here</p>
+            <h3 class="text-lg font-semibold mb-2">{{ 'page.card.card2' | translate }}</h3>
+            <p class="text-sm text-muted-foreground">{{ 'page.card.content' | translate }}</p>
           </div>
           <div class="p-6 rounded-lg border bg-card">
-            <h3 class="text-lg font-semibold mb-2">Card 3</h3>
-            <p class="text-sm text-muted-foreground">Card content goes here</p>
+            <h3 class="text-lg font-semibold mb-2">{{ 'page.card.card3' | translate }}</h3>
+            <p class="text-sm text-muted-foreground">{{ 'page.card.content' | translate }}</p>
           </div>
         </div>
       </div>

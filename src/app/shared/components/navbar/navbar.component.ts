@@ -3,21 +3,24 @@ import { DarkModeService } from '@shared/services/darkmode.service';
 import { LanguageService } from '@shared/services/language.service';
 import { ZardButtonComponent } from '../button/button.component';
 import { ZardIconComponent } from '../icon/icon.component';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'z-navbar',
   exportAs: 'zNavbar',
   standalone: true,
-  imports: [ZardButtonComponent, ZardIconComponent],
+  imports: [ZardButtonComponent, ZardIconComponent, TranslateModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   template: `
     <div class="flex items-center justify-between h-full w-full">
-      <div class="flex items-center gap-2">
+      <!-- Logo Section - Left -->
+      <div class="flex items-center gap-2 flex-shrink-0">
         <ng-content select="[navbar-brand]"></ng-content>
       </div>
       
-      <div class="flex items-center gap-2">
+      <!-- Controls Section - Right -->
+      <div class="flex items-center gap-3 flex-shrink-0">
         <!-- Language Toggle -->
         <div class="flex items-center gap-1 border rounded-md">
           <z-button
@@ -45,9 +48,9 @@ import { ZardIconComponent } from '../icon/icon.component';
           (click)="toggleTheme()"
           zType="ghost"
           zSize="icon"
-          [attr.aria-label]="getCurrentTheme() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
+          [attr.aria-label]="currentTheme() === 'dark' ? ('theme.switchToLight' | translate) : ('theme.switchToDark' | translate)"
         >
-          @if (getCurrentTheme() === 'dark') {
+          @if (currentTheme() === 'dark') {
             <z-icon zType="sun" />
           } @else {
             <z-icon zType="moon" />
@@ -62,13 +65,10 @@ export class ZardNavbarComponent {
   private readonly languageService = inject(LanguageService);
 
   readonly currentLanguage = this.languageService.getCurrentLanguageSignal();
+  readonly currentTheme = this.darkmodeService.getCurrentThemeSignal();
 
   toggleTheme(): void {
     this.darkmodeService.toggleTheme();
-  }
-
-  getCurrentTheme(): 'light' | 'dark' {
-    return this.darkmodeService.getCurrentTheme();
   }
 
   setLanguage(lang: 'en' | 'fr'): void {

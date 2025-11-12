@@ -1,4 +1,5 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 
 export type Language = 'en' | 'fr';
 
@@ -8,8 +9,16 @@ export type Language = 'en' | 'fr';
 export class LanguageService {
   private readonly storageKey = 'language';
   private readonly currentLanguage = signal<Language>(this.getInitialLanguage());
+  private translateService: TranslateService | null = null;
 
   constructor() {
+    // TranslateService will be injected after initialization
+    // We'll set it up in AppComponent
+  }
+
+  setTranslateService(translateService: TranslateService): void {
+    this.translateService = translateService;
+    // Initialize language after TranslateService is set
     this.initLanguage();
   }
 
@@ -30,6 +39,9 @@ export class LanguageService {
   setLanguage(language: Language): void {
     this.currentLanguage.set(language);
     this.applyLanguage(language);
+    if (this.translateService) {
+      this.translateService.use(language);
+    }
     localStorage.setItem(this.storageKey, language);
   }
 
@@ -52,6 +64,10 @@ export class LanguageService {
 
   private applyLanguage(language: Language): void {
     document.documentElement.setAttribute('lang', language);
+    // Set initial language for TranslateService if it's available
+    if (this.translateService && this.translateService.currentLang !== language) {
+      this.translateService.use(language).subscribe();
+    }
   }
 }
 
