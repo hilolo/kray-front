@@ -1,0 +1,142 @@
+<!-- Desktop Sidebar (Hidden on Mobile) -->
+<z-sidebar 
+  [zWidth]="zSidebarWidth()" 
+  [zCollapsible]="true"
+  [zCollapsed]="sidebarCollapsed()"
+  [zCollapsedWidth]="64"
+  (zCollapsedChange)="sidebarCollapsed.set($event)"
+  [class]="sidebarCollapsed() ? 'p-2' : 'p-6'"
+  class="hidden md:flex h-full"
+>
+  <div class="flex flex-col h-full">
+    <z-sidebar-group class="flex-1 min-h-0">
+      <nav class="flex flex-col gap-1">
+        @for (item of zSidebarItems(); track item.route) {
+          <a
+            [routerLink]="item.route"
+            routerLinkActive="bg-accent"
+            [routerLinkActiveOptions]="getRouterLinkActiveOptions(item.route)"
+            [class]="sidebarCollapsed() ? 'justify-center px-2' : 'gap-3 px-3'"
+            class="flex items-center py-2 rounded-md hover:bg-accent transition-colors"
+            [attr.title]="sidebarCollapsed() ? (item.labelKey ? (item.labelKey | translate) : item.label) : null"
+            (click)="closeMobileSidebar()"
+          >
+            @if (item.icon) {
+              <z-icon [zType]="item.icon" />
+            }
+            @if (!sidebarCollapsed()) {
+              <span>{{ item.labelKey ? (item.labelKey | translate) : item.label }}</span>
+            }
+          </a>
+        }
+      </nav>
+    </z-sidebar-group>
+
+    <!-- User Profile Section at Bottom - Always visible -->
+    <div class="mt-auto pt-4 border-t border-border flex-shrink-0">
+      <z-dropdown-menu>
+        <button
+          dropdown-trigger
+          type="button"
+          [class]="sidebarCollapsed() ? 'w-full flex items-center justify-center p-2' : 'w-full flex items-center gap-3 p-2 rounded-md hover:bg-accent transition-colors'"
+        >
+          <z-avatar 
+            zSize="sm" 
+            zType="default" 
+            [zImage]="userAvatar() ? { url: userAvatar()!, fallback: userName().charAt(0).toUpperCase() } : { fallback: userName().charAt(0).toUpperCase() }"
+          />
+          @if (!sidebarCollapsed()) {
+            <div class="flex-1 min-w-0 text-left">
+              <div class="text-xs font-medium break-words">{{ userName() }}</div>
+              <div class="text-[10px] text-muted-foreground break-words leading-tight">{{ userEmail() }}</div>
+            </div>
+            <z-icon zType="ellipsis" zSize="sm" class="text-muted-foreground flex-shrink-0" />
+          }
+        </button>
+
+        <div class="px-2 py-1.5 mb-1">
+          <div class="flex items-center gap-3">
+            <z-avatar 
+              zSize="default" 
+              zType="default" 
+              [zImage]="userAvatar() ? { url: userAvatar()!, fallback: userName().charAt(0).toUpperCase() } : { fallback: userName().charAt(0).toUpperCase() }"
+            />
+            <div class="flex-1 min-w-0">
+              <div class="text-xs font-medium break-words">{{ userName() }}</div>
+              <div class="text-[10px] text-muted-foreground break-words leading-tight">{{ userEmail() }}</div>
+            </div>
+          </div>
+        </div>
+        <z-dropdown-menu-item (click)="onSettingsClick()">
+          <z-icon zType="settings" zSize="sm" class="mr-2" />
+          <span>Settings</span>
+        </z-dropdown-menu-item>
+      </z-dropdown-menu>
+    </div>
+  </div>
+</z-sidebar>
+
+<!-- Mobile Sidebar Template (for Sheet) -->
+<ng-template #mobileSidebarTemplate>
+  <div class="flex flex-col h-full">
+    <z-sidebar-group class="flex-1">
+      <nav class="flex flex-col gap-1 p-4">
+        @for (item of zSidebarItems(); track item.route) {
+          <a
+            [routerLink]="item.route"
+            routerLinkActive="bg-accent"
+            [routerLinkActiveOptions]="getRouterLinkActiveOptions(item.route)"
+            class="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-accent transition-colors"
+            (click)="closeMobileSidebar()"
+          >
+            @if (item.icon) {
+              <z-icon [zType]="item.icon" />
+            }
+            <span>{{ item.labelKey ? (item.labelKey | translate) : item.label }}</span>
+          </a>
+        }
+      </nav>
+    </z-sidebar-group>
+
+    <!-- User Profile Section at Bottom (Mobile) -->
+    <div class="mt-auto pt-4 border-t border-border px-4 pb-4">
+      <z-dropdown-menu>
+        <button
+          dropdown-trigger
+          type="button"
+          class="w-full flex items-center gap-3 p-2 rounded-md hover:bg-accent transition-colors"
+        >
+          <z-avatar 
+            zSize="sm" 
+            zType="default" 
+            [zImage]="userAvatar() ? { url: userAvatar()!, fallback: userName().charAt(0).toUpperCase() } : { fallback: userName().charAt(0).toUpperCase() }"
+          />
+          <div class="flex-1 min-w-0 text-left">
+            <div class="text-xs font-medium break-words">{{ userName() }}</div>
+            <div class="text-[10px] text-muted-foreground break-words leading-tight">{{ userEmail() }}</div>
+          </div>
+          <z-icon zType="ellipsis" zSize="sm" class="text-muted-foreground flex-shrink-0" />
+        </button>
+
+        <div class="px-2 py-1.5 mb-1">
+          <div class="flex items-center gap-3">
+            <z-avatar 
+              zSize="default" 
+              zType="default" 
+              [zImage]="userAvatar() ? { url: userAvatar()!, fallback: userName().charAt(0).toUpperCase() } : { fallback: userName().charAt(0).toUpperCase() }"
+            />
+            <div class="flex-1 min-w-0">
+              <div class="text-xs font-medium break-words">{{ userName() }}</div>
+              <div class="text-[10px] text-muted-foreground break-words leading-tight">{{ userEmail() }}</div>
+            </div>
+          </div>
+        </div>
+        <z-dropdown-menu-item (click)="onSettingsClick()">
+          <z-icon zType="settings" zSize="sm" class="mr-2" />
+          <span>Settings</span>
+        </z-dropdown-menu-item>
+      </z-dropdown-menu>
+    </div>
+  </div>
+</ng-template>
+

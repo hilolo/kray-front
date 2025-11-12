@@ -26,4 +26,9 @@ export const routes: Routes = [
     loadChildren: () => import('./settings/settings.module').then((m) => m.SettingsModule),
     canActivate: [authGuard],
   },
+  {
+    path: 'contact',
+    loadChildren: () => import('./contact/contact.module').then((m) => m.ContactModule),
+    canActivate: [authGuard],
+  },
 ];

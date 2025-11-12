@@ -1,0 +1,74 @@
+<z-header>
+  <div class="flex items-center justify-between h-full w-full">
+    <!-- Left Section: Burger Menu (Mobile) + Logo -->
+    <div class="flex items-center gap-2 flex-shrink-0">
+      <!-- Burger Menu Button (Mobile Only) -->
+      <z-button
+        zType="ghost"
+        zSize="icon"
+        class="md:hidden"
+        (click)="onMobileMenuClick()"
+        [attr.aria-label]="'menu.open' | translate"
+      >
+        <z-icon zType="panel-left" />
+      </z-button>
+      
+      @if (!logoError()) {
+        <img 
+          [src]="currentTheme() === 'dark' ? '/assets/logo-white.svg' : '/assets/logo.svg'" 
+          alt="Logo" 
+          class="h-8 w-auto"
+          (error)="logoError.set(true)"
+        />
+      } @else {
+        <span class="text-lg font-bold">Logo</span>
+      }
+    </div>
+    
+    <!-- Controls Section - Right -->
+    <div class="flex items-center gap-3 flex-shrink-0">
+      <!-- Language Dropdown -->
+      <z-dropdown-menu>
+        <z-button
+          dropdown-trigger
+          zType="ghost"
+          zSize="sm"
+        >
+          {{ currentLanguage() === 'en' ? 'EN' : 'FR' }}
+        </z-button>
+        
+        <z-dropdown-menu-item (click)="setLanguage('en')" [class.bg-accent]="currentLanguage() === 'en'">
+          {{ 'language.english' | translate }}
+        </z-dropdown-menu-item>
+        <z-dropdown-menu-item (click)="setLanguage('fr')" [class.bg-accent]="currentLanguage() === 'fr'">
+          {{ 'language.french' | translate }}
+        </z-dropdown-menu-item>
+      </z-dropdown-menu>
+
+      <!-- Dark Mode Toggle -->
+      <z-button
+        (click)="toggleTheme()"
+        zType="ghost"
+        zSize="icon"
+        [attr.aria-label]="currentTheme() === 'dark' ? ('theme.switchToLight' | translate) : ('theme.switchToDark' | translate)"
+      >
+        @if (currentTheme() === 'dark') {
+          <z-icon zType="sun" />
+        } @else {
+          <z-icon zType="moon" />
+        }
+      </z-button>
+
+      <!-- Logout Button -->
+      <z-button
+        (click)="showLogoutConfirmation()"
+        zType="ghost"
+        zSize="icon"
+        [attr.aria-label]="'Log out' | translate"
+      >
+        <z-icon zType="log-out" />
+      </z-button>
+    </div>
+  </div>
+</z-header>
+
