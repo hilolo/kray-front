@@ -12,7 +12,7 @@ import { ZardIconComponent } from '../icon/icon.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   template: `
-    <div class="flex items-center justify-between h-full px-4 w-full">
+    <div class="flex items-center justify-between h-full w-full">
       <div class="flex items-center gap-2">
         <ng-content select="[navbar-brand]"></ng-content>
       </div>

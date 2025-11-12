@@ -45,11 +45,6 @@ import { ZardBreadcrumbModule } from '@shared/components/breadcrumb/breadcrumb.m
           </div>
         </div>
       </div>
-
-      <!-- Footer Content -->
-      <div footer-content>
-        <span>&copy; 2024 Dashboard. All rights reserved.</span>
-      </div>
     </z-page>
   `,
 })

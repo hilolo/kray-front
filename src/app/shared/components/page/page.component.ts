@@ -18,7 +18,7 @@ import type { ZardIcon } from '../icon/icons';
       <z-header>
         <z-navbar>
           <div navbar-brand>
-            <h1 class="text-xl font-semibold">{{ zTitle() }}</h1>
+            <img src="assets/logo.svg" alt="Logo" class="h-8 w-auto" />
           </div>
         </z-navbar>
       </z-header>
@@ -43,23 +43,16 @@ import type { ZardIcon } from '../icon/icons';
           </z-sidebar-group>
         </z-sidebar>
 
-        <z-content>
+        <z-content class="!min-h-0">
           <ng-content></ng-content>
         </z-content>
       </z-layout>
-
-      <z-footer [zHeight]="zFooterHeight()">
-        <div class="flex items-center justify-center h-full text-xs text-muted-foreground">
-          <ng-content select="[footer-content]"></ng-content>
-        </div>
-      </z-footer>
     </z-layout>
   `,
 })
 export class ZardPageComponent {
   readonly zTitle = input<string>('Dashboard');
   readonly zSidebarWidth = input<number>(240);
-  readonly zFooterHeight = input<number>(32);
   readonly zSidebarItems = input<
     Array<{
       route: string;
