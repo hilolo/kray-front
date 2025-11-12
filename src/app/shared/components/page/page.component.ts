@@ -102,6 +102,7 @@ import { ZardSheetRef } from '../sheet/sheet-ref';
                 <a
                   [routerLink]="item.route"
                   routerLinkActive="bg-accent"
+                  [routerLinkActiveOptions]="getRouterLinkActiveOptions(item.route)"
                   [class]="sidebarCollapsed() ? 'justify-center px-2' : 'gap-3 px-3'"
                   class="flex items-center py-2 rounded-md hover:bg-accent transition-colors"
                   [attr.title]="sidebarCollapsed() ? (item.labelKey ? (item.labelKey | translate) : item.label) : null"
@@ -128,6 +129,7 @@ import { ZardSheetRef } from '../sheet/sheet-ref';
                   <a
                     [routerLink]="item.route"
                     routerLinkActive="bg-accent"
+                    [routerLinkActiveOptions]="getRouterLinkActiveOptions(item.route)"
                     class="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-accent transition-colors"
                     (click)="closeMobileSidebar()"
                   >
@@ -215,6 +217,10 @@ export class ZardPageComponent {
       this.mobileSidebarRef.close();
       this.mobileSidebarRef = null;
     }
+  }
+
+  getRouterLinkActiveOptions(route: string): { exact: boolean } {
+    return route === '/' ? { exact: true } : { exact: false };
   }
 }
 

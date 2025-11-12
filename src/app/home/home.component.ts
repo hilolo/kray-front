@@ -1,28 +1,14 @@
 import { Component } from '@angular/core';
 import { ZardPageComponent } from '@shared/components/page/page.component';
-import { ZardBreadcrumbModule } from '@shared/components/breadcrumb/breadcrumb.module';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [ZardPageComponent, ZardBreadcrumbModule, TranslateModule],
+  imports: [ZardPageComponent, TranslateModule],
   template: `
     <z-page zTitle="Dashboard">
       <div class="space-y-6">
-        <!-- Breadcrumb -->
-        <z-breadcrumb>
-          <z-breadcrumb-list>
-            <z-breadcrumb-item>
-              <z-breadcrumb-link zLink="/">{{ 'breadcrumb.home' | translate }}</z-breadcrumb-link>
-            </z-breadcrumb-item>
-            <z-breadcrumb-separator />
-            <z-breadcrumb-item>
-              <z-breadcrumb-page>{{ 'menu.dashboard' | translate }}</z-breadcrumb-page>
-            </z-breadcrumb-item>
-          </z-breadcrumb-list>
-        </z-breadcrumb>
-
         <!-- Main Content -->
         <div>
           <h2 class="text-3xl font-bold mb-2">{{ 'page.dashboard.title' | translate }}</h2>

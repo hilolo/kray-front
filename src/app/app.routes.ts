@@ -16,4 +16,8 @@ export const routes: Routes = [
     path: 'heroicons',
     component: HeroiconExampleComponent,
   },
+  {
+    path: 'settings',
+    loadChildren: () => import('./settings/settings.module').then((m) => m.SettingsModule),
+  },
 ];
