@@ -35,7 +35,16 @@
     "dashboard": "Tableau de bord",
     "settings": "Paramètres",
     "home": "Accueil",
-    "open": "Ouvrir le menu"
+    "open": "Ouvrir le menu",
+    "bureau": "Bureau",
+    "biens": "Biens",
+    "lots": "Lots",
+    "immeubles": "Immeubles",
+    "locataires": "Locataires",
+    "locations": "Locations",
+    "reservations": "Réservations",
+    "inventaires": "Inventaires",
+    "etatDesLieux": "Etat des lieux"
   },
   "sidebar": {
     "expand": "Développer la barre latérale",

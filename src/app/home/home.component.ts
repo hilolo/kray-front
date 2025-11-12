@@ -1,39 +1,12 @@
 import { Component } from '@angular/core';
-import { ZardPageComponent } from '@shared/components/page/page.component';
+import { ZardPageComponent } from '../page/page.component';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-home',
   standalone: true,
   imports: [ZardPageComponent, TranslateModule],
-  template: `
-    <z-page zTitle="Dashboard">
-      <div class="space-y-6">
-        <!-- Main Content -->
-        <div>
-          <h2 class="text-3xl font-bold mb-2">{{ 'page.dashboard.title' | translate }}</h2>
-          <p class="text-muted-foreground">
-            {{ 'page.dashboard.description' | translate }}
-          </p>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div class="p-6 rounded-lg border bg-card">
-            <h3 class="text-lg font-semibold mb-2">{{ 'page.card.card1' | translate }}</h3>
-            <p class="text-sm text-muted-foreground">{{ 'page.card.content' | translate }}</p>
-          </div>
-          <div class="p-6 rounded-lg border bg-card">
-            <h3 class="text-lg font-semibold mb-2">{{ 'page.card.card2' | translate }}</h3>
-            <p class="text-sm text-muted-foreground">{{ 'page.card.content' | translate }}</p>
-          </div>
-          <div class="p-6 rounded-lg border bg-card">
-            <h3 class="text-lg font-semibold mb-2">{{ 'page.card.card3' | translate }}</h3>
-            <p class="text-sm text-muted-foreground">{{ 'page.card.content' | translate }}</p>
-          </div>
-        </div>
-      </div>
-    </z-page>
-  `,
+  templateUrl: './home.component.html',
 })
 export class HomeComponent {}
 

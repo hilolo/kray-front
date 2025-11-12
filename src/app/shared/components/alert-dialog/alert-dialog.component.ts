@@ -1,4 +1,3 @@
-import { animate, state, style, transition, trigger } from '@angular/animations';
 import { A11yModule } from '@angular/cdk/a11y';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { BasePortalOutlet, CdkPortalOutlet, ComponentPortal, PortalModule, TemplatePortal } from '@angular/cdk/portal';
@@ -61,7 +60,6 @@ export class ZardAlertDialogOptions<T> {
   encapsulation: ViewEncapsulation.None,
   host: {
     '[class]': 'classes()',
-    '[@alertDialogAnimation]': 'state()',
     '[style.width]': 'config.zWidth ? config.zWidth : null',
     role: 'alertdialog',
     '[attr.aria-modal]': 'true',
@@ -78,14 +76,6 @@ export class ZardAlertDialogOptions<T> {
         transform-origin: center center;
       }
     `,
-  ],
-  animations: [
-    trigger('alertDialogAnimation', [
-      state('close', style({ opacity: 0, transform: 'scale(0.9)' })),
-      state('open', style({ opacity: 1, transform: 'scale(1)' })),
-      transition('close => open', animate('150ms ease-out')),
-      transition('open => close', animate('150ms ease-in')),
-    ]),
   ],
 })
 export class ZardAlertDialogComponent<T> extends BasePortalOutlet {

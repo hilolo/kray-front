@@ -1,14 +1,14 @@
 import { Component, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { LayoutComponent } from '@shared/components/layout/layout.component';
-import { ContentComponent } from '@shared/components/layout/content.component';
 import { ZardFormFieldComponent } from '@shared/components/form/form.component';
 import { ZardFormControlComponent } from '@shared/components/form/form.component';
 import { ZardFormLabelComponent } from '@shared/components/form/form.component';
 import { ZardInputDirective } from '@shared/components/input/input.directive';
 import { ZardButtonComponent } from '@shared/components/button/button.component';
 import { ZardIconComponent } from '@shared/components/icon/icon.component';
+import { DarkModeService } from '@shared/services/darkmode.service';
+import { AuthService } from '@shared/services/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -16,8 +16,6 @@ import { ZardIconComponent } from '@shared/components/icon/icon.component';
   imports: [
     FormsModule,
     RouterLink,
-    LayoutComponent,
-    ContentComponent,
     ZardFormFieldComponent,
     ZardFormControlComponent,
     ZardFormLabelComponent,
@@ -25,127 +23,35 @@ import { ZardIconComponent } from '@shared/components/icon/icon.component';
     ZardButtonComponent,
     ZardIconComponent,
   ],
-  template: `
-    <z-layout>
-      <z-content>
-        <div class="min-h-screen flex items-center justify-center bg-background p-4">
-          <div class="w-full max-w-md space-y-8">
-            <div class="text-center space-y-2">
-              <h1 class="text-3xl font-bold tracking-tight">Welcome back</h1>
-              <p class="text-muted-foreground">Enter your credentials to access your account</p>
-            </div>
-
-            <div class="rounded-lg border bg-card p-6 shadow-sm">
-              <form (ngSubmit)="onSubmit()" class="space-y-6">
-                <z-form-field>
-                  <z-form-label zRequired>Email</z-form-label>
-                  <z-form-control [errorMessage]="emailError()">
-                    <input
-                      z-input
-                      type="email"
-                      [(ngModel)]="email"
-                      name="email"
-                      placeholder="name@example.com"
-                      required
-                      autocomplete="email"
-                      class="w-full"
-                    />
-                  </z-form-control>
-                </z-form-field>
-
-                <z-form-field>
-                  <z-form-label zRequired>Password</z-form-label>
-                  <z-form-control [errorMessage]="passwordError()">
-                    <div class="relative">
-                      <input
-                        z-input
-                        [type]="showPassword() ? 'text' : 'password'"
-                        [(ngModel)]="password"
-                        name="password"
-                        placeholder="Enter your password"
-                        required
-                        autocomplete="current-password"
-                        class="w-full pr-10"
-                      />
-                      <button
-                        type="button"
-                        (click)="togglePasswordVisibility()"
-                        class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                        [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
-                      >
-                        @if (showPassword()) {
-                          <z-icon zType="eye-off" zSize="sm" />
-                        } @else {
-                          <z-icon zType="eye" zSize="sm" />
-                        }
-                      </button>
-                    </div>
-                  </z-form-control>
-                </z-form-field>
-
-                <div class="flex items-center justify-between">
-                  <label class="flex items-center space-x-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      [(ngModel)]="rememberMe"
-                      name="rememberMe"
-                      class="rounded border-gray-300"
-                    />
-                    <span class="text-sm text-muted-foreground">Remember me</span>
-                  </label>
-                  <a href="#" class="text-sm text-primary hover:underline">Forgot password?</a>
-                </div>
-
-                @if (errorMessage()) {
-                  <div class="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
-                    {{ errorMessage() }}
-                  </div>
-                }
-
-                <z-button
-                  type="submit"
-                  zType="default"
-                  zSize="default"
-                  zFull
-                  [zLoading]="isLoading()"
-                  [attr.disabled]="isLoading() ? '' : null"
-                >
-                  @if (!isLoading()) {
-                    Sign in
-                  } @else {
-                    Signing in...
-                  }
-                </z-button>
-              </form>
-
-              <div class="mt-6 text-center text-sm text-muted-foreground">
-                Don't have an account?
-                <a routerLink="/register" class="text-primary hover:underline font-medium"> Sign up </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </z-content>
-    </z-layout>
-  `,
+  templateUrl: './login.component.html',
 })
 export class LoginComponent {
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly darkmodeService = inject(DarkModeService);
+  private readonly authService = inject(AuthService);
 
-  email = '';
-  password = '';
+  email = 'admin@admin.com';
+  password = 'admin';
   rememberMe = false;
   showPassword = signal(false);
   isLoading = signal(false);
   errorMessage = signal('');
   emailError = signal('');
   passwordError = signal('');
+  readonly currentTheme = this.darkmodeService.getCurrentThemeSignal();
+  readonly logoError = signal(false);
 
   togglePasswordVisibility(): void {
     this.showPassword.update((value) => !value);
   }
 
-  onSubmit(): void {
+  onSubmit(event?: Event): void {
+    // Prevent default form submission
+    if (event) {
+      event.preventDefault();
+    }
+
     // Reset errors
     this.errorMessage.set('');
     this.emailError.set('');
@@ -170,19 +76,36 @@ export class LoginComponent {
       return;
     }
 
-    if (passwordValue.length < 6) {
-      this.passwordError.set('Password must be at least 6 characters');
+    // Prevent multiple submissions
+    if (this.isLoading()) {
       return;
     }
 
-    // Simulate login
+    // Call authentication service
+    console.log('Calling auth service with:', { email: emailValue, password: '***' });
     this.isLoading.set(true);
-    setTimeout(() => {
-      this.isLoading.set(false);
-      // In a real app, you would call an authentication service here
-      // For now, we'll just navigate to home
-      this.router.navigate(['/']);
-    }, 1500);
+    this.authService.login(emailValue, passwordValue).subscribe({
+      next: (response) => {
+        console.log('Login successful:', response);
+        this.isLoading.set(false);
+        // Get return URL from route parameters or default to home
+        const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
+        // Navigate to return URL or home on successful login
+        this.router.navigate([returnUrl]);
+      },
+      error: (error) => {
+        console.error('Login error:', error);
+        this.isLoading.set(false);
+        // Handle error response
+        if (error.errors && error.errors.length > 0) {
+          this.errorMessage.set(error.errors.join(', '));
+        } else if (error.message) {
+          this.errorMessage.set(error.message);
+        } else {
+          this.errorMessage.set('Login failed. Please try again.');
+        }
+      },
+    });
   }
 
   private isValidEmail(email: string): boolean {

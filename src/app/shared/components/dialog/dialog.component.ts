@@ -16,7 +16,6 @@ import {
   ViewContainerRef,
 } from '@angular/core';
 import { BasePortalOutlet, CdkPortalOutlet, ComponentPortal, PortalModule, TemplatePortal } from '@angular/cdk/portal';
-import { animate, state, style, transition, trigger } from '@angular/animations';
 import { OverlayModule } from '@angular/cdk/overlay';
 
 import { ZardButtonComponent } from '../button/button.component';
@@ -108,17 +107,8 @@ export class ZardDialogOptions<T, U> {
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '[class]': 'classes()',
-    '[@dialogAnimation]': 'state()',
     '[style.width]': 'config.zWidth ? config.zWidth : null',
   },
-  animations: [
-    trigger('dialogAnimation', [
-      state('close', style({ opacity: 0, transform: 'scale(0.9)' })),
-      state('open', style({ opacity: 1, transform: 'scale(1)' })),
-      transition('close => open', animate('150ms ease-out')),
-      transition('open => close', animate('150ms ease-in')),
-    ]),
-  ],
 })
 export class ZardDialogComponent<T, U> extends BasePortalOutlet {
   private readonly host = inject(ElementRef<HTMLElement>);

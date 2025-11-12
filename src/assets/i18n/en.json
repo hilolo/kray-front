@@ -35,7 +35,16 @@
     "dashboard": "Dashboard",
     "settings": "Settings",
     "home": "Home",
-    "open": "Open menu"
+    "open": "Open menu",
+    "bureau": "Office",
+    "biens": "Properties",
+    "lots": "Lots",
+    "immeubles": "Buildings",
+    "locataires": "Tenants",
+    "locations": "Rentals",
+    "reservations": "Reservations",
+    "inventaires": "Inventories",
+    "etatDesLieux": "Condition Report"
   },
   "sidebar": {
     "expand": "Expand sidebar",

@@ -124,25 +124,7 @@
         selector: 'app-page-name',
         standalone: true,
         imports: [LayoutComponent, HeaderComponent, SidebarComponent, ContentComponent, FooterComponent],
-        template: `
-          <z-layout>
-            <z-header>
-              <!-- Header content -->
-            </z-header>
-            
-            <z-sidebar>
-              <!-- Sidebar content -->
-            </z-sidebar>
-            
-            <z-content>
-              <!-- Main page content -->
-            </z-content>
-            
-            <z-footer>
-              <!-- Footer content (optional) -->
-            </z-footer>
-          </z-layout>
-        `,
+        templateUrl: './page-name.component.html',
       })
       ```
     - **Minimum required**: At least use `<z-layout><z-content>...</z-content></z-layout>` for all page components
@@ -155,6 +137,29 @@
     - **NEVER** create page components without using the layout structure
     - Layout automatically handles responsive behavior and direction (horizontal/vertical)
 
+14. **Template File Separation** - **MANDATORY for all components**:
+    - **ALWAYS** separate HTML templates from TypeScript component files
+    - **NEVER** use inline `template` property in `@Component` decorator
+    - **ALWAYS** use `templateUrl` property pointing to a separate `.html` file
+    - File naming convention:
+      - Component file: `[component-name].component.ts`
+      - Template file: `[component-name].component.html` (in the same directory)
+    - Example:
+      ```typescript
+      @Component({
+        selector: 'app-component-name',
+        standalone: true,
+        templateUrl: './component-name.component.html',  // ✅ CORRECT
+        // template: `...`  // ❌ NEVER use inline templates
+      })
+      ```
+    - **Exception**: Only very small utility components with minimal HTML (1-2 lines) may use inline templates, but this should be rare
+    - This separation improves:
+      - Code readability and maintainability
+      - Better IDE support and syntax highlighting
+      - Easier collaboration between developers
+      - Better separation of concerns
+
 ## Important Notes
 
 - **NEVER** create components that duplicate existing functionality
@@ -165,4 +170,6 @@
 - **ALWAYS** use `cva` for variant management, never manual class strings
 - **ALWAYS** use `z-layout` with `z-content` (at minimum) for all page/route components
 - **NEVER** create page components without the layout structure - it's mandatory for consistency
+- **ALWAYS** separate HTML templates into `.html` files - **NEVER** use inline `template` property
+- **ALWAYS** use `templateUrl` pointing to a separate HTML file in the same directory
 

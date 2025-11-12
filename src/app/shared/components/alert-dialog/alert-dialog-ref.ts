@@ -63,7 +63,8 @@ export class ZardAlertDialogRef<T = unknown, R = unknown> {
         this.close(result as R);
       }
     } else {
-      this.close();
+      // Return false when cancel is clicked and no callback is provided
+      this.close(false as R);
     }
   }
 
@@ -76,7 +77,8 @@ export class ZardAlertDialogRef<T = unknown, R = unknown> {
         this.close(result as R);
       }
     } else {
-      this.close();
+      // Return true when OK is clicked and no callback is provided
+      this.close(true as R);
     }
   }
 

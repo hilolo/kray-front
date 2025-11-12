@@ -1,9 +1,12 @@
-import { ChangeDetectionStrategy, Component, inject, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnDestroy, ViewContainerRef, ViewEncapsulation } from '@angular/core';
+import { Subject, takeUntil } from 'rxjs';
 import { DarkModeService } from '@shared/services/darkmode.service';
 import { LanguageService } from '@shared/services/language.service';
 import { ZardButtonComponent } from '../button/button.component';
 import { ZardIconComponent } from '../icon/icon.component';
 import { TranslateModule } from '@ngx-translate/core';
+import { ZardAlertDialogService } from '../alert-dialog/alert-dialog.service';
+import { AuthService } from '@shared/services/auth.service';
 
 @Component({
   selector: 'z-navbar',
@@ -56,13 +59,27 @@ import { TranslateModule } from '@ngx-translate/core';
             <z-icon zType="moon" />
           }
         </z-button>
+
+        <!-- Logout Button -->
+        <z-button
+          (click)="showLogoutConfirmation()"
+          zType="ghost"
+          zSize="icon"
+          [attr.aria-label]="'Log out' | translate"
+        >
+          <z-icon zType="log-out" />
+        </z-button>
       </div>
     </div>
   `,
 })
-export class ZardNavbarComponent {
+export class ZardNavbarComponent implements OnDestroy {
   private readonly darkmodeService = inject(DarkModeService);
   private readonly languageService = inject(LanguageService);
+  private readonly alertDialogService = inject(ZardAlertDialogService);
+  private readonly authService = inject(AuthService);
+  private readonly viewContainerRef = inject(ViewContainerRef);
+  private readonly destroy$ = new Subject<void>();
 
   readonly currentLanguage = this.languageService.getCurrentLanguageSignal();
   readonly currentTheme = this.darkmodeService.getCurrentThemeSignal();
@@ -73,6 +90,35 @@ export class ZardNavbarComponent {
 
   setLanguage(lang: 'en' | 'fr'): void {
     this.languageService.setLanguage(lang);
+  }
+
+  showLogoutConfirmation(): void {
+    console.log('Navbar: showLogoutConfirmation called');
+    const dialogRef = this.alertDialogService.confirm({
+      zTitle: 'Log out',
+      zDescription: 'Are you sure you want to log out?',
+      zOkText: 'Log out',
+      zCancelText: 'Cancel',
+      zOkDestructive: true,
+      zViewContainerRef: this.viewContainerRef,
+    });
+
+    console.log('Navbar: Dialog created, waiting for user response...');
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result) => {
+      console.log('Navbar: Dialog closed with result:', result);
+      if (result) {
+        // User confirmed logout
+        console.log('Navbar: User confirmed logout, calling authService.logout()');
+        this.authService.logout();
+      } else {
+        console.log('Navbar: User cancelled logout');
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }
 
