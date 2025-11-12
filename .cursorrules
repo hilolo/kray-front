@@ -1,0 +1,168 @@
+# Cursor Rules for Angular Admin Template
+
+## Component Development Guidelines
+
+### When creating or modifying components:
+
+1. **Always use existing component patterns** - Before creating new components, check if similar functionality exists in `src/app/shared/components/` and reuse or extend existing components.
+
+2. **Follow shadcn/ui architecture** - All components must follow the shadcn/ui design system patterns:
+   - Use `class-variance-authority` (cva) for variant management
+   - Use Tailwind CSS for styling
+   - Follow accessibility best practices
+   - Use Angular signals for reactivity
+
+3. **Component Structure Requirements**:
+   - **Standalone components**: All components must be standalone Angular components
+   - **Naming convention**: 
+     - Component class: `Zard[ComponentName]Component`
+     - Selector: `z-[component-name]` (kebab-case)
+     - Export as: `z[ComponentName]` (camelCase)
+   - **File structure**: Each component should have:
+     - `[component-name].component.ts` - Main component file
+     - `[component-name].variants.ts` - Variant definitions using cva
+     - Optional: `[component-name].module.ts` if module is needed
+
+4. **Required Component Patterns**:
+   ```typescript
+   - Use `input()` signals for all inputs (not @Input())
+   - Use `computed()` signals for derived state
+   - Use `mergeClasses()` from `@shared/utils/merge-classes` for class merging
+   - Use `ViewEncapsulation.None`
+   - Use `ChangeDetectionStrategy.OnPush`
+   - Variants must use `cva()` from 'class-variance-authority'
+   - Export variant types using `VariantProps<typeof variantFunction>`
+   ```
+
+5. **Class Management**:
+   - Always use `mergeClasses()` utility instead of direct class concatenation
+   - Use `ClassValue` type from 'clsx' for class inputs
+   - Variant props should be prefixed with `z` (e.g., `zType`, `zSize`, `zShape`)
+   - Support custom classes via `class` input
+
+6. **Component Variants Pattern**:
+   ```typescript
+   // In [component].variants.ts
+   import { cva, VariantProps } from 'class-variance-authority';
+   
+   export const componentVariants = cva(
+     "base-classes-here",
+     {
+       variants: {
+         zType: { default: '', variant1: '...', variant2: '...' },
+         zSize: { default: '...', sm: '...', lg: '...' },
+       },
+       defaultVariants: { zType: 'default', zSize: 'default' }
+     }
+   );
+   export type ZardComponentVariants = VariantProps<typeof componentVariants>;
+   ```
+
+7. **Component Implementation Pattern**:
+   ```typescript
+   @Component({
+     selector: 'z-component-name',
+     exportAs: 'zComponentName',
+     standalone: true,
+     imports: [/* required imports */],
+     changeDetection: ChangeDetectionStrategy.OnPush,
+     encapsulation: ViewEncapsulation.None,
+     // template or templateUrl
+     host: {
+       '[class]': 'classes()',
+     },
+   })
+   export class ZardComponentNameComponent {
+     readonly zType = input<ZardComponentVariants['zType']>('default');
+     readonly class = input<ClassValue>('');
+     
+     protected readonly classes = computed(() =>
+       mergeClasses(
+         componentVariants({ zType: this.zType() }),
+         this.class(),
+       ),
+     );
+   }
+   ```
+
+8. **Reuse Existing Components**:
+   - When user requests functionality, first check if existing components can be used or extended
+   - Prefer composition over creating new components from scratch
+   - Use existing components like `ZardButtonComponent`, `ZardIconComponent`, etc. within new components
+
+9. **Path Aliases**:
+   - Use `@shared/components` for component imports
+   - Use `@shared/utils` for utility imports
+   - Defined in `tsconfig.json` and `components.json`
+
+10. **Accessibility**:
+    - Include proper ARIA attributes
+    - Use semantic HTML
+    - Support keyboard navigation
+    - Follow WCAG guidelines
+
+11. **Styling**:
+    - Use Tailwind CSS utility classes
+    - Support dark mode via `dark:` prefix
+    - Use CSS variables for theming (defined in `src/styles.css`)
+    - Follow shadcn/ui design tokens
+
+12. **When adding new features**:
+    - Check existing components first
+    - Extend existing components when possible
+    - Maintain consistency with existing patterns
+    - Ensure all variants are properly typed
+    - Add proper TypeScript types
+
+13. **Layout Component Usage** - **MANDATORY for all page/route components**:
+    - **ALWAYS** wrap page components (route components) with the layout component structure
+    - Use `LayoutComponent` from `@shared/components/layout/layout.component`
+    - Import `LayoutModule` or individual layout components as needed
+    - Standard layout structure:
+      ```typescript
+      @Component({
+        selector: 'app-page-name',
+        standalone: true,
+        imports: [LayoutComponent, HeaderComponent, SidebarComponent, ContentComponent, FooterComponent],
+        template: `
+          <z-layout>
+            <z-header>
+              <!-- Header content -->
+            </z-header>
+            
+            <z-sidebar>
+              <!-- Sidebar content -->
+            </z-sidebar>
+            
+            <z-content>
+              <!-- Main page content -->
+            </z-content>
+            
+            <z-footer>
+              <!-- Footer content (optional) -->
+            </z-footer>
+          </z-layout>
+        `,
+      })
+      ```
+    - **Minimum required**: At least use `<z-layout><z-content>...</z-content></z-layout>` for all page components
+    - Layout components available:
+      - `z-layout` - Main layout wrapper (required)
+      - `z-header` - Header section (optional but recommended)
+      - `z-sidebar` - Sidebar navigation (optional)
+      - `z-content` - Main content area (required)
+      - `z-footer` - Footer section (optional)
+    - **NEVER** create page components without using the layout structure
+    - Layout automatically handles responsive behavior and direction (horizontal/vertical)
+
+## Important Notes
+
+- **NEVER** create components that duplicate existing functionality
+- **ALWAYS** check `src/app/shared/components/` before creating new components
+- **ALWAYS** use the existing utility functions (`mergeClasses`, `cn`, `transform`, `generateId`)
+- **ALWAYS** follow the exact naming conventions and patterns shown above
+- **ALWAYS** make components standalone and use signals for inputs
+- **ALWAYS** use `cva` for variant management, never manual class strings
+- **ALWAYS** use `z-layout` with `z-content` (at minimum) for all page/route components
+- **NEVER** create page components without the layout structure - it's mandatory for consistency
+
