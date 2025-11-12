@@ -34,7 +34,8 @@
   "menu": {
     "dashboard": "Dashboard",
     "settings": "Settings",
-    "home": "Home"
+    "home": "Home",
+    "open": "Open menu"
   },
   "sidebar": {
     "expand": "Expand sidebar",

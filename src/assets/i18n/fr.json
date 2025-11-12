@@ -34,7 +34,8 @@
   "menu": {
     "dashboard": "Tableau de bord",
     "settings": "Paramètres",
-    "home": "Accueil"
+    "home": "Accueil",
+    "open": "Ouvrir le menu"
   },
   "sidebar": {
     "expand": "Développer la barre latérale",
