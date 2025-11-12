@@ -167,6 +167,20 @@ export class ZardDropdownMenuComponent implements OnInit, OnDestroy {
           .flexibleConnectedTo(this.elementRef)
           .withPositions([
             {
+              originX: 'end',
+              originY: 'bottom',
+              overlayX: 'end',
+              overlayY: 'top',
+              offsetY: 4,
+            },
+            {
+              originX: 'end',
+              originY: 'top',
+              overlayX: 'end',
+              overlayY: 'bottom',
+              offsetY: -4,
+            },
+            {
               originX: 'start',
               originY: 'bottom',
               overlayX: 'start',
@@ -181,7 +195,9 @@ export class ZardDropdownMenuComponent implements OnInit, OnDestroy {
               offsetY: -4,
             },
           ])
-          .withPush(false);
+          .withPush(false)
+          .withFlexibleDimensions(true)
+          .withGrowAfterOpen(true);
 
         this.overlayRef = this.overlay.create({
           positionStrategy,

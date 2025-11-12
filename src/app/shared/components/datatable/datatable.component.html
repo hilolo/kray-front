@@ -1,0 +1,168 @@
+<div class="flex flex-col h-full min-h-0">
+  <!-- Scrollable Content Area -->
+  <div class="flex-1 overflow-y-auto min-h-0">
+    <div class="space-y-4 pb-4">
+      @if (!hasData() && zShowEmpty()) {
+        <!-- Empty State -->
+        <div class="flex items-center justify-center min-h-[400px]">
+          @if (emptyTemplate()) {
+            <ng-container *ngTemplateOutlet="emptyTemplate()!" />
+          } @else {
+            <z-empty [zDescription]="zEmptyMessage()" class="w-full" />
+          }
+        </div>
+      } @else {
+        @if (zViewMode() === 'list') {
+          <!-- Table View -->
+          <div class="rounded-md border">
+            <table z-table [zType]="zType()" [zSize]="zSize()">
+              <thead z-table-header>
+                <tr z-table-row>
+                  @if (zSelectable()) {
+                    <th z-table-head class="w-12">
+                      <z-checkbox
+                        [ngModel]="allSelected()"
+                        (checkChange)="toggleSelectAll()"
+                      />
+                    </th>
+                  }
+                  @for (column of zColumns(); track trackByColumn($index, column)) {
+                    <th z-table-head [style.width]="column.width || 'auto'">
+                      @if (column.headerTemplate) {
+                        <ng-container
+                          *ngTemplateOutlet="column.headerTemplate; context: { $implicit: column }"
+                        />
+                      } @else {
+                        <div class="flex items-center gap-2">
+                          {{ column.label }}
+                          @if (column.sortable) {
+                            <z-icon
+                              zType="chevrons-up-down"
+                              zSize="sm"
+                              class="text-muted-foreground cursor-pointer"
+                            />
+                          }
+                        </div>
+                      }
+                    </th>
+                  }
+                </tr>
+              </thead>
+              <tbody z-table-body>
+                @for (row of paginatedData(); track trackByIndex($index)) {
+                  <tr z-table-row (click)="onRowClick(row)">
+                    @if (zSelectable()) {
+                      <td z-table-cell>
+                        <z-checkbox
+                          [ngModel]="isSelected(row)"
+                          (checkChange)="toggleSelect(row)"
+                        />
+                      </td>
+                    }
+                    @for (column of zColumns(); track trackByColumn($index, column)) {
+                      <td z-table-cell>
+                        @if (column.cellTemplate) {
+                          <ng-container
+                            *ngTemplateOutlet="
+                              column.cellTemplate;
+                              context: { $implicit: getCellValue(row, column), row: row, column: column }
+                            "
+                          />
+                        } @else {
+                          {{ getCellValue(row, column) }}
+                        }
+                      </td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <!-- Card View -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            @for (row of paginatedData(); track trackByIndex($index)) {
+              <z-card class="relative" (click)="onRowClick(row)">
+                @if (cardTemplate()) {
+                  <ng-container
+                    *ngTemplateOutlet="cardTemplate()!; context: { $implicit: row, row: row }"
+                  />
+                } @else {
+                  <!-- Default card layout -->
+                  <div class="flex flex-col gap-3">
+                    @if (zSelectable()) {
+                      <div class="absolute top-4 right-4">
+                        <z-checkbox
+                          [ngModel]="isSelected(row)"
+                          (checkChange)="toggleSelect(row)"
+                        />
+                      </div>
+                    }
+                    @for (column of zColumns(); track trackByColumn($index, column)) {
+                      @if (column.key !== 'actions') {
+                        <div>
+                          @if (column.cellTemplate) {
+                            <ng-container
+                              *ngTemplateOutlet="
+                                column.cellTemplate;
+                                context: { $implicit: getCellValue(row, column), row: row, column: column }
+                              "
+                            />
+                          } @else {
+                            <div class="text-sm">
+                              <span class="font-medium">{{ column.label }}: </span>
+                              <span>{{ getCellValue(row, column) }}</span>
+                            </div>
+                          }
+                        </div>
+                      }
+                    }
+                  </div>
+                }
+              </z-card>
+            }
+          </div>
+        }
+      }
+    </div>
+  </div>
+
+  <!-- Pagination Footer -->
+  @if (zShowPagination() && hasData()) {
+    <div class="sticky bottom-0 left-0 right-0 border-t bg-background z-10 shadow-sm">
+      <div class="px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="text-sm text-muted-foreground">
+          @if (zSelectable()) {
+            {{ selectedCount() }} of {{ zData().length }} row(s) selected.
+          } @else {
+            {{ zData().length }} total row(s).
+          }
+        </div>
+        <div class="flex items-center gap-4">
+          <div class="flex items-center gap-2">
+            <span class="text-sm text-muted-foreground">Rows per page</span>
+            <select
+              z-input
+              class="h-8 w-[70px]"
+              [value]="pageSize()"
+              (change)="onPageSizeChange(+$any($event.target).value)"
+            >
+              @for (option of zPageSizeOptions(); track option) {
+                <option [value]="option">{{ option }}</option>
+              }
+            </select>
+          </div>
+          <div class="text-sm text-muted-foreground">
+            Page {{ currentPage() }} of {{ totalPages() }}
+          </div>
+          <z-pagination
+            [zPageIndex]="currentPage()"
+            [zTotal]="totalPages()"
+            (zPageIndexChange)="onPageChange($event)"
+          />
+        </div>
+      </div>
+    </div>
+  }
+</div>
+

@@ -1,243 +1,206 @@
 <z-page zTitle="Contacts">
-  <div class="flex flex-col h-full min-h-0" #contentContainer>
-    <!-- Scrollable Content Area -->
-    <div class="flex-1 overflow-y-auto min-h-0">
-      <div class="space-y-6 pb-6">
-        <!-- Header Section -->
-        <div>
-          <h2 class="text-3xl font-bold mb-2">Welcome back!</h2>
-          <p class="text-muted-foreground">
-            Here's a list of your contacts for this month.
-          </p>
-        </div>
-
-        <!-- Filter and Action Bar -->
-        <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-          <div class="flex flex-1 gap-2 items-center w-full sm:w-auto">
-            <div class="relative flex-1 sm:flex-initial">
-              <z-icon zType="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" zSize="sm" />
-              <input
-                z-input
-                type="text"
-                placeholder="Filter contacts..."
-                class="pl-9 w-full sm:w-[300px]"
-                [value]="searchQuery()"
-                (input)="onSearchChange($any($event.target).value)"
-              />
-            </div>
-          </div>
-          <div class="flex flex-col gap-2 items-end">
-            <div class="flex items-center gap-2">
-              <label class="text-sm text-muted-foreground cursor-pointer" (click)="toggleShowArchived(!showArchived())">
-                Show Archived
-              </label>
-              <z-switch [ngModel]="showArchived()" (checkChange)="toggleShowArchived($event)" />
-            </div>
-            <div class="flex gap-2">
-              @if (hasSelectedContacts()) {
-                <z-button zType="destructive" zSize="default" class="gap-2" (click)="showArchiveConfirmation()">
-                  <z-icon zType="folder" zSize="sm" />
-                  Archive
-                </z-button>
-              }
-              <z-button zType="outline" zSize="default" class="gap-2" (click)="toggleViewMode()">
-                @if (viewMode() === 'list') {
-                  <z-icon zType="layout-dashboard" zSize="sm" />
-                  <span>Card View</span>
-                } @else {
-                  <z-icon zType="layers" zSize="sm" />
-                  <span>List View</span>
-                }
-              </z-button>
-              <z-button zType="default" zSize="default" class="gap-2">
-                <z-icon zType="folder-plus" zSize="sm" />
-                Add Contact
-              </z-button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Contacts View -->
-        @if (hasNoData()) {
-          <!-- Empty State -->
-          <div class="flex items-center justify-center min-h-[400px]">
-            <z-empty 
-              [zDescription]="emptyMessage()"
-              class="w-full"
-            />
-          </div>
-        } @else {
-          @if (viewMode() === 'list') {
-            <!-- List View -->
-            <div class="rounded-md border">
-              <table z-table>
-                <thead z-table-header>
-                  <tr z-table-row>
-                    <th z-table-head class="w-12">
-                      <z-checkbox [ngModel]="allSelected()" (checkChange)="toggleSelectAll()" />
-                    </th>
-                    <th z-table-head>Contact</th>
-                    <th z-table-head class="cursor-pointer hover:bg-muted/50">
-                      <div class="flex items-center gap-2">
-                        Name
-                        <z-icon zType="chevrons-up-down" zSize="sm" class="text-muted-foreground" />
-                      </div>
-                    </th>
-                    <th z-table-head class="cursor-pointer hover:bg-muted/50">
-                      <div class="flex items-center gap-2">
-                        Status
-                        <z-icon zType="chevrons-up-down" zSize="sm" class="text-muted-foreground" />
-                      </div>
-                    </th>
-                    <th z-table-head class="cursor-pointer hover:bg-muted/50">
-                      <div class="flex items-center gap-2">
-                        Priority
-                        <z-icon zType="chevrons-up-down" zSize="sm" class="text-muted-foreground" />
-                      </div>
-                    </th>
-                    <th z-table-head class="w-12"></th>
-                  </tr>
-                </thead>
-                <tbody z-table-body>
-                  @for (contact of paginatedContacts(); track contact.id) {
-                    <tr z-table-row>
-                      <td z-table-cell>
-                        <z-checkbox [ngModel]="isSelected(contact.id)" (checkChange)="toggleSelect(contact.id)" />
-                      </td>
-                      <td z-table-cell>
-                        <div class="flex flex-col gap-1">
-                          <span class="font-medium">{{ contact.id }}</span>
-                          <z-badge zType="secondary" zShape="default" class="w-fit">
-                            {{ contact.category }}
-                          </z-badge>
-                        </div>
-                      </td>
-                      <td z-table-cell>
-                        <div class="flex flex-col gap-1">
-                          <span class="font-medium">{{ contact.name }}</span>
-                          <span class="text-sm text-muted-foreground">{{ contact.email }}</span>
-                          <span class="text-sm text-muted-foreground">{{ contact.phone }}</span>
-                          <span class="text-sm text-muted-foreground">{{ contact.company }}</span>
-                        </div>
-                      </td>
-                      <td z-table-cell>
-                        <div class="flex items-center gap-2">
-                          <z-icon [zType]="getStatusIcon(contact.status)" zSize="sm" />
-                          <z-badge [zType]="getStatusBadgeType(contact.status)" zShape="default" class="capitalize">
-                            {{ contact.status }}
-                          </z-badge>
-                        </div>
-                      </td>
-                      <td z-table-cell>
-                        <div class="flex items-center gap-2">
-                          <z-icon [zType]="getPriorityIcon(contact.priority)" zSize="sm" />
-                          <z-badge [zType]="getPriorityBadgeType(contact.priority)" zShape="default" class="capitalize">
-                            {{ contact.priority }}
-                          </z-badge>
-                        </div>
-                      </td>
-                      <td z-table-cell>
-                        <z-button zType="ghost" zSize="icon" class="h-8 w-8">
-                          <z-icon zType="ellipsis" zSize="sm" />
-                        </z-button>
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
-          } @else {
-            <!-- Card View -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              @for (contact of paginatedContacts(); track contact.id) {
-                <z-card class="relative">
-                  <div class="absolute top-4 right-4">
-                    <z-checkbox [ngModel]="isSelected(contact.id)" (checkChange)="toggleSelect(contact.id)" />
-                  </div>
-                  <div class="flex flex-col gap-3">
-                    <div class="flex items-start justify-between gap-2">
-                      <div class="flex-1 min-w-0">
-                        <h3 class="font-semibold text-lg truncate">{{ contact.name }}</h3>
-                        <p class="text-sm text-muted-foreground">{{ contact.id }}</p>
-                      </div>
-                      <z-button zType="ghost" zSize="icon" class="h-8 w-8 flex-shrink-0">
-                        <z-icon zType="ellipsis" zSize="sm" />
-                      </z-button>
-                    </div>
-                    
-                    <div class="space-y-2">
-                      <div class="flex items-center gap-2 text-sm">
-                        <z-icon zType="mail" zSize="sm" class="text-muted-foreground" />
-                        <span class="text-muted-foreground truncate">{{ contact.email }}</span>
-                      </div>
-                      <div class="flex items-center gap-2 text-sm">
-                        <z-icon zType="smartphone" zSize="sm" class="text-muted-foreground" />
-                        <span class="text-muted-foreground">{{ contact.phone }}</span>
-                      </div>
-                      <div class="flex items-center gap-2 text-sm">
-                        <z-icon zType="building" zSize="sm" class="text-muted-foreground" />
-                        <span class="text-muted-foreground truncate">{{ contact.company }}</span>
-                      </div>
-                    </div>
-
-                    <div class="flex flex-wrap items-center gap-2 pt-2 border-t">
-                      <z-badge zType="secondary" zShape="default" class="w-fit">
-                        {{ contact.category }}
-                      </z-badge>
-                      <div class="flex items-center gap-1">
-                        <z-icon [zType]="getStatusIcon(contact.status)" zSize="sm" />
-                        <z-badge [zType]="getStatusBadgeType(contact.status)" zShape="default" class="capitalize text-xs">
-                          {{ contact.status }}
-                        </z-badge>
-                      </div>
-                      <div class="flex items-center gap-1">
-                        <z-icon [zType]="getPriorityIcon(contact.priority)" zSize="sm" />
-                        <z-badge [zType]="getPriorityBadgeType(contact.priority)" zShape="default" class="capitalize text-xs">
-                          {{ contact.priority }}
-                        </z-badge>
-                      </div>
-                    </div>
-                  </div>
-                </z-card>
-              }
-            </div>
-          }
-        }
+  <div class="flex flex-col h-full min-h-0">
+    <!-- Header Section -->
+    <div class="space-y-6 pb-6">
+      <div>
+        <h2 class="text-3xl font-bold mb-2">Welcome back!</h2>
+        <p class="text-muted-foreground">
+          Here's a list of your contacts for this month.
+        </p>
       </div>
 
-      <!-- Pagination Footer - Fixed at Bottom (inside scrollable area) -->
-      <div #paginationContainer class="sticky bottom-0 left-0 right-0 border-t bg-background z-10 shadow-sm">
-        <div class="px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div class="text-sm text-muted-foreground">
-            {{ selectedCount() }} of {{ filteredContacts().length }} row(s) selected.
-          </div>
-          <div class="flex items-center gap-4">
-            <div class="flex items-center gap-2">
-              <span class="text-sm text-muted-foreground">Rows per page</span>
-              <select
-                z-input
-                class="h-8 w-[70px]"
-                [value]="pageSize()"
-                (change)="pageSize.set(+$any($event.target).value); currentPage.set(1)"
-              >
-                <option value="10">10</option>
-                <option value="20">20</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-              </select>
-            </div>
-            <div class="text-sm text-muted-foreground">
-              Page {{ currentPage() }} of {{ totalPages() }}
-            </div>
-            <z-pagination
-              [zPageIndex]="currentPage()"
-              [zTotal]="totalPages()"
-              (zPageIndexChange)="onPageChange($event)"
+      <!-- Filter and Action Bar -->
+      <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <div class="flex flex-1 gap-2 items-center w-full sm:w-auto">
+          <div class="relative flex-1 sm:flex-initial">
+            <z-icon zType="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" zSize="sm" />
+            <input
+              z-input
+              type="text"
+              placeholder="Filter contacts..."
+              class="pl-9 w-full sm:w-[300px]"
+              [value]="searchQuery()"
+              (input)="onSearchChange($any($event.target).value)"
             />
+          </div>
+        </div>
+        <div class="flex flex-col gap-2 items-end">
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-muted-foreground cursor-pointer" (click)="toggleShowArchived(!showArchived())">
+              Show Archived
+            </label>
+            <z-switch [ngModel]="showArchived()" (checkChange)="toggleShowArchived($event)" />
+          </div>
+          <div class="flex gap-2">
+            @if (hasSelectedContacts()) {
+              <z-button zType="destructive" zSize="default" class="gap-2" (click)="showArchiveConfirmation()">
+                <z-icon zType="folder" zSize="sm" />
+                Archive
+              </z-button>
+            }
+            <z-button zType="outline" zSize="default" class="gap-2" (click)="toggleViewMode()">
+              @if (viewMode() === 'list') {
+                <z-icon zType="layout-dashboard" zSize="sm" />
+                <span>Card View</span>
+              } @else {
+                <z-icon zType="layers" zSize="sm" />
+                <span>List View</span>
+              }
+            </z-button>
+            <z-button zType="default" zSize="default" class="gap-2">
+              <z-icon zType="folder-plus" zSize="sm" />
+              Add Contact
+            </z-button>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Datatable -->
+    <div class="flex-1 min-h-0 mb-0 pb-0">
+      <z-datatable
+        [zData]="filteredContacts()"
+        [zColumns]="columns()"
+        [zViewMode]="viewMode()"
+        [zSelectable]="true"
+        [zSelectedRows]="selectedRows()"
+        [zCurrentPage]="currentPage()"
+        [zPageSize]="pageSize()"
+        [zEmptyMessage]="emptyMessage()"
+        (zPageChange)="onPageChange($event)"
+        (zPageSizeChange)="onPageSizeChange($event)"
+        (zSelectionChange)="onSelectionChange($event)"
+      >
+        <!-- Contact ID Column Template -->
+        <ng-template #contactIdCell let-value let-row="row">
+          <div class="flex flex-col gap-1">
+            <span class="font-medium">{{ row.id }}</span>
+            <z-badge zType="secondary" zShape="default" class="w-fit">
+              {{ row.category }}
+            </z-badge>
+          </div>
+        </ng-template>
+
+        <!-- Name Column Template -->
+        <ng-template #nameCell let-value let-row="row">
+          <div class="flex flex-col gap-1">
+            <span class="font-medium">{{ row.name }}</span>
+            <span class="text-sm text-muted-foreground">{{ row.email }}</span>
+            <span class="text-sm text-muted-foreground">{{ row.phone }}</span>
+            <span class="text-sm text-muted-foreground">{{ row.company }}</span>
+          </div>
+        </ng-template>
+
+        <!-- Status Column Template -->
+        <ng-template #statusCell let-value let-row="row">
+          <div class="flex items-center gap-2">
+            <z-icon [zType]="getStatusIcon(row.status)" zSize="sm" />
+            <z-badge [zType]="getStatusBadgeType(row.status)" zShape="default" class="capitalize">
+              {{ row.status }}
+            </z-badge>
+          </div>
+        </ng-template>
+
+        <!-- Priority Column Template -->
+        <ng-template #priorityCell let-value let-row="row">
+          <div class="flex items-center gap-2">
+            <z-icon [zType]="getPriorityIcon(row.priority)" zSize="sm" />
+            <z-badge [zType]="getPriorityBadgeType(row.priority)" zShape="default" class="capitalize">
+              {{ row.priority }}
+            </z-badge>
+          </div>
+        </ng-template>
+
+        <!-- Actions Column Template -->
+        <ng-template #actionsCell let-value let-row="row">
+          <z-dropdown-menu>
+            <z-button zType="ghost" zSize="icon" class="h-8 w-8" dropdown-trigger>
+              <z-icon zType="ellipsis" zSize="sm" />
+            </z-button>
+            <z-dropdown-menu-item (click)="onViewContact(row)">
+              <z-icon zType="eye" zSize="sm" class="mr-2" />
+              <span>View</span>
+            </z-dropdown-menu-item>
+            <z-dropdown-menu-item (click)="onEditContact(row)">
+              <z-icon zType="pencil" zSize="sm" class="mr-2" />
+              <span>Edit</span>
+            </z-dropdown-menu-item>
+            <z-divider class="my-1" />
+            <z-dropdown-menu-item (click)="onDeleteContact(row)" class="text-destructive focus:text-destructive">
+              <z-icon zType="x" zSize="sm" class="mr-2" />
+              <span>Delete</span>
+            </z-dropdown-menu-item>
+          </z-dropdown-menu>
+        </ng-template>
+
+        <!-- Card Template -->
+        <ng-template #cardTemplate let-row="row">
+          <div class="flex flex-col gap-3">
+            <div class="absolute top-4 left-4 flex items-center gap-2">
+              <z-checkbox [ngModel]="isSelected(row.id)" (checkChange)="toggleSelect(row.id)" />
+              <z-dropdown-menu>
+                <z-button zType="ghost" zSize="icon" class="h-8 w-8 flex-shrink-0" dropdown-trigger>
+                  <z-icon zType="ellipsis" zSize="sm" />
+                </z-button>
+                <z-dropdown-menu-item (click)="onViewContact(row)">
+                  <z-icon zType="eye" zSize="sm" class="mr-2" />
+                  <span>View</span>
+                </z-dropdown-menu-item>
+                <z-dropdown-menu-item (click)="onEditContact(row)">
+                  <z-icon zType="pencil" zSize="sm" class="mr-2" />
+                  <span>Edit</span>
+                </z-dropdown-menu-item>
+                <z-divider class="my-1" />
+                <z-dropdown-menu-item (click)="onDeleteContact(row)" class="text-destructive focus:text-destructive">
+                  <z-icon zType="x" zSize="sm" class="mr-2" />
+                  <span>Delete</span>
+                </z-dropdown-menu-item>
+              </z-dropdown-menu>
+            </div>
+            <div class="flex flex-col gap-3 pt-12">
+              <div class="flex items-start justify-between gap-2">
+                <div class="flex-1 min-w-0">
+                  <h3 class="font-semibold text-lg truncate">{{ row.name }}</h3>
+                  <p class="text-sm text-muted-foreground">{{ row.id }}</p>
+                </div>
+              </div>
+              
+              <div class="space-y-2">
+                <div class="flex items-center gap-2 text-sm">
+                  <z-icon zType="mail" zSize="sm" class="text-muted-foreground" />
+                  <span class="text-muted-foreground truncate">{{ row.email }}</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm">
+                  <z-icon zType="smartphone" zSize="sm" class="text-muted-foreground" />
+                  <span class="text-muted-foreground">{{ row.phone }}</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm">
+                  <z-icon zType="building" zSize="sm" class="text-muted-foreground" />
+                  <span class="text-muted-foreground truncate">{{ row.company }}</span>
+                </div>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-2 pt-2 border-t">
+                <z-badge zType="secondary" zShape="default" class="w-fit">
+                  {{ row.category }}
+                </z-badge>
+                <div class="flex items-center gap-1">
+                  <z-icon [zType]="getStatusIcon(row.status)" zSize="sm" />
+                  <z-badge [zType]="getStatusBadgeType(row.status)" zShape="default" class="capitalize text-xs">
+                    {{ row.status }}
+                  </z-badge>
+                </div>
+                <div class="flex items-center gap-1">
+                  <z-icon [zType]="getPriorityIcon(row.priority)" zSize="sm" />
+                  <z-badge [zType]="getPriorityBadgeType(row.priority)" zShape="default" class="capitalize text-xs">
+                    {{ row.priority }}
+                  </z-badge>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ng-template>
+      </z-datatable>
+    </div>
   </div>
 </z-page>
-

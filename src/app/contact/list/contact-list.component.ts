@@ -1,20 +1,21 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, computed, ElementRef, inject, OnDestroy, signal, ViewChild, ViewContainerRef } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, computed, ElementRef, inject, OnDestroy, signal, ViewChild, ViewContainerRef, TemplateRef, viewChild } from '@angular/core';
 import { ZardPageComponent } from '../../page/page.component';
-import { ZardTableModule } from '@shared/components/table/table.module';
 import { ZardButtonComponent } from '@shared/components/button/button.component';
 import { ZardInputDirective } from '@shared/components/input/input.directive';
 import { ZardBadgeComponent } from '@shared/components/badge/badge.component';
 import { ZardCheckboxComponent } from '@shared/components/checkbox/checkbox.component';
-import { ZardPaginationComponent } from '@shared/components/pagination/pagination.component';
 import { ZardIconComponent } from '@shared/components/icon/icon.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
 import type { ZardIcon } from '@shared/components/icon/icons';
-import { ZardCardComponent } from '@shared/components/card/card.component';
 import { ZardAlertDialogService } from '@shared/components/alert-dialog/alert-dialog.service';
 import { ZardSwitchComponent } from '@shared/components/switch/switch.component';
-import { ZardEmptyComponent } from '@shared/components/empty/empty.component';
+import { ZardDatatableComponent, DatatableColumn } from '@shared/components/datatable/datatable.component';
+import { ZardDropdownMenuComponent } from '@shared/components/dropdown/dropdown.component';
+import { ZardDropdownMenuItemComponent } from '@shared/components/dropdown/dropdown-item.component';
+import { ZardDividerComponent } from '@shared/components/divider/divider.component';
 import { Subject, takeUntil } from 'rxjs';
+import { CommonModule } from '@angular/common';
 
 interface Contact {
   id: string;
@@ -31,31 +32,28 @@ interface Contact {
   selector: 'app-contact-list',
   standalone: true,
   imports: [
+    CommonModule,
     ZardPageComponent,
-    ZardTableModule,
     ZardButtonComponent,
     ZardInputDirective,
     ZardBadgeComponent,
     ZardCheckboxComponent,
-    ZardPaginationComponent,
     ZardIconComponent,
-    ZardCardComponent,
     ZardSwitchComponent,
-    ZardEmptyComponent,
+    ZardDatatableComponent,
+    ZardDropdownMenuComponent,
+    ZardDropdownMenuItemComponent,
+    ZardDividerComponent,
     TranslateModule,
     FormsModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './contact-list.component.html',
 })
-export class ContactListComponent implements OnDestroy, AfterViewInit {
+export class ContactListComponent implements OnDestroy {
   private readonly alertDialogService = inject(ZardAlertDialogService);
   private readonly viewContainerRef = inject(ViewContainerRef);
   private readonly destroy$ = new Subject<void>();
-  private readonly elementRef = inject(ElementRef);
-
-  @ViewChild('paginationContainer', { static: false }) paginationContainer?: ElementRef<HTMLElement>;
-  @ViewChild('contentContainer', { static: false }) contentContainer?: ElementRef<HTMLElement>;
 
   readonly searchQuery = signal('');
   readonly selectedRows = signal<Set<string>>(new Set());
@@ -190,33 +188,12 @@ export class ContactListComponent implements OnDestroy, AfterViewInit {
     );
   });
 
-  readonly paginatedContacts = computed(() => {
-    const start = (this.currentPage() - 1) * this.pageSize();
-    const end = start + this.pageSize();
-    return this.filteredContacts().slice(start, end);
-  });
-
-  readonly totalPages = computed(() => {
-    return Math.ceil(this.filteredContacts().length / this.pageSize());
-  });
-
   readonly selectedCount = computed(() => {
     return this.selectedRows().size;
   });
 
   readonly hasSelectedContacts = computed(() => {
     return this.selectedCount() > 0;
-  });
-
-  readonly allSelected = computed(() => {
-    return (
-      this.paginatedContacts().length > 0 &&
-      this.paginatedContacts().every((contact) => this.selectedRows().has(contact.id))
-    );
-  });
-
-  readonly hasNoData = computed(() => {
-    return this.filteredContacts().length === 0;
   });
 
   readonly emptyMessage = computed(() => {
@@ -229,42 +206,49 @@ export class ContactListComponent implements OnDestroy, AfterViewInit {
     return 'No contacts available';
   });
 
+  // Template references for custom cells
+  readonly contactIdCell = viewChild<TemplateRef<any>>('contactIdCell');
+  readonly nameCell = viewChild<TemplateRef<any>>('nameCell');
+  readonly statusCell = viewChild<TemplateRef<any>>('statusCell');
+  readonly priorityCell = viewChild<TemplateRef<any>>('priorityCell');
+  readonly actionsCell = viewChild<TemplateRef<any>>('actionsCell');
+
+  // Define columns for datatable
+  readonly columns = computed<DatatableColumn<Contact>[]>(() => [
+    {
+      key: 'id',
+      label: 'Contact',
+      cellTemplate: this.contactIdCell(),
+    },
+    {
+      key: 'name',
+      label: 'Name',
+      sortable: true,
+      cellTemplate: this.nameCell(),
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      sortable: true,
+      cellTemplate: this.statusCell(),
+    },
+    {
+      key: 'priority',
+      label: 'Priority',
+      sortable: true,
+      cellTemplate: this.priorityCell(),
+    },
+    {
+      key: 'actions',
+      label: '',
+      width: '50px',
+      cellTemplate: this.actionsCell(),
+    },
+  ]);
+
   onSearchChange(value: string): void {
     this.searchQuery.set(value);
     this.currentPage.set(1);
-  }
-
-  toggleSelectAll(): void {
-    const newValue = !this.allSelected();
-    const newSet = new Set(this.selectedRows());
-    if (newValue) {
-      this.paginatedContacts().forEach((contact) => {
-        newSet.add(contact.id);
-      });
-    } else {
-      this.paginatedContacts().forEach((contact) => {
-        newSet.delete(contact.id);
-      });
-    }
-    this.selectedRows.set(newSet);
-  }
-
-  toggleSelect(contactId: string): void {
-    const newSet = new Set(this.selectedRows());
-    if (newSet.has(contactId)) {
-      newSet.delete(contactId);
-    } else {
-      newSet.add(contactId);
-    }
-    this.selectedRows.set(newSet);
-  }
-
-  isSelected(contactId: string): boolean {
-    return this.selectedRows().has(contactId);
-  }
-
-  onPageChange(page: number): void {
-    this.currentPage.set(page);
   }
 
   toggleViewMode(): void {
@@ -310,66 +294,6 @@ export class ContactListComponent implements OnDestroy, AfterViewInit {
     this.contacts.set(updatedContacts);
     this.archivedContacts.set(updatedArchived);
     this.selectedRows.set(new Set());
-    
-    // Reset to first page if current page is empty
-    if (this.paginatedContacts().length === 0 && this.currentPage() > 1) {
-      this.currentPage.set(1);
-    }
-  }
-
-  ngAfterViewInit(): void {
-    // Log layout dimensions for debugging
-    setTimeout(() => {
-      const hostElement = this.elementRef.nativeElement as HTMLElement;
-      const paginationEl = this.paginationContainer?.nativeElement;
-      const contentEl = this.contentContainer?.nativeElement;
-      
-      console.log('=== Contact List Layout Debug ===');
-      console.log('Host element:', {
-        height: hostElement.offsetHeight,
-        scrollHeight: hostElement.scrollHeight,
-        clientHeight: hostElement.clientHeight,
-        computedStyle: window.getComputedStyle(hostElement).height,
-      });
-      
-      if (contentEl) {
-        console.log('Content container:', {
-          height: contentEl.offsetHeight,
-          scrollHeight: contentEl.scrollHeight,
-          clientHeight: contentEl.clientHeight,
-          computedStyle: window.getComputedStyle(contentEl).height,
-          paddingBottom: window.getComputedStyle(contentEl).paddingBottom,
-        });
-      }
-      
-      if (paginationEl) {
-        console.log('Pagination container:', {
-          height: paginationEl.offsetHeight,
-          offsetTop: paginationEl.offsetTop,
-          offsetParent: paginationEl.offsetParent,
-          position: window.getComputedStyle(paginationEl).position,
-          bottom: window.getComputedStyle(paginationEl).bottom,
-          zIndex: window.getComputedStyle(paginationEl).zIndex,
-        });
-      }
-      
-      // Check parent chain
-      let current: HTMLElement | null = hostElement.parentElement;
-      let level = 0;
-      while (current && level < 5) {
-        console.log(`Parent level ${level}:`, {
-          tag: current.tagName,
-          class: current.className,
-          height: current.offsetHeight,
-          scrollHeight: current.scrollHeight,
-          overflow: window.getComputedStyle(current).overflow,
-          position: window.getComputedStyle(current).position,
-        });
-        current = current.parentElement;
-        level++;
-      }
-      console.log('=== End Debug ===');
-    }, 100);
   }
 
   ngOnDestroy(): void {
@@ -428,5 +352,64 @@ export class ContactListComponent implements OnDestroy, AfterViewInit {
         return 'default';
     }
   }
-}
 
+  onViewContact(contact: Contact): void {
+    console.log('View contact:', contact);
+    // TODO: Implement view functionality
+  }
+
+  onEditContact(contact: Contact): void {
+    console.log('Edit contact:', contact);
+    // TODO: Implement edit functionality
+  }
+
+  onDeleteContact(contact: Contact): void {
+    const dialogRef = this.alertDialogService.confirm({
+      zTitle: 'Delete Contact',
+      zDescription: `Are you sure you want to delete ${contact.name}? This action cannot be undone.`,
+      zOkText: 'Delete',
+      zCancelText: 'Cancel',
+      zOkDestructive: true,
+      zViewContainerRef: this.viewContainerRef,
+    });
+
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result) => {
+      if (result) {
+        // Remove contact from the list
+        const updatedContacts = this.contacts().filter((c) => c.id !== contact.id);
+        this.contacts.set(updatedContacts);
+        
+        // Remove from selection if selected
+        const newSet = new Set(this.selectedRows());
+        newSet.delete(contact.id);
+        this.selectedRows.set(newSet);
+      }
+    });
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage.set(page);
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+  }
+
+  onSelectionChange(selection: Set<string>): void {
+    this.selectedRows.set(selection);
+  }
+
+  toggleSelect(contactId: string): void {
+    const newSet = new Set(this.selectedRows());
+    if (newSet.has(contactId)) {
+      newSet.delete(contactId);
+    } else {
+      newSet.add(contactId);
+    }
+    this.selectedRows.set(newSet);
+  }
+
+  isSelected(contactId: string): boolean {
+    return this.selectedRows().has(contactId);
+  }
+}
