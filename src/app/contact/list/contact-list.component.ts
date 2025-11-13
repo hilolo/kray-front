@@ -1,5 +1,5 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, computed, ElementRef, inject, OnDestroy, signal, ViewChild, ViewContainerRef, TemplateRef, viewChild } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { AfterViewInit, ChangeDetectionStrategy, Component, computed, ElementRef, inject, OnDestroy, OnInit, signal, ViewChild, ViewContainerRef, TemplateRef, viewChild } from '@angular/core';
+import { RouterLink, ActivatedRoute } from '@angular/router';
 import { ZardPageComponent } from '../../page/page.component';
 import { ZardButtonComponent } from '@shared/components/button/button.component';
 import { ZardInputDirective } from '@shared/components/input/input.directive';
@@ -16,8 +16,13 @@ import { ZardDatatableComponent, DatatableColumn } from '@shared/components/data
 import { ZardDropdownMenuComponent } from '@shared/components/dropdown/dropdown.component';
 import { ZardDropdownMenuItemComponent } from '@shared/components/dropdown/dropdown-item.component';
 import { ZardDividerComponent } from '@shared/components/divider/divider.component';
+import { ZardPaginationComponent } from '@shared/components/pagination/pagination.component';
+import { ZardSelectComponent } from '@shared/components/select/select.component';
+import { ZardSelectItemComponent } from '@shared/components/select/select-item.component';
 import { Subject, takeUntil } from 'rxjs';
 import { CommonModule } from '@angular/common';
+
+export type ContactType = 'tenants' | 'owners' | 'services';
 
 interface Contact {
   id: string;
@@ -28,6 +33,7 @@ interface Contact {
   status: 'active' | 'inactive' | 'pending';
   priority: 'high' | 'medium' | 'low';
   category: string;
+  type: ContactType;
 }
 
 @Component({
@@ -48,21 +54,27 @@ interface Contact {
     ZardDropdownMenuComponent,
     ZardDropdownMenuItemComponent,
     ZardDividerComponent,
+    ZardPaginationComponent,
+    ZardSelectComponent,
+    ZardSelectItemComponent,
     TranslateModule,
     FormsModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './contact-list.component.html',
 })
-export class ContactListComponent implements OnDestroy {
+export class ContactListComponent implements OnInit, OnDestroy {
   private readonly alertDialogService = inject(ZardAlertDialogService);
   private readonly viewContainerRef = inject(ViewContainerRef);
+  private readonly route = inject(ActivatedRoute);
   private readonly destroy$ = new Subject<void>();
 
+  readonly contactType = signal<ContactType>('tenants');
   readonly searchQuery = signal('');
   readonly selectedRows = signal<Set<string>>(new Set());
   readonly currentPage = signal(1);
   readonly pageSize = signal(10);
+  readonly pageSizeOptions = signal([10, 20, 50, 100]);
   readonly viewMode = signal<'list' | 'card'>('list');
   readonly showArchived = signal(false);
   readonly archivedContacts = signal<Contact[]>([]);
@@ -75,7 +87,7 @@ export class ContactListComponent implements OnDestroy {
   }
 
   // Sample contact data
-  readonly contacts = signal<Contact[]>([
+  readonly allContacts = signal<Contact[]>([
     {
       id: 'CONTACT-8782',
       name: 'John Doe',
@@ -85,6 +97,7 @@ export class ContactListComponent implements OnDestroy {
       status: 'active',
       priority: 'medium',
       category: 'Client',
+      type: 'tenants',
     },
     {
       id: 'CONTACT-7878',
@@ -95,6 +108,7 @@ export class ContactListComponent implements OnDestroy {
       status: 'pending',
       priority: 'medium',
       category: 'Lead',
+      type: 'owners',
     },
     {
       id: 'CONTACT-7839',
@@ -105,6 +119,7 @@ export class ContactListComponent implements OnDestroy {
       status: 'active',
       priority: 'high',
       category: 'Partner',
+      type: 'services',
     },
     {
       id: 'CONTACT-5562',
@@ -115,6 +130,7 @@ export class ContactListComponent implements OnDestroy {
       status: 'inactive',
       priority: 'medium',
       category: 'Vendor',
+      type: 'tenants',
     },
     {
       id: 'CONTACT-8686',
@@ -125,6 +141,7 @@ export class ContactListComponent implements OnDestroy {
       status: 'active',
       priority: 'low',
       category: 'Client',
+      type: 'owners',
     },
     {
       id: 'CONTACT-1280',
@@ -135,6 +152,7 @@ export class ContactListComponent implements OnDestroy {
       status: 'active',
       priority: 'high',
       category: 'Client',
+      type: 'tenants',
     },
     {
       id: 'CONTACT-7262',
@@ -145,6 +163,7 @@ export class ContactListComponent implements OnDestroy {
       status: 'pending',
       priority: 'medium',
       category: 'Lead',
+      type: 'services',
     },
     {
       id: 'CONTACT-1138',
@@ -155,6 +174,7 @@ export class ContactListComponent implements OnDestroy {
       status: 'active',
       priority: 'low',
       category: 'Partner',
+      type: 'owners',
     },
     {
       id: 'CONTACT-7184',
@@ -165,6 +185,7 @@ export class ContactListComponent implements OnDestroy {
       status: 'inactive',
       priority: 'medium',
       category: 'Vendor',
+      type: 'tenants',
     },
     {
       id: 'CONTACT-5160',
@@ -175,8 +196,14 @@ export class ContactListComponent implements OnDestroy {
       status: 'active',
       priority: 'high',
       category: 'Client',
+      type: 'services',
     },
   ]);
+
+  readonly contacts = computed(() => {
+    const type = this.contactType();
+    return this.allContacts().filter(contact => contact.type === type);
+  });
 
   readonly filteredContacts = computed(() => {
     const query = this.searchQuery().toLowerCase();
@@ -191,6 +218,18 @@ export class ContactListComponent implements OnDestroy {
         contact.id.toLowerCase().includes(query)
     );
   });
+
+  ngOnInit(): void {
+    // Get contact type from route params
+    this.route.params.pipe(takeUntil(this.destroy$)).subscribe(params => {
+      const type = params['type'] as ContactType;
+      if (type && ['tenants', 'owners', 'services'].includes(type)) {
+        this.contactType.set(type);
+      } else {
+        this.contactType.set('tenants');
+      }
+    });
+  }
 
   readonly selectedCount = computed(() => {
     return this.selectedRows().size;
@@ -210,9 +249,20 @@ export class ContactListComponent implements OnDestroy {
     return 'No contacts available';
   });
 
+  readonly totalPages = computed(() => {
+    const total = this.filteredContacts().length;
+    const size = this.pageSize();
+    return Math.ceil(total / size);
+  });
+
+  readonly hasData = computed(() => {
+    return this.filteredContacts().length > 0;
+  });
+
   // Template references for custom cells
   readonly contactIdCell = viewChild<TemplateRef<any>>('contactIdCell');
   readonly nameCell = viewChild<TemplateRef<any>>('nameCell');
+  readonly typeCell = viewChild<TemplateRef<any>>('typeCell');
   readonly statusCell = viewChild<TemplateRef<any>>('statusCell');
   readonly priorityCell = viewChild<TemplateRef<any>>('priorityCell');
   readonly actionsCell = viewChild<TemplateRef<any>>('actionsCell');
@@ -229,6 +279,12 @@ export class ContactListComponent implements OnDestroy {
       label: 'Name',
       sortable: true,
       cellTemplate: this.nameCell(),
+    },
+    {
+      key: 'type',
+      label: 'Type',
+      sortable: true,
+      cellTemplate: this.typeCell(),
     },
     {
       key: 'status',
@@ -287,7 +343,7 @@ export class ContactListComponent implements OnDestroy {
     );
     
     // Remove archived contacts from the active list
-    const updatedContacts = this.contacts().filter(
+    const updatedAllContacts = this.allContacts().filter(
       (contact) => !selectedIds.includes(contact.id)
     );
     
@@ -295,7 +351,7 @@ export class ContactListComponent implements OnDestroy {
     const updatedArchived = [...this.archivedContacts(), ...contactsToArchive];
     
     // Update contacts and archived lists, clear selection
-    this.contacts.set(updatedContacts);
+    this.allContacts.set(updatedAllContacts);
     this.archivedContacts.set(updatedArchived);
     this.selectedRows.set(new Set());
   }
@@ -380,8 +436,8 @@ export class ContactListComponent implements OnDestroy {
     dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result) => {
       if (result) {
         // Remove contact from the list
-        const updatedContacts = this.contacts().filter((c) => c.id !== contact.id);
-        this.contacts.set(updatedContacts);
+        const updatedContacts = this.allContacts().filter((c) => c.id !== contact.id);
+        this.allContacts.set(updatedContacts);
         
         // Remove from selection if selected
         const newSet = new Set(this.selectedRows());
@@ -397,6 +453,7 @@ export class ContactListComponent implements OnDestroy {
 
   onPageSizeChange(size: number): void {
     this.pageSize.set(size);
+    this.currentPage.set(1); // Reset to first page when page size changes
   }
 
   onSelectionChange(selection: Set<string>): void {
@@ -422,5 +479,15 @@ export class ContactListComponent implements OnDestroy {
     if (parts.length === 0) return '?';
     if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
     return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+  }
+
+  getAddContactRoute(): string {
+    const type = this.contactType();
+    return `/contact/${type}/add`;
+  }
+
+  getContactTypeLabel(): string {
+    const type = this.contactType();
+    return type.charAt(0).toUpperCase() + type.slice(1);
   }
 }

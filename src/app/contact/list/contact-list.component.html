@@ -1,14 +1,7 @@
 <z-page zTitle="Contacts">
-  <div class="flex flex-col h-full min-h-0">
+  <div class="flex flex-col" style="height: calc(100vh - 180px);">
     <!-- Header Section -->
-    <div class="space-y-6 pb-6">
-      <div>
-        <h2 class="text-3xl font-bold mb-2">Welcome back!</h2>
-        <p class="text-muted-foreground">
-          Here's a list of your contacts for this month.
-        </p>
-      </div>
-
+    <div class="space-y-6 pb-6 flex-shrink-0">
       <!-- Filter and Action Bar -->
       <div class="flex flex-col gap-4">
         <!-- Show Archived switch -->
@@ -48,7 +41,7 @@
                 <span>List View</span>
               }
             </z-button>
-            <z-button zType="default" zSize="default" class="gap-2" routerLink="/contact/add">
+            <z-button zType="default" zSize="default" class="gap-2" [routerLink]="getAddContactRoute()">
               <z-icon zType="folder-plus" zSize="sm" />
               Add Contact
             </z-button>
@@ -58,7 +51,7 @@
     </div>
 
     <!-- Datatable -->
-    <div class="flex-1 min-h-0 mb-0 pb-0">
+    <div class="flex-1 min-h-0 overflow-y-auto pb-4">
       <z-datatable
         [zData]="filteredContacts()"
         [zColumns]="columns()"
@@ -67,6 +60,7 @@
         [zSelectedRows]="selectedRows()"
         [zCurrentPage]="currentPage()"
         [zPageSize]="pageSize()"
+        [zShowPagination]="false"
         [zEmptyMessage]="emptyMessage()"
         (zPageChange)="onPageChange($event)"
         (zPageSizeChange)="onPageSizeChange($event)"
@@ -92,6 +86,13 @@
             <span class="text-sm text-muted-foreground">{{ row.phone }}</span>
             <span class="text-sm text-muted-foreground">{{ row.company }}</span>
           </div>
+        </ng-template>
+
+        <!-- Type Column Template -->
+        <ng-template #typeCell let-value let-row="row">
+          <z-badge zType="secondary" zShape="default" class="capitalize">
+            {{ row.type }}
+          </z-badge>
         </ng-template>
 
         <!-- Status Column Template -->
@@ -214,5 +215,41 @@
         </ng-template>
       </z-datatable>
     </div>
+
+    <!-- Pagination Footer -->
+    @if (hasData()) {
+      <div class="border-t bg-background pt-4 pb-4 flex-shrink-0 -mx-6 px-6">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <!-- Left side: Rows per page selector -->
+          <div class="flex items-center gap-2 flex-shrink-0 whitespace-nowrap">
+            <z-select
+              [zValue]="pageSize().toString()"
+              [zLabel]="pageSize().toString()"
+              class="h-8 w-[70px]"
+              (zSelectionChange)="onPageSizeChange(+$event)"
+            >
+              @for (option of pageSizeOptions(); track option) {
+                <z-select-item [zValue]="option.toString()">
+                  {{ option }}
+                </z-select-item>
+              }
+            </z-select>
+            <span class="text-sm text-muted-foreground">Rows per page</span>
+          </div>
+
+          <!-- Right side: Page info and pagination -->
+          <div class="flex items-center gap-4 flex-shrink-0 whitespace-nowrap">
+            <div class="text-sm text-muted-foreground">
+              Page {{ currentPage() }} of {{ totalPages() }}
+            </div>
+            <z-pagination
+              [zPageIndex]="currentPage()"
+              [zTotal]="totalPages()"
+              (zPageIndexChange)="onPageChange($event)"
+            />
+          </div>
+        </div>
+      </div>
+    }
   </div>
 </z-page>

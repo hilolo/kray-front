@@ -1,7 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, ElementRef, signal, TemplateRef, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, ElementRef, inject, OnDestroy, OnInit, signal, TemplateRef, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
+import { Subject, takeUntil } from 'rxjs';
+import type { ContactType } from '../list/contact-list.component';
 import { ZardPageComponent } from '../../page/page.component';
 import { ZardButtonComponent } from '@shared/components/button/button.component';
 import { ZardInputDirective } from '@shared/components/input/input.directive';
@@ -59,7 +61,12 @@ interface UploadedFile {
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './edit-contact.component.html',
 })
-export class EditContactComponent {
+export class EditContactComponent implements OnInit, OnDestroy {
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly destroy$ = new Subject<void>();
+
+  readonly contactType = signal<ContactType>('tenants');
   // Form data
   readonly formData = signal<ContactFormData>({
     firstName: '',
@@ -96,7 +103,22 @@ export class EditContactComponent {
     return this.uploadedFiles().reduce((total, file) => total + file.size, 0);
   });
 
-  constructor(private router: Router) {}
+  ngOnInit(): void {
+    // Get contact type from route params
+    this.route.params.pipe(takeUntil(this.destroy$)).subscribe(params => {
+      const type = params['type'] as ContactType;
+      if (type && ['tenants', 'owners', 'services'].includes(type)) {
+        this.contactType.set(type);
+      } else {
+        this.contactType.set('tenants');
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
   // Company toggle handler
   onCompanyToggle(value: boolean): void {
@@ -255,12 +277,14 @@ export class EditContactComponent {
     console.log('Uploaded files:', this.uploadedFiles());
     
     // Navigate back to list
-    this.router.navigate(['/contact/list']);
+    const type = this.contactType();
+    this.router.navigate(['/contact', type]);
   }
 
   onCancel(): void {
     // Navigate back to list
-    this.router.navigate(['/contact/list']);
+    const type = this.contactType();
+    this.router.navigate(['/contact', type]);
   }
 
   // Phone number handlers
