@@ -71,6 +71,11 @@
           <z-icon zType="settings" zSize="sm" class="mr-2" />
           <span>Settings</span>
         </z-dropdown-menu-item>
+        <z-divider class="my-1" />
+        <z-dropdown-menu-item (click)="onLogoutClick()" class="text-destructive focus:text-destructive">
+          <z-icon zType="log-out" zSize="sm" class="mr-2" />
+          <span>Log out</span>
+        </z-dropdown-menu-item>
       </z-dropdown-menu>
     </div>
   </div>
@@ -134,6 +139,11 @@
         <z-dropdown-menu-item (click)="onSettingsClick()">
           <z-icon zType="settings" zSize="sm" class="mr-2" />
           <span>Settings</span>
+        </z-dropdown-menu-item>
+        <z-divider class="my-1" />
+        <z-dropdown-menu-item (click)="onLogoutClick()" class="text-destructive focus:text-destructive">
+          <z-icon zType="log-out" zSize="sm" class="mr-2" />
+          <span>Log out</span>
         </z-dropdown-menu-item>
       </z-dropdown-menu>
     </div>

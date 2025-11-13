@@ -8,6 +8,8 @@ import { TranslateModule } from '@ngx-translate/core';
 import { mergeClasses } from '@shared/utils/merge-classes';
 import { contentVariants } from './layout.variants';
 import { ZardBreadcrumbModule } from '../breadcrumb/breadcrumb.module';
+import { ZardIconComponent } from '../icon/icon.component';
+import type { ZardIcon } from '../icon/icons';
 
 interface BreadcrumbItem {
   label: string;
@@ -23,13 +25,28 @@ interface BreadcrumbItem {
   imports: [
     TranslateModule,
     ZardBreadcrumbModule,
+    ZardIconComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   template: `
     <main>
       @if (breadcrumbs().length > 0) {
-        <div class="mb-6">
+        <div class="mb-6 flex items-center gap-2">
+          @if (zSidebarToggle()) {
+            <div
+              [class]="triggerClasses()"
+              (click)="onToggleSidebar()"
+              (keydown.enter)="onToggleSidebar(); $event.preventDefault()"
+              (keydown.space)="onToggleSidebar(); $event.preventDefault()"
+              tabindex="0"
+              role="button"
+              [attr.aria-label]="zSidebarCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
+              [attr.aria-expanded]="!zSidebarCollapsed()"
+            >
+              <z-icon [zType]="menuIcon()" />
+            </div>
+          }
           <z-breadcrumb>
             <z-breadcrumb-list>
               @for (crumb of breadcrumbs(); track crumb.route; let i = $index) {
@@ -63,8 +80,20 @@ export class ContentComponent {
   private readonly router = inject(Router);
 
   readonly class = input<ClassValue>('');
+  readonly zSidebarToggle = input<(() => void) | null>(null);
+  readonly zSidebarCollapsed = input<boolean>(false);
 
   protected readonly classes = computed(() => mergeClasses(contentVariants(), this.class()));
+
+  protected readonly triggerClasses = computed(() => 
+    mergeClasses(
+      'flex items-center justify-center cursor-pointer rounded-sm border border-sidebar-border bg-sidebar hover:bg-sidebar-accent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 w-6 h-6 shrink-0'
+    )
+  );
+
+  protected readonly menuIcon = computed((): ZardIcon => {
+    return 'panel-left';
+  });
 
   readonly breadcrumbs = signal<BreadcrumbItem[]>([]);
 
@@ -130,5 +159,12 @@ export class ContentComponent {
       .split(/[-_]/)
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(' ');
+  }
+
+  protected onToggleSidebar(): void {
+    const toggleFn = this.zSidebarToggle();
+    if (toggleFn) {
+      toggleFn();
+    }
   }
 }

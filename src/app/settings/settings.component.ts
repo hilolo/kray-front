@@ -11,6 +11,11 @@ import { ZardSelectComponent } from '@shared/components/select/select.component'
 import { ZardSelectItemComponent } from '@shared/components/select/select-item.component';
 import { ZardAvatarComponent } from '@shared/components/avatar/avatar.component';
 import { ZardBadgeComponent } from '@shared/components/badge/badge.component';
+import { ZardDividerComponent } from '@shared/components/divider/divider.component';
+import { AuthService } from '@shared/services/auth.service';
+import { ZardAlertDialogService } from '@shared/components/alert-dialog/alert-dialog.service';
+import { inject, ViewContainerRef, OnDestroy } from '@angular/core';
+import { Subject, takeUntil } from 'rxjs';
 
 type SettingsSection = 'account' | 'security' | 'plan-billing' | 'team' | 'application';
 
@@ -40,10 +45,16 @@ interface TeamMember {
     ZardSelectItemComponent,
     ZardAvatarComponent,
     ZardBadgeComponent,
+    ZardDividerComponent,
   ],
   templateUrl: './settings.component.html',
 })
-export class SettingsComponent {
+export class SettingsComponent implements OnDestroy {
+  private readonly authService = inject(AuthService);
+  private readonly alertDialogService = inject(ZardAlertDialogService);
+  private readonly viewContainerRef = inject(ViewContainerRef);
+  private readonly destroy$ = new Subject<void>();
+
   activeSection = signal<SettingsSection>('account');
 
   // Icon templates for input groups
@@ -205,6 +216,28 @@ export class SettingsComponent {
   onSavePassword(): void {
     // Save password logic
     console.log('Saving password');
+  }
+
+  onLogout(): void {
+    const dialogRef = this.alertDialogService.confirm({
+      zTitle: 'Log out',
+      zDescription: 'Are you sure you want to log out?',
+      zOkText: 'Log out',
+      zCancelText: 'Cancel',
+      zOkDestructive: true,
+      zViewContainerRef: this.viewContainerRef,
+    });
+
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result) => {
+      if (result) {
+        this.authService.logout();
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }
 

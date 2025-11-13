@@ -2,16 +2,14 @@ import { ChangeDetectionStrategy, Component, computed, effect, input, output, si
 import type { ClassValue } from 'clsx';
 
 import { ZardStringTemplateOutletDirective } from '../core/directives/string-template-outlet/string-template-outlet.directive';
-import { sidebarGroupLabelVariants, sidebarGroupVariants, sidebarTriggerVariants, sidebarVariants } from './layout.variants';
+import { sidebarGroupLabelVariants, sidebarGroupVariants, sidebarVariants } from './layout.variants';
 import { mergeClasses, transform } from '@shared/utils/merge-classes';
-import { ZardIconComponent } from '../icon/icon.component';
-import { ZardIcon } from '@shared/components/icon/icons';
 
 @Component({
   selector: 'z-sidebar',
   exportAs: 'zSidebar',
   standalone: true,
-  imports: [ZardStringTemplateOutletDirective, ZardIconComponent],
+  imports: [ZardStringTemplateOutletDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   template: `
@@ -19,21 +17,6 @@ import { ZardIcon } from '@shared/components/icon/icons';
       <div class="flex-1 overflow-auto">
         <ng-content></ng-content>
       </div>
-
-      @if (zCollapsible() && !zTrigger()) {
-        <div
-          [class]="triggerClasses()"
-          (click)="toggleCollapsed()"
-          (keydown.enter)="toggleCollapsed(); $event.preventDefault()"
-          (keydown.space)="toggleCollapsed(); $event.preventDefault()"
-          tabindex="0"
-          role="button"
-          [attr.aria-label]="zCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
-          [attr.aria-expanded]="!zCollapsed()"
-        >
-          <z-icon [zType]="chevronIcon()" />
-        </div>
-      }
 
       @if (zCollapsible() && zTrigger()) {
         <ng-container *zStringTemplateOutlet="zTrigger()"></ng-container>
@@ -70,19 +53,7 @@ export class SidebarComponent {
     return typeof width === 'number' ? width : parseInt(width, 10);
   });
 
-  protected readonly chevronIcon = computed((): ZardIcon => {
-    const collapsed = this.zCollapsed();
-    const reverse = this.zReverseArrow();
-
-    if (reverse) {
-      return collapsed ? 'chevron-left' : 'chevron-right';
-    }
-    return collapsed ? 'chevron-right' : 'chevron-left';
-  });
-
   protected readonly classes = computed(() => mergeClasses(sidebarVariants(), this.class()));
-
-  protected readonly triggerClasses = computed(() => mergeClasses(sidebarTriggerVariants()));
 
   toggleCollapsed(): void {
     const newState = !this.zCollapsed();

@@ -10,13 +10,16 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ZardSheetService } from '@shared/components/sheet/sheet.service';
 import { ZardSheetRef } from '@shared/components/sheet/sheet-ref';
 import { ZardAvatarComponent } from '@shared/components/avatar/avatar.component';
+import { ZardDividerComponent } from '@shared/components/divider/divider.component';
 import { UserService } from '@shared/services/user.service';
+import { AuthService } from '@shared/services/auth.service';
+import { ZardAlertDialogService } from '@shared/components/alert-dialog/alert-dialog.service';
 
 @Component({
   selector: 'app-sidebar',
   exportAs: 'appSidebar',
   standalone: true,
-  imports: [LayoutModule, ZardIconComponent, ZardDropdownModule, RouterLink, RouterLinkActive, TranslateModule, ZardAvatarComponent],
+  imports: [LayoutModule, ZardIconComponent, ZardDropdownModule, RouterLink, RouterLinkActive, TranslateModule, ZardAvatarComponent, ZardDividerComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   templateUrl: './app-sidebar.component.html',
@@ -29,6 +32,8 @@ export class AppSidebarComponent implements OnDestroy {
   private readonly userService = inject(UserService);
   private readonly router = inject(Router);
   private readonly viewContainerRef = inject(ViewContainerRef);
+  private readonly authService = inject(AuthService);
+  private readonly alertDialogService = inject(ZardAlertDialogService);
   private readonly destroy$ = new Subject<void>();
 
   @ViewChild('mobileSidebarTemplate', { static: true }) mobileSidebarTemplate!: TemplateRef<any>;
@@ -119,6 +124,23 @@ export class AppSidebarComponent implements OnDestroy {
   onSettingsClick(): void {
     this.router.navigate(['/settings']);
     this.closeMobileSidebar();
+  }
+
+  onLogoutClick(): void {
+    const dialogRef = this.alertDialogService.confirm({
+      zTitle: 'Log out',
+      zDescription: 'Are you sure you want to log out?',
+      zOkText: 'Log out',
+      zCancelText: 'Cancel',
+      zOkDestructive: true,
+      zViewContainerRef: this.viewContainerRef,
+    });
+
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result) => {
+      if (result) {
+        this.authService.logout();
+      }
+    });
   }
 
   ngOnDestroy(): void {

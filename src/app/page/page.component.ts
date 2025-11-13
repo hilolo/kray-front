@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, input, ViewChild, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, computed, effect, input, signal, ViewChild, ViewEncapsulation } from '@angular/core';
 import type { ClassValue } from 'clsx';
 import { LayoutModule } from '@shared/components/layout/layout.module';
 import { AppHeaderComponent } from '@shared/components/app-header/app-header.component';
@@ -43,6 +43,14 @@ export class ZardPageComponent implements AfterViewInit {
   readonly class = input<ClassValue>('');
 
   @ViewChild('sidebarRef', { static: false }) sidebarRef?: AppSidebarComponent;
+
+  readonly sidebarCollapsed = computed(() => {
+    return this.sidebarRef?.sidebarCollapsed() ?? false;
+  });
+
+  readonly sidebarToggle = (): void => {
+    this.sidebarRef?.toggleSidebar();
+  };
 
   ngAfterViewInit(): void {
     // Ensure ViewChild is available

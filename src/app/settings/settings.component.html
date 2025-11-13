@@ -172,6 +172,17 @@
                       <z-button zType="outline" (click)="onCancel()">Cancel</z-button>
                       <z-button zType="default" (click)="onSaveUserInfo()">Save User Info</z-button>
                     </div>
+
+                    <!-- Logout Section -->
+                    <z-divider class="my-6" />
+                    <div class="space-y-2">
+                      <h3 class="text-sm font-semibold">Account Actions</h3>
+                      <p class="text-sm text-muted-foreground">Sign out of your account</p>
+                      <z-button zType="destructive" (click)="onLogout()" class="gap-2">
+                        <z-icon zType="log-out" zSize="sm" />
+                        <span>Log out</span>
+                      </z-button>
+                    </div>
                   </div>
                 </div>
               </z-card>
@@ -297,7 +308,7 @@
 
                     <z-form-field class="flex-1 min-w-0">
                       <z-form-label zRequired>New password</z-form-label>
-                      <z-form-control helpText="Minimum 8 characters. Must include numbers, letters and special characters.">
+                      <z-form-control >
                         <z-input-group [zPrefix]="lockIconTemplate">
                           <div class="relative w-full">
                             <input

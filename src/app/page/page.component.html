@@ -11,7 +11,11 @@
       [zUserAvatar]="zUserAvatar()"
     />
     
-    <z-content class="!min-h-0">
+    <z-content 
+      class="!min-h-0"
+      [zSidebarToggle]="sidebarToggle"
+      [zSidebarCollapsed]="sidebarCollapsed()"
+    >
       <ng-content></ng-content>
     </z-content>
   </z-layout>
