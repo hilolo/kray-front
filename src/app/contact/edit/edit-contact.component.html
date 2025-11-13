@@ -10,12 +10,19 @@
           </p>
         </div>
         <div class="flex gap-2">
-          <z-button zType="outline" zSize="default" (click)="onCancel()">
+          <z-button zType="outline" zSize="default" [disabled]="isSaving()" (click)="!isSaving() && onCancel()">
             Cancel
           </z-button>
-          <z-button zType="default" zSize="default" (click)="onSave()">
-            <z-icon zType="check" zSize="sm" class="mr-2" />
-            Save Contact
+          <z-button [zType]="isSaving() || !isFormValid() ? 'ghost' : 'default'" [disabled]="isSaving()" (click)="!isSaving() && onSave()">
+            @if (isSaving()) {
+              <span class="flex items-center gap-2">
+                <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+                Saving...
+              </span>
+            } @else {
+              <z-icon zType="check" zSize="sm" class="mr-2" />
+              Save Contact
+            }
           </z-button>
         </div>
       </div>
@@ -131,7 +138,7 @@
                   <div class="space-y-6">
                     <z-form-field>
                       <z-form-label zRequired>Company Name</z-form-label>
-                      <z-form-control>
+                      <z-form-control [errorMessage]="companyNameError()">
                         <z-input-group [zPrefix]="buildingIconTemplate">
                           <input
                             z-input
@@ -139,6 +146,7 @@
                             [ngModel]="formData().companyName"
                             (ngModelChange)="updateField('companyName', $event)"
                             placeholder="Enter company name"
+                            [zStatus]="companyNameHasError() ? 'error' : undefined"
                             class="w-full"
                           />
                         </z-input-group>
@@ -147,7 +155,7 @@
 
                     <z-form-field>
                       <z-form-label zRequired>ICE</z-form-label>
-                      <z-form-control helpText="Identifiant Commun de l'Entreprise">
+                      <z-form-control [errorMessage]="iceError()" helpText="Identifiant Commun de l'Entreprise">
                         <z-input-group [zPrefix]="idCardIconTemplate">
                           <input
                             z-input
@@ -155,6 +163,7 @@
                             [ngModel]="formData().ice"
                             (ngModelChange)="updateField('ice', $event)"
                             placeholder="Enter ICE number"
+                            [zStatus]="iceHasError() ? 'error' : undefined"
                             class="w-full"
                           />
                         </z-input-group>
@@ -163,7 +172,7 @@
 
                     <z-form-field>
                       <z-form-label zRequired>RC</z-form-label>
-                      <z-form-control helpText="Registre de Commerce">
+                      <z-form-control [errorMessage]="rcError()" helpText="Registre de Commerce">
                         <z-input-group [zPrefix]="idCardIconTemplate">
                           <input
                             z-input
@@ -171,6 +180,7 @@
                             [ngModel]="formData().rc"
                             (ngModelChange)="updateField('rc', $event)"
                             placeholder="Enter RC number"
+                            [zStatus]="rcHasError() ? 'error' : undefined"
                             class="w-full"
                           />
                         </z-input-group>
@@ -182,7 +192,7 @@
                   <div class="space-y-6">
                     <z-form-field>
                       <z-form-label zRequired>First Name</z-form-label>
-                      <z-form-control>
+                      <z-form-control [errorMessage]="firstNameError()">
                         <z-input-group [zPrefix]="userIconTemplate">
                           <input
                             z-input
@@ -190,6 +200,7 @@
                             [ngModel]="formData().firstName"
                             (ngModelChange)="updateField('firstName', $event)"
                             placeholder="Enter first name"
+                            [zStatus]="firstNameHasError() ? 'error' : undefined"
                             class="w-full"
                           />
                         </z-input-group>
@@ -198,7 +209,7 @@
 
                     <z-form-field>
                       <z-form-label zRequired>Last Name</z-form-label>
-                      <z-form-control>
+                      <z-form-control [errorMessage]="lastNameError()">
                         <z-input-group [zPrefix]="userIconTemplate">
                           <input
                             z-input
@@ -206,6 +217,7 @@
                             [ngModel]="formData().lastName"
                             (ngModelChange)="updateField('lastName', $event)"
                             placeholder="Enter last name"
+                            [zStatus]="lastNameHasError() ? 'error' : undefined"
                             class="w-full"
                           />
                         </z-input-group>
@@ -214,7 +226,7 @@
 
                     <z-form-field>
                       <z-form-label zRequired>Identifier</z-form-label>
-                      <z-form-control helpText="National ID or Passport number">
+                      <z-form-control [errorMessage]="identifierError()" helpText="National ID or Passport number">
                         <z-input-group [zPrefix]="idCardIconTemplate">
                           <input
                             z-input
@@ -222,6 +234,7 @@
                             [ngModel]="formData().identifier"
                             (ngModelChange)="updateField('identifier', $event)"
                             placeholder="Enter identifier"
+                            [zStatus]="identifierHasError() ? 'error' : undefined"
                             class="w-full"
                           />
                         </z-input-group>
@@ -237,7 +250,7 @@
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <z-form-field>
                   <z-form-label zRequired>Phone Number</z-form-label>
-                  <z-form-control>
+                  <z-form-control [errorMessage]="phoneNumberError()">
                     <div class="flex gap-2">
                       <z-input-group [zPrefix]="phoneIconTemplate" class="flex-1">
                         <input
@@ -246,6 +259,7 @@
                           [ngModel]="formData().phoneNumbers[0]"
                           (ngModelChange)="updatePhoneNumber(0, $event)"
                           placeholder="+212 (605) 000-0000"
+                          [zStatus]="phoneNumberHasError() ? 'error' : undefined"
                           class="w-full"
                         />
                       </z-input-group>
@@ -383,16 +397,6 @@
             }
           </div>
 
-          <!-- Form Actions -->
-          <div class="flex justify-end gap-3 pt-8 mt-8 border-t">
-            <z-button zType="outline" zSize="default" (click)="onCancel()">
-              Cancel
-            </z-button>
-            <z-button zType="default" zSize="default" (click)="onSave()">
-              <z-icon zType="check" zSize="sm" class="mr-2" />
-              Save Contact
-            </z-button>
-          </div>
         </div>
       </z-card>
     </div>

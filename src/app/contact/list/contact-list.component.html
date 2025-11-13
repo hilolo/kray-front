@@ -27,7 +27,7 @@
           <!-- Buttons on right - Archive first, then Card View, then Add Contact -->
           <div class="flex gap-2 items-center ml-auto">
             @if (hasSelectedContacts()) {
-              <z-button zType="destructive" zSize="default" class="gap-2" (click)="showArchiveConfirmation()">
+              <z-button zType="outline" zSize="default" class="gap-2 bg-amber-500 hover:bg-amber-600 text-white border-amber-500 hover:border-amber-600 shadow-xs" (click)="showArchiveConfirmation()">
                 <z-icon zType="folder" zSize="sm" />
                 Archive
               </z-button>
