@@ -116,7 +116,7 @@
                         />
                       } @else {
                         <div class="w-40 h-40 rounded-lg bg-primary text-primary-foreground flex items-center justify-center text-4xl font-semibold border border-border">
-                          {{ userInfo.fullName ? userInfo.fullName.charAt(0).toUpperCase() : 'U' }}
+                          {{ userInfo.fullName() ? userInfo.fullName().charAt(0).toUpperCase() : 'U' }}
                         </div>
                       }
                       <button
@@ -153,7 +153,7 @@
                       <z-form-label zRequired>Full name</z-form-label>
                       <z-form-control>
                         <z-input-group [zPrefix]="userIconTemplate">
-                          <input z-input type="text" [(ngModel)]="userInfo.fullName" name="fullName" placeholder="Enter your full name" class="w-full" />
+                          <input z-input type="text" [ngModel]="userInfo.fullName()" (ngModelChange)="userInfo.fullName.set($event)" name="fullName" placeholder="Enter your full name" class="w-full" />
                         </z-input-group>
                       </z-form-control>
                     </z-form-field>
@@ -162,25 +162,23 @@
                       <z-form-label>Phone</z-form-label>
                       <z-form-control>
                         <z-input-group [zPrefix]="phoneIconTemplate">
-                          <input z-input type="tel" [(ngModel)]="userInfo.phone" name="phone" placeholder="Enter your phone number" class="w-full" />
+                          <input z-input type="tel" [ngModel]="userInfo.phone()" (ngModelChange)="userInfo.phone.set($event)" name="phone" placeholder="Enter your phone number" class="w-full" />
                         </z-input-group>
                       </z-form-control>
                     </z-form-field>
 
                     <!-- Action Buttons -->
                     <div class="flex gap-3 justify-end pt-2">
-                      <z-button zType="outline" (click)="onCancel()">Cancel</z-button>
-                      <z-button zType="default" (click)="onSaveUserInfo()">Save User Info</z-button>
-                    </div>
-
-                    <!-- Logout Section -->
-                    <z-divider class="my-6" />
-                    <div class="space-y-2">
-                      <h3 class="text-sm font-semibold">Account Actions</h3>
-                      <p class="text-sm text-muted-foreground">Sign out of your account</p>
-                      <z-button zType="destructive" (click)="onLogout()" class="gap-2">
-                        <z-icon zType="log-out" zSize="sm" />
-                        <span>Log out</span>
+                      <z-button zType="outline" (click)="onCancel()" [attr.disabled]="isSaving() ? '' : null">Cancel</z-button>
+                      <z-button zType="default" (click)="onSaveUserInfo()" [attr.disabled]="isSaving() || !isAccountFormValid() ? '' : null">
+                        @if (isSaving()) {
+                          <span class="flex items-center gap-2">
+                            <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+                            Saving...
+                          </span>
+                        } @else {
+                          Save User Info
+                        }
                       </z-button>
                     </div>
                   </div>

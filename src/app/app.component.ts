@@ -3,10 +3,12 @@ import { RouterOutlet } from '@angular/router';
 import { DarkModeService } from './shared/services/darkmode.service';
 import { LanguageService } from './shared/services/language.service';
 import { TranslateService } from '@ngx-translate/core';
+import { ZardToastComponent } from './shared/components/toast/toast.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  standalone: true,
+  imports: [RouterOutlet, ZardToastComponent],
   templateUrl: './app.component.html'
 })
 export class AppComponent implements OnInit {

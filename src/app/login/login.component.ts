@@ -87,11 +87,24 @@ export class LoginComponent {
     this.authService.login(emailValue, passwordValue).subscribe({
       next: (response) => {
         console.log('Login successful:', response);
-        this.isLoading.set(false);
-        // Get return URL from route parameters or default to home
-        const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
-        // Navigate to return URL or home on successful login
-        this.router.navigate([returnUrl]);
+        // After successful login, call sign-in-with-token to get full user data
+        this.authService.signInWithToken().subscribe({
+          next: (tokenResponse) => {
+            console.log('Sign in with token successful:', tokenResponse);
+            this.isLoading.set(false);
+            // Get return URL from route parameters or default to home
+            const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
+            // Navigate to return URL or home on successful login
+            this.router.navigate([returnUrl]);
+          },
+          error: (tokenError) => {
+            console.error('Sign in with token error:', tokenError);
+            // Even if this fails, we still have the initial login data
+            this.isLoading.set(false);
+            const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
+            this.router.navigate([returnUrl]);
+          },
+        });
       },
       error: (error) => {
         console.error('Login error:', error);

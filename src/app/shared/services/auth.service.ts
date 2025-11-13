@@ -51,6 +51,27 @@ export class AuthService {
   }
 
   /**
+   * Sign in with token (refresh user data after login)
+   * POST https://localhost:5001/api/user/sign-in-with-token
+   */
+  signInWithToken(): Observable<LoginResponseData> {
+    return this.apiService.post<LoginResponseData>('api/user/sign-in-with-token', {}).pipe(
+      tap((response) => {
+        // Update user and token with fresh data
+        this.setUser(response.user);
+        this.setToken(response.jwt.token);
+        
+        // Save to localStorage
+        this.saveUserToStorage(response.user);
+        this.saveTokenToStorage(response.jwt.token);
+        
+        // Update authentication state
+        this.isAuthenticated.set(true);
+      })
+    );
+  }
+
+  /**
    * Logout user
    */
   logout(): void {
@@ -85,7 +106,16 @@ export class AuthService {
    * Set current user
    */
   setUser(user: User): void {
+    // Preserve company information if not present in the updated user
+    const currentUser = this.currentUser();
+    if (currentUser && currentUser.company && !user.company) {
+      // Merge company data from existing user if not in updated user
+      user = { ...user, company: currentUser.company };
+    }
+    
     this.currentUser.set(user);
+    // Save to localStorage to persist the update
+    this.saveUserToStorage(user);
   }
 
   /**

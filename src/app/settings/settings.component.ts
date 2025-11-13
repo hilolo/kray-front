@@ -1,4 +1,4 @@
-import { Component, computed, ElementRef, signal, TemplateRef, viewChild } from '@angular/core';
+import { Component, computed, effect, ElementRef, inject, signal, TemplateRef, viewChild, ViewContainerRef, OnInit, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ZardPageComponent } from '../page/page.component';
 import { ZardFormFieldComponent, ZardFormControlComponent, ZardFormLabelComponent } from '@shared/components/form/form.component';
@@ -13,9 +13,10 @@ import { ZardAvatarComponent } from '@shared/components/avatar/avatar.component'
 import { ZardBadgeComponent } from '@shared/components/badge/badge.component';
 import { ZardDividerComponent } from '@shared/components/divider/divider.component';
 import { AuthService } from '@shared/services/auth.service';
+import { UserService } from '@shared/services/user.service';
 import { ZardAlertDialogService } from '@shared/components/alert-dialog/alert-dialog.service';
-import { inject, ViewContainerRef, OnDestroy } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
+import { toast } from 'ngx-sonner';
 
 type SettingsSection = 'account' | 'security' | 'plan-billing' | 'team' | 'application';
 
@@ -45,12 +46,12 @@ interface TeamMember {
     ZardSelectItemComponent,
     ZardAvatarComponent,
     ZardBadgeComponent,
-    ZardDividerComponent,
   ],
   templateUrl: './settings.component.html',
 })
-export class SettingsComponent implements OnDestroy {
+export class SettingsComponent implements OnInit, OnDestroy {
   private readonly authService = inject(AuthService);
+  private readonly userService = inject(UserService);
   private readonly alertDialogService = inject(ZardAlertDialogService);
   private readonly viewContainerRef = inject(ViewContainerRef);
   private readonly destroy$ = new Subject<void>();
@@ -71,23 +72,32 @@ export class SettingsComponent implements OnDestroy {
 
   // User Information
   userInfo = {
-    fullName: '',
-    phone: '',
+    fullName: signal(''),
+    phone: signal(''),
+    email: '',
   };
+
+  // Loading state for save operation
+  isSaving = signal(false);
 
   // Profile image
   profileImageUrl = signal<string | null>(null);
   profileImageFile = signal<File | null>(null);
 
-  // Company Information (read-only)
+  // Computed signal to check if account form is valid (all required fields filled)
+  readonly isAccountFormValid = computed(() => {
+    return this.userInfo.fullName() && this.userInfo.fullName().trim() !== '';
+  });
+
+  // Company Information (read-only) - populated from user service
   companyInfo = {
-    name: 'IMMOSYNCPRO',
-    address: 'bassatine',
-    city: 'tanger',
-    phone: '0605934495',
-    website: 'www.immoyncpro.com',
-    rc: '43 43 43 43',
-    ice: '51250111',
+    name: '',
+    address: '',
+    city: '',
+    phone: '',
+    website: '',
+    rc: '',
+    ice: '',
   };
 
   // Password Form
@@ -120,6 +130,70 @@ export class SettingsComponent implements OnDestroy {
   appSettings = {
     language: 'fr',
   };
+
+  // Computed signals for reactive user and company data
+  readonly currentUser = computed(() => this.userService.getCurrentUser());
+  readonly currentCompany = computed(() => this.userService.company());
+
+  constructor() {
+    // Use effect to reactively update user and company info when data changes
+    effect(() => {
+      const user = this.currentUser();
+      if (user) {
+        this.userInfo.email = user.email || '';
+        this.userInfo.fullName.set(user.name || '');
+        this.userInfo.phone.set(user.phone || '');
+        
+        // Update profile image if avatar exists
+        if (user.avatar && !this.profileImageUrl()) {
+          this.profileImageUrl.set(user.avatar);
+        }
+      }
+    });
+
+    effect(() => {
+      const company = this.currentCompany();
+      if (company) {
+        this.companyInfo = {
+          name: company.name || '',
+          address: company.address || '',
+          city: company.city || '',
+          phone: company.phone || '',
+          website: company.website || '',
+          rc: company.rc || '',
+          ice: company.ice || '',
+        };
+      }
+    });
+  }
+
+  ngOnInit(): void {
+    // Initial population (effects will handle updates)
+    const user = this.currentUser();
+    if (user) {
+      this.userInfo.email = user.email || '';
+      this.userInfo.fullName.set(user.name || '');
+      this.userInfo.phone.set(user.phone || '');
+      
+      // Set profile image if avatar exists
+      if (user.avatar) {
+        this.profileImageUrl.set(user.avatar);
+      }
+    }
+    
+    const company = this.currentCompany();
+    if (company) {
+      this.companyInfo = {
+        name: company.name || '',
+        address: company.address || '',
+        city: company.city || '',
+        phone: company.phone || '',
+        website: company.website || '',
+        rc: company.rc || '',
+        ice: company.ice || '',
+      };
+    }
+  }
 
   // Property Settings
   propertySettings = {
@@ -190,27 +264,78 @@ export class SettingsComponent implements OnDestroy {
   }
 
   onSaveUserInfo(): void {
-    // Save user info logic
-    const userData = {
-      ...this.userInfo,
-      profileImage: this.profileImageFile(),
-      profileImageUrl: this.profileImageUrl(),
+    // Validate required fields
+    const fullName = this.userInfo.fullName();
+    if (!fullName || fullName.trim() === '') {
+      toast.error('Full name is required');
+      return;
+    }
+
+    // Set loading state
+    this.isSaving.set(true);
+
+    // Prepare user data for update
+    const userData: { name?: string; phone?: string; avatar?: string } = {
+      name: fullName.trim(),
     };
-    console.log('Saving user info:', userData);
-    
-    // Here you would typically:
-    // 1. Upload the image file to your server
-    // 2. Get the server URL for the uploaded image
-    // 3. Save the user info with the image URL
-    
-    // Example API call (uncomment and adjust as needed):
-    // if (this.profileImageFile()) {
-    //   const formData = new FormData();
-    //   formData.append('image', this.profileImageFile()!);
-    //   formData.append('fullName', this.userInfo.fullName);
-    //   formData.append('phone', this.userInfo.phone);
-    //   // ... make HTTP request to save
-    // }
+
+    // Only include phone if it's provided
+    const phone = this.userInfo.phone();
+    if (phone && phone.trim() !== '') {
+      userData.phone = phone.trim();
+    }
+
+    // Handle avatar: convert file to base64 if a new image was selected
+    const imageFile = this.profileImageFile();
+    if (imageFile) {
+      // Convert file to base64
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64String = reader.result as string;
+        // Remove data URL prefix (e.g., "data:image/jpeg;base64,")
+        const base64Data = base64String.split(',')[1] || base64String;
+        userData.avatar = base64Data;
+
+        // Call the update service with avatar
+        this.updateUserData(userData);
+      };
+      reader.onerror = () => {
+        this.isSaving.set(false);
+        toast.error('Failed to read image file');
+      };
+      reader.readAsDataURL(imageFile);
+    } else {
+      // No new image selected, update without avatar
+      this.updateUserData(userData);
+    }
+  }
+
+  private updateUserData(userData: { name?: string; phone?: string; avatar?: string }): void {
+    // Call the update service
+    this.userService.updateUser(userData).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (updatedUser) => {
+        this.isSaving.set(false);
+        toast.success('Account information updated successfully');
+        
+        // Clear the file reference after successful update
+        this.profileImageFile.set(null);
+      },
+      error: (error) => {
+        this.isSaving.set(false);
+        console.error('Error updating user info:', error);
+        
+        // Show error message
+        let errorMessage = 'Failed to update account information';
+        if (error.errors && error.errors.length > 0) {
+          errorMessage = error.errors.join(', ');
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        toast.error(errorMessage);
+      },
+    });
   }
 
   onSavePassword(): void {

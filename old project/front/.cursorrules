@@ -1,9 +1,0 @@
-# .cursorrules
-
-rules:
-  - If you cannot find a component, module, or service in the current project folder named "fron",
-    then look into the "./fuse-demo-v19.0.0" project for a similar implementation.
-  - Copy the necessary component, dependencies, and imports from "./fuse-demo-v19.0.0"
-    and adapt them so they work correctly inside the "fron" project structure and naming conventions.
-  - Ensure all required modules, styles, and assets are included for compatibility.
-  - Do not overwrite existing code unless it’s clearly outdated or redundant.

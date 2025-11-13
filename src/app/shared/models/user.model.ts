@@ -6,6 +6,9 @@ import type { Company } from './company.model';
 export interface User {
   id: string;
   email: string;
+  name?: string;
+  phone?: string;
+  avatar?: string;
   isAdmin: boolean;
   role: string;
   companyId: string;
