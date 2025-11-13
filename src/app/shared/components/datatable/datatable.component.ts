@@ -20,6 +20,8 @@ import { ZardInputDirective } from '@shared/components/input/input.directive';
 import { ZardCheckboxComponent } from '@shared/components/checkbox/checkbox.component';
 import { ZardIconComponent } from '@shared/components/icon/icon.component';
 import { ZardCardComponent } from '@shared/components/card/card.component';
+import { ZardSelectComponent } from '@shared/components/select/select.component';
+import { ZardSelectItemComponent } from '@shared/components/select/select-item.component';
 import { FormsModule } from '@angular/forms';
 import { datatableVariants, ZardDatatableVariants } from './datatable.variants';
 
@@ -45,6 +47,8 @@ export interface DatatableColumn<T = any> {
     ZardCheckboxComponent,
     ZardIconComponent,
     ZardCardComponent,
+    ZardSelectComponent,
+    ZardSelectItemComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,

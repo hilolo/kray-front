@@ -130,27 +130,26 @@
   <!-- Pagination Footer -->
   @if (zShowPagination() && hasData()) {
     <div class="sticky bottom-0 left-0 right-0 border-t bg-background z-10 shadow-sm">
-      <div class="px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div class="text-sm text-muted-foreground">
-          @if (zSelectable()) {
-            {{ selectedCount() }} of {{ zData().length }} row(s) selected.
-          } @else {
-            {{ zData().length }} total row(s).
-          }
+      <div class="px-6 py-4 flex flex-row items-center justify-between gap-4 overflow-x-auto">
+        <!-- Left side: Rows per page selector -->
+        <div class="flex items-center gap-2 flex-shrink-0 whitespace-nowrap">
+          <z-select
+            [zValue]="pageSize().toString()"
+            [zLabel]="pageSize().toString()"
+            class="h-8 w-[70px]"
+            (zSelectionChange)="onPageSizeChange(+$event)"
+          >
+            @for (option of zPageSizeOptions(); track option) {
+              <z-select-item [zValue]="option.toString()">
+                {{ option }}
+              </z-select-item>
+            }
+          </z-select>
+          <span class="text-sm text-muted-foreground">Rows per page</span>
         </div>
-        <div class="flex items-center gap-4">
-          <div class="flex items-center gap-2">
-            <span class="text-sm text-muted-foreground">Rows per page</span>
-            <select
-              class="h-8 w-[70px] rounded-md border border-input bg-background px-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-background dark:text-foreground dark:border-input"
-              [value]="pageSize()"
-              (change)="onPageSizeChange(+$any($event.target).value)"
-            >
-              @for (option of zPageSizeOptions(); track option) {
-                <option [value]="option" class="bg-background text-foreground dark:bg-background dark:text-foreground">{{ option }}</option>
-              }
-            </select>
-          </div>
+
+        <!-- Right side: Page info and pagination -->
+        <div class="flex items-center gap-4 flex-shrink-0 whitespace-nowrap">
           <div class="text-sm text-muted-foreground">
             Page {{ currentPage() }} of {{ totalPages() }}
           </div>
