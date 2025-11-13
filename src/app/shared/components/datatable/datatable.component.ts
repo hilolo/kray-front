@@ -42,7 +42,6 @@ export interface DatatableColumn<T = any> {
     ZardTableModule,
     ZardPaginationComponent,
     ZardEmptyComponent,
-    ZardInputDirective,
     ZardCheckboxComponent,
     ZardIconComponent,
     ZardCardComponent,

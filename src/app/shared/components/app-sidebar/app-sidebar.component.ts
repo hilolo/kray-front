@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal, TemplateRef, ViewChild, ViewContainerRef, ViewEncapsulation, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, TemplateRef, ViewChild, ViewContainerRef, ViewEncapsulation, OnDestroy } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import type { ClassValue } from 'clsx';
@@ -35,6 +35,7 @@ export class AppSidebarComponent implements OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly alertDialogService = inject(ZardAlertDialogService);
   private readonly destroy$ = new Subject<void>();
+  private readonly storageKey = 'sidebarCollapsed';
 
   @ViewChild('mobileSidebarTemplate', { static: true }) mobileSidebarTemplate!: TemplateRef<any>;
 
@@ -85,8 +86,21 @@ export class AppSidebarComponent implements OnDestroy {
     return this.userService.userAvatar();
   });
 
-  readonly sidebarCollapsed = signal(false);
+  readonly sidebarCollapsed = signal(this.loadCollapsedState());
   private mobileSidebarRef: ZardSheetRef | null = null;
+
+  constructor() {
+    // Persist sidebar collapsed state to localStorage whenever it changes
+    effect(() => {
+      const collapsed = this.sidebarCollapsed();
+      localStorage.setItem(this.storageKey, String(collapsed));
+    });
+  }
+
+  private loadCollapsedState(): boolean {
+    const saved = localStorage.getItem(this.storageKey);
+    return saved === 'true';
+  }
 
   toggleSidebar(): void {
     this.sidebarCollapsed.set(!this.sidebarCollapsed());

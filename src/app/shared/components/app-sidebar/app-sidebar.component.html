@@ -5,7 +5,7 @@
   [zCollapsed]="sidebarCollapsed()"
   [zCollapsedWidth]="64"
   (zCollapsedChange)="sidebarCollapsed.set($event)"
-  [class]="sidebarCollapsed() ? 'p-2' : 'p-6'"
+  [class]="'p-2'"
   class="hidden md:flex h-full"
 >
   <div class="flex flex-col h-full">
@@ -33,19 +33,19 @@
     </z-sidebar-group>
 
     <!-- User Profile Section at Bottom - Always visible -->
-    <div class="mt-auto pt-4 border-t border-border flex-shrink-0">
+    <div class="mt-auto pt-4 border-t border-border flex-shrink-0 w-full">
       <z-dropdown-menu>
         <button
           dropdown-trigger
           type="button"
-          [class]="sidebarCollapsed() ? 'w-full flex items-center justify-center p-2' : 'w-full flex items-center gap-3 p-2 rounded-md hover:bg-accent transition-colors'"
+          class="flex gap-3 hover:bg-accent items-center p-2 rounded-md transition-colors w-full"
         >
-          <z-avatar 
-            zSize="sm" 
-            zType="default" 
-            [zImage]="userAvatar() ? { url: userAvatar()!, fallback: userName().charAt(0).toUpperCase() } : { fallback: userName().charAt(0).toUpperCase() }"
-          />
           @if (!sidebarCollapsed()) {
+            <z-avatar 
+              zSize="sm" 
+              zType="default" 
+              [zImage]="userAvatar() ? { url: userAvatar()!, fallback: userName().charAt(0).toUpperCase() } : { fallback: userName().charAt(0).toUpperCase() }"
+            />
             <div class="flex-1 min-w-0 text-left">
               <div class="text-xs font-medium break-words">{{ userName() }}</div>
               <div class="text-[10px] text-muted-foreground break-words leading-tight">{{ userEmail() }}</div>

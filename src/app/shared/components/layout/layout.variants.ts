@@ -33,7 +33,7 @@ export type ContentVariants = VariantProps<typeof contentVariants>;
 
 // Sidebar Variants
 export const sidebarVariants = cva(
-  'relative flex flex-col h-full transition-all duration-300 ease-in-out border-r shrink-0 p-6 bg-sidebar text-sidebar-foreground border-sidebar-border',
+  'relative flex flex-col h-full transition-all duration-300 ease-in-out border-r shrink-0 p-2 bg-sidebar text-sidebar-foreground border-sidebar-border',
 );
 
 export const sidebarTriggerVariants = cva(
