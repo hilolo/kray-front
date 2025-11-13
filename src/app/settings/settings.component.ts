@@ -80,6 +80,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
   // Loading state for save operation
   isSaving = signal(false);
 
+  // Form validation state
+  formSubmitted = signal(false);
+
   // Profile image
   profileImageUrl = signal<string | null>(null);
   profileImageFile = signal<File | null>(null);
@@ -87,6 +90,21 @@ export class SettingsComponent implements OnInit, OnDestroy {
   // Computed signal to check if account form is valid (all required fields filled)
   readonly isAccountFormValid = computed(() => {
     return this.userInfo.fullName() && this.userInfo.fullName().trim() !== '';
+  });
+
+  // Computed signals for error messages
+  readonly fullNameError = computed(() => {
+    if (!this.formSubmitted()) return '';
+    const fullName = this.userInfo.fullName();
+    if (!fullName || fullName.trim() === '') {
+      return 'Full name is required';
+    }
+    return '';
+  });
+
+  // Computed signal to check if full name input has error
+  readonly fullNameHasError = computed(() => {
+    return this.formSubmitted() && (!this.userInfo.fullName() || this.userInfo.fullName().trim() === '');
   });
 
   // Company Information (read-only) - populated from user service
@@ -102,11 +120,19 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
   // Password Form
   passwordForm = {
-    currentPassword: '',
-    newPassword: '',
+    currentPassword: signal(''),
+    newPassword: signal(''),
+    confirmPassword: signal(''),
   };
   showCurrentPassword = signal(false);
   showNewPassword = signal(false);
+  showConfirmPassword = signal(false);
+  
+  // Password form validation state
+  passwordFormSubmitted = signal(false);
+  
+  // Loading state for password update
+  isUpdatingPassword = signal(false);
 
   // Team Members
   teamMembers = signal<TeamMember[]>([
@@ -204,16 +230,84 @@ export class SettingsComponent implements OnInit, OnDestroy {
   };
 
   toggleCurrentPassword(): void {
-    this.showCurrentPassword.update((v) => !v);
+    this.showCurrentPassword.update((value) => !value);
   }
 
   toggleNewPassword(): void {
-    this.showNewPassword.update((v) => !v);
+    this.showNewPassword.update((value) => !value);
   }
 
-  isPasswordFormValid(): boolean {
-    return this.passwordForm.currentPassword.length > 0 && this.passwordForm.newPassword.length >= 8;
+  toggleConfirmPassword(): void {
+    this.showConfirmPassword.update((value) => !value);
   }
+
+  // Computed signal to check if password form is valid
+  readonly isPasswordFormValid = computed(() => {
+    const currentPassword = this.passwordForm.currentPassword();
+    const newPassword = this.passwordForm.newPassword();
+    const confirmPassword = this.passwordForm.confirmPassword();
+    
+    return (
+      currentPassword.trim() !== '' &&
+      newPassword.trim() !== '' &&
+      newPassword.length >= 8 &&
+      confirmPassword.trim() !== '' &&
+      newPassword === confirmPassword
+    );
+  });
+
+  // Computed signals for error messages
+  readonly currentPasswordError = computed(() => {
+    if (!this.passwordFormSubmitted()) return '';
+    const currentPassword = this.passwordForm.currentPassword();
+    if (!currentPassword || currentPassword.trim() === '') {
+      return 'Current password is required';
+    }
+    return '';
+  });
+
+  readonly newPasswordError = computed(() => {
+    if (!this.passwordFormSubmitted()) return '';
+    const newPassword = this.passwordForm.newPassword();
+    if (!newPassword || newPassword.trim() === '') {
+      return 'New password is required';
+    }
+    if (newPassword.length < 8) {
+      return 'Password must be at least 8 characters long';
+    }
+    return '';
+  });
+
+  readonly confirmPasswordError = computed(() => {
+    if (!this.passwordFormSubmitted()) return '';
+    const newPassword = this.passwordForm.newPassword();
+    const confirmPassword = this.passwordForm.confirmPassword();
+    if (!confirmPassword || confirmPassword.trim() === '') {
+      return 'Please confirm your password';
+    }
+    if (newPassword !== confirmPassword) {
+      return 'Passwords do not match';
+    }
+    return '';
+  });
+
+  // Computed signals to check if fields have errors (for styling)
+  readonly currentPasswordHasError = computed(() => {
+    return this.passwordFormSubmitted() && (!this.passwordForm.currentPassword() || this.passwordForm.currentPassword().trim() === '');
+  });
+
+  readonly newPasswordHasError = computed(() => {
+    if (!this.passwordFormSubmitted()) return false;
+    const newPassword = this.passwordForm.newPassword();
+    return !newPassword || newPassword.trim() === '' || newPassword.length < 8;
+  });
+
+  readonly confirmPasswordHasError = computed(() => {
+    if (!this.passwordFormSubmitted()) return false;
+    const newPassword = this.passwordForm.newPassword();
+    const confirmPassword = this.passwordForm.confirmPassword();
+    return !confirmPassword || confirmPassword.trim() === '' || newPassword !== confirmPassword;
+  });
 
   onCancel(): void {
     // Reset forms or navigate away
@@ -256,18 +350,13 @@ export class SettingsComponent implements OnInit, OnDestroy {
     input.value = '';
   }
 
-  onRemoveImage(): void {
-    this.profileImageUrl.set(null);
-    this.profileImageFile.set(null);
-    // Reset file input
-    this.fileInput().nativeElement.value = '';
-  }
 
   onSaveUserInfo(): void {
-    // Validate required fields
-    const fullName = this.userInfo.fullName();
-    if (!fullName || fullName.trim() === '') {
-      toast.error('Full name is required');
+    // Mark form as submitted to show validation errors
+    this.formSubmitted.set(true);
+
+    // Guard: prevent execution if form is invalid
+    if (!this.isAccountFormValid()) {
       return;
     }
 
@@ -275,6 +364,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     this.isSaving.set(true);
 
     // Prepare user data for update
+    const fullName = this.userInfo.fullName();
     const userData: { name?: string; phone?: string; avatar?: string } = {
       name: fullName.trim(),
     };
@@ -317,6 +407,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     ).subscribe({
       next: (updatedUser) => {
         this.isSaving.set(false);
+        this.formSubmitted.set(false); // Reset form validation state on success
         toast.success('Account information updated successfully');
         
         // Clear the file reference after successful update
@@ -325,22 +416,51 @@ export class SettingsComponent implements OnInit, OnDestroy {
       error: (error) => {
         this.isSaving.set(false);
         console.error('Error updating user info:', error);
-        
-        // Show error message
-        let errorMessage = 'Failed to update account information';
-        if (error.errors && error.errors.length > 0) {
-          errorMessage = error.errors.join(', ');
-        } else if (error.message) {
-          errorMessage = error.message;
-        }
-        toast.error(errorMessage);
+        // Toast error is handled automatically by the API interceptor/service
       },
     });
   }
 
   onSavePassword(): void {
-    // Save password logic
-    console.log('Saving password');
+    // Mark form as submitted to show validation errors
+    this.passwordFormSubmitted.set(true);
+
+    // Guard: prevent execution if form is invalid
+    if (!this.isPasswordFormValid()) {
+      return;
+    }
+
+    // Set loading state
+    this.isUpdatingPassword.set(true);
+
+    // Prepare password data
+    const passwordData = {
+      currentPassword: this.passwordForm.currentPassword().trim(),
+      newPassword: this.passwordForm.newPassword().trim(),
+      confirmPassword: this.passwordForm.confirmPassword().trim(),
+    };
+
+    // Call the update password service
+    this.userService.updatePassword(passwordData).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: () => {
+        this.isUpdatingPassword.set(false);
+        this.passwordFormSubmitted.set(false); // Reset form validation state on success
+        
+        // Reset form fields
+        this.passwordForm.currentPassword.set('');
+        this.passwordForm.newPassword.set('');
+        this.passwordForm.confirmPassword.set('');
+        
+        toast.success('Password updated successfully');
+      },
+      error: (error) => {
+        this.isUpdatingPassword.set(false);
+        console.error('Error updating password:', error);
+        // Toast error is handled automatically by the API interceptor/service
+      },
+    });
   }
 
   onLogout(): void {

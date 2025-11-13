@@ -20,6 +20,8 @@ import { ZardIconComponent } from '../icon/icon.component';
   `,
   host: {
     '[class]': 'classes()',
+    '[attr.disabled]': 'isDisabled() ? "" : null',
+    '[attr.aria-disabled]': 'isDisabled()',
   },
 })
 export class ZardButtonComponent {
@@ -31,6 +33,9 @@ export class ZardButtonComponent {
 
   readonly zFull = input(false, { transform });
   readonly zLoading = input(false, { transform });
+  readonly disabled = input(false, { transform });
+
+  protected readonly isDisabled = computed(() => Boolean(this.disabled()));
 
   protected readonly classes = computed(() =>
     mergeClasses(

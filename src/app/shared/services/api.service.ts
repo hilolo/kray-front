@@ -4,6 +4,7 @@ import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import type { ApiResponse } from '../models/api-response.model';
+import { toast } from 'ngx-sonner';
 
 /**
  * Base API service for making HTTP requests to the backend
@@ -37,7 +38,18 @@ export class ApiService {
     };
 
     return this.http.get<ApiResponse<T>>(url, options).pipe(
-      map((response) => response.data), // Extract data from standard response
+      map((response) => {
+        // Check if response has error status even with 200 OK
+        if (response.status === 'Failed') {
+          if (response.message) {
+            toast.error(response.message, {
+              duration: 5000, // 5 seconds
+            });
+          }
+          throw new Error(response.message || 'Request failed');
+        }
+        return response.data; // Extract data from standard response
+      }),
       catchError(this.handleError)
     );
   }
@@ -48,7 +60,18 @@ export class ApiService {
   post<T = any>(endpoint: string, body: any, options?: { headers?: HttpHeaders }): Observable<T> {
     const url = this.getUrl(endpoint);
     return this.http.post<ApiResponse<T>>(url, body, options).pipe(
-      map((response) => response.data), // Extract data from standard response
+      map((response) => {
+        // Check if response has error status even with 200 OK
+        if (response.status === 'Failed') {
+          if (response.message) {
+            toast.error(response.message, {
+              duration: 5000, // 5 seconds
+            });
+          }
+          throw new Error(response.message || 'Request failed');
+        }
+        return response.data; // Extract data from standard response
+      }),
       catchError(this.handleError)
     );
   }
@@ -59,7 +82,18 @@ export class ApiService {
   put<T = any>(endpoint: string, body: any, options?: { headers?: HttpHeaders }): Observable<T> {
     const url = this.getUrl(endpoint);
     return this.http.put<ApiResponse<T>>(url, body, options).pipe(
-      map((response) => response.data), // Extract data from standard response
+      map((response) => {
+        // Check if response has error status even with 200 OK
+        if (response.status === 'Failed') {
+          if (response.message) {
+            toast.error(response.message, {
+              duration: 5000, // 5 seconds
+            });
+          }
+          throw new Error(response.message || 'Request failed');
+        }
+        return response.data; // Extract data from standard response
+      }),
       catchError(this.handleError)
     );
   }
@@ -70,7 +104,18 @@ export class ApiService {
   patch<T = any>(endpoint: string, body: any, options?: { headers?: HttpHeaders }): Observable<T> {
     const url = this.getUrl(endpoint);
     return this.http.patch<ApiResponse<T>>(url, body, options).pipe(
-      map((response) => response.data), // Extract data from standard response
+      map((response) => {
+        // Check if response has error status even with 200 OK
+        if (response.status === 'Failed') {
+          if (response.message) {
+            toast.error(response.message, {
+              duration: 5000, // 5 seconds
+            });
+          }
+          throw new Error(response.message || 'Request failed');
+        }
+        return response.data; // Extract data from standard response
+      }),
       catchError(this.handleError)
     );
   }
@@ -85,7 +130,18 @@ export class ApiService {
     };
 
     return this.http.delete<ApiResponse<T>>(url, options).pipe(
-      map((response) => response.data), // Extract data from standard response
+      map((response) => {
+        // Check if response has error status even with 200 OK
+        if (response.status === 'Failed') {
+          if (response.message) {
+            toast.error(response.message, {
+              duration: 5000, // 5 seconds
+            });
+          }
+          throw new Error(response.message || 'Request failed');
+        }
+        return response.data; // Extract data from standard response
+      }),
       catchError(this.handleError)
     );
   }

@@ -53,6 +53,7 @@ export class ZardSheetOptions<T, U> {
 @Component({
   selector: 'z-sheet',
   exportAs: 'zSheet',
+  standalone: true,
   imports: [OverlayModule, PortalModule, ZardButtonComponent, ZardIconComponent],
   template: `
     @if (config.zClosable || config.zClosable === undefined) {
@@ -89,7 +90,7 @@ export class ZardSheetOptions<T, U> {
             class="cursor-pointer"
             z-button
             [zType]="config.zOkDestructive ? 'destructive' : 'default'"
-            [disabled]="config.zOkDisabled"
+            [disabled]="!!config.zOkDisabled"
             (click)="onOkClick()"
           >
             @if (config.zOkIcon) {

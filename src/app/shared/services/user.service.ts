@@ -78,5 +78,13 @@ export class UserService {
       })
     );
   }
+
+  /**
+   * Update user password
+   * PATCH https://localhost:5001/api/user/updatePassword
+   */
+  updatePassword(passwordData: { currentPassword: string; newPassword: string; confirmPassword: string }): Observable<any> {
+    return this.apiService.patch('api/user/updatePassword', passwordData);
+  }
 }
 

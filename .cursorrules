@@ -160,6 +160,124 @@
       - Easier collaboration between developers
       - Better separation of concerns
 
+15. **Form Validation Pattern** - **MANDATORY for all forms with validation**:
+    - **ALWAYS** implement form validation using the following pattern:
+    
+    **TypeScript Component Pattern**:
+    ```typescript
+    export class FormComponent {
+      // Form data using signals
+      formData = {
+        fieldName: signal(''),
+        // ... other fields
+      };
+
+      // Form validation state
+      formSubmitted = signal(false);
+
+      // Computed signal to check if form is valid
+      readonly isFormValid = computed(() => {
+        return this.formData.fieldName() && this.formData.fieldName().trim() !== '';
+        // Add all required field validations
+      });
+
+      // Computed signals for error messages (one per field)
+      readonly fieldNameError = computed(() => {
+        if (!this.formSubmitted()) return '';
+        const value = this.formData.fieldName();
+        if (!value || value.trim() === '') {
+          return 'Field name is required';
+        }
+        // Add other validation rules
+        return '';
+      });
+
+      // Computed signals to check if field has error (for styling)
+      readonly fieldNameHasError = computed(() => {
+        return this.formSubmitted() && (!this.formData.fieldName() || this.formData.fieldName().trim() === '');
+      });
+
+      // Submit handler
+      onSubmit(): void {
+        // Mark form as submitted to show validation errors
+        this.formSubmitted.set(true);
+
+        // Guard: prevent execution if form is invalid
+        if (!this.isFormValid()) {
+          return;
+        }
+
+        // Proceed with form submission
+        // ...
+        
+        // Reset formSubmitted on successful submission
+        // this.formSubmitted.set(false);
+      }
+    }
+    ```
+
+    **HTML Template Pattern**:
+    ```html
+    <z-form-field>
+      <z-form-label zRequired>Field Name</z-form-label>
+      <z-form-control [errorMessage]="fieldNameError()">
+        <z-input-group [zPrefix]="iconTemplate">
+          <input 
+            z-input 
+            type="text" 
+            [ngModel]="formData.fieldName()" 
+            (ngModelChange)="formData.fieldName.set($event)" 
+            name="fieldName" 
+            placeholder="Enter field name" 
+            [zStatus]="fieldNameHasError() ? 'error' : undefined" 
+            class="w-full" 
+          />
+        </z-input-group>
+      </z-form-control>
+    </z-form-field>
+
+    <!-- Submit Button -->
+    <z-button 
+      [zType]="isSaving() || !isFormValid() ? 'ghost' : 'default'" 
+      [disabled]="isSaving()" 
+      (click)="!isSaving() && onSubmit()"
+    >
+      Save
+    </z-button>
+    ```
+
+    **Key Requirements**:
+    - ✅ **ALWAYS** use `formSubmitted` signal to track when form has been submitted
+    - ✅ **ALWAYS** create computed signals for error messages (`fieldNameError`)
+    - ✅ **ALWAYS** create computed signals for error state (`fieldNameHasError`) for styling
+    - ✅ **ALWAYS** set `formSubmitted.set(true)` at the start of submit handler
+    - ✅ **ALWAYS** use `[errorMessage]` binding on `z-form-control` to display errors
+    - ✅ **ALWAYS** use `[zStatus]="fieldHasError() ? 'error' : undefined"` on inputs to show red border
+    - ✅ **ALWAYS** disable button only when saving (`[disabled]="isSaving()"`), NOT when invalid
+    - ✅ **ALWAYS** allow button click even when invalid to trigger validation
+    - ✅ **ALWAYS** use button type `ghost` when invalid/saving, `default` when valid
+    - ✅ **ALWAYS** reset `formSubmitted.set(false)` on successful submission
+    - ✅ **ALWAYS** validate required fields (check for empty/whitespace)
+    - ✅ **ALWAYS** use `zRequired` on form labels for required fields
+
+    **Validation Rules**:
+    - Required fields: Check if value exists and is not empty/whitespace
+    - Email fields: Add email format validation
+    - Phone fields: Add phone format validation
+    - Min/Max length: Add length validations
+    - Custom validations: Add business rule validations
+
+    **Error Display**:
+    - Error messages appear below the input field automatically via `z-form-control`
+    - Red border on input via `zStatus="error"`
+    - Error message text is red (`text-red-500` via form control component)
+
+    **Button State Management**:
+    - Button is `ghost` type when: form is invalid OR saving
+    - Button is `default` type when: form is valid AND not saving
+    - Button is disabled only when: saving (NOT when invalid - allows validation trigger)
+    - Button click handler: Always call submit handler, validation guard prevents execution
+
 ## Copying from Front Projects - **CRITICAL RULE**
 
 **Important**: The front app is located in the `old project/front/` folder at the root of the workspace.

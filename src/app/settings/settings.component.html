@@ -127,16 +127,6 @@
                       >
                         <z-icon zType="camera" zSize="sm" />
                       </button>
-                      @if (profileImageUrl()) {
-                        <button
-                          type="button"
-                          (click)="onRemoveImage()"
-                          class="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-1.5 hover:bg-destructive/90 transition-colors"
-                          title="Remove profile picture"
-                        >
-                          <z-icon zType="x" zSize="sm" />
-                        </button>
-                      }
                       <input
                         #fileInput
                         type="file"
@@ -151,9 +141,9 @@
                   <div class="flex-1 space-y-4">
                     <z-form-field>
                       <z-form-label zRequired>Full name</z-form-label>
-                      <z-form-control>
+                      <z-form-control [errorMessage]="fullNameError()">
                         <z-input-group [zPrefix]="userIconTemplate">
-                          <input z-input type="text" [ngModel]="userInfo.fullName()" (ngModelChange)="userInfo.fullName.set($event)" name="fullName" placeholder="Enter your full name" class="w-full" />
+                          <input z-input type="text" [ngModel]="userInfo.fullName()" (ngModelChange)="userInfo.fullName.set($event)" name="fullName" placeholder="Enter your full name" [zStatus]="fullNameHasError() ? 'error' : undefined" class="w-full" />
                         </z-input-group>
                       </z-form-control>
                     </z-form-field>
@@ -169,8 +159,8 @@
 
                     <!-- Action Buttons -->
                     <div class="flex gap-3 justify-end pt-2">
-                      <z-button zType="outline" (click)="onCancel()" [attr.disabled]="isSaving() ? '' : null">Cancel</z-button>
-                      <z-button zType="default" (click)="onSaveUserInfo()" [attr.disabled]="isSaving() || !isAccountFormValid() ? '' : null">
+                      <z-button zType="outline" [disabled]="isSaving()" (click)="!isSaving() && onCancel()">Cancel</z-button>
+                      <z-button [zType]="isSaving() || !isAccountFormValid() ? 'ghost' : 'default'" [disabled]="isSaving()" (click)="!isSaving() && onSaveUserInfo()">
                         @if (isSaving()) {
                           <span class="flex items-center gap-2">
                             <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
@@ -267,77 +257,120 @@
             <div class="space-y-8">
               <h1 class="text-3xl font-bold">Security</h1>
 
-              <z-card>
-                <div class="flex items-center gap-6 flex-wrap">
-                  <div class="flex-shrink-0">
-                    <div class="text-2xl font-semibold leading-none tracking-tight">Change your password</div>
-                    <div class="text-sm text-muted-foreground mt-1">You can only change your password twice within 24 hours!</div>
-                  </div>
-                  
-                  <div class="flex-1 flex items-center gap-4 min-w-0">
-                    <z-form-field class="flex-1 min-w-0">
-                      <z-form-label zRequired>Current password</z-form-label>
-                      <z-form-control>
+              <z-card zTitle="Change your password" zDescription="You can only change your password twice within 24 hours!">
+                <div class="space-y-4">
+                  <z-form-field>
+                    <z-form-label zRequired>Current password</z-form-label>
+                    <z-form-control [errorMessage]="currentPasswordError()">
+                      <div class="relative">
                         <z-input-group [zPrefix]="lockIconTemplate">
-                          <div class="relative w-full">
-                            <input
-                              z-input
-                              [type]="showCurrentPassword() ? 'text' : 'password'"
-                              [(ngModel)]="passwordForm.currentPassword"
-                              name="currentPassword"
-                              placeholder="Enter your current password"
-                              class="w-full pr-10"
-                            />
-                            <button
-                              type="button"
-                              (click)="toggleCurrentPassword()"
-                              class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                            >
-                              @if (showCurrentPassword()) {
-                                <z-icon zType="eye-off" zSize="sm" />
-                              } @else {
-                                <z-icon zType="eye" zSize="sm" />
-                              }
-                            </button>
-                          </div>
+                          <input
+                            z-input
+                            [type]="showCurrentPassword() ? 'text' : 'password'"
+                            [ngModel]="passwordForm.currentPassword()"
+                            (ngModelChange)="passwordForm.currentPassword.set($event)"
+                            name="currentPassword"
+                            placeholder="Enter your current password"
+                            [zStatus]="currentPasswordHasError() ? 'error' : undefined"
+                            class="w-full pr-10"
+                          />
                         </z-input-group>
-                      </z-form-control>
-                    </z-form-field>
+                        <button
+                          type="button"
+                          (click)="toggleCurrentPassword()"
+                          class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          [attr.aria-label]="showCurrentPassword() ? 'Hide password' : 'Show password'"
+                        >
+                          @if (showCurrentPassword()) {
+                            <z-icon zType="eye-off" zSize="sm" />
+                          } @else {
+                            <z-icon zType="eye" zSize="sm" />
+                          }
+                        </button>
+                      </div>
+                    </z-form-control>
+                  </z-form-field>
 
-                    <z-form-field class="flex-1 min-w-0">
-                      <z-form-label zRequired>New password</z-form-label>
-                      <z-form-control >
+                  <z-form-field>
+                    <z-form-label zRequired>New password</z-form-label>
+                    <z-form-control [errorMessage]="newPasswordError()">
+                      <div class="relative">
                         <z-input-group [zPrefix]="lockIconTemplate">
-                          <div class="relative w-full">
-                            <input
-                              z-input
-                              [type]="showNewPassword() ? 'text' : 'password'"
-                              [(ngModel)]="passwordForm.newPassword"
-                              name="newPassword"
-                              placeholder="Enter your new password"
-                              class="w-full pr-10"
-                            />
-                            <button
-                              type="button"
-                              (click)="toggleNewPassword()"
-                              class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                            >
-                              @if (showNewPassword()) {
-                                <z-icon zType="eye-off" zSize="sm" />
-                              } @else {
-                                <z-icon zType="eye" zSize="sm" />
-                              }
-                            </button>
-                          </div>
+                          <input
+                            z-input
+                            [type]="showNewPassword() ? 'text' : 'password'"
+                            [ngModel]="passwordForm.newPassword()"
+                            (ngModelChange)="passwordForm.newPassword.set($event)"
+                            name="newPassword"
+                            placeholder="Enter your new password"
+                            [zStatus]="newPasswordHasError() ? 'error' : undefined"
+                            class="w-full pr-10"
+                          />
                         </z-input-group>
-                      </z-form-control>
-                    </z-form-field>
-                  </div>
-                </div>
+                        <button
+                          type="button"
+                          (click)="toggleNewPassword()"
+                          class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          [attr.aria-label]="showNewPassword() ? 'Hide password' : 'Show password'"
+                        >
+                          @if (showNewPassword()) {
+                            <z-icon zType="eye-off" zSize="sm" />
+                          } @else {
+                            <z-icon zType="eye" zSize="sm" />
+                          }
+                        </button>
+                      </div>
+                    </z-form-control>
+                  </z-form-field>
 
-                <div class="flex gap-3 justify-end mt-6">
-                  <z-button zType="outline" (click)="onCancel()">Cancel</z-button>
-                  <z-button zType="default" (click)="onSavePassword()" [attr.disabled]="!isPasswordFormValid() ? '' : null">Save</z-button>
+                  <z-form-field>
+                    <z-form-label zRequired>Confirm password</z-form-label>
+                    <z-form-control [errorMessage]="confirmPasswordError()">
+                      <div class="relative">
+                        <z-input-group [zPrefix]="lockIconTemplate">
+                          <input
+                            z-input
+                            [type]="showConfirmPassword() ? 'text' : 'password'"
+                            [ngModel]="passwordForm.confirmPassword()"
+                            (ngModelChange)="passwordForm.confirmPassword.set($event)"
+                            name="confirmPassword"
+                            placeholder="Confirm your new password"
+                            [zStatus]="confirmPasswordHasError() ? 'error' : undefined"
+                            class="w-full pr-10"
+                          />
+                        </z-input-group>
+                        <button
+                          type="button"
+                          (click)="toggleConfirmPassword()"
+                          class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          [attr.aria-label]="showConfirmPassword() ? 'Hide password' : 'Show password'"
+                        >
+                          @if (showConfirmPassword()) {
+                            <z-icon zType="eye-off" zSize="sm" />
+                          } @else {
+                            <z-icon zType="eye" zSize="sm" />
+                          }
+                        </button>
+                      </div>
+                    </z-form-control>
+                  </z-form-field>
+
+                  <div class="flex gap-3 justify-end pt-2">
+                    <z-button 
+                      [zType]="isUpdatingPassword() || !isPasswordFormValid() ? 'ghost' : 'default'" 
+                      [disabled]="isUpdatingPassword()" 
+                      (click)="!isUpdatingPassword() && onSavePassword()"
+                    >
+                      @if (isUpdatingPassword()) {
+                        <span class="flex items-center gap-2">
+                          <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+                          Updating...
+                        </span>
+                      } @else {
+                        Save Password
+                      }
+                    </z-button>
+                  </div>
                 </div>
               </z-card>
             </div>
