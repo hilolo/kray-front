@@ -30,7 +30,7 @@ interface BreadcrumbItem {
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   template: `
-    <main>
+    <main class="flex flex-col min-h-0 flex-1">
       @if (breadcrumbs().length > 0) {
         <div class="mb-6 flex items-center gap-2">
           @if (zSidebarToggle()) {
