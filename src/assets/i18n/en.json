@@ -44,7 +44,9 @@
     "locations": "Rentals",
     "reservations": "Reservations",
     "inventaires": "Inventories",
-    "etatDesLieux": "Condition Report"
+    "etatDesLieux": "Condition Report",
+    "aiChat": "AI Chat",
+    "fileManager": "File Manager"
   },
   "sidebar": {
     "expand": "Expand sidebar",

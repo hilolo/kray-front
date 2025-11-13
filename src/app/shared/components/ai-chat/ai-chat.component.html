@@ -1,0 +1,177 @@
+<div class="flex h-full w-full">
+  <!-- Sidebar -->
+  @if (zShowSidebar()) {
+    <aside [class]="sidebarClasses()">
+      <!-- Sidebar Header -->
+      <div [class]="sidebarHeaderClasses()">
+        <button
+          z-button
+          zType="default"
+          zFull
+          (click)="createNewChat()"
+          class="bg-foreground text-background hover:bg-foreground/90"
+        >
+          <z-icon zType="plus" />
+          New Chat
+        </button>
+      </div>
+
+      <!-- Sidebar Content -->
+      <div [class]="sidebarContentClasses()">
+        <!-- Recent Chats Header -->
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-xs font-semibold uppercase text-muted-foreground tracking-wider">
+            Recent Chats
+          </h3>
+          <z-icon zType="search" zSize="sm" class="text-muted-foreground" />
+        </div>
+
+        <!-- Search Input -->
+        <div class="mb-4">
+          <input
+            z-input
+            type="text"
+            placeholder="Search chats..."
+            class="w-full"
+            [value]="searchQuery()"
+            (input)="searchQuery.set($any($event.target).value)"
+          />
+        </div>
+
+        <!-- Recent Chats List -->
+        <div class="space-y-2">
+          @for (chat of filteredRecentChats(); track chat.id) {
+            <button
+              (click)="selectChat(chat.id)"
+              class="w-full text-left p-3 rounded-lg hover:bg-muted transition-colors group"
+            >
+              <div class="flex items-start gap-3">
+                <z-icon zType="message-circle" zSize="sm" class="text-muted-foreground mt-0.5 shrink-0" />
+                <div class="flex-1 min-w-0">
+                  <div class="font-semibold text-sm truncate">{{ chat.title }}</div>
+                  <div class="text-xs text-muted-foreground truncate mt-1">{{ chat.preview }}</div>
+                </div>
+              </div>
+            </button>
+          } @empty {
+            <div class="text-sm text-muted-foreground text-center py-8">
+              No recent chats
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Remaining Questions -->
+      <div [class]="sidebarFooterClasses()">
+        <div class="p-4 rounded-lg bg-muted/50 border border-border">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-semibold uppercase text-muted-foreground tracking-wider">
+              Questions Remaining
+            </span>
+            <span class="text-lg font-bold" [class.text-primary]="zRemainingQuestions() > 0" [class.text-muted-foreground]="zRemainingQuestions() === 0">
+              {{ zRemainingQuestions() }}
+            </span>
+          </div>
+          @if (zRemainingQuestions() === 0) {
+            <div class="mt-2 text-xs text-destructive">
+              You've reached your daily limit
+            </div>
+          }
+        </div>
+      </div>
+    </aside>
+  }
+
+  <!-- Main Chat Area -->
+  <div [class]="mainClasses()">
+    <!-- Messages Container -->
+    <div [class]="messagesClasses()" #messagesContainer>
+      @if (messages().length === 0) {
+        <div class="flex items-center justify-center h-full">
+          <div class="text-center space-y-4 max-w-md">
+            <z-icon zType="message-circle" zSize="lg" class="mx-auto text-muted-foreground" />
+            <div class="space-y-2">
+              <h3 class="text-lg font-semibold">Start a conversation</h3>
+              <p class="text-sm text-muted-foreground">
+                Ask me anything and I'll help you out.
+              </p>
+            </div>
+          </div>
+        </div>
+      } @else {
+        @for (message of messages(); track message.id) {
+          <div [class]="messageClasses(message.role)()">
+            @if (message.role === 'assistant') {
+              <z-avatar
+                [zImage]="zAssistantAvatar() ? { fallback: 'AI', url: zAssistantAvatar()! } : { fallback: 'AI' }"
+                zSize="sm"
+                class="shrink-0"
+              />
+            }
+            <div [class]="messageContentClasses(message.role)()">
+              <div class="whitespace-pre-wrap">{{ message.content }}</div>
+              @if (message.timestamp) {
+                <div class="text-xs opacity-70 mt-2">
+                  {{ message.timestamp | date: 'short' }}
+                </div>
+              }
+            </div>
+            @if (message.role === 'user') {
+              <z-avatar
+                [zImage]="zUserAvatar() ? { fallback: 'U', url: zUserAvatar()! } : { fallback: 'U' }"
+                zSize="sm"
+                class="shrink-0"
+              />
+            }
+          </div>
+        }
+
+        @if (zLoading()) {
+          <div class="flex gap-4 justify-start">
+            <z-avatar
+              [zImage]="zAssistantAvatar() ? { fallback: 'AI', url: zAssistantAvatar()! } : { fallback: 'AI' }"
+              zSize="sm"
+              class="shrink-0"
+            />
+            <div [class]="messageContentClasses('assistant')()">
+              <div class="flex items-center gap-1">
+                <div class="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style="animation-delay: 0ms"></div>
+                <div class="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style="animation-delay: 150ms"></div>
+                <div class="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style="animation-delay: 300ms"></div>
+              </div>
+            </div>
+          </div>
+        }
+      }
+    </div>
+
+    <!-- Input Area -->
+    <div [class]="inputAreaClasses()">
+      <div [class]="inputContainerClasses()">
+        <input
+          z-input
+          type="text"
+          [placeholder]="zRemainingQuestions() === 0 ? 'Daily limit reached' : zPlaceholder()"
+          class="flex-1 border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent"
+          [value]="currentMessage()"
+          (input)="currentMessage.set($any($event.target).value)"
+          (keydown)="onKeyDown($event)"
+          [disabled]="zDisabled() || zLoading() || !canAskQuestion()"
+          #messageInput
+        />
+        <button
+          z-button
+          zType="default"
+          zSize="icon"
+          (click)="sendMessage()"
+          [disabled]="!currentMessage().trim() || zDisabled() || zLoading() || !canAskQuestion()"
+          class="shrink-0"
+          title="Send message"
+        >
+          <z-icon zType="send" />
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+

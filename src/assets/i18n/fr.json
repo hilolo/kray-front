@@ -44,7 +44,9 @@
     "locations": "Locations",
     "reservations": "Réservations",
     "inventaires": "Inventaires",
-    "etatDesLieux": "Etat des lieux"
+    "etatDesLieux": "Etat des lieux",
+    "aiChat": "Chat IA",
+    "fileManager": "Gestionnaire de fichiers"
   },
   "sidebar": {
     "expand": "Développer la barre latérale",

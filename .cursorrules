@@ -160,6 +160,50 @@
       - Easier collaboration between developers
       - Better separation of concerns
 
+## Copying from Front Projects - **CRITICAL RULE**
+
+When the user says "copy from front project" or similar instructions:
+
+1. **NEVER copy the design/UI/styling** - The design must always maintain the admintemplate design system
+2. **ALWAYS use existing shared components** - Use components from `src/app/shared/components/` instead of copying UI elements
+3. **ONLY adapt logic and services** - Extract and adapt:
+   - Business logic and functionality
+   - Service calls and API integrations
+   - Data models and interfaces
+   - Component behavior and state management
+4. **Maintain admintemplate patterns**:
+   - Use existing `Zard*` components for UI elements
+   - Follow the component structure and naming conventions
+   - Use existing layout components (`z-layout`, `z-content`, etc.)
+   - Apply admintemplate styling and variants
+5. **Service adaptation**:
+   - Adapt service calls to match existing service patterns in `src/app/shared/services/`
+   - Use existing API service structure
+   - Maintain consistency with existing interceptors and guards
+6. **What to copy**:
+   - ✅ Logic and functionality
+   - ✅ Service methods and API calls (adapted to project structure)
+   - ✅ Data models (adapted to project naming)
+   - ✅ Business rules and validations
+7. **What NOT to copy**:
+   - ❌ HTML templates and UI structure
+   - ❌ CSS classes and styling
+   - ❌ Component design and layout
+   - ❌ Visual elements and UI components
+
+8. **Creating missing components**:
+   - If a component/design doesn't exist in `src/app/shared/components/`, **CREATE IT** using admintemplate's design system
+   - **NEVER** copy the front project's design - build it from scratch using:
+     - Existing `Zard*` shared components as building blocks
+     - Admintemplate styling patterns and variants
+     - shadcn/ui design principles
+     - Tailwind CSS utility classes from the project
+   - Compose new components using existing shared components (buttons, cards, inputs, etc.)
+   - Follow all component development guidelines (standalone, signals, cva variants, etc.)
+   - The new component should look and feel like it belongs in admintemplate, not the front project
+
+**Summary**: When copying from another project, extract the logic and adapt it to use admintemplate's design system and shared components. Never bring over the visual design. If a component doesn't exist, create it using admintemplate's patterns and shared components, not the front project's design.
+
 ## Important Notes
 
 - **NEVER** create components that duplicate existing functionality

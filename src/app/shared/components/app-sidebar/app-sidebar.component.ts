@@ -57,6 +57,8 @@ export class AppSidebarComponent implements OnDestroy {
     { route: '/inventaires', label: 'Inventaires', labelKey: 'menu.inventaires', icon: 'folder' },
     { route: '/etat-des-lieux', label: 'Etat des lieux', labelKey: 'menu.etatDesLieux', icon: 'clipboard' },
     { route: '/contact', label: 'Contact', labelKey: 'menu.contact', icon: 'user' },
+    { route: '/ai-chat', label: 'AI Chat', labelKey: 'menu.aiChat', icon: 'sparkles' },
+    { route: '/file-manager', label: 'File Manager', labelKey: 'menu.fileManager', icon: 'folder' },
     { route: '/settings', label: 'Settings', labelKey: 'menu.settings', icon: 'settings' },
   ]);
   readonly zUserName = input<string>('');

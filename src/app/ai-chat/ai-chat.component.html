@@ -1,0 +1,18 @@
+<z-page zTitle="AI Chat">
+  <div class="h-[calc(100vh-200px)] w-full">
+    <z-ai-chat
+      [zMessages]="messages()"
+      [zRecentChats]="recentChats()"
+      [zLoading]="isLoading()"
+      [zPlaceholder]="'Ask me anything...'"
+      [zRemainingQuestions]="remainingQuestions()"
+      [zMaxQuestionsPerDay]="maxQuestionsPerDay"
+      (messageSent)="onMessageSent($event)"
+      (chatSelected)="onChatSelected($event)"
+      (newChatClicked)="onNewChat()"
+      zSize="full"
+      class="w-full"
+    />
+  </div>
+</z-page>
+

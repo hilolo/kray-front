@@ -1,0 +1,158 @@
+<z-page zTitle="File Manager">
+  <div class="space-y-6">
+      <!-- Header with Search and Actions -->
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <!-- Search Input -->
+        <div class="relative flex-1 max-w-md">
+          <z-icon zType="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" zSize="sm" />
+          <input
+            z-input
+            type="text"
+            placeholder="Search files and folders..."
+            [value]="searchTerm()"
+            (input)="onSearchChange($event)"
+            class="pl-9 w-full"
+          />
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="flex items-center gap-2">
+          <z-button zType="ghost" zSize="default" (click)="selectAllFiles()">
+            Select All
+          </z-button>
+          @if (hasSelectedFiles()) {
+            <z-button zType="ghost" zSize="default" (click)="deselectAllFiles()">
+              Deselect All
+            </z-button>
+          }
+          <z-button zType="default" zSize="default" (click)="uploadFile()">
+            <z-icon zType="upload" class="mr-2" />
+            Upload File
+          </z-button>
+          <z-button zType="default" zSize="default" (click)="createNewFolder()">
+            <z-icon zType="folder-plus" class="mr-2" />
+            New Folder
+          </z-button>
+          @if (hasSelectedFiles()) {
+            <z-button zType="destructive" zSize="default" (click)="deleteSelectedFiles()">
+              <z-icon zType="x" class="mr-2" />
+              Delete ({{ selectedFileIds().size }})
+            </z-button>
+          }
+        </div>
+      </div>
+
+      <!-- Current Path Breadcrumb -->
+      <div class="flex items-center gap-2">
+        <z-breadcrumb>
+          <z-breadcrumb-list>
+            @for (segment of pathSegments(); track segment.route; let i = $index) {
+              <z-breadcrumb-item>
+                @if (i === pathSegments().length - 1) {
+                  <z-breadcrumb-page>
+                    {{ segment.label }}
+                  </z-breadcrumb-page>
+                } @else {
+                  <z-breadcrumb-link [zLink]="segment.route">
+                    {{ segment.label }}
+                  </z-breadcrumb-link>
+                }
+              </z-breadcrumb-item>
+              @if (i < pathSegments().length - 1) {
+                <z-breadcrumb-separator />
+              }
+            }
+          </z-breadcrumb-list>
+        </z-breadcrumb>
+      </div>
+
+      <!-- Folders Section -->
+      @if (filteredFolders().length > 0) {
+        <div class="space-y-4">
+          <h2 class="text-lg font-semibold">Folders</h2>
+          <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
+            @for (folder of filteredFolders(); track folder.id) {
+              <z-card 
+                class="cursor-pointer hover:shadow-md transition-shadow relative group"
+                [class.border-primary]="selectedItem()?.id === folder.id && selectedItem()?.type === 'folder'"
+                (click)="selectItem(folder)"
+              >
+                <div class="flex flex-col items-center gap-2 p-3">
+                  <!-- Info Icon -->
+                  <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <z-icon zType="info" class="text-primary" zSize="sm" />
+                  </div>
+                  
+                  <!-- Folder Icon -->
+                  <z-icon zType="folder" class="text-muted-foreground !w-10 !h-10" zSize="xl" />
+                  
+                  <!-- Folder Name -->
+                  <div class="text-center w-full">
+                    <h3 class="font-medium text-xs truncate">{{ folder.name }}</h3>
+                    <p class="text-[10px] text-muted-foreground mt-0.5">{{ folder.fileCount }} files</p>
+                  </div>
+                </div>
+              </z-card>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Files Section -->
+      @if (filteredFiles().length > 0) {
+        <div class="space-y-4">
+          <h2 class="text-lg font-semibold">Files</h2>
+          <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
+            @for (file of filteredFiles(); track file.id) {
+              <z-card 
+                class="hover:shadow-md transition-shadow relative"
+                [class.border-primary]="isFileSelected(file.id)"
+              >
+                <div class="flex flex-col items-center gap-2 p-3">
+                  <!-- Checkbox -->
+                  <div class="absolute top-2 left-2 z-10" (click)="$event.stopPropagation()">
+                    <z-checkbox
+                      [ngModel]="isFileSelected(file.id)"
+                      (checkChange)="toggleFileSelection(file.id, $event)"
+                    />
+                  </div>
+                  
+                  <!-- File Icon with Extension Badge -->
+                  <div class="relative cursor-pointer flex items-center justify-center mb-2" (click)="selectItem(file)">
+                    <div class="relative">
+                      <z-icon [zType]="getFileIconType(file.extension)" class="text-muted-foreground !w-12 !h-12" zSize="xl" />
+                      <div 
+                        class="absolute -bottom-1 -right-1 px-1.5 py-0.5 text-[10px] font-medium text-white rounded shadow-sm min-w-[28px] text-center z-10"
+                        [class]="getExtensionColor(file.extension)"
+                      >
+                        {{ file.extension.toUpperCase() }}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- File Name -->
+                  <div class="text-center w-full cursor-pointer" (click)="selectItem(file)">
+                    <p class="text-xs font-medium truncate" [title]="file.name">{{ file.name }}</p>
+                  </div>
+                </div>
+              </z-card>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Empty State -->
+      @if (filteredFolders().length === 0 && filteredFiles().length === 0) {
+        <div class="flex flex-col items-center justify-center py-12 text-center">
+          <z-icon zType="folder" class="text-muted-foreground mb-4" zSize="lg" />
+          <h3 class="text-lg font-semibold mb-2">
+            {{ searchTerm() ? 'No results found' : 'No files or folders' }}
+          </h3>
+          <p class="text-sm text-muted-foreground">
+            {{ searchTerm() ? 'Try adjusting your search terms' : 'This folder is empty' }}
+          </p>
+        </div>
+      }
+    </div>
+</z-page>
+
