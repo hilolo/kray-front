@@ -52,6 +52,7 @@ export class ZardDialogOptions<T, U> {
 @Component({
   selector: 'z-dialog',
   exportAs: 'zDialog',
+  standalone: true,
   imports: [OverlayModule, PortalModule, ZardButtonComponent, ZardIconComponent],
   template: `
     @if (config.zClosable || config.zClosable === undefined) {
@@ -93,7 +94,7 @@ export class ZardDialogOptions<T, U> {
         }
 
         @if (config.zOkText !== null) {
-          <button data-testid="z-ok-button" z-button [zType]="config.zOkDestructive ? 'destructive' : 'default'" [disabled]="config.zOkDisabled" (click)="onOkClick()">
+          <button data-testid="z-ok-button" z-button [zType]="config.zOkDestructive ? 'destructive' : 'default'" [disabled]="config.zOkDisabled ?? false" (click)="onOkClick()">
             @if (config.zOkIcon) {
               <z-icon [zType]="config.zOkIcon" />
             }

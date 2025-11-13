@@ -15,18 +15,13 @@ import { ZardDividerComponent } from '@shared/components/divider/divider.compone
 import { AuthService } from '@shared/services/auth.service';
 import { UserService } from '@shared/services/user.service';
 import { ZardAlertDialogService } from '@shared/components/alert-dialog/alert-dialog.service';
+import { ZardDialogService } from '@shared/components/dialog/dialog.service';
+import { PermissionsDialogComponent } from '@shared/components/permissions-dialog/permissions-dialog.component';
 import { Subject, takeUntil } from 'rxjs';
 import { toast } from 'ngx-sonner';
+import type { TeamMember } from '@shared/models/team-member.model';
 
 type SettingsSection = 'account' | 'security' | 'plan-billing' | 'team' | 'application';
-
-interface TeamMember {
-  id: string;
-  name: string;
-  email: string;
-  role: 'Administrator' | 'User';
-  permissions: string;
-}
 
 @Component({
   selector: 'app-settings',
@@ -53,6 +48,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly userService = inject(UserService);
   private readonly alertDialogService = inject(ZardAlertDialogService);
+  private readonly dialogService = inject(ZardDialogService);
   private readonly viewContainerRef = inject(ViewContainerRef);
   private readonly destroy$ = new Subject<void>();
 
@@ -135,22 +131,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
   isUpdatingPassword = signal(false);
 
   // Team Members
-  teamMembers = signal<TeamMember[]>([
-    {
-      id: '1',
-      name: 'No name',
-      email: 'admin@admin.com',
-      role: 'Administrator',
-      permissions: 'No permissions set.',
-    },
-    {
-      id: '2',
-      name: 'No name',
-      email: 'user@boilerplate.com',
-      role: 'User',
-      permissions: 'No permissions set.',
-    },
-  ]);
+                                      teamMembers = signal<TeamMember[]>([]);
+  isLoadingTeamMembers = signal(false);
 
   // Application Settings
   appSettings = {
@@ -219,6 +201,48 @@ export class SettingsComponent implements OnInit, OnDestroy {
         ice: company.ice || '',
       };
     }
+
+    // Load team members
+    this.loadTeamMembers();
+  }
+
+  /**
+   * Load team members from API
+   */
+  loadTeamMembers(): void {
+    this.isLoadingTeamMembers.set(true);
+    this.userService.getTeamMembers()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (members) => {
+          this.teamMembers.set(members);
+          this.isLoadingTeamMembers.set(false);
+        },
+        error: (error) => {
+          console.error('Error loading team members:', error);
+          this.isLoadingTeamMembers.set(false);
+          toast.error('Failed to load team members');
+        }
+      });
+  }
+
+  /**
+   * Open permissions dialog for a team member
+   */
+  openPermissionsDialog(member: TeamMember): void {
+    const dialogRef = this.dialogService.create({
+      zContent: PermissionsDialogComponent,
+      zTitle: `Permissions - ${member.name || member.email}`,
+      zWidth: '800px',
+      zData: { userId: member.id },
+      zViewContainerRef: this.viewContainerRef,
+      zOkText: 'Save',
+      zCancelText: 'Cancel',
+      zOnOk: () => {
+        // Handle save if needed
+        dialogRef.close();
+      },
+    });
   }
 
   // Property Settings

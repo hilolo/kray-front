@@ -3,6 +3,8 @@ import { Observable, tap } from 'rxjs';
 import { AuthService } from './auth.service';
 import { ApiService } from './api.service';
 import type { User } from '../models/user.model';
+import type { TeamMember } from '../models/team-member.model';
+import type { UserPermissions } from '../models/user-permissions.model';
 
 /**
  * User service
@@ -85,6 +87,22 @@ export class UserService {
    */
   updatePassword(passwordData: { currentPassword: string; newPassword: string; confirmPassword: string }): Observable<any> {
     return this.apiService.patch('api/user/updatePassword', passwordData);
+  }
+
+  /**
+   * Get team members
+   * GET api/user/team
+   */
+  getTeamMembers(): Observable<TeamMember[]> {
+    return this.apiService.get<TeamMember[]>('api/user/team');
+  }
+
+  /**
+   * Get user permissions
+   * GET api/userpermissions/{userId}
+   */
+  getUserPermissions(userId: string): Observable<UserPermissions> {
+    return this.apiService.get<UserPermissions>(`api/userpermissions/${userId}`);
   }
 }
 
