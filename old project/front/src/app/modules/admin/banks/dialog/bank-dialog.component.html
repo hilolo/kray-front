@@ -1,0 +1,238 @@
+<div class="flex flex-col max-h-screen">
+    <!-- Header -->
+    <div class="flex items-center justify-between px-6 py-6 border-b">
+        <h2 class="text-2xl font-semibold">{{ getTitle() }}</h2>
+        <button mat-icon-button (click)="close()">
+            <mat-icon [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
+        </button>
+    </div>
+
+    <!-- Content -->
+    <div class="flex-auto overflow-y-auto p-6">
+        <ng-container *ngIf="mode === BankDialogMode.VIEW">
+            <!-- View Mode - Show all details including contact info -->
+            <div class="space-y-6">
+                <!-- Bank Information -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-4 text-blue-600 dark:text-blue-400">Bank Information</h3>
+                    
+                    <!-- Bank Name -->
+                    <div class="mb-4">
+                        <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Bank Name</div>
+                        <div class="text-base text-gray-900 dark:text-white">{{ bank.bankName || 'Not specified' }}</div>
+                    </div>
+                    
+                    <!-- RIB -->
+                    <div class="mb-4">
+                        <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">RIB</div>
+                        <div class="text-base font-mono text-gray-900 dark:text-white">{{ bank.rib }}</div>
+                    </div>
+
+                    <!-- IBAN -->
+                    <div *ngIf="bank.iban" class="mb-4">
+                        <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">IBAN</div>
+                        <div class="text-base font-mono text-gray-900 dark:text-white">{{ bank.iban }}</div>
+                    </div>
+
+                    <!-- SWIFT -->
+                    <div *ngIf="bank.swift" class="mb-4">
+                        <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">SWIFT Code</div>
+                        <div class="text-base font-mono text-gray-900 dark:text-white">{{ bank.swift }}</div>
+                    </div>
+
+                    <!-- Created/Modified Dates -->
+                    <div class="grid grid-cols-2 gap-4 mt-4">
+                        <div>
+                            <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Created On</div>
+                            <div class="text-sm text-gray-700 dark:text-gray-300">{{ bank.createdOn | date:'medium' }}</div>
+                        </div>
+                        <div *ngIf="bank.lastModifiedOn">
+                            <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Last Modified</div>
+                            <div class="text-sm text-gray-700 dark:text-gray-300">{{ bank.lastModifiedOn | date:'medium' }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Information -->
+                <div *ngIf="bank.contact" class="border-t pt-6">
+                    <h3 class="text-lg font-semibold mb-4 text-blue-600 dark:text-blue-400">Account Holder Information</h3>
+                    
+                    <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 space-y-3">
+                        <!-- Contact Name -->
+                        <div class="flex items-center gap-4">
+                            <mat-icon class="icon-size-6 text-blue-600 dark:text-blue-400" [svgIcon]="'heroicons_solid:user'"></mat-icon>
+                            <div class="flex-1">
+                                <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Name</div>
+                                <div class="text-base font-medium text-gray-900 dark:text-white">
+                                    {{ bank.contact.isACompany ? bank.contact.companyName : (bank.contact.firstName + ' ' + bank.contact.lastName) }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contact Identifier -->
+                        <div class="flex items-center gap-4">
+                            <mat-icon class="icon-size-6 text-gray-600 dark:text-gray-400" [svgIcon]="'heroicons_solid:identification'"></mat-icon>
+                            <div class="flex-1">
+                                <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Identifier</div>
+                                <div class="text-base text-gray-900 dark:text-white">{{ bank.contact.identifier }}</div>
+                            </div>
+                        </div>
+
+                        <!-- Contact Email -->
+                        <div *ngIf="bank.contact.email" class="flex items-center gap-4">
+                            <mat-icon class="icon-size-6 text-gray-600 dark:text-gray-400" [svgIcon]="'heroicons_solid:envelope'"></mat-icon>
+                            <div class="flex-1">
+                                <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Email</div>
+                                <div class="text-base text-gray-900 dark:text-white">{{ bank.contact.email }}</div>
+                            </div>
+                        </div>
+
+                        <!-- Contact Phone -->
+                        <div *ngIf="bank.contact.phones && bank.contact.phones.length > 0" class="flex items-center gap-4">
+                            <mat-icon class="icon-size-6 text-gray-600 dark:text-gray-400" [svgIcon]="'heroicons_solid:phone'"></mat-icon>
+                            <div class="flex-1">
+                                <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Phone</div>
+                                <div class="text-base text-gray-900 dark:text-white">{{ bank.contact.phones[0] }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </ng-container>
+
+        <ng-container *ngIf="mode !== BankDialogMode.VIEW">
+            <!-- Add/Edit Mode - Show form -->
+            <form [formGroup]="bankForm" class="space-y-6">
+                <!-- Contact Selection with Custom Searchable Dropdown -->
+                <div class="relative w-full">
+                    <mat-form-field [ngClass]="formFieldHelpers" class="w-full">
+                        <mat-label>Account Holder (Contact)</mat-label>
+                        <input matInput 
+                               type="text"
+                               [value]="isEditingContact ? contactSearchTerm : getSelectedContactDisplay()"
+                               placeholder="Search contacts..."
+                               (input)="onContactInput($event)"
+                               (focus)="onContactFocus()"
+                               (blur)="onContactBlur()"
+                               autocomplete="off"
+                               required>
+                        <mat-icon matPrefix [svgIcon]="'heroicons_solid:user'" class="icon-size-5"></mat-icon>
+                        <button mat-icon-button matSuffix 
+                                *ngIf="selectedContactId"
+                                (click)="clearContactSelection()"
+                                type="button">
+                            <mat-icon [svgIcon]="'heroicons_outline:x-mark'" class="icon-size-5"></mat-icon>
+                        </button>
+                        <mat-error *ngIf="bankForm.get('contactId').hasError('required')">
+                            Contact is required
+                        </mat-error>
+                    </mat-form-field>
+                    
+                    <!-- Custom Dropdown -->
+                    <div *ngIf="showContactDropdown && !loadingContacts" 
+                         class="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-80 overflow-y-auto">
+                        
+                        <!-- Loading State -->
+                        <div *ngIf="loadingContacts" class="px-4 py-3 flex items-center gap-2">
+                            <mat-spinner diameter="20"></mat-spinner>
+                            <span class="text-gray-600 dark:text-gray-400">Loading contacts...</span>
+                        </div>
+                        
+                        <!-- No Results -->
+                        <div *ngIf="!loadingContacts && filteredContacts.length === 0" class="px-4 py-6 text-center">
+                            <mat-icon class="icon-size-12 text-gray-400" [svgIcon]="'heroicons_outline:magnifying-glass'"></mat-icon>
+                            <p class="mt-2 text-gray-600 dark:text-gray-400">No contacts found</p>
+                        </div>
+                        
+                        <!-- Contacts List -->
+                        <div *ngIf="!loadingContacts && filteredContacts.length > 0" class="py-1">
+                            <button *ngFor="let contact of filteredContacts" 
+                                    type="button"
+                                    (click)="selectContact(contact.id)"
+                                    class="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 flex flex-col gap-1">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-medium text-gray-900 dark:text-white">
+                                        {{ getContactDisplayName(contact) }}
+                                    </span>
+                                    <span *ngIf="contact.isACompany" class="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded">
+                                        Company
+                                    </span>
+                                </div>
+                                <span class="text-xs text-gray-600 dark:text-gray-400">{{ contact.identifier }}</span>
+                                <span *ngIf="contact.email" class="text-xs text-gray-500 dark:text-gray-500">{{ contact.email }}</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Loading Spinner Overlay -->
+                    <div *ngIf="loadingContacts" 
+                         class="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg px-4 py-3">
+                        <div class="flex items-center gap-2">
+                            <mat-spinner diameter="20"></mat-spinner>
+                            <span class="text-gray-600 dark:text-gray-400">Loading contacts...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bank Name -->
+                <mat-form-field [ngClass]="formFieldHelpers" class="w-full">
+                    <mat-label>Bank Name</mat-label>
+                    <input matInput formControlName="bankName" placeholder="Enter bank name (optional)" />
+                    <mat-icon matPrefix [svgIcon]="'heroicons_solid:building-library'"></mat-icon>
+                    <mat-error *ngIf="bankForm.get('bankName').hasError('maxlength')">
+                        Bank name cannot exceed 200 characters
+                    </mat-error>
+                </mat-form-field>
+
+                <!-- RIB -->
+                <mat-form-field [ngClass]="formFieldHelpers" class="w-full">
+                    <mat-label>RIB</mat-label>
+                    <input matInput formControlName="rib" placeholder="Enter RIB number" required />
+                    <mat-icon matPrefix [svgIcon]="'heroicons_solid:banknotes'"></mat-icon>
+                    <mat-error *ngIf="bankForm.get('rib').hasError('required')">
+                        RIB is required
+                    </mat-error>
+                    <mat-error *ngIf="bankForm.get('rib').hasError('maxlength')">
+                        RIB cannot exceed 100 characters
+                    </mat-error>
+                </mat-form-field>
+
+                <!-- IBAN -->
+                <mat-form-field [ngClass]="formFieldHelpers" class="w-full">
+                    <mat-label>IBAN</mat-label>
+                    <input matInput formControlName="iban" placeholder="Enter IBAN (optional)" />
+                    <mat-icon matPrefix [svgIcon]="'heroicons_solid:credit-card'"></mat-icon>
+                    <mat-error *ngIf="bankForm.get('iban').hasError('maxlength')">
+                        IBAN cannot exceed 100 characters
+                    </mat-error>
+                </mat-form-field>
+
+                <!-- SWIFT -->
+                <mat-form-field [ngClass]="formFieldHelpers" class="w-full">
+                    <mat-label>SWIFT Code</mat-label>
+                    <input matInput formControlName="swift" placeholder="Enter SWIFT code (optional)" />
+                    <mat-icon matPrefix [svgIcon]="'heroicons_solid:globe-alt'"></mat-icon>
+                    <mat-error *ngIf="bankForm.get('swift').hasError('maxlength')">
+                        SWIFT code cannot exceed 50 characters
+                    </mat-error>
+                </mat-form-field>
+            </form>
+        </ng-container>
+    </div>
+
+    <!-- Footer -->
+    <div class="flex items-center justify-end gap-4 px-6 py-6 border-t bg-gray-50 dark:bg-transparent">
+        <button mat-button (click)="close()" [disabled]="isLoading">
+            <span>{{ mode === BankDialogMode.VIEW ? 'Close' : 'Cancel' }}</span>
+        </button>
+        <button *ngIf="mode !== BankDialogMode.VIEW" 
+                mat-flat-button 
+                [color]="'primary'" 
+                (click)="save()"
+                [disabled]="isLoading || bankForm.invalid">
+            <mat-spinner *ngIf="isLoading" diameter="20" class="mr-2"></mat-spinner>
+            <span>{{ mode === BankDialogMode.ADD ? 'Create' : 'Update' }}</span>
+        </button>
+    </div>
+</div>
+

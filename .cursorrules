@@ -162,6 +162,8 @@
 
 ## Copying from Front Projects - **CRITICAL RULE**
 
+**Important**: The front app is located in the `old project/front/` folder at the root of the workspace.
+
 When the user says "copy from front project" or similar instructions:
 
 1. **NEVER copy the design/UI/styling** - The design must always maintain the admintemplate design system

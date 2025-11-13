@@ -1,0 +1,248 @@
+<div class="tasks-page absolute inset-0 flex flex-col overflow-hidden">
+
+    <div class="tasks-body flex flex-col flex-auto bg-card dark:bg-transparent">
+
+        <div class="tasks-header flex flex-col gap-6 py-6 px-6 md:px-8 border-b">
+            <div class="flex flex-col gap-5">
+                <div class="flex items-start justify-between gap-4">
+                    <!-- Left side: Title, Month navigation and filters -->
+                    <div class="flex flex-col gap-5 flex-1">
+                        <div class="text-4xl font-extrabold leading-tight tracking-tight">Tasks</div>
+
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                            <div class="flex flex-wrap items-center gap-3 text-secondary">
+                                <button mat-icon-button matTooltip="Previous month" (click)="previousMonth()">
+                                    <mat-icon [svgIcon]="'heroicons_outline:chevron-left'"></mat-icon>
+                                </button>
+                                <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800">
+                                    <mat-icon class="icon-size-4 text-primary" [svgIcon]="'heroicons_outline:calendar-days'"></mat-icon>
+                                    <span class="font-medium">{{ currentMonthLabel }}</span>
+                                </div>
+                                <button mat-icon-button matTooltip="Next month" (click)="nextMonth()">
+                                    <mat-icon [svgIcon]="'heroicons_outline:chevron-right'"></mat-icon>
+                                </button>
+                            </div>
+
+                            <button mat-flat-button color="primary" (click)="openCreateTaskDialog()">
+                                <mat-icon [svgIcon]="'heroicons_outline:plus'"></mat-icon>
+                                <span class="ml-2">Add Task</span>
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div class="relative w-full">
+                                <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+                                    <mat-label>Assigned User</mat-label>
+                                    <input matInput type="text"
+                                           [value]="isEditingUser ? userSearchTerm : getSelectedUserName()"
+                                           (input)="onUserInput($event)"
+                                           (focus)="onUserFocus()"
+                                           (blur)="onUserBlur()"
+                                           placeholder="Search team members..."
+                                           autocomplete="off">
+                                    <mat-icon matPrefix class="icon-size-5" [svgIcon]="'heroicons_outline:user-circle'"></mat-icon>
+                                    <button mat-icon-button matSuffix *ngIf="selectedUserId"
+                                            (mousedown)="clearUserFilter(); $event.preventDefault(); $event.stopPropagation()"
+                                            tabindex="-1">
+                                        <mat-icon [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
+                                    </button>
+                                </mat-form-field>
+
+                                <div *ngIf="showUserDropdown"
+                                     class="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-72 overflow-y-auto">
+                                    <div class="px-4 py-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 border-b border-gray-200 dark:border-gray-700"
+                                         (mousedown)="selectUser(null)">
+                                        <div class="font-medium text-gray-900 dark:text-white">All Users</div>
+                                    </div>
+                                    <div *ngFor="let member of filteredTeamMembers"
+                                         class="px-4 py-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 border-b border-gray-200 dark:border-gray-700 last:border-b-0"
+                                         (mousedown)="selectUser(member.id)">
+                                        <div class="font-medium text-gray-900 dark:text-white">{{ member.name }}</div>
+                                        <div class="text-sm text-secondary" *ngIf="member.email">{{ member.email }}</div>
+                                    </div>
+                                    <div *ngIf="filteredTeamMembers.length === 0" class="px-4 py-3 text-secondary flex items-center gap-2">
+                                        <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:magnifying-glass'"></mat-icon>
+                                        <span>No users found</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="relative w-full">
+                                <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+                                    <mat-label>Contact</mat-label>
+                                    <input matInput type="text"
+                                           [value]="isEditingContact ? contactSearchTerm : getSelectedContactName()"
+                                           (input)="onContactInput($event)"
+                                           (focus)="onContactFocus()"
+                                           (blur)="onContactBlur()"
+                                           placeholder="Search contacts..."
+                                           autocomplete="off">
+                                    <mat-icon matPrefix class="icon-size-5" [svgIcon]="'heroicons_outline:user-group'"></mat-icon>
+                                    <button mat-icon-button matSuffix *ngIf="selectedContactId"
+                                            (mousedown)="clearContactFilter(); $event.preventDefault(); $event.stopPropagation()"
+                                            tabindex="-1">
+                                        <mat-icon [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
+                                    </button>
+                                </mat-form-field>
+
+                                <div *ngIf="showContactDropdown"
+                                     class="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-72 overflow-y-auto">
+                                    <div class="px-4 py-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 border-b border-gray-200 dark:border-gray-700"
+                                         (mousedown)="selectContact(null)">
+                                        <div class="font-medium text-gray-900 dark:text-white">All Contacts</div>
+                                    </div>
+                                    <div *ngFor="let contact of filteredContacts"
+                                         class="px-4 py-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 border-b border-gray-200 dark:border-gray-700 last:border-b-0"
+                                         (mousedown)="selectContact(contact.id)">
+                                        <div class="font-medium text-gray-900 dark:text-white">
+                                            {{ contact.isACompany ? contact.companyName : (contact.firstName + ' ' + contact.lastName) }}
+                                        </div>
+                                        <div class="text-sm text-secondary" *ngIf="contact.email">{{ contact.email }}</div>
+                                    </div>
+                                    <div *ngIf="filteredContacts.length === 0" class="px-4 py-3 text-secondary flex items-center gap-2">
+                                        <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:magnifying-glass'"></mat-icon>
+                                        <span>No contacts found</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="relative w-full">
+                                <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+                                    <mat-label>Property</mat-label>
+                                    <input matInput type="text"
+                                           [value]="isEditingProperty ? propertySearchTerm : getSelectedPropertyName()"
+                                           (input)="onPropertyInput($event)"
+                                           (focus)="onPropertyFocus()"
+                                           (blur)="onPropertyBlur()"
+                                           placeholder="Search properties..."
+                                           autocomplete="off">
+                                    <mat-icon matPrefix class="icon-size-5" [svgIcon]="'heroicons_outline:building-office-2'"></mat-icon>
+                                    <button mat-icon-button matSuffix *ngIf="selectedPropertyId"
+                                            (mousedown)="clearPropertyFilter(); $event.preventDefault(); $event.stopPropagation()"
+                                            tabindex="-1">
+                                        <mat-icon [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
+                                    </button>
+                                </mat-form-field>
+
+                                <div *ngIf="showPropertyDropdown"
+                                     class="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-72 overflow-y-auto">
+                                    <div class="px-4 py-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 border-b border-gray-200 dark:border-gray-700"
+                                         (mousedown)="selectProperty(null)">
+                                        <div class="font-medium text-gray-900 dark:text-white">All Properties</div>
+                                    </div>
+                                    <div *ngFor="let property of filteredProperties"
+                                         class="px-4 py-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 border-b border-gray-200 dark:border-gray-700 last-border-b-0"
+                                         (mousedown)="selectProperty(property.id)">
+                                        <div class="font-medium text-gray-900 dark:text-white">
+                                            {{ property.name || property.identifier || 'Unnamed property' }}
+                                        </div>
+                                        <div class="text-sm text-secondary" *ngIf="property.address">{{ property.address }}</div>
+                                    </div>
+                                    <div *ngIf="filteredProperties.length === 0" class="px-4 py-3 text-secondary flex items-center gap-2">
+                                        <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:magnifying-glass'"></mat-icon>
+                                        <span>No properties found</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex-auto overflow-hidden relative">
+            <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+
+            <div class="h-full overflow-auto px-4 py-6 md:px-8 md:py-8">
+                <!-- Group all drop lists together so tasks can be transferred between columns -->
+                <div class="kanban-grid" cdkDropListGroup>
+                    <ng-container *ngFor="let column of columns">
+                        <div class="kanban-column">
+                            <div class="column-header">
+                                <div class="flex items-center gap-3">
+                                    <div class="icon-container" [ngClass]="getIconContainerClass(column.status)">
+                                        <mat-icon class="icon-size-5 text-white" [svgIcon]="column.icon"></mat-icon>
+                                    </div>
+                                    <div>
+                                        <div class="column-title">{{ column.title }}</div>
+                                        <div class="column-description">{{ column.description }}</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <div class="count-badge">{{ column.tasks.length }}</div>
+                                </div>
+                            </div>
+
+                            <div class="column-body" 
+                                 cdkDropList 
+                                 [cdkDropListData]="column.tasks" 
+                                 (cdkDropListDropped)="drop($event, column.status)">
+                                <div *ngIf="column.tasks.length === 0" class="empty-state">
+                                    <mat-icon [svgIcon]="'heroicons_outline:inbox-stack'"></mat-icon>
+                                    <span>No tasks here yet</span>
+                                </div>
+
+                                <div class="task-card" 
+                                     *ngFor="let task of column.tasks; trackBy: trackByTaskId" 
+                                     cdkDrag
+                                     [cdkDragData]="task">
+                                    <div class="task-card-header">
+                                        <div class="task-title line-clamp-2">{{ task.title }}</div>
+                                    </div>
+
+                                    <div class="task-meta">
+                                        <div class="badge" [ngClass]="'priority-' + task.priority">
+                                            {{ getTaskPriorityLabel(task.priority) }}
+                                        </div>
+                                        <div class="date-chip">
+                                            <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:calendar'"></mat-icon>
+                                            <span>{{ task.scheduledDateTime | date:'MMM yyyy' }}</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="task-details">
+                                        <div class="detail-row" *ngIf="task.assignedUserName">
+                                            <mat-icon class="icon-size-5 text-primary" [svgIcon]="'heroicons_outline:user-circle'"></mat-icon>
+                                            <span>{{ task.assignedUserName }}</span>
+                                        </div>
+                                        <div class="detail-row" *ngIf="task.contactName">
+                                            <mat-icon class="icon-size-5 text-sky-500" [svgIcon]="'heroicons_outline:user-group'"></mat-icon>
+                                            <span>{{ task.contactName }}</span>
+                                        </div>
+                                        <div class="detail-row" *ngIf="task.propertyName">
+                                            <mat-icon class="icon-size-5 text-amber-500" [svgIcon]="'heroicons_outline:building-office-2'"></mat-icon>
+                                            <span>{{ task.propertyName }}</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="task-description" *ngIf="task.description">
+                                        {{ task.description }}
+                                    </div>
+
+                                    <div class="task-footer">
+                                        <div class="flex items-center gap-2">
+                                            <button mat-stroked-button color="primary" (click)="openEditTaskDialog(task); $event.stopPropagation()">
+                                                <mat-icon class="icon-size-4 mr-1" [svgIcon]="'heroicons_outline:pencil-square'"></mat-icon>
+                                                Edit
+                                            </button>
+                                            <button mat-icon-button color="warn" (click)="deleteTask(task); $event.stopPropagation()">
+                                                <mat-icon [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </ng-container>
+                </div>
+
+                <div *ngIf="!isLoading && filteredTasks.length === 0" class="empty-kanban">
+                    <mat-icon [svgIcon]="'heroicons_outline:clipboard-document'"></mat-icon>
+                    <div class="text-xl font-semibold">No tasks scheduled for {{ currentMonthLabel }}</div>
+                    <p class="text-secondary mt-2">Use the "Add Task" button to create a task and assign it to a team member.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

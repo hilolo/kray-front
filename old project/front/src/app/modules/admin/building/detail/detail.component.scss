@@ -1,0 +1,51 @@
+building-detail {
+    position: relative;
+    display: flex;
+    flex: 1 1 auto;
+    width: 100%;
+}
+
+// Big + button styling - targeting by size classes
+:host ::ng-deep .mat-mdc-fab.mat-primary {
+    transition: all 0.3s ease;
+    
+    &:hover:not(:disabled) {
+        transform: scale(1.1);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    }
+    
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+}
+
+// Line clamp utilities
+.line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+}
+
+.line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+}
+
+// Button styling improvements
+:host ::ng-deep {
+    // Manage property buttons with better spacing and hover effects
+    .mat-mdc-button,
+    .mat-mdc-outlined-button,
+    .mat-mdc-raised-button {
+        &.w-full {
+            justify-content: center;
+        }
+    }
+}
+

@@ -1,0 +1,257 @@
+<div class="w-full max-w-3xl">
+
+    <!-- User Information Form -->
+    <form [formGroup]="userForm" [class.opacity-50]="isSaving" [class.pointer-events-none]="isSaving">
+        <!-- User Section -->
+        <div class="w-full">
+            <div class="text-xl">User Information</div>
+            <div class="text-secondary">Manage your personal profile information</div>
+        </div>
+        
+        <div class="grid sm:grid-cols-4 gap-4 w-full mt-6">
+            <!-- Avatar -->
+            <div class="sm:col-span-4">
+                <div class="flex justify-center">
+                    <div class="relative">
+                        <img
+                            class="w-24 h-24 rounded-full object-cover"
+                            [class.opacity-50]="isAvatarUploading"
+                            [src]="getAvatarSrc()"
+                            alt="Avatar">
+                        
+                        <!-- Loading Spinner Overlay -->
+                        <div 
+                            *ngIf="isAvatarUploading"
+                            class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full">
+                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                        </div>
+                        
+                        <button
+                            mat-icon-button
+                            class="absolute -bottom-2 -right-2 bg-blue-600 text-white shadow-lg border-2 border-white hover:bg-blue-700"
+                            [disabled]="isAvatarUploading"
+                            (click)="onAvatarClick()">
+                            <mat-icon [svgIcon]="'heroicons_outline:camera'" class="text-white"></mat-icon>
+                        </button>
+                        <input
+                            #avatarInput
+                            type="file"
+                            accept="image/*"
+                            class="hidden"
+                            [disabled]="isAvatarUploading"
+                            (change)="onAvatarChange($event)">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Name -->
+            <div class="sm:col-span-2">
+                <mat-form-field
+                    class="w-full"
+                    [subscriptSizing]="'dynamic'">
+                    <mat-label>Full name</mat-label>
+                    <mat-icon
+                        class="icon-size-5"
+                        [svgIcon]="'heroicons_solid:user'"
+                        matPrefix></mat-icon>
+                    <input
+                        [formControlName]="'name'"
+                        matInput>
+                    <mat-error *ngIf="userForm.get('name')?.hasError('required')">
+                        Name is required
+                    </mat-error>
+                    <mat-error *ngIf="userForm.get('name')?.hasError('maxlength')">
+                        Name cannot exceed 200 characters
+                    </mat-error>
+                </mat-form-field>
+            </div>
+            
+            <!-- Phone -->
+            <div class="sm:col-span-2">
+                <mat-form-field
+                    class="w-full"
+                    [subscriptSizing]="'dynamic'">
+                    <mat-label>Phone</mat-label>
+                    <mat-icon
+                        class="icon-size-5"
+                        [svgIcon]="'heroicons_solid:phone'"
+                        matPrefix></mat-icon>
+                    <input
+                        [formControlName]="'phone'"
+                        matInput>
+                </mat-form-field>
+            </div>
+        </div>
+
+        <!-- User Actions -->
+        <div class="flex items-center justify-end mt-6">
+            <button
+                mat-stroked-button
+                type="button"
+                [disabled]="isSaving"
+                (click)="resetUserForm()">
+                Cancel
+            </button>
+            <button
+                class="ml-4"
+                mat-flat-button
+                type="button"
+                [color]="'primary'"
+                [disabled]="isSaving"
+                (click)="saveUserInfo()">
+                <mat-icon *ngIf="isSaving" class="animate-spin mr-2">refresh</mat-icon>
+                {{ isSaving ? 'Saving...' : 'Save User Info' }}
+            </button>
+        </div>
+    </form>
+
+    <!-- Divider -->
+    <div class="my-10 border-t"></div>
+
+    <!-- Company Information Section -->
+    <div class="w-full">
+        <div class="text-xl">Company Information</div>
+        <div class="text-secondary">Company details are managed by administrators and cannot be modified here</div>
+    </div>
+    
+    <div class="grid sm:grid-cols-4 gap-4 w-full mt-6">
+        <!-- Company Logo -->
+        <div class="sm:col-span-4">
+            <div class="flex justify-center">
+                <div class="relative">
+                    <img
+                        class="w-32 h-32 rounded-lg object-contain bg-gray-50 p-2"
+                        [src]="companyInfo.image"
+                        alt="Company Logo">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Company Name -->
+        <div class="sm:col-span-4">
+            <mat-form-field
+                class="w-full"
+                [subscriptSizing]="'dynamic'"
+                [ngClass]="formFieldHelpers">
+                <mat-label>Company Name</mat-label>
+                <mat-icon
+                    class="icon-size-5"
+                    [svgIcon]="'heroicons_solid:building-office-2'"
+                    matPrefix></mat-icon>
+                <input
+                    [value]="companyInfo.name"
+                    matInput
+                    readonly>
+            </mat-form-field>
+        </div>
+        
+        <!-- Address -->
+        <div class="sm:col-span-2">
+            <mat-form-field
+                class="w-full"
+                [subscriptSizing]="'dynamic'"
+                [ngClass]="formFieldHelpers">
+                <mat-label>Address</mat-label>
+                <mat-icon
+                    class="icon-size-5"
+                    [svgIcon]="'heroicons_solid:map-pin'"
+                    matPrefix></mat-icon>
+                <input
+                    [value]="companyInfo.address"
+                    matInput
+                    readonly>
+            </mat-form-field>
+        </div>
+        
+        <!-- City -->
+        <div class="sm:col-span-2">
+            <mat-form-field
+                class="w-full"
+                [subscriptSizing]="'dynamic'"
+                [ngClass]="formFieldHelpers">
+                <mat-label>City</mat-label>
+                <mat-icon
+                    class="icon-size-5"
+                    [svgIcon]="'heroicons_solid:building-office'"
+                    matPrefix></mat-icon>
+                <input
+                    [value]="companyInfo.city"
+                    matInput
+                    readonly>
+            </mat-form-field>
+        </div>
+        
+        <!-- Phone -->
+        <div class="sm:col-span-2">
+            <mat-form-field
+                class="w-full"
+                [subscriptSizing]="'dynamic'"
+                [ngClass]="formFieldHelpers">
+                <mat-label>Phone</mat-label>
+                <mat-icon
+                    class="icon-size-5"
+                    [svgIcon]="'heroicons_solid:phone'"
+                    matPrefix></mat-icon>
+                <input
+                    [value]="companyInfo.phone"
+                    matInput
+                    readonly>
+            </mat-form-field>
+        </div>
+        
+        <!-- Website -->
+        <div class="sm:col-span-2">
+            <mat-form-field
+                class="w-full"
+                [subscriptSizing]="'dynamic'"
+                [ngClass]="formFieldHelpers">
+                <mat-label>Website</mat-label>
+                <mat-icon
+                    class="icon-size-5"
+                    [svgIcon]="'heroicons_solid:globe-alt'"
+                    matPrefix></mat-icon>
+                <input
+                    [value]="companyInfo.website"
+                    matInput
+                    readonly>
+            </mat-form-field>
+        </div>
+        
+        <!-- RC (Registration Number) -->
+        <div class="sm:col-span-2">
+            <mat-form-field
+                class="w-full"
+                [subscriptSizing]="'dynamic'"
+                [ngClass]="formFieldHelpers">
+                <mat-label>RC (Registration Number)</mat-label>
+                <mat-icon
+                    class="icon-size-5"
+                    [svgIcon]="'heroicons_solid:document-text'"
+                    matPrefix></mat-icon>
+                <input
+                    [value]="companyInfo.rc"
+                    matInput
+                    readonly>
+            </mat-form-field>
+        </div>
+        
+        <!-- ICE (Tax ID) -->
+        <div class="sm:col-span-2">
+            <mat-form-field
+                class="w-full"
+                [subscriptSizing]="'dynamic'"
+                [ngClass]="formFieldHelpers">
+                <mat-label>ICE (Tax ID)</mat-label>
+                <mat-icon
+                    class="icon-size-5"
+                    [svgIcon]="'heroicons_solid:calculator'"
+                    matPrefix></mat-icon>
+                <input
+                    [value]="companyInfo.ice"
+                    matInput
+                    readonly>
+            </mat-form-field>
+        </div>
+    </div>
+
+</div>

@@ -1,0 +1,650 @@
+/* stylelint-disable at-rule-no-unknown */
+:host {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.property-details-page {
+    @apply text-gray-900 dark:text-gray-50;
+
+    .page-header {
+        @apply bg-white dark:bg-gray-900/80 rounded-3xl shadow-sm shadow-gray-200/60 dark:shadow-black/40;
+    }
+
+    .page-chip {
+        @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-slate-100 text-slate-700 dark:bg-gray-700 dark:text-gray-200;
+
+        &--accent {
+            @apply bg-primary-50 text-primary-600 dark:bg-primary-900/40 dark:text-primary-200;
+        }
+    }
+
+    .page-header__title {
+        @apply break-words;
+    }
+
+    .page-header__address {
+        @apply text-sm text-gray-500 dark:text-gray-400;
+    }
+
+    .price-card {
+        @apply bg-white dark:bg-gray-900 rounded-2xl px-5 py-4 shadow-md shadow-primary-900/10 border border-primary-100/60 dark:border-primary-900/30;
+
+        &__label {
+            @apply text-xs uppercase tracking-[0.3em] text-primary-500/80 dark:text-primary-200/80 font-semibold;
+        }
+
+        &__value {
+            @apply text-3xl font-bold text-primary-600 dark:text-primary-300;
+        }
+
+        &__note {
+            @apply text-xs text-primary-500/70 dark:text-primary-200/80;
+        }
+    }
+
+    .card {
+        @apply bg-white dark:bg-gray-900 rounded-3xl shadow-sm shadow-gray-200/60 dark:shadow-black/30 border border-gray-100 dark:border-gray-800 p-6;
+    }
+
+    .section-title {
+        @apply text-lg font-semibold text-gray-900 dark:text-white mb-4;
+    }
+
+    .gallery-card {
+        @apply overflow-hidden;
+
+        .gallery-main {
+            @apply relative aspect-[16/9] bg-gray-100 dark:bg-gray-800 flex items-center justify-center cursor-pointer;
+
+            &--empty {
+                @apply cursor-default;
+            }
+
+            &__image {
+                @apply object-cover transition-transform duration-500;
+            }
+
+            &:hover .gallery-main__image {
+                @apply scale-[1.02];
+            }
+
+            &__counter {
+                @apply absolute top-4 left-4 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/60 text-white text-xs font-semibold backdrop-blur;
+            }
+
+            &__zoom {
+                @apply absolute top-4 right-4 shadow-md;
+            }
+        }
+
+        .gallery-nav {
+            @apply absolute top-1/2 -translate-y-1/2 shadow-lg shadow-black/20;
+
+            &--prev {
+                @apply left-4;
+            }
+
+            &--next {
+                @apply right-4;
+            }
+        }
+    }
+
+    .gallery-zoom-btn {
+        @apply transition-all duration-200;
+        
+        &:hover {
+            @apply scale-110 shadow-xl;
+        }
+    }
+
+    .gallery-nav-btn {
+        @apply w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-white dark:bg-white backdrop-blur-md shadow-2xl border-2 border-white flex items-center justify-center transition-all duration-200 text-gray-900 hover:bg-gray-50 dark:hover:bg-gray-100 hover:scale-110 hover:shadow-2xl;
+
+        mat-icon {
+            @apply text-xl sm:text-2xl;
+        }
+
+        &--prev {
+            @apply left-2 sm:left-4;
+        }
+
+        &--next {
+            @apply right-2 sm:right-4;
+        }
+
+        &:hover {
+            @apply bg-gray-50 dark:bg-gray-100;
+        }
+    }
+
+    .gallery-thumbs {
+        @apply flex gap-3 p-4 overflow-y-hidden overflow-x-auto bg-gray-50 dark:bg-gray-900/60;
+
+            .gallery-thumb {
+                @apply relative w-28 h-20 rounded-xl overflow-hidden border-2 border-transparent transition-all duration-200 bg-gray-200 dark:bg-gray-700;
+
+                &--active {
+                    @apply border-primary-500 shadow-lg shadow-primary-500/25;
+                }
+
+                img {
+                    @apply object-cover w-full h-full;
+                }
+            }
+    }
+
+    .gallery-placeholder {
+        @apply flex flex-col items-center justify-center gap-2 text-center text-sm text-gray-500 dark:text-gray-400 px-6;
+
+        p {
+            @apply text-xs;
+        }
+    }
+
+    .public-link-row {
+        width: 100%;
+
+        @media (min-width: 640px) {
+            width: auto;
+        }
+    }
+
+    .public-link-field {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1rem;
+        border-radius: 1rem;
+        border: 1px solid rgba(59, 130, 246, 0.35);
+        background: rgba(236, 254, 255, 0.45);
+        color: #1d4ed8;
+        transition: all 200ms ease;
+
+        @media (min-width: 640px) {
+            padding: 1.25rem 1.5rem;
+            align-items: center;
+        }
+
+        &__icon-wrapper {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 1rem;
+            background: rgba(191, 219, 254, 0.9);
+            color: #2563eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 6px 16px rgba(59, 130, 246, 0.12);
+            transition: all 200ms ease;
+
+            &--inactive {
+                background: rgba(148, 163, 184, 0.25);
+                color: rgba(71, 85, 105, 0.8);
+            }
+        }
+
+        &__icon {
+            font-size: 1.5rem;
+        }
+
+        &__content {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        &__header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        &__label {
+            font-size: 0.7rem;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            font-weight: 600;
+            color: rgba(37, 99, 235, 0.82);
+        }
+
+        &__status {
+            font-size: 0.6rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            padding: 0.15rem 0.6rem;
+            border-radius: 9999px;
+            border: 1px solid transparent;
+
+            &--active {
+                color: #047857;
+                border-color: rgba(16, 185, 129, 0.35);
+                background: rgba(16, 185, 129, 0.12);
+            }
+        }
+
+        &__url-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        &__url {
+            display: inline-flex;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #1f2937;
+            text-decoration: none;
+            word-break: break-all;
+            text-underline-offset: 6px;
+            transition: color 200ms ease;
+
+            &:hover {
+                color: #1d4ed8;
+                text-decoration: underline;
+            }
+        }
+
+        &__domain-pill {
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            font-weight: 600;
+            padding: 0.35rem 0.75rem;
+            border-radius: 9999px;
+            border: 1px solid rgba(59, 130, 246, 0.35);
+            background: rgba(255, 255, 255, 0.75);
+            color: rgba(37, 99, 235, 0.9);
+        }
+
+        &__helper {
+            font-size: 0.75rem;
+            color: rgba(37, 99, 235, 0.7);
+            margin: 0;
+        }
+
+        &__placeholder {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: rgba(37, 99, 235, 0.75);
+            max-width: 20rem;
+
+            .public-link-field__label {
+                color: rgba(37, 99, 235, 0.82);
+            }
+        }
+
+        &--empty {
+            border-style: dashed;
+            border-color: rgba(59, 130, 246, 0.28);
+            color: rgba(59, 130, 246, 0.65);
+            background: rgba(219, 234, 254, 0.25);
+        }
+
+        &--disabled {
+            border-color: rgba(148, 163, 184, 0.35);
+            background: rgba(148, 163, 184, 0.12);
+            color: rgba(71, 85, 105, 0.65);
+
+            .public-link-field__label {
+                color: rgba(71, 85, 105, 0.7);
+            }
+
+            .public-link-field__placeholder {
+                color: rgba(71, 85, 105, 0.7);
+            }
+        }
+    }
+
+    .public-link-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        width: 100%;
+
+        @media (min-width: 640px) {
+            flex-direction: row;
+            width: auto;
+        }
+
+        &__button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding-inline: 1.25rem;
+            border-radius: 0.85rem;
+            font-weight: 600;
+            text-transform: none;
+
+            mat-icon {
+                font-size: 1.25rem;
+            }
+        }
+    }
+
+    .info-grid {
+        @apply grid grid-cols-1 sm:grid-cols-2 gap-4;
+
+        .info-item {
+            @apply flex items-start gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-gray-900/70 border border-slate-100 dark:border-gray-800;
+
+            &__label {
+                @apply text-xs uppercase tracking-widest text-gray-500 dark:text-gray-400;
+            }
+
+            &__value {
+                @apply text-base font-semibold text-gray-900 dark:text-gray-100;
+            }
+        }
+    }
+
+    .feature-card {
+        .feature-groups {
+            @apply flex flex-col gap-6;
+        }
+
+        .feature-group__title {
+            @apply text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-300 mb-2;
+        }
+
+        .feature-group__chips {
+            @apply flex flex-wrap gap-2;
+
+            mat-chip-set {
+                @apply flex flex-wrap gap-2 w-full;
+            }
+        }
+
+        .feature-chip {
+            @apply bg-slate-100 dark:bg-gray-800 text-slate-700 dark:text-gray-200 font-medium px-3 py-1 rounded-full text-xs;
+
+            &--accent {
+                @apply bg-primary-50 dark:bg-primary-900/40 text-primary-600 dark:text-primary-200;
+            }
+        }
+    }
+
+    .insights-card {
+        .mat-mdc-tab-group {
+            @apply w-full;
+        }
+
+        .tab-panel {
+            @apply pt-6 flex flex-col gap-6;
+        }
+
+        .finance-summary {
+            @apply flex flex-col gap-6 md:flex-row md:items-center md:justify-between;
+
+            &__label {
+                @apply text-xs uppercase tracking-[0.35em] text-gray-500 dark:text-gray-400 font-semibold;
+            }
+
+            &__value {
+                @apply text-3xl font-bold text-primary-600 dark:text-primary-300;
+            }
+
+            &__note {
+                @apply text-xs text-primary-500/70 dark:text-primary-200/80;
+            }
+
+            &__chart {
+                @apply flex flex-col items-center gap-3 text-sm text-gray-500 dark:text-gray-400 bg-slate-50 dark:bg-gray-900/70 border border-slate-100 dark:border-gray-800 rounded-2xl px-6 py-8;
+            }
+        }
+
+        .finance-empty {
+            @apply flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400 bg-slate-50 dark:bg-gray-900/70 border border-slate-100 dark:border-gray-800 rounded-2xl px-4 py-3;
+        }
+
+        .tab-loader {
+            @apply flex items-center justify-center py-10;
+        }
+
+        .tab-empty {
+            @apply flex flex-col items-center gap-3 text-center text-sm text-gray-500 dark:text-gray-400 py-10;
+
+            &.text-error {
+                @apply text-rose-500 dark:text-rose-400;
+            }
+        }
+    }
+
+    .lease-tile,
+    .reservation-tile {
+        @apply rounded-2xl border border-slate-100 dark:border-gray-800 bg-slate-50 dark:bg-gray-900/70 px-5 py-4 flex flex-col gap-4;
+    }
+
+    .lease-tile__header,
+    .reservation-tile__header {
+        @apply flex items-start justify-between gap-4;
+    }
+
+    .lease-tile__tenant,
+    .reservation-tile__guest {
+        @apply text-base font-semibold;
+    }
+
+    .lease-tile__dates,
+    .reservation-tile__dates {
+        @apply text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide;
+    }
+
+    .lease-tile__body,
+    .reservation-tile__body {
+        @apply grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-300;
+    }
+
+    .lease-tile__label,
+    .reservation-tile__label {
+        @apply text-xs uppercase tracking-widest text-gray-500 dark:text-gray-400;
+    }
+
+    .lease-tile__value,
+    .reservation-tile__value {
+        @apply font-semibold;
+    }
+
+    .lease-tile__badge,
+    .reservation-tile__badge {
+        @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold;
+    }
+
+    .owner-card {
+        @apply flex flex-col gap-5;
+
+        &__header {
+            @apply flex items-center justify-between;
+        }
+
+        &__body {
+            @apply flex items-center gap-4;
+        }
+
+        &__avatar {
+            @apply grid place-items-center w-14 h-14 rounded-full bg-primary-100 text-primary-600 dark:bg-primary-900/40 dark:text-primary-200 text-xl font-bold;
+
+            img {
+                @apply w-full h-full object-cover rounded-full;
+            }
+        }
+
+        &__name {
+            @apply text-base font-semibold;
+        }
+
+        &__meta {
+            @apply text-xs text-gray-500 dark:text-gray-400;
+        }
+
+        &__meta-list {
+            @apply flex flex-col gap-2 text-sm text-gray-500 dark:text-gray-400;
+
+            div {
+                @apply inline-flex items-center gap-2;
+            }
+        }
+
+        &__loading {
+            @apply flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400;
+
+            mat-progress-spinner {
+                width: 1.5rem !important;
+                height: 1.5rem !important;
+            }
+        }
+    }
+}
+
+// Calendar day selected as start date (bottom-right half colored pink)
+.calendar-day-selected-start {
+    position: relative !important;
+    overflow: hidden !important;
+    color: rgb(17 24 39) !important;
+    border: none !important;
+    background: linear-gradient(to bottom right, 
+        rgb(220 252 231) 0%, 
+        rgb(220 252 231) 50%, 
+        rgb(251 207 232) 50%, 
+        rgb(251 207 232) 100%) !important;
+    background-color: transparent !important;
+}
+
+// Dark mode for start date
+.dark .calendar-day-selected-start {
+    color: rgb(243 244 246) !important;
+    border: none !important;
+    background: linear-gradient(to bottom right, 
+        rgb(20 83 45 / 0.4) 0%, 
+        rgb(20 83 45 / 0.4) 50%, 
+        rgb(131 24 67 / 0.5) 50%, 
+        rgb(131 24 67 / 0.5) 100%) !important;
+    background-color: transparent !important;
+}
+
+// Calendar day selected as end date (top-left half colored pink)
+.calendar-day-selected-end {
+    position: relative !important;
+    overflow: hidden !important;
+    color: rgb(17 24 39) !important;
+    border: none !important;
+    background: linear-gradient(to bottom right, 
+        rgb(251 207 232) 0%, 
+        rgb(251 207 232) 50%, 
+        rgb(220 252 231) 50%, 
+        rgb(220 252 231) 100%) !important;
+    background-color: transparent !important;
+}
+
+// Dark mode for end date
+.dark .calendar-day-selected-end {
+    color: rgb(243 244 246) !important;
+    border: none !important;
+    background: linear-gradient(to bottom right, 
+        rgb(131 24 67 / 0.5) 0%, 
+        rgb(131 24 67 / 0.5) 50%, 
+        rgb(20 83 45 / 0.4) 50%, 
+        rgb(20 83 45 / 0.4) 100%) !important;
+    background-color: transparent !important;
+}
+
+// Calendar day selected as start date with pending (bottom-right half colored yellow)
+.calendar-day-selected-start-yellow {
+    position: relative !important;
+    overflow: hidden !important;
+    color: rgb(17 24 39) !important;
+    border: none !important;
+    background: linear-gradient(to bottom right, 
+        rgb(220 252 231) 0%, 
+        rgb(220 252 231) 50%, 
+        rgb(254 240 138) 50%, 
+        rgb(254 240 138) 100%) !important;
+    background-color: transparent !important;
+}
+
+// Dark mode for start date with pending
+.dark .calendar-day-selected-start-yellow {
+    color: rgb(243 244 246) !important;
+    border: none !important;
+    background: linear-gradient(to bottom right, 
+        rgb(20 83 45 / 0.4) 0%, 
+        rgb(20 83 45 / 0.4) 50%, 
+        rgb(133 77 14 / 0.6) 50%, 
+        rgb(133 77 14 / 0.6) 100%) !important;
+    background-color: transparent !important;
+}
+
+// Calendar day selected as end date with pending (top-left half colored yellow)
+.calendar-day-selected-end-yellow {
+    position: relative !important;
+    overflow: hidden !important;
+    color: rgb(17 24 39) !important;
+    border: none !important;
+    background: linear-gradient(to bottom right, 
+        rgb(254 240 138) 0%, 
+        rgb(254 240 138) 50%, 
+        rgb(220 252 231) 50%, 
+        rgb(220 252 231) 100%) !important;
+    background-color: transparent !important;
+}
+
+// Dark mode for end date with pending
+.dark .calendar-day-selected-end-yellow {
+    color: rgb(243 244 246) !important;
+    border: none !important;
+    background: linear-gradient(to bottom right, 
+        rgb(133 77 14 / 0.6) 0%, 
+        rgb(133 77 14 / 0.6) 50%, 
+        rgb(20 83 45 / 0.4) 50%, 
+        rgb(20 83 45 / 0.4) 100%) !important;
+    background-color: transparent !important;
+}
+
+// Calendar day with end marker (top-left pink/red) and start marker (bottom-right yellow)
+// Used when an approved reservation ends on previous day and a pending reservation starts on this day
+.calendar-day-end-start-mixed {
+    position: relative !important;
+    overflow: hidden !important;
+    color: rgb(17 24 39) !important;
+    border: none !important;
+    background: linear-gradient(to bottom right, 
+        rgb(251 207 232) 0%, 
+        rgb(251 207 232) 50%, 
+        rgb(254 240 138) 50%, 
+        rgb(254 240 138) 100%) !important;
+    background-color: transparent !important;
+}
+
+// Dark mode for mixed end-start day
+.dark .calendar-day-end-start-mixed {
+    color: rgb(243 244 246) !important;
+    border: none !important;
+    background: linear-gradient(to bottom right, 
+        rgb(131 24 67 / 0.5) 0%, 
+        rgb(131 24 67 / 0.5) 50%, 
+        rgb(133 77 14 / 0.6) 50%, 
+        rgb(133 77 14 / 0.6) 100%) !important;
+    background-color: transparent !important;
+}
+
+// Print styles
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .print-calendar-section,
+    .print-reservations-section {
+        page-break-inside: avoid;
+    }
+}
+
+/* stylelint-enable at-rule-no-unknown */
+

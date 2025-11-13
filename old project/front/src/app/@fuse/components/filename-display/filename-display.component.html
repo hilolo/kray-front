@@ -1,0 +1,13 @@
+<div 
+    class="filename-display"
+    [class]="cssClass"
+    [matTooltip]="shouldShowTooltip ? fullName : null"
+    [matTooltipPosition]="tooltipPosition"
+    [matTooltipDisabled]="!shouldShowTooltip">
+    
+    <span class="filename-text" 
+          [class.truncate]="truncateMode !== 'none'"
+          [class.break-words]="truncateMode === 'none'">
+        {{ displayName }}
+    </span>
+</div>

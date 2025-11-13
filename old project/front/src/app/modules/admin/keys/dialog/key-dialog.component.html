@@ -1,0 +1,218 @@
+<div class="flex flex-col max-h-screen">
+    <!-- Header -->
+    <div class="flex items-center justify-between px-6 py-6 border-b">
+        <h2 class="text-2xl font-semibold">{{ getTitle() }}</h2>
+        <button mat-icon-button (click)="close()">
+            <mat-icon [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
+        </button>
+    </div>
+
+    <!-- Content -->
+    <div class="flex-auto overflow-y-auto p-6">
+        <ng-container *ngIf="mode === KeyDialogMode.VIEW">
+            <!-- View Mode - Show all details including property info -->
+            <div class="space-y-6">
+                <!-- Key Information -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-4 text-primary-600 dark:text-primary-400">Key Information</h3>
+                    
+                    <!-- Name -->
+                    <div class="mb-4">
+                        <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Name</div>
+                        <div class="text-base text-gray-900 dark:text-white">{{ key.name }}</div>
+                    </div>
+                    
+                    <!-- Description -->
+                    <div class="mb-4">
+                        <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Description</div>
+                        <div class="text-base text-gray-900 dark:text-white">
+                            {{ key.description || 'No description provided' }}
+                        </div>
+                    </div>
+
+                    <!-- Created/Modified Dates -->
+                    <div class="grid grid-cols-2 gap-4 mt-4">
+                        <div>
+                            <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Created On</div>
+                            <div class="text-sm text-gray-700 dark:text-gray-300">{{ key.createdOn | date:'medium' }}</div>
+                        </div>
+                        <div *ngIf="key.lastModifiedOn">
+                            <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Last Modified</div>
+                            <div class="text-sm text-gray-700 dark:text-gray-300">{{ key.lastModifiedOn | date:'medium' }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Property Information -->
+                <div *ngIf="key.property" class="border-t pt-6">
+                    <h3 class="text-lg font-semibold mb-4 text-primary-600 dark:text-primary-400">Property Information</h3>
+                    
+                    <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 space-y-3">
+                        <!-- Property Name -->
+                        <div class="flex items-center gap-4">
+                            <mat-icon class="icon-size-6 text-primary-600 dark:text-primary-400" [svgIcon]="'heroicons_solid:home'"></mat-icon>
+                            <div class="flex-1">
+                                <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Property Name</div>
+                                <div class="text-base font-medium text-gray-900 dark:text-white">{{ key.property.name }}</div>
+                            </div>
+                        </div>
+
+                        <!-- Property Reference -->
+                        <div class="flex items-center gap-4">
+                            <mat-icon class="icon-size-6 text-gray-600 dark:text-gray-400" [svgIcon]="'heroicons_solid:hashtag'"></mat-icon>
+                            <div class="flex-1">
+                                <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Reference</div>
+                                <div class="text-base text-gray-900 dark:text-white">{{ key.property.identifier }}</div>
+                            </div>
+                        </div>
+
+                        <!-- Owner Name -->
+                        <div *ngIf="key.property.ownerName" class="flex items-center gap-4">
+                            <mat-icon class="icon-size-6 text-gray-600 dark:text-gray-400" [svgIcon]="'heroicons_solid:user'"></mat-icon>
+                            <div class="flex-1">
+                                <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Owner</div>
+                                <div class="text-base text-gray-900 dark:text-white">{{ key.property.ownerName }}</div>
+                            </div>
+                        </div>
+
+                        <!-- Property Address -->
+                        <div *ngIf="key.property.address" class="flex items-start gap-4">
+                            <mat-icon class="icon-size-6 mt-1 text-gray-600 dark:text-gray-400" [svgIcon]="'heroicons_solid:map-pin'"></mat-icon>
+                            <div class="flex-1">
+                                <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Address</div>
+                                <div class="text-base text-gray-900 dark:text-white">{{ key.property.address }}</div>
+                            </div>
+                        </div>
+
+                        <!-- Building Information -->
+                        <div *ngIf="key.property.building" class="flex items-center gap-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+                            <mat-icon class="icon-size-6 text-gray-600 dark:text-gray-400" [svgIcon]="'heroicons_solid:building-office-2'"></mat-icon>
+                            <div class="flex-1">
+                                <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Building</div>
+                                <div class="text-base text-gray-900 dark:text-white">{{ key.property.building.name }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </ng-container>
+
+        <ng-container *ngIf="mode !== KeyDialogMode.VIEW">
+            <!-- Add/Edit Mode - Show form -->
+            <form [formGroup]="keyForm" class="space-y-6">
+                <!-- Name -->
+                <mat-form-field [ngClass]="formFieldHelpers" class="w-full">
+                    <mat-label>Name</mat-label>
+                    <input matInput formControlName="name" placeholder="Enter key name" required />
+                    <mat-icon matPrefix [svgIcon]="'heroicons_solid:key'"></mat-icon>
+                    <mat-error *ngIf="keyForm.get('name').hasError('required')">
+                        Name is required
+                    </mat-error>
+                    <mat-error *ngIf="keyForm.get('name').hasError('maxlength')">
+                        Name cannot exceed 200 characters
+                    </mat-error>
+                </mat-form-field>
+
+                <!-- Property Selection with Custom Searchable Dropdown -->
+                <div class="relative w-full">
+                    <mat-form-field [ngClass]="formFieldHelpers" class="w-full">
+                        <mat-label>Property</mat-label>
+                        <input matInput 
+                               type="text"
+                               [value]="isEditingProperty ? propertySearchTerm : getSelectedPropertyDisplay()"
+                               placeholder="Search properties..."
+                               (input)="onPropertyInput($event)"
+                               (focus)="onPropertyFocus()"
+                               (blur)="onPropertyBlur()"
+                               autocomplete="off"
+                               required>
+                        <mat-icon matPrefix [svgIcon]="'heroicons_solid:home'" class="icon-size-5"></mat-icon>
+                        <button mat-icon-button matSuffix 
+                                *ngIf="selectedPropertyId"
+                                (click)="clearPropertySelection()"
+                                type="button">
+                            <mat-icon [svgIcon]="'heroicons_outline:x-mark'" class="icon-size-5"></mat-icon>
+                        </button>
+                        <mat-error *ngIf="keyForm.get('propertyId').hasError('required')">
+                            Property is required
+                        </mat-error>
+                    </mat-form-field>
+                    
+                    <!-- Custom Dropdown -->
+                    <div *ngIf="showPropertyDropdown && !loadingProperties" 
+                         class="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-80 overflow-y-auto">
+                        
+                        <!-- Loading State -->
+                        <div *ngIf="loadingProperties" class="px-4 py-3 flex items-center gap-2">
+                            <mat-spinner diameter="20"></mat-spinner>
+                            <span class="text-gray-600 dark:text-gray-400">Loading properties...</span>
+                        </div>
+                        
+                        <!-- No Results -->
+                        <div *ngIf="!loadingProperties && filteredProperties.length === 0" 
+                             class="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
+                            No properties found
+                        </div>
+                        
+                        <!-- Property Options -->
+                        <div *ngFor="let property of filteredProperties" 
+                             class="px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-200 dark:border-gray-700 last:border-b-0"
+                             (mousedown)="selectProperty(property.id)">
+                            <div class="flex flex-col gap-1.5">
+                                <!-- Property Name and Reference -->
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold text-primary-600 dark:text-primary-400">{{ property.identifier }}</span>
+                                    <span class="font-medium text-gray-900 dark:text-white">{{ property.name }}</span>
+                                </div>
+                                
+                                <!-- Owner Name -->
+                                <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400" *ngIf="property.ownerName">
+                                    <mat-icon class="icon-size-4" [svgIcon]="'heroicons_solid:user'"></mat-icon>
+                                    <span>{{ property.ownerName }}</span>
+                                </div>
+                                
+                                <!-- Address -->
+                                <div class="flex items-start gap-2 text-xs text-gray-500 dark:text-gray-500" *ngIf="property.address">
+                                    <mat-icon class="icon-size-4 mt-0.5" [svgIcon]="'heroicons_solid:map-pin'"></mat-icon>
+                                    <span class="line-clamp-2">{{ property.address }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <mat-form-field [ngClass]="formFieldHelpers" class="w-full">
+                    <mat-label>Description</mat-label>
+                    <textarea matInput formControlName="description" 
+                              placeholder="Enter key description (optional)"
+                              rows="3"></textarea>
+                    <mat-icon matPrefix [svgIcon]="'heroicons_solid:document-text'"></mat-icon>
+                    <mat-error *ngIf="keyForm.get('description').hasError('maxlength')">
+                        Description cannot exceed 1000 characters
+                    </mat-error>
+                </mat-form-field>
+            </form>
+        </ng-container>
+    </div>
+
+    <!-- Footer -->
+    <div class="flex items-center justify-end gap-4 px-6 py-6 border-t bg-gray-50 dark:bg-gray-900">
+        <ng-container *ngIf="mode === KeyDialogMode.VIEW">
+            <button mat-button (click)="close()">
+                Close
+            </button>
+        </ng-container>
+
+        <ng-container *ngIf="mode !== KeyDialogMode.VIEW">
+            <button mat-button (click)="close()" [disabled]="isLoading">
+                Cancel
+            </button>
+            <button mat-flat-button [color]="'primary'" (click)="save()" [disabled]="isLoading || keyForm.invalid">
+                <mat-spinner *ngIf="isLoading" diameter="20" class="mr-2"></mat-spinner>
+                <span>{{ mode === KeyDialogMode.ADD ? 'Create' : 'Update' }}</span>
+            </button>
+        </ng-container>
+    </div>
+</div>
+

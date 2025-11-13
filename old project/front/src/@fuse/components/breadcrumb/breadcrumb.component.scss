@@ -1,0 +1,102 @@
+fuse-breadcrumb {
+    display: block;
+
+    .fuse-breadcrumb {
+        display: flex;
+        align-items: center;
+        padding: 0.5rem 0;
+
+        .fuse-breadcrumb-list {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            gap: 0.25rem;
+
+            .fuse-breadcrumb-item {
+                display: flex;
+                align-items: center;
+                font-size: 0.875rem;
+                line-height: 1.25rem;
+
+                .fuse-breadcrumb-icon {
+                    width: 1rem;
+                    height: 1rem;
+                    min-width: 1rem;
+                    min-height: 1rem;
+                    margin-right: 0.25rem;
+                    font-size: 1rem;
+                }
+
+                .fuse-breadcrumb-link {
+                    color: var(--fuse-text-secondary);
+                    text-decoration: none;
+                    transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+                    cursor: pointer;
+
+                    &:hover {
+                        color: var(--fuse-primary);
+                        text-decoration: underline;
+                    }
+
+                    &:focus {
+                        outline: 2px solid var(--fuse-primary);
+                        outline-offset: 2px;
+                        border-radius: 0.25rem;
+                    }
+                }
+
+                .fuse-breadcrumb-current {
+                    display: flex;
+                    align-items: center;
+                    color: var(--fuse-text-default);
+                    font-weight: 500;
+                }
+
+                .fuse-breadcrumb-separator {
+                    width: 1rem;
+                    height: 1rem;
+                    min-width: 1rem;
+                    min-height: 1rem;
+                    margin: 0 0.25rem;
+                    font-size: 1rem;
+                    color: var(--fuse-text-hint);
+                }
+
+                &.fuse-breadcrumb-item-active {
+                    .fuse-breadcrumb-current {
+                        color: var(--fuse-text-default);
+                    }
+                }
+            }
+        }
+    }
+
+    // Dark mode
+    .dark & {
+        .fuse-breadcrumb {
+            .fuse-breadcrumb-list {
+                .fuse-breadcrumb-item {
+                    .fuse-breadcrumb-link {
+                        color: rgba(255, 255, 255, 0.7);
+
+                        &:hover {
+                            color: var(--fuse-primary);
+                        }
+                    }
+
+                    .fuse-breadcrumb-current {
+                        color: rgba(255, 255, 255, 0.95);
+                    }
+
+                    .fuse-breadcrumb-separator {
+                        color: rgba(255, 255, 255, 0.5);
+                    }
+                }
+            }
+        }
+    }
+}
+

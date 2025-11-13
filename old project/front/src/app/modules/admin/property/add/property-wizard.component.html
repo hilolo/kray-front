@@ -1,0 +1,1033 @@
+<div class="absolute inset-0 flex flex-col min-w-0 overflow-hidden">
+    <!-- Loading Overlay - Only for Create/Update -->
+    <div *ngIf="isUploading" 
+         class="absolute inset-0 bg-white/80 dark:bg-gray-900/80 flex flex-col items-center justify-center z-50">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-8 shadow-2xl flex flex-col items-center">
+            <img src="assets/images/brand/loading.png" alt="Loading" class="w-48 h-48 mb-4 animate-pulse">
+            <div class="text-lg font-semibold text-gray-900 dark:text-white mb-2">{{ editMode ? 'Updating Property' : 'Creating Property' }}</div>
+            <div class="text-sm text-gray-600 dark:text-gray-400">Please wait while we {{ editMode ? 'update' : 'upload images and create' }} the property...</div>
+        </div>
+    </div>
+
+    <div class="flex flex-col h-full bg-card dark:bg-transparent">
+        <!-- Main -->
+        <div class="flex flex-col flex-auto overflow-hidden">
+            <!-- Header -->
+            <div class="py-6 px-6 md:px-8 border-b flex-shrink-0">
+                <!-- Title -->
+                <div class="mb-3 flex items-start justify-between">
+                    <div class="flex-1">
+                        <div class="text-2xl font-bold tracking-tight leading-none text-gray-900 dark:text-white">
+                            {{ isViewMode ? (editMode ? 'Edit Property' : 'View Property Details') : ('property.add.title' | transloco) }}
+                        </div>
+                        <div class="ml-0.5 text-sm font-medium text-gray-500 dark:text-gray-400">{{ getStepDescription() }}</div>
+                    </div>
+                    
+                    <!-- Close Icon Button (only in dialog mode) -->
+                    <button *ngIf="dialogMode"
+                            mat-icon-button
+                            type="button"
+                            (click)="closeDialog()"
+                            class="ml-2 -mt-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                        <mat-icon [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
+                    </button>
+                </div>
+                
+                <!-- Buttons - Under Title -->
+                <div class="flex items-center justify-between gap-2">
+                    <button *ngIf="!dialogMode" 
+                            mat-stroked-button 
+                            type="button"
+                            (click)="backToList()"
+                            class="min-w-0">
+                        <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:arrow-left'"></mat-icon>
+                        <span class="ml-2">Back to List</span>
+                    </button>
+                    
+                    <div class="flex items-center gap-2" [class.ml-auto]="dialogMode">
+                        <!-- Edit Button (show when in view mode but not in edit mode) -->
+                        <button *ngIf="isViewMode && !editMode"
+                                mat-flat-button 
+                                type="button"
+                                (click)="toggleEditMode(true)"
+                                [disabled]="!canEditProperties()"
+                                [matTooltip]="!canEditProperties() ? 'You do not have permission to edit properties' : ''"
+                                class="bg-blue-600 text-white hover:bg-blue-700">
+                            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_solid:pencil-square'"></mat-icon>
+                            <span class="ml-2">Edit</span>
+                        </button>
+                        
+                        <!-- Cancel Button (show when in edit mode) -->
+                        <button *ngIf="isViewMode && editMode"
+                                mat-stroked-button 
+                                type="button"
+                                (click)="toggleEditMode(false)">
+                            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
+                            <span class="ml-2">Cancel</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Bar and Steps -->
+            <div class="px-6 md:px-8 py-6 border-b">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">Step {{ currentStep }} of {{ totalSteps }}</span>
+                    <span class="text-sm text-gray-500 dark:text-gray-400">{{ Math.round(getProgressPercentage()) }}%</span>
+                </div>
+                
+                <!-- Progress Bar -->
+                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-6">
+                    <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                         [style.width.%]="getProgressPercentage()"></div>
+                </div>
+                
+                <!-- Steps Navigation -->
+                <div class="flex justify-between">
+                    <div *ngFor="let step of steps" 
+                         class="flex flex-col items-center"
+                         [class.opacity-50]="step.number > currentStep"
+                         [class.cursor-not-allowed]="step.number > currentStep"
+                         [class.cursor-default]="step.number <= currentStep">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-all duration-200"
+                             [class.bg-blue-600]="step.number === currentStep"
+                             [class.bg-green-600]="step.number < currentStep"
+                             [class.bg-gray-300]="step.number > currentStep"
+                             [class.dark:bg-gray-600]="step.number > currentStep">
+                            <mat-icon *ngIf="step.number < currentStep" 
+                                      class="text-white text-sm" 
+                                      [svgIcon]="'heroicons_outline:check'"></mat-icon>
+                            <mat-icon *ngIf="step.number >= currentStep" 
+                                      class="text-white text-sm" 
+                                      [svgIcon]="step.icon"></mat-icon>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-xs font-medium text-gray-900 dark:text-white">{{ step.title }}</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400 hidden md:block">{{ step.description }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step Content -->
+            <div class="flex-auto overflow-y-auto p-6 md:p-8">
+                <form [formGroup]="propertyForm" (ngSubmit)="nextStep()" (keydown)="onFormKeyDown($event)">
+                    
+                    <!-- Step 1: Owner -->
+                    <div *ngIf="currentStep === 1" class="space-y-6">
+                        <div class="mb-6">
+                            <h2 class="text-2xl font-semibold text-gray-900 dark:text-white">{{ getStepTitle() }}</h2>
+                        </div>
+                        
+                        <div class="space-y-6">
+                            <!-- Owner Selection -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                                    Owner 
+                                    <span class="text-red-500">*</span>
+                                </label>
+                                
+                                <!-- Search Input -->
+                                <div class="relative" #ownerDropdownContainer>
+                                    <mat-form-field [ngClass]="formFieldHelpers" class="w-full">
+                                        <input matInput 
+                                               type="text"
+                                               [(ngModel)]="ownerSearchTerm"
+                                               [ngModelOptions]="{standalone: true}"
+                                               [disabled]="isReadOnly()"
+                                               (ngModelChange)="filterOwners()"
+                                               (focus)="showOwnerDropdown = true"
+                                               (click)="showOwnerDropdown = true; $event.stopPropagation()"
+                                               placeholder="Type to search owners..."
+                                               autocomplete="off">
+                                        <mat-icon matPrefix class="text-gray-400">search</mat-icon>
+                                    </mat-form-field>
+                                    
+                                    <!-- Dropdown -->
+                                    <div *ngIf="showOwnerDropdown && filteredOwners && filteredOwners.length > 0" 
+                                         class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+                                         (click)="$event.stopPropagation()">
+                                        <div *ngFor="let owner of filteredOwners" 
+                                             class="px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-200 dark:border-gray-700 last:border-b-0"
+                                             (click)="selectOwner(owner)">
+                                            <div class="font-medium text-gray-900 dark:text-white">
+                                                {{ owner.isACompany ? owner.companyName : (owner.firstName + ' ' + owner.lastName) }}
+                                            </div>
+                                            <div class="text-sm text-gray-500 dark:text-gray-400 space-y-1">
+                                                <div *ngIf="owner.identifier" class="flex items-center gap-1">
+                                                    <mat-icon class="icon-size-3" [svgIcon]="'heroicons_outline:identification'"></mat-icon>
+                                                    <span>{{ owner.identifier }}</span>
+                                                </div>
+                                                <div *ngIf="owner.email" class="flex items-center gap-1">
+                                                    <mat-icon class="icon-size-3" [svgIcon]="'heroicons_outline:envelope'"></mat-icon>
+                                                    <span>{{ owner.email }}</span>
+                                                </div>
+                                                <div *ngIf="owner.phones && owner.phones.length > 0" class="flex items-center gap-1">
+                                                    <mat-icon class="icon-size-3" [svgIcon]="'heroicons_outline:phone'"></mat-icon>
+                                                    <span>{{ owner.phones[0] }}</span>
+                                                </div>
+                                                <div *ngIf="!owner.identifier && !owner.email && !owner.phones?.length" class="text-gray-400 italic">
+                                                    No contact info
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Selected Owner Display -->
+                                <div *ngIf="propertyForm.get('ownerId')?.value" class="mt-4 p-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg">
+                                    <div class="flex items-start justify-between mb-4">
+                                        <div class="flex items-center gap-4 flex-1">
+                                            <!-- Avatar -->
+                                            <div class="relative w-16 h-16 flex-shrink-0">
+                                                <div class="w-full h-full rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center border-2 border-green-300 dark:border-green-600">
+                                                    <img *ngIf="getSelectedOwner()?.avatar" 
+                                                         [src]="getSelectedOwnerAvatar()" 
+                                                         alt="Owner avatar"
+                                                         class="object-contain w-full h-full">
+                                                    <mat-icon *ngIf="!getSelectedOwner()?.avatar" 
+                                                              class="text-green-600 icon-size-8" 
+                                                              [svgIcon]="'heroicons_outline:user-circle'"></mat-icon>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Owner Info -->
+                                            <div class="flex-1 min-w-0">
+                                                <div class="flex items-center gap-2 mb-1">
+                                                    <div class="font-semibold text-lg text-green-900 dark:text-green-100">
+                                                        {{ getSelectedOwnerName() }}
+                                                    </div>
+                                                    <mat-icon class="text-green-600 icon-size-5" [svgIcon]="'heroicons_outline:check-circle'"></mat-icon>
+                                                </div>
+                                                <div class="text-sm text-green-700 dark:text-green-300 space-y-1">
+                                                    <div *ngIf="getSelectedOwner()?.identifier" class="flex items-center gap-2">
+                                                        <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:identification'"></mat-icon>
+                                                        <span>{{ getSelectedOwner()?.identifier }}</span>
+                                                    </div>
+                                                    <div *ngIf="getSelectedOwner()?.email" class="flex items-center gap-2">
+                                                        <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:envelope'"></mat-icon>
+                                                        <span>{{ getSelectedOwner()?.email }}</span>
+                                                    </div>
+                                                    <div *ngIf="getSelectedOwner()?.phones && getSelectedOwner()?.phones.length > 0" class="flex items-center gap-2">
+                                                        <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:phone'"></mat-icon>
+                                                        <span>{{ getSelectedOwner()?.phones[0] }}</span>
+                                                    </div>
+                                                    <div *ngIf="getSelectedOwner()?.isACompany && getSelectedOwner()?.ice" class="flex items-center gap-2">
+                                                        <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:building-office'"></mat-icon>
+                                                        <span>ICE: {{ getSelectedOwner()?.ice }}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Close Button -->
+                                        <button mat-icon-button 
+                                                type="button"
+                                                *ngIf="!isReadOnly()"
+                                                (click)="clearOwner()"
+                                                class="text-green-600 hover:text-green-800 -mt-2 -mr-2">
+                                            <mat-icon>close</mat-icon>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Add New Owner Button -->
+                                <div class="mt-4" *ngIf="!isReadOnly()">
+                                    <button mat-stroked-button 
+                                            type="button"
+                                            color="primary"
+                                            (click)="openAddContactDialog()">
+                                        <mat-icon>add</mat-icon>
+                                        <span class="ml-2">Add New Owner</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Property Type -->
+                    <div *ngIf="currentStep === 2" class="space-y-6">
+                        <div class="mb-6">
+                            <h2 class="text-2xl font-semibold text-gray-900 dark:text-white">{{ getStepTitle() }}</h2>
+                        </div>
+                        
+                        <div class="space-y-6">
+                                <!-- Category Selection -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                                        {{ 'property.add.fields.category' | transloco }} 
+                                        <span class="text-red-500">{{ 'property.add.fields.required_field' | transloco }}</span>
+                                    </label>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div *ngFor="let category of propertyCategories" class="relative">
+                                            <input type="radio" 
+                                                   [id]="'category-' + category.value" 
+                                                   [value]="category.value" 
+                                                   formControlName="category"
+                                                   [disabled]="isReadOnly()"
+                                                   class="sr-only">
+                                            <label [for]="isReadOnly() ? null : 'category-' + category.value" 
+                                                   class="property-type-label"
+                                                   [class.selected]="propertyForm.get('category')?.value === category.value"
+                                                   [class.cursor-not-allowed]="isReadOnly()"
+                                                   [class.opacity-75]="isReadOnly()"
+                                                   (click)="onDisabledElementClick($event)">
+                                                <span class="text-sm font-medium">{{ getCategoryLabel(category) }}</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Furnished, Price and Payment Type in one line -->
+                                <div *ngIf="propertyForm.get('category')?.value !== null && propertyForm.get('category')?.value !== undefined" class="mt-4">
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <!-- Furnished Checkbox (only for location category) -->
+                                        <div *ngIf="propertyForm.get('category')?.value === 0" class="flex items-end pb-2">
+                                            <mat-checkbox formControlName="furnished" 
+                                                          color="primary" 
+                                                          [disabled]="isReadOnly()"
+                                                          (click)="onDisabledElementClick($event)">
+                                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                    {{ 'property.add.fields.furnished' | transloco }}
+                                                </span>
+                                            </mat-checkbox>
+                                        </div>
+                                        
+                                        <!-- Empty div to maintain grid layout when furnished is not shown -->
+                                        <div *ngIf="propertyForm.get('category')?.value !== 0"></div>
+
+                                        <!-- Price -->
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                {{ 'property.add.fields.price' | transloco }} <span class="text-red-500">*</span>
+                                            </label>
+                                            <input type="number" 
+                                                   formControlName="price"
+                                                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                                   placeholder="{{ 'property.add.fields.price_placeholder' | transloco }}"
+                                                   min="0"
+                                                   required
+                                                   [readonly]="isReadOnly()"
+                                                   (click)="onInputClick()">
+                                        </div>
+
+                                        <!-- Payment Type -->
+                                        <div class="relative">
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                {{ 'property.add.fields.payment_type' | transloco }} <span class="text-red-500">*</span>
+                                            </label>
+                                            <select formControlName="typePaiment"
+                                                    [disabled]="propertyForm.get('category')?.value === 1 || isReadOnly()"
+                                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    required>
+                                                <option *ngFor="let type of paymentTypes" [value]="type.value">
+                                                    {{ getPaymentTypeLabel(type) }}
+                                                </option>
+                                            </select>
+                                            <!-- Transparent overlay for click detection in view mode -->
+                                            <div *ngIf="isReadOnly()" 
+                                                 class="absolute inset-0 cursor-not-allowed"
+                                                 style="top: 28px;"
+                                                 (click)="onInputClick()"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Property Type Selection -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">{{ 'property.add.fields.property_type' | transloco }}</label>
+                                    <div *ngIf="propertyTypes.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        <div *ngFor="let type of propertyTypes" class="relative">
+                                            <input type="radio" 
+                                                   [id]="'type-' + type.value" 
+                                                   [value]="type.value" 
+                                                   formControlName="propertyType"
+                                                   [disabled]="isReadOnly()"
+                                                   class="sr-only">
+                                            <label [for]="isReadOnly() ? null : 'type-' + type.value" 
+                                                   class="property-type-label"
+                                                   [class.selected]="propertyForm.get('propertyType')?.value === type.value"
+                                                   [class.cursor-not-allowed]="isReadOnly()"
+                                                   [class.opacity-75]="isReadOnly()"
+                                                   (click)="onDisabledElementClick($event)">
+                                                <span class="text-sm font-medium">{{ getPropertyTypeLabel(type) }}</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div *ngIf="propertyTypes.length === 0" class="text-center py-6">
+                                        <div class="text-gray-500 dark:text-gray-400 mb-4">
+                                            <mat-icon class="text-4xl mb-2">info</mat-icon>
+                                            <p class="text-lg font-medium">No Property Types Available</p>
+                                            <p class="text-sm">Please configure property types in the application settings first.</p>
+                                        </div>
+                                        <button type="button" 
+                                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                                                (click)="goToSettings()">
+                                            <mat-icon class="mr-2">settings</mat-icon>
+                                            Go to Settings
+                                        </button>
+                                    </div>
+                                </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: General Information -->
+                    <div *ngIf="currentStep === 3" class="space-y-6">
+                        <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-6">{{ getStepTitle() }}</h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Property Name *</label>
+                                <input type="text" 
+                                       formControlName="name"
+                                       class="form-input"
+                                       placeholder="Enter property name"
+                                       [readonly]="isReadOnly()"
+                                       (click)="onInputClick()">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Reference <span class="text-red-500">{{ 'property.add.fields.required_field' | transloco }}</span>
+                                </label>
+                                <div class="flex gap-2">
+                                    <input type="text" 
+                                           formControlName="reference"
+                                           class="form-input flex-1"
+                                           placeholder="Enter reference"
+                                           [readonly]="isReadOnly()"
+                                           (click)="onInputClick()">
+                                    <button type="button" 
+                                            class="px-3 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400 rounded-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            (click)="generateRandomReference()"
+                                            [disabled]="isReadOnly()"
+                                            [title]="'property.add.generate_reference' | transloco">
+                                        <mat-icon class="text-lg text-black">refresh</mat-icon>
+                                    </button>
+                                </div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    {{ 'property.add.fields.generate_reference_help' | transloco }}
+                                </p>
+                            </div>
+
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Address *</label>
+                                <input type="text" 
+                                       formControlName="address"
+                                       class="form-input"
+                                       placeholder="Enter full address"
+                                       [readonly]="isReadOnly()"
+                                       (click)="onInputClick()">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">City *</label>
+                                <div class="relative">
+                                    <input type="text" 
+                                           formControlName="city"
+                                           class="form-input"
+                                           placeholder="Search for a city..."
+                                           [value]="citySearchTerm"
+                                           [readonly]="isReadOnly()"
+                                           (input)="onCitySearch($event)"
+                                           (focus)="onCityInputFocus()"
+                                           (blur)="onCityInputBlur()"
+                                           (click)="onInputClick()">
+                                    
+                                    <!-- City Dropdown -->
+                                    <div *ngIf="showCityDropdown && filteredCities.length > 0" 
+                                         class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                                        <div *ngFor="let city of filteredCities.slice(0, 10)" 
+                                             class="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-gray-900 dark:text-white"
+                                             (click)="selectCity(city)">
+                                            {{ city }}
+                                        </div>
+                                        <div *ngIf="filteredCities.length > 10" 
+                                             class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400 text-center">
+                                            ... and {{ filteredCities.length - 10 }} more cities
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- No results -->
+                                    <div *ngIf="showCityDropdown && filteredCities.length === 0" 
+                                         class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg">
+                                        <div class="px-4 py-2 text-gray-500 dark:text-gray-400 text-center">
+                                            No cities found
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Property Details -->
+                    <div *ngIf="currentStep === 4" class="space-y-6">
+                        <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-6">{{ getStepTitle() }}</h2>
+                        
+                        <!-- Property Details -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <!-- Surface construite -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Surface
+                                </label>
+                                <div class="flex">
+                                    <input type="number" 
+                                           formControlName="surfaceConstruite"
+                                           class="form-input rounded-r-none"
+                                           placeholder="0" min="0"
+                                           [readonly]="isReadOnly()"
+                                           (click)="onInputClick()">
+                                    <button type="button" 
+                                            class="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-l-0 border-gray-300 dark:border-gray-600 rounded-r-md">
+                                        m²
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Pièces -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Pièces
+                                </label>
+                                <div class="flex items-center border border-gray-300 dark:border-gray-600 rounded-md">
+                                    <button type="button" 
+                                            (click)="!isReadOnly() && decrementPieces(); isReadOnly() && onInputClick()"
+                                            [disabled]="isReadOnly()"
+                                            class="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-l-md disabled:opacity-50 disabled:cursor-not-allowed">
+                                        -
+                                    </button>
+                                    <span class="flex-1 text-center py-2 text-gray-900 dark:text-white cursor-pointer" (click)="onInputClick()">{{ propertyForm.get('pieces')?.value || 0 }}</span>
+                                    <button type="button" 
+                                            (click)="!isReadOnly() && incrementPieces(); isReadOnly() && onInputClick()"
+                                            [disabled]="isReadOnly()"
+                                            class="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-r-md disabled:opacity-50 disabled:cursor-not-allowed">
+                                        +
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Chambres -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Chambres
+                                </label>
+                                <div class="flex items-center border border-gray-300 dark:border-gray-600 rounded-md">
+                                    <button type="button" 
+                                            (click)="!isReadOnly() && decrementChambres(); isReadOnly() && onInputClick()"
+                                            [disabled]="isReadOnly()"
+                                            class="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-l-md disabled:opacity-50 disabled:cursor-not-allowed">
+                                        -
+                                    </button>
+                                    <span class="flex-1 text-center py-2 text-gray-900 dark:text-white cursor-pointer" (click)="onInputClick()">{{ propertyForm.get('chambres')?.value || 0 }}</span>
+                                    <button type="button" 
+                                            (click)="!isReadOnly() && incrementChambres(); isReadOnly() && onInputClick()"
+                                            [disabled]="isReadOnly()"
+                                            class="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-r-md disabled:opacity-50 disabled:cursor-not-allowed">
+                                        +
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Salles de bains -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Salles de bains
+                                </label>
+                                <div class="flex items-center border border-gray-300 dark:border-gray-600 rounded-md">
+                                    <button type="button" 
+                                            (click)="!isReadOnly() && decrementSallesDeBains(); isReadOnly() && onInputClick()"
+                                            [disabled]="isReadOnly()"
+                                            class="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-l-md disabled:opacity-50 disabled:cursor-not-allowed">
+                                        -
+                                    </button>
+                                    <span class="flex-1 text-center py-2 text-gray-900 dark:text-white cursor-pointer" (click)="onInputClick()">{{ propertyForm.get('sallesDeBains')?.value || 0 }}</span>
+                                    <button type="button" 
+                                            (click)="!isReadOnly() && incrementSallesDeBains(); isReadOnly() && onInputClick()"
+                                            [disabled]="isReadOnly()"
+                                            class="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-r-md disabled:opacity-50 disabled:cursor-not-allowed">
+                                        +
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <!-- Property Features -->
+                        <div class="space-y-4">
+                            <label class="block text-lg font-semibold text-gray-900 dark:text-white">Property Features</label>
+                            
+                            <div class="flex flex-wrap gap-4">
+                                <button type="button" 
+                                        *ngFor="let feature of propertyFeatures" 
+                                        (click)="!isReadOnly() && toggleFeature(feature)"
+                                        [disabled]="isReadOnly()"
+                                        class="feature-chip-large"
+                                        [class.selected]="isFeatureSelected(feature)"
+                                        [class.cursor-not-allowed]="isReadOnly()"
+                                        [class.opacity-75]="isReadOnly()">
+                                    <span class="flex items-center gap-2">
+                                        {{ feature }}
+                                        <button type="button" 
+                                                *ngIf="!isReadOnly() && !['Alarm', 'Furnished', 'Renovated', 'Hardwood floors', 'Fireplace', 'Fresh paint', 'Dishwasher', 'Walk-in closets', 'Balcony, Deck, Patio', 'Internet', 'Fenced yard', 'Tile', 'Carpet', 'Storage', 'Unfurnished'].includes(feature)"
+                                                (click)="removeCustomFeature(feature); $event.stopPropagation()"
+                                                class="ml-1 text-red-500 hover:text-red-700">
+                                            ×
+                                        </button>
+                                    </span>
+                                </button>
+                                
+                                <!-- Inline Add Feature -->
+                                <div *ngIf="!addingFeature && !isReadOnly()" class="feature-chip-large border-dashed border-2 border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30">
+                                    <button type="button" 
+                                            (click)="startAddingFeature()"
+                                            class="flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
+                                        <span class="text-lg">+</span>
+                                        <span>Add Feature</span>
+                                    </button>
+                                </div>
+                                
+                                <!-- Add Feature Input -->
+                                <div *ngIf="addingFeature && !isReadOnly()" class="feature-chip-large bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-600">
+                                    <div class="flex items-center gap-2">
+                                        <input type="text" 
+                                               [(ngModel)]="customFeature"
+                                               [ngModelOptions]="{standalone: true}"
+                                               placeholder="Enter feature..."
+                                               class="flex-1 bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-500"
+                                               (keyup.enter)="confirmAddFeature()"
+                                               (keyup.escape)="cancelAddFeature()"
+                                               autofocus>
+                                        <button type="button" 
+                                                (click)="confirmAddFeature()"
+                                                class="text-green-600 hover:text-green-700 text-sm">
+                                            ✓
+                                        </button>
+                                        <button type="button" 
+                                                (click)="cancelAddFeature()"
+                                                class="text-red-500 hover:text-red-700 text-sm">
+                                            ×
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Property Amenities -->
+                        <div class="space-y-4">
+                            <label class="block text-lg font-semibold text-gray-900 dark:text-white">Property Amenities</label>
+                            
+                            <div class="flex flex-wrap gap-4">
+                                <button type="button" 
+                                        *ngFor="let amenity of propertyAmenities" 
+                                        (click)="!isReadOnly() && toggleAmenity(amenity)"
+                                        [disabled]="isReadOnly()"
+                                        class="amenity-chip-large"
+                                        [class.selected]="isAmenitySelected(amenity)"
+                                        [class.cursor-not-allowed]="isReadOnly()"
+                                        [class.opacity-75]="isReadOnly()">
+                                    <span class="flex items-center gap-2">
+                                        {{ amenity }}
+                                        <button type="button" 
+                                                *ngIf="!isReadOnly() && !['Parking', 'Laundry', 'Air conditioning', 'Heating', 'Swimming pool', 'Gym', 'Security', 'Elevator', 'Balcony', 'Garden', 'Garage', 'Pet friendly'].includes(amenity)"
+                                                (click)="removeCustomAmenity(amenity); $event.stopPropagation()"
+                                                class="ml-1 text-red-500 hover:text-red-700">
+                                            ×
+                                        </button>
+                                    </span>
+                                </button>
+                                
+                                <!-- Inline Add Amenity -->
+                                <div *ngIf="!addingAmenity && !isReadOnly()" class="amenity-chip-large border-dashed border-2 border-green-300 dark:border-green-600 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30">
+                                    <button type="button" 
+                                            (click)="startAddingAmenity()"
+                                            class="flex items-center gap-2 text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300">
+                                        <span class="text-lg">+</span>
+                                        <span>Add Amenity</span>
+                                    </button>
+                                </div>
+                                
+                                <!-- Add Amenity Input -->
+                                <div *ngIf="addingAmenity && !isReadOnly()" class="amenity-chip-large bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-600">
+                                    <div class="flex items-center gap-2">
+                                        <input type="text" 
+                                               [(ngModel)]="customAmenity"
+                                               [ngModelOptions]="{standalone: true}"
+                                               placeholder="Enter amenity..."
+                                               class="flex-1 bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-500"
+                                               (keyup.enter)="confirmAddAmenity()"
+                                               (keyup.escape)="cancelAddAmenity()"
+                                               autofocus>
+                                        <button type="button" 
+                                                (click)="confirmAddAmenity()"
+                                                class="text-green-600 hover:text-green-700 text-sm">
+                                            ✓
+                                        </button>
+                                        <button type="button" 
+                                                (click)="cancelAddAmenity()"
+                                                class="text-red-500 hover:text-red-700 text-sm">
+                                            ×
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 5: Property Images -->
+                    <div *ngIf="currentStep === 5" class="space-y-6">
+                        <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-6">{{ getStepTitle() }}</h2>
+                        
+                                                 <!-- File Upload Area -->
+                        <div *ngIf="!isReadOnly()" class="upload-area relative"
+                             (dragover)="onDragOver($event)"
+                             (dragleave)="onDragLeave($event)"
+                             (drop)="onDrop($event)"
+                             [class.drag-over]="isDragOver">
+                            <!-- Loading Overlay -->
+                            <div *ngIf="isUploading" 
+                                 class="absolute inset-0 bg-white/90 dark:bg-gray-900/90 flex flex-col items-center justify-center rounded-lg z-10">
+                                <div class="mb-2 flex items-center justify-center">
+                                    <mat-spinner diameter="32"></mat-spinner>
+                                </div>
+                                <div class="text-xs font-medium text-gray-700 dark:text-gray-300">Uploading...</div>
+                            </div>
+                            
+                            <div class="space-y-3">
+                                <div class="mx-auto w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                    </svg>
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-lg font-semibold text-gray-900 dark:text-white">Upload Property Images</p>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Drag and drop images here or click to browse</p>
+                                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-2">Supports JPG, PNG, GIF • Max 3MB per image</p>
+                                </div>
+                                <div class="flex justify-center">
+                                    <button type="button" 
+                                            [disabled]="isUploading"
+                                            (click)="fileInput.click()"
+                                            class="px-6 py-3 bg-blue-600 dark:bg-blue-500 text-white text-sm font-medium rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl">
+                                        <div class="flex items-center gap-2">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                            </svg>
+                                            Choose Images
+                                        </div>
+                                    </button>
+                                </div>
+                                <input #fileInput 
+                                       type="file" 
+                                       multiple 
+                                       accept="image/*" 
+                                       (change)="onFileSelected($event); fileInput.value = ''"
+                                       class="hidden">
+                            </div>
+                        </div>
+
+                        <!-- Image Preview Grid - View Mode (Read-only) -->
+                        <div *ngIf="isViewMode && !editMode && existingImages.length > 0">
+                            <div class="mb-4 flex items-center justify-between">
+                                <div class="text-sm text-gray-600 dark:text-gray-400">
+                                    {{ existingImages.length }} image(s)
+                                </div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">
+                                    Click on an image to view full size
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                                <div *ngFor="let img of existingImages; let i = index" 
+                                     class="relative group image-preview-container cursor-pointer"
+                                     [class.default-image]="defaultImageIndex === i"
+                                     (click)="openImageViewer(img.url, i)">
+                                    
+                                    <!-- Image -->
+                                    <img [src]="img.url" 
+                                         [alt]="img.fileName" 
+                                         class="w-full h-64 object-contain rounded-lg border-2 transition-all duration-200 hover:opacity-90"
+                                         [class.border-green-500]="defaultImageIndex === i"
+                                         [class.border-gray-300]="defaultImageIndex !== i">
+                                    
+                                    <!-- Default Image Badge -->
+                                    <div *ngIf="defaultImageIndex === i" 
+                                         class="absolute top-2 left-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg pointer-events-none">
+                                        <div class="flex items-center gap-1">
+                                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                            </svg>
+                                            Default
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Hover Overlay with View Icon -->
+                                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-events-none">
+                                        <div class="text-white">
+                                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Image Preview Grid - Create Mode -->
+                        <div *ngIf="!isViewMode && !editMode && previewUrls.length > 0">
+                            <div class="mb-4 flex items-center justify-between">
+                                <div class="text-sm text-gray-600 dark:text-gray-400">
+                                    {{ previewUrls.length }} image(s) uploaded
+                                </div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">
+                                    Click on an image to set it as default
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                                <div *ngFor="let url of previewUrls; let i = index" 
+                                     class="relative group image-preview-container"
+                                     [class.default-image]="defaultImageIndex === i">
+                                    
+                                    <!-- Image -->
+                                    <img [src]="url" 
+                                         alt="Property image" 
+                                         class="w-full h-64 object-contain rounded-lg border-2 transition-all duration-200 cursor-pointer hover:opacity-90"
+                                         [class.border-green-500]="defaultImageIndex === i"
+                                         [class.border-gray-300]="defaultImageIndex !== i"
+                                         (click)="setDefaultImage(i)">
+                                    
+                                    <!-- Remove Button - Top Right Corner -->
+                                    <button type="button" 
+                                            (click)="removeImage(i)"
+                                            class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200 shadow-lg hover:shadow-xl z-10"
+                                            title="Remove image">
+                                        ×
+                                    </button>
+                                    
+                                    <!-- Default Image Badge -->
+                                    <div *ngIf="defaultImageIndex === i" 
+                                         class="absolute top-2 left-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
+                                        <div class="flex items-center gap-1">
+                                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                            </svg>
+                                            Default
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Hover Overlay with Set Default Button -->
+                                    <div *ngIf="defaultImageIndex !== i" 
+                                         class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                        <button type="button" 
+                                                (click)="setDefaultImage(i); $event.stopPropagation()"
+                                                class="px-3 py-2 bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 text-white rounded-lg text-sm font-medium transition-all duration-200 shadow-lg hover:shadow-xl">
+                                            <div class="flex items-center gap-1">
+                                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                                </svg>
+                                                Set Default
+                                            </div>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Edit Mode: Separate sections for existing and new images -->
+                        <div *ngIf="editMode">
+                            <!-- Existing Images Section -->
+                            <div *ngIf="existingImages.length > 0" class="mb-6">
+                                <div class="mb-4">
+                                    <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">Current Images</h3>
+                                    <div class="text-sm text-gray-600 dark:text-gray-400">
+                                        {{ getActiveExistingImagesCount() }} image(s) {{ imagesToDelete.length > 0 ? '(' + imagesToDelete.length + ' marked for deletion)' : '' }}
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                                    <div *ngFor="let img of existingImages; let i = index" 
+                                         class="relative group image-preview-container"
+                                         [class.opacity-50]="isExistingImageDeleted(img.id)"
+                                         [class.default-image]="defaultImageIndex === i && !isExistingImageDeleted(img.id)">
+                                        
+                                        <!-- Image -->
+                                        <img [src]="img.url" 
+                                             [alt]="img.fileName" 
+                                             class="w-full h-64 object-contain rounded-lg border-2 transition-all duration-200 cursor-pointer hover:opacity-90"
+                                             [class.border-green-500]="defaultImageIndex === i && !isExistingImageDeleted(img.id)"
+                                             [class.border-red-500]="isExistingImageDeleted(img.id)"
+                                             [class.border-gray-300]="defaultImageIndex !== i && !isExistingImageDeleted(img.id)"
+                                             (click)="!isReadOnly() && !isExistingImageDeleted(img.id) ? setDefaultExistingImage(img.id, i) : null">
+                                        
+                                        <!-- Delete Overlay -->
+                                        <div *ngIf="isExistingImageDeleted(img.id)" 
+                                             class="absolute inset-0 bg-red-500 bg-opacity-30 rounded-lg flex items-center justify-center flex-col gap-2">
+                                            <span class="text-red-700 dark:text-red-300 font-bold text-sm">To be deleted</span>
+                                            <button type="button" 
+                                                    (click)="restoreExistingImage(img.id); $event.stopPropagation()"
+                                                    class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium transition-all duration-200 shadow-lg hover:shadow-xl flex items-center gap-1">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
+                                                </svg>
+                                                Restore
+                                            </button>
+                                        </div>
+                                        
+                                        <!-- Remove Button -->
+                                        <button *ngIf="!isReadOnly() && !isExistingImageDeleted(img.id)" type="button" 
+                                                (click)="removeExistingImage(img.id, i); $event.stopPropagation()"
+                                                class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200 shadow-lg hover:shadow-xl z-10"
+                                                title="Mark for deletion">
+                                            ×
+                                        </button>
+                                        
+                                        <!-- Default Image Badge -->
+                                        <div *ngIf="defaultImageIndex === i && !isExistingImageDeleted(img.id)" 
+                                             class="absolute top-2 left-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
+                                            <div class="flex items-center gap-1">
+                                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                                </svg>
+                                                Default
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Hover Overlay with Set Default Button -->
+                                        <div *ngIf="defaultImageIndex !== i && !isReadOnly() && !isExistingImageDeleted(img.id)" 
+                                             class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                            <button type="button" 
+                                                    (click)="setDefaultExistingImage(img.id, i); $event.stopPropagation()"
+                                                    class="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-all duration-200 shadow-lg hover:shadow-xl">
+                                                <div class="flex items-center gap-1">
+                                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                                    </svg>
+                                                    Set Default
+                                                </div>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- New Images Section -->
+                            <div *ngIf="newImages.length > 0" class="mb-6">
+                                <div class="mb-4">
+                                    <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">New Images to Upload</h3>
+                                    <div class="text-sm text-gray-600 dark:text-gray-400">
+                                        {{ newImages.length }} new image(s) to be added
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                                    <div *ngFor="let img of newImages; let i = index" 
+                                         class="relative group image-preview-container"
+                                         [class.default-image]="isNewImageDefault(i)">
+                                        
+                                        <!-- Image -->
+                                        <img [src]="img.preview" 
+                                             alt="New image" 
+                                             class="w-full h-64 object-contain rounded-lg border-2 transition-all duration-200 hover:opacity-90"
+                                             [class.border-green-500]="isNewImageDefault(i)"
+                                             [class.border-blue-500]="!isNewImageDefault(i)">
+                                        
+                                        <!-- Remove Button -->
+                                        <button type="button" 
+                                                (click)="removeNewImage(i); $event.stopPropagation()"
+                                                class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200 shadow-lg hover:shadow-xl z-10"
+                                                title="Remove image">
+                                            ×
+                                        </button>
+                                        
+                                        <!-- Default Badge (when selected as default) -->
+                                        <div *ngIf="isNewImageDefault(i)" 
+                                             class="absolute top-2 left-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
+                                            <div class="flex items-center gap-1">
+                                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                                </svg>
+                                                Default
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- New Image Badge (when not selected as default) -->
+                                        <div *ngIf="!isNewImageDefault(i)" 
+                                             class="absolute top-2 left-2 bg-blue-500 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
+                                            New
+                                        </div>
+                                        
+                                        <!-- Hover Overlay with Set Default Button -->
+                                        <div *ngIf="!isNewImageDefault(i)" 
+                                             class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                            <button type="button" 
+                                                    (click)="setDefaultNewImage(i); $event.stopPropagation()"
+                                                    class="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-all duration-200 shadow-lg hover:shadow-xl">
+                                                <div class="flex items-center gap-1">
+                                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                                    </svg>
+                                                    Set Default
+                                                </div>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                    </div>
+
+                    <!-- Navigation Buttons -->
+                    <div class="flex justify-between pt-6 border-t border-gray-200 dark:border-gray-700 mt-6">
+                        <!-- View Mode Buttons (Read-only) -->
+                        <div *ngIf="isViewMode && !editMode" class="flex justify-between w-full">
+                            <button type="button" 
+                                    (click)="previousStep()"
+                                    [disabled]="currentStep === 1"
+                                    class="btn-secondary">
+                                {{ 'property.add.buttons.previous' | transloco }}
+                            </button>
+                            
+                            <button type="button" 
+                                    (click)="nextStep()"
+                                    *ngIf="currentStep < totalSteps"
+                                    class="btn-primary">
+                                {{ 'property.add.buttons.next' | transloco }}
+                            </button>
+                        </div>
+                        
+                        <!-- Create/Edit Mode Buttons -->
+                        <ng-container *ngIf="!isViewMode || editMode">
+                            <button type="button" 
+                                    (click)="previousStep()"
+                                    [disabled]="currentStep === 1 || isUploading"
+                                    class="btn-secondary">
+                                {{ 'property.add.buttons.previous' | transloco }}
+                            </button>
+                            
+                            <button type="submit" 
+                                    [disabled]="!isCurrentStepValid() || isUploading || !canEditProperties()"
+                                    [matTooltip]="!canEditProperties() ? 'You do not have permission to save properties' : ''"
+                                    class="btn-primary flex items-center gap-2">
+                                <mat-spinner *ngIf="isUploading && currentStep === totalSteps" diameter="16" class="inline-block"></mat-spinner>
+                                <span *ngIf="isUploading && currentStep === totalSteps">{{ editMode ? 'Updating Property...' : 'Creating Property...' }}</span>
+                                <span *ngIf="!isUploading || currentStep !== totalSteps">{{ currentStep === totalSteps ? (editMode ? 'Update Property' : ('property.add.buttons.create_property' | transloco)) : ('property.add.buttons.next' | transloco) }}</span>
+                            </button>
+                        </ng-container>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Viewer -->
+    <app-image-viewer
+        [imageUrl]="selectedImageUrl"
+        [imageName]="selectedImageName"
+        [fileSize]="selectedImageSize"
+        [images]="selectedImages"
+        [currentIndex]="selectedImageIndex"
+        [isOpen]="isImageViewerOpen"
+        (close)="closeImageViewer()"
+        (imageChanged)="onImageChanged($event)">
+    </app-image-viewer>
+</div>

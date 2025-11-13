@@ -1,0 +1,609 @@
+<div class="flex flex-col w-full h-full">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between w-full px-6 py-6 border-b bg-card">
+        <div class="flex items-center flex-1">
+            <button
+                *ngIf="!dialogMode"
+                mat-icon-button
+                [matTooltip]="'contacts.actions.back_to_list' | transloco"
+                (click)="closeDrawer()">
+                <mat-icon [svgIcon]="'heroicons_outline:arrow-left'"></mat-icon>
+            </button>
+            <div [ngClass]="{'ml-4': !dialogMode}">
+                <div class="text-xl font-semibold">{{ (isNewContact ? 'contacts.actions.add' : (editMode ? 'contacts.actions.edit' : 'contacts.actions.view')) | transloco }} {{ displayTitle }}</div>
+            </div>
+        </div>
+        <div class="flex items-center space-x-2">
+            <button
+                *ngIf="!editMode && !isNewContact && !dialogMode"
+                mat-stroked-button
+                (click)="toggleEditMode(true)">
+                <mat-icon class="icon-size-5" [svgIcon]="'heroicons_solid:pencil-square'"></mat-icon>
+                <span class="ml-2">{{ 'contacts.actions.edit' | transloco }}</span>
+            </button>
+            <button
+                *ngIf="editMode && !isNewContact && !dialogMode"
+                mat-stroked-button
+                (click)="toggleEditMode(false)">
+                <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
+                <span class="ml-2">{{ 'contacts.actions.cancel' | transloco }}</span>
+            </button>
+            <button
+                *ngIf="editMode && !dialogMode"
+                mat-flat-button
+                [color]="'primary'"
+                [disabled]="contactForm.invalid"
+                (click)="updateContact()">
+                <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:check'"></mat-icon>
+                <span class="ml-2">{{ 'contacts.actions.save' | transloco }}</span>
+            </button>
+            <button
+                *ngIf="editMode && dialogMode"
+                mat-stroked-button
+                (click)="closeDrawer()">
+                <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
+                <span class="ml-2">{{ 'contacts.actions.cancel' | transloco }}</span>
+            </button>
+            <button
+                *ngIf="editMode && dialogMode"
+                mat-flat-button
+                [color]="'primary'"
+                [disabled]="contactForm.invalid"
+                (click)="updateContact()">
+                <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:check'"></mat-icon>
+                <span class="ml-2">{{ 'contacts.actions.save' | transloco }}</span>
+            </button>
+            <button
+                *ngIf="!isNewContact && !dialogMode"
+                mat-icon-button
+                [matTooltip]="'contacts.actions.delete' | transloco"
+                (click)="deleteContact()">
+                <mat-icon class="text-warn" [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content Layout -->
+    <div class="flex flex-1 overflow-hidden">
+        <form [formGroup]="contactForm" class="flex flex-1">
+            
+            <!-- Left Sidebar - Profile Information -->
+            <div class="w-80 lg:w-80 md:w-72 sm:w-64 bg-card border-r border-gray-200 dark:border-gray-700 flex flex-col hidden lg:flex">
+                
+                <!-- Profile Section -->
+                <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                    <!-- Avatar -->
+                    <div class="flex flex-col items-center mb-6">
+                        <div class="relative w-24 h-24 mb-4">
+                            <div class="w-full h-full rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center border-2 border-gray-300 dark:border-gray-600">
+                                <ng-container *ngIf="avatarUrl">
+                                    <img
+                                        class="object-cover w-full h-full"
+                                        [src]="avatarUrl"
+                                        alt="Contact avatar"/>
+                                </ng-container>
+                                <ng-container *ngIf="!avatarUrl">
+                                    <div class="flex flex-col items-center justify-center text-center p-2">
+                                        <mat-icon class="icon-size-8 text-hint" [svgIcon]="'heroicons_outline:user-circle'"></mat-icon>
+                                        <div class="mt-1 text-xs text-secondary">{{ 'contacts.messages.no_photo' | transloco }}</div>
+                                    </div>
+                                </ng-container>
+                            </div>
+                            <!-- Upload overlay for edit mode -->
+                            <div *ngIf="editMode && avatarUrl" class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full opacity-0 hover:opacity-100 transition-opacity cursor-pointer"
+                                 (click)="avatarFileInput.click()">
+                                <mat-icon class="text-white icon-size-6" [svgIcon]="'heroicons_outline:camera'"></mat-icon>
+                            </div>
+                        </div>
+
+                        <!-- Contact Name/Company -->
+                        <div class="text-center">
+                            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+                                <ng-container *ngIf="!contactForm.get('isACompany').value">
+                                    {{ contactForm.get('firstName').value }} {{ contactForm.get('lastName').value }}
+                                </ng-container>
+                                <ng-container *ngIf="contactForm.get('isACompany').value">
+                                    {{ contactForm.get('companyName').value }}
+                                </ng-container>
+                            </h2>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                {{ displayTitle }}
+                            </p>
+                        </div>
+
+                        <!-- Avatar Upload Section - Only in Edit Mode -->
+                        <ng-container *ngIf="editMode">
+                            <input
+                                #avatarFileInput
+                                type="file"
+                                accept="image/jpeg, image/png, image/gif, image/webp"
+                                class="hidden"
+                                (change)="uploadAvatar(avatarFileInput.files)"/>
+                            
+                            <!-- Show upload button when no avatar -->
+                            <div *ngIf="!avatarUrl" class="flex flex-col items-center gap-2 mt-3">
+                                <button
+                                    mat-flat-button
+                                    color="primary"
+                                    size="small"
+                                    type="button"
+                                    (click)="avatarFileInput.click()">
+                                    <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:camera'"></mat-icon>
+                                    <span class="ml-1 text-xs">{{ 'contacts.actions.upload_photo' | transloco }}</span>
+                                </button>
+                                <div class="text-xs text-secondary text-center">{{ 'contacts.messages.file_size_limit' | transloco }}</div>
+                            </div>
+
+                            <!-- Show actions when avatar exists -->
+                            <div *ngIf="avatarUrl" class="flex gap-2 mt-3">
+                                <button
+                                    mat-stroked-button
+                                    size="small"
+                                    type="button"
+                                    (click)="avatarFileInput.click()">
+                                    <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:arrow-path'"></mat-icon>
+                                    <span class="ml-1 text-xs">{{ 'contacts.actions.change' | transloco }}</span>
+                                </button>
+                                <button
+                                    mat-stroked-button
+                                    size="small"
+                                    type="button"
+                                    (click)="removeAvatar()">
+                                    <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                                    <span class="ml-1 text-xs">{{ 'contacts.actions.remove' | transloco }}</span>
+                                </button>
+                            </div>
+                        </ng-container>
+                    </div>
+                </div>
+
+                <!-- Quick Info Cards -->
+                <div class="flex-1 p-6 space-y-4">
+                    
+                    <!-- Contact Type Toggle (Only shown when creating new contact) -->
+                    <div *ngIf="isNewContact" class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <div class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                {{ 'contacts.messages.display_as_company' | transloco }}
+                            </div>
+                            <mat-slide-toggle
+                                [formControlName]="'isACompany'"
+                                [disabled]="!editMode && !isNewContact"
+                                color="primary">
+                            </mat-slide-toggle>
+                        </div>
+                    </div>
+
+                    <!-- Email Card -->
+                    <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                        <div class="flex items-center mb-2">
+                            <mat-icon class="icon-size-5 text-primary mr-2" [svgIcon]="'heroicons_outline:envelope'"></mat-icon>
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Email</span>
+                        </div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400">
+                            {{ contactForm.get('email').value || 'No email provided' }}
+                        </div>
+                    </div>
+
+                    <!-- Phone Numbers Card -->
+                    <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                        <div class="flex items-center mb-2">
+                            <mat-icon class="icon-size-5 text-primary mr-2" [svgIcon]="'heroicons_outline:phone'"></mat-icon>
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Phone Numbers</span>
+                        </div>
+                        <div class="space-y-1">
+                            <ng-container *ngFor="let phoneGroup of contactForm.get('phones')['controls']; let i = index">
+                                <div class="text-sm text-gray-600 dark:text-gray-400">
+                                    {{ phoneGroup.get('phone').value || 'No phone provided' }}
+                                </div>
+                            </ng-container>
+                        </div>
+                    </div>
+
+                    <!-- Company Info (if company) -->
+                    <div *ngIf="contactForm.get('isACompany').value" class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                        <div class="flex items-center mb-2">
+                            <mat-icon class="icon-size-5 text-primary mr-2" [svgIcon]="'heroicons_outline:building-office'"></mat-icon>
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Company Info</span>
+                        </div>
+                        <div class="space-y-1 text-sm text-gray-600 dark:text-gray-400">
+                            <div>ICE: {{ contactForm.get('ice').value || 'Not provided' }}</div>
+                            <div>RC: {{ contactForm.get('rc').value || 'Not provided' }}</div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Right Content Area -->
+            <div class="flex-1 flex flex-col overflow-hidden">
+                
+                <!-- Mobile Profile Summary (visible on small screens) -->
+                <div class="lg:hidden bg-card border-b border-gray-200 dark:border-gray-700 p-4">
+                    <div class="flex items-center space-x-4">
+                        <!-- Mobile Avatar -->
+                        <div class="relative w-12 h-12">
+                            <div class="w-full h-full rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center border-2 border-gray-300 dark:border-gray-600">
+                                <ng-container *ngIf="avatarUrl">
+                                    <img
+                                        class="object-cover w-full h-full"
+                                        [src]="avatarUrl"
+                                        alt="Contact avatar"/>
+                                </ng-container>
+                                <ng-container *ngIf="!avatarUrl">
+                                    <mat-icon class="icon-size-6 text-hint" [svgIcon]="'heroicons_outline:user-circle'"></mat-icon>
+                                </ng-container>
+                            </div>
+                        </div>
+                        
+                        <!-- Mobile Contact Info -->
+                        <div class="flex-1 min-w-0">
+                            <h3 class="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                                <ng-container *ngIf="!contactForm.get('isACompany').value">
+                                    {{ contactForm.get('firstName').value }} {{ contactForm.get('lastName').value }}
+                                </ng-container>
+                                <ng-container *ngIf="contactForm.get('isACompany').value">
+                                    {{ contactForm.get('companyName').value }}
+                                </ng-container>
+                            </h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                {{ contactForm.get('email').value || 'No email provided' }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tabs -->
+                <mat-tab-group class="flex flex-col flex-1" animationDuration="200ms">
+                    
+                    <!-- Personal Information Tab -->
+                    <mat-tab [label]="'contacts.tabs.personal_information' | transloco">
+                        <div class="flex-1 overflow-y-auto p-4 lg:p-6">
+                            
+                            <!-- Name fields (shown when NOT a company) -->
+                            <div *ngIf="!contactForm.get('isACompany').value" class="mb-8">
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Personal Information</h3>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <mat-form-field [ngClass]="formFieldHelpers" class="w-full">
+                                        <mat-label>{{ 'contacts.fields.first_name' | transloco }}</mat-label>
+                                        <input
+                                            matInput
+                                            [formControlName]="'firstName'"
+                                            [placeholder]="'contacts.placeholders.type_name_here' | transloco"
+                                            [readonly]="!editMode"
+                                            (click)="onInputClick()"/>
+                                        <mat-error *ngIf="contactForm.get('firstName').hasError('required')">
+                                            {{ 'contacts.messages.first_name_required' | transloco }}
+                                        </mat-error>
+                                    </mat-form-field>
+
+                                    <mat-form-field [ngClass]="formFieldHelpers" class="w-full">
+                                        <mat-label>{{ 'contacts.fields.last_name' | transloco }}</mat-label>
+                                        <input
+                                            matInput
+                                            [formControlName]="'lastName'"
+                                            [placeholder]="'contacts.placeholders.type_name_here' | transloco"
+                                            [readonly]="!editMode"
+                                            (click)="onInputClick()"/>
+                                        <mat-error *ngIf="contactForm.get('lastName').hasError('required')">
+                                            {{ 'contacts.messages.last_name_required' | transloco }}
+                                        </mat-error>
+                                    </mat-form-field>
+
+                                    <mat-form-field class="w-full sm:col-span-2">
+                                        <mat-label>{{ 'contacts.fields.identifier' | transloco }}</mat-label>
+                                        <input
+                                            matInput
+                                            [formControlName]="'identifier'"
+                                            [placeholder]="'contacts.placeholders.enter_identifier' | transloco"
+                                            [readonly]="!editMode"
+                                            (click)="onInputClick()"/>
+                                        <mat-error *ngIf="contactForm.get('identifier').hasError('required')">
+                                            {{ 'contacts.messages.identifier_required' | transloco }}
+                                        </mat-error>
+                                    </mat-form-field>
+                                </div>
+                            </div>
+
+                            <!-- Company fields (shown when IS a company) -->
+                            <div *ngIf="contactForm.get('isACompany').value" class="mb-8">
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Company Information</h3>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <mat-form-field [ngClass]="formFieldHelpers" class="w-full">
+                                        <mat-label>{{ 'contacts.fields.company_name' | transloco }}</mat-label>
+                                        <input
+                                            matInput
+                                            [formControlName]="'companyName'"
+                                            [placeholder]="'contacts.placeholders.type_name_here' | transloco"
+                                            [readonly]="!editMode"
+                                            (click)="onInputClick()"/>
+                                        <mat-error *ngIf="contactForm.get('companyName').hasError('required')">
+                                            {{ 'contacts.messages.company_name_required' | transloco }}
+                                        </mat-error>
+                                    </mat-form-field>
+
+                                    <mat-form-field [ngClass]="formFieldHelpers" class="w-full">
+                                        <mat-label>{{ 'contacts.fields.ice' | transloco }}</mat-label>
+                                        <input
+                                            matInput
+                                            [formControlName]="'ice'"
+                                            [placeholder]="'contacts.placeholders.enter_ice' | transloco"
+                                            [readonly]="!editMode"
+                                            (click)="onInputClick()"/>
+                                    </mat-form-field>
+
+                                    <mat-form-field [ngClass]="formFieldHelpers" class="w-full">
+                                        <mat-label>{{ 'contacts.fields.rc' | transloco }}</mat-label>
+                                        <input
+                                            matInput
+                                            [formControlName]="'rc'"
+                                            [placeholder]="'contacts.placeholders.enter_rc' | transloco"
+                                            [readonly]="!editMode"
+                                            (click)="onInputClick()"/>
+                                    </mat-form-field>
+
+                                    <mat-form-field class="w-full sm:col-span-3">
+                                        <mat-label>{{ 'contacts.fields.identifier' | transloco }}</mat-label>
+                                        <input
+                                            matInput
+                                            [formControlName]="'identifier'"
+                                            [placeholder]="'contacts.placeholders.enter_identifier' | transloco"
+                                            [readonly]="!editMode"
+                                            (click)="onInputClick()"/>
+                                        <mat-error *ngIf="contactForm.get('identifier').hasError('required')">
+                                            {{ 'contacts.messages.identifier_required' | transloco }}
+                                        </mat-error>
+                                    </mat-form-field>
+                                </div>
+                            </div>
+
+                            <!-- Contact Details -->
+                            <div class="mb-8">
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Contact Details</h3>
+                                
+                                <!-- Email -->
+                                <div class="mb-6">
+                                    <mat-form-field [ngClass]="formFieldHelpers" class="w-full">
+                                        <mat-label>{{ 'contacts.fields.email_address' | transloco }}</mat-label>
+                                        <input
+                                            matInput
+                                            type="email"
+                                            [formControlName]="'email'"
+                                            [placeholder]="'contacts.placeholders.add_email_here' | transloco"
+                                            [readonly]="!editMode"
+                                            (click)="onInputClick()"/>
+                                        <mat-error *ngIf="contactForm.get('email').hasError('email')">
+                                            {{ 'contacts.messages.email_invalid' | transloco }}
+                                        </mat-error>
+                                    </mat-form-field>
+                                </div>
+
+                                <!-- Phone Numbers -->
+                                <div>
+                                    <div class="flex items-center justify-between mb-4">
+                                        <h4 class="text-md font-medium text-gray-700 dark:text-gray-300">Phone Numbers</h4>
+                                        <button
+                                            *ngIf="editMode"
+                                            mat-stroked-button
+                                            size="small"
+                                            type="button"
+                                            (click)="addPhoneField()">
+                                            <mat-icon class="icon-size-4 text-green-600" [svgIcon]="'heroicons_outline:plus'"></mat-icon>
+                                            <span class="ml-1 text-xs text-green-600">Add Phone</span>
+                                        </button>
+                                    </div>
+                                    
+                                    <ng-container formArrayName="phones">
+                                        <ng-container *ngFor="let phoneGroup of contactForm.get('phones')['controls']; let i = index; let first = first;">
+                                            <div [formGroupName]="i" class="flex items-center gap-4 mb-3">
+                                                <mat-form-field class="flex-1">
+                                                    <mat-label>{{ (first ? 'contacts.fields.phone_number' : 'contacts.fields.additional_phone') | transloco }}</mat-label>
+                                                    <input
+                                                        matInput
+                                                        [formControlName]="'phone'"
+                                                        [placeholder]="'contacts.placeholders.add_phone_number' | transloco"
+                                                        [readonly]="!editMode"
+                                                        (click)="onInputClick()"/>
+                                                </mat-form-field>
+                                                <button
+                                                    *ngIf="editMode && !first"
+                                                    mat-icon-button
+                                                    type="button"
+                                                    (click)="removePhoneField(i)">
+                                                    <mat-icon class="text-warn icon-size-5" [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                                                </button>
+                                            </div>
+                                        </ng-container>
+                                    </ng-container>
+                                </div>
+                            </div>
+                        </div>
+                    </mat-tab>
+
+                    <!-- Documents Tab -->
+                    <mat-tab [label]="'contacts.tabs.attachments' | transloco">
+                        <div class="flex flex-col h-full overflow-hidden p-4 lg:p-6">
+                            
+                            <!-- Upload Section (Edit Mode Only) -->
+                            <div *ngIf="editMode" class="mb-8 flex-shrink-0">
+                                <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6 border border-blue-200 dark:border-blue-700">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <div class="flex items-center">
+                                            <mat-icon class="icon-size-6 text-blue-600 mr-2" [svgIcon]="'heroicons_outline:arrow-up-tray'"></mat-icon>
+                                            <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-100">Upload Documents</h3>
+                                        </div>
+                                        <input
+                                            #documentFileInput
+                                            type="file"
+                                            multiple
+                                            accept="image/*, application/pdf, .doc, .docx, .xls, .xlsx, .txt"
+                                            class="hidden"
+                                            (change)="uploadDocuments(documentFileInput.files); documentFileInput.value = ''"/>
+                                        <button
+                                            mat-flat-button
+                                            color="primary"
+                                            type="button"
+                                            (click)="documentFileInput.click()">
+                                            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:arrow-up-tray'"></mat-icon>
+                                            <span class="ml-2">Upload Files</span>
+                                        </button>
+                                    </div>
+
+                                    <!-- Documents to Upload Queue -->
+                                    <div *ngIf="attachmentsToAdd.length > 0" class="mb-4">
+                                        <div class="text-sm font-medium mb-3 text-blue-700 dark:text-blue-300">Files to be uploaded when saving:</div>
+                                        <div class="grid grid-cols-1 gap-4">
+                                            <div *ngFor="let doc of attachmentsToAdd; let i = index" 
+                                                 class="flex items-center gap-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-700">
+                                                <mat-icon class="icon-size-6 text-green-600" [svgIcon]="'heroicons_outline:document'"></mat-icon>
+                                                <div class="flex-1 min-w-0">
+                                                    <div class="text-sm font-medium truncate">{{ doc.fileName }}</div>
+                                                    <div class="text-xs text-green-600">Ready to upload</div>
+                                                </div>
+                                                <button
+                                                    mat-icon-button
+                                                    type="button"
+                                                    (click)="removeDocumentFromQueue(i)">
+                                                    <mat-icon class="text-warn icon-size-4" [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div *ngIf="attachmentsToAdd.length === 0" class="text-sm text-blue-600 dark:text-blue-400 italic">
+                                        No files selected for upload. Click "Upload Files" to add attachments.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Existing Documents -->
+                            <div *ngIf="!editMode || (contact?.attachments && contact.attachments.length > 0)" class="flex flex-col flex-1 min-h-0" data-attachments-container>
+                                <div class="flex items-center justify-between mb-6 flex-shrink-0">
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                                        {{ editMode ? 'Current Documents' : 'Documents' }}
+                                    </h3>
+                                </div>
+
+                                <!-- Documents List -->
+                                <div *ngIf="contact?.attachments && contact.attachments.length > 0" 
+                                     class="flex-1 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-gray-100 dark:scrollbar-track-gray-800 max-h-[600px]" 
+                                     data-documents-list>
+                                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                                    <div *ngFor="let doc of contact.attachments; trackBy: trackByFn" 
+                                         class="flex items-center gap-4 p-4 rounded-lg border transition-colors"
+                                         [ngClass]="{
+                                             'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700 opacity-50': editMode && isDocumentMarkedForDeletion(doc.id),
+                                             'bg-card border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800': !editMode || !isDocumentMarkedForDeletion(doc.id),
+                                             'cursor-pointer': !editMode
+                                         }"
+                                         (click)="!editMode ? viewDocument(doc) : null">
+                                        
+                                        <mat-icon class="icon-size-8"
+                                                  [ngClass]="{
+                                                      'text-red-600': editMode && isDocumentMarkedForDeletion(doc.id),
+                                                      'text-primary': !editMode || !isDocumentMarkedForDeletion(doc.id)
+                                                  }"
+                                                  [svgIcon]="getFileIcon(doc.fileExtension)"></mat-icon>
+                                        
+                                        <div class="flex-1 min-w-0">
+                                            <fuse-filename-display
+                                                [filename]="doc.originalFileName || doc.fileName"
+                                                [maxLength]="25"
+                                                [truncateMode]="'middle'"
+                                                [showExtension]="true"
+                                                cssClass="text-sm font-semibold leading-relaxed">
+                                            </fuse-filename-display>
+                                            <div class="text-xs mt-1"
+                                                 [ngClass]="{
+                                                     'text-red-600': editMode && isDocumentMarkedForDeletion(doc.id),
+                                                     'text-secondary': !editMode || !isDocumentMarkedForDeletion(doc.id)
+                                                 }">
+                                                <span *ngIf="editMode && isDocumentMarkedForDeletion(doc.id)">Marked for deletion • </span>
+                                                {{ formatFileSize(doc.fileSize) }} • {{ doc.createdAt | date:'short' }}
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Actions -->
+                                        <div class="flex items-center gap-1">
+                                            <!-- Edit Mode Actions -->
+                                            <button *ngIf="editMode && !isDocumentMarkedForDeletion(doc.id)"
+                                                    mat-icon-button
+                                                    type="button"
+                                                    (click)="$event.stopPropagation(); markDocumentForDeletion(doc.id)"
+                                                    matTooltip="Mark for deletion">
+                                                <mat-icon class="text-warn icon-size-5" [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                                            </button>
+                                            <button *ngIf="editMode && isDocumentMarkedForDeletion(doc.id)"
+                                                    mat-icon-button
+                                                    type="button"
+                                                    (click)="$event.stopPropagation(); cancelDocumentDeletion(doc.id)"
+                                                    matTooltip="Cancel deletion">
+                                                <mat-icon class="text-green-600 icon-size-5" [svgIcon]="'heroicons_outline:arrow-uturn-left'"></mat-icon>
+                                            </button>
+                                            <!-- View Mode Actions -->
+                                            <button *ngIf="!editMode"
+                                                    mat-icon-button
+                                                    type="button"
+                                                    (click)="downloadDocument(doc, $event)"
+                                                    matTooltip="Download">
+                                                <mat-icon class="icon-size-5 text-primary" [svgIcon]="'heroicons_outline:arrow-down-tray'"></mat-icon>
+                                            </button>
+                                            <mat-icon *ngIf="!editMode" class="icon-size-5 text-hint" [svgIcon]="'heroicons_outline:eye'"></mat-icon>
+                                        </div>
+                                    </div>
+                                    </div>
+                                </div>
+
+                                <!-- No Documents -->
+                                <div *ngIf="!contact?.attachments || contact.attachments.length === 0" 
+                                     class="flex flex-col items-center justify-center py-16 text-center">
+                                    <mat-icon class="icon-size-24 text-hint mb-4" [svgIcon]="'heroicons_outline:document'"></mat-icon>
+                                    <div class="text-lg font-medium text-secondary">No attachments yet</div>
+                                    <div *ngIf="!editMode" class="mt-2 text-sm text-hint">
+                                        Click "Edit" to upload attachments for this contact
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </mat-tab>
+
+                </mat-tab-group>
+            </div>
+        </form>
+    </div>
+
+    <!-- Document Viewer -->
+    <app-document-viewer
+        [documentType]="selectedDocumentType"
+        [documentUrl]="selectedDocumentUrl"
+        [documentName]="selectedDocumentName"
+        [originalDocumentUrl]="originalDocumentUrl"
+        [fileSize]="selectedFileSize"
+        [isOpen]="isDocumentViewerOpen"
+        (close)="closeDocumentViewer()">
+    </app-document-viewer>
+
+    <!-- PDF Viewer -->
+    <app-pdf-viewer
+        [pdfUrl]="selectedPdfUrl"
+        [pdfName]="selectedPdfName"
+        [fileSize]="selectedPdfSize"
+        [isOpen]="isPdfViewerOpen"
+        (close)="closePdfViewer()">
+    </app-pdf-viewer>
+
+    <!-- Image Viewer -->
+    <app-image-viewer
+        [imageUrl]="selectedImageUrl"
+        [imageName]="selectedImageName"
+        [fileSize]="selectedImageSize"
+        [images]="selectedImages"
+        [currentIndex]="selectedImageIndex"
+        [isOpen]="isImageViewerOpen"
+        (close)="closeImageViewer()"
+        (imageChanged)="onImageChanged($event)">
+    </app-image-viewer>
+
+</div>

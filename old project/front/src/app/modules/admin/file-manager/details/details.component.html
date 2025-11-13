@@ -1,0 +1,167 @@
+    <div class="flex flex-col flex-auto p-6 relative min-h-full">
+    
+    <!-- Clickable backdrop area -->
+    <div class="absolute inset-0 z-0 cursor-pointer hover:bg-gray-50/5 dark:hover:bg-gray-900/5 transition-colors duration-200" (click)="onBackdropClicked()"></div>
+    
+    <!-- Content area -->
+    <div class="relative z-10" (click)="$event.stopPropagation()">
+    
+    <!-- Loading Overlay -->
+    <div *ngIf="isLoading" class="absolute inset-0 bg-white/80 dark:bg-gray-900/80 flex items-center justify-center z-50 rounded-lg">
+        <div class="flex flex-col items-center">
+            <img 
+                src="assets/images/brand/loading.png" 
+                alt="Loading..." 
+                class="w-16 h-16 animate-spin mb-4"
+                style="animation-duration: 2s;">
+            <div class="text-lg font-medium text-gray-700 dark:text-gray-300">Processing...</div>
+        </div>
+    </div>
+
+    <!-- Close button -->
+    <div class="flex items-center justify-end">
+        <button
+            mat-icon-button
+            (click)="closeDrawer()">
+            <mat-icon [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
+        </button>
+    </div>
+
+    <!-- No item selected state -->
+    <ng-container *ngIf="!item">
+        <div class="flex flex-col items-center justify-center py-12">
+            <img 
+                src="assets/images/brand/loading.png" 
+                alt="No item selected" 
+                class="w-24 h-24 opacity-50 mb-6">
+            <div class="text-xl font-semibold text-secondary">No item selected</div>
+            <div class="text-sm text-secondary">Select a file or folder to view details</div>
+        </div>
+    </ng-container>
+
+    <!-- View Mode UI -->
+    <ng-container *ngIf="item">
+        <!-- Preview -->
+        <div class="mt-8 aspect-[9/6]">
+            <!-- Folder preview -->
+            <div *ngIf="item.type === 'folder'" class="flex items-center justify-center h-full border rounded-lg bg-gray-50 dark:bg-card">
+                <mat-icon
+                    class="icon-size-24 text-hint"
+                    [svgIcon]="'heroicons_outline:folder'"></mat-icon>
+            </div>
+            
+            <!-- Image preview for image files -->
+            <div *ngIf="item.type !== 'folder' && isImageFile(item) && item.url" class="flex items-center justify-center h-full border rounded-lg bg-gray-50 dark:bg-card relative group">
+                <div class="relative w-full h-full cursor-pointer hover:opacity-90 transition-opacity" (click)="viewFile()">
+                    <img 
+                        [src]="item.url" 
+                        [alt]="item.name"
+                        class="w-full h-full object-cover rounded-lg"
+                        (error)="$event.target.style.display='none'"
+                        loading="lazy">
+                    <!-- Eye icon overlay on hover -->
+                    <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-lg">
+                        <mat-icon class="text-white text-4xl">visibility</mat-icon>
+                    </div>
+                    <!-- File type badge for images -->
+                    <div
+                        class="absolute left-0 bottom-0 px-1.5 rounded text-sm font-semibold leading-5 text-white z-10"
+                        [class.bg-amber-600]="item.type === 'JPG'"
+                        [class.bg-purple-600]="item.type === 'PNG'"
+                        [class.bg-orange-600]="item.type === 'GIF'"
+                        [class.bg-blue-600]="item.type === 'WEBP'"
+                        [class.bg-gray-600]="item.type === 'BMP'"
+                        [class.bg-green-600]="item.type === 'SVG'">
+                        {{item.type.toUpperCase()}}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- File icon for non-image files -->
+            <div *ngIf="item.type !== 'folder' && (!isImageFile(item) || !item.url)" class="flex items-center justify-center h-full border rounded-lg bg-gray-50 dark:bg-card cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group relative" (click)="viewFile()">
+                <div class="relative">
+                    <mat-icon
+                        class="icon-size-24 text-hint"
+                        [svgIcon]="getFileTypeIcon(item)"></mat-icon>
+                </div>
+                <!-- Eye icon overlay on hover -->
+                <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-lg">
+                    <mat-icon class="text-white text-4xl">visibility</mat-icon>
+                </div>
+            </div>
+        </div>
+
+    <!-- Name & Type -->
+    <div class="flex flex-col items-start mt-8">
+        <fuse-filename-display
+            [filename]="item.name"
+            [maxLength]="60"
+            [truncateMode]="'end'"
+            [showExtension]="true"
+            cssClass="text-2xl font-semibold leading-relaxed">
+        </fuse-filename-display>
+        <div
+            class="mt-1 px-1.5 rounded text-sm font-semibold leading-5 text-white"
+            [class.bg-indigo-600]="item.type === 'folder'"
+            [class.bg-red-600]="item.type === 'PDF'"
+            [class.bg-blue-600]="item.type === 'DOC'"
+            [class.bg-green-600]="item.type === 'XLS'"
+            [class.bg-gray-600]="item.type === 'TXT'"
+            [class.bg-amber-600]="item.type === 'JPG'"
+            [class.bg-purple-600]="item.type === 'PNG'"
+            [class.bg-orange-600]="item.type === 'GIF'">
+            {{item.type.toUpperCase()}}
+        </div>
+    </div>
+
+    <!-- Information -->
+    <div class="text-lg font-medium mt-8">{{ 'file_manager.labels.information' | transloco }}</div>
+    <div class="flex flex-col mt-4 border-t border-b divide-y font-medium">
+        <div class="flex items-center justify-between py-3">
+            <div class="text-secondary">{{ 'file_manager.fields.created_at' | transloco }}</div>
+            <div>{{item.createdAt}}</div>
+        </div>
+        <div class="flex items-center justify-between py-3" *ngIf="item.modifiedAt">
+            <div class="text-secondary">{{ 'file_manager.fields.modified_at' | transloco }}</div>
+            <div>{{item.modifiedAt}}</div>
+        </div>
+        <div class="flex items-center justify-between py-3">
+            <div class="text-secondary">{{ 'file_manager.fields.size' | transloco }}</div>
+            <div>{{item.size}}</div>
+        </div>
+        <ng-container *ngIf="item.contents">
+            <div class="flex items-center justify-between py-3">
+                <div class="text-secondary">{{ 'file_manager.fields.contents' | transloco }}</div>
+                <div>{{item.contents}}</div>
+            </div>
+        </ng-container>
+    </div>
+
+    <!-- Actions -->
+    <div class="grid grid-cols-3 gap-4 w-full mt-8" *ngIf="item.type !== 'folder'">
+        <button
+            class="flex-auto"
+            mat-flat-button
+            [color]="'primary'"
+            (click)="viewFile()">
+            {{ 'file_manager.actions.view' | transloco }}
+        </button>
+        <button
+            class="flex-auto"
+            mat-stroked-button
+            (click)="downloadFile()">
+            {{ 'file_manager.actions.download' | transloco }}
+        </button>
+        <button
+            class="flex-auto"
+            mat-stroked-button
+            [color]="'warn'"
+            (click)="deleteFile()">
+            <mat-icon [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+            <span class="ml-2">Delete</span>
+        </button>
+    </div>
+    </ng-container>
+
+    </div> <!-- End content area -->
+</div>

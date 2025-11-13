@@ -1,0 +1,32 @@
+:host {
+    display: block;
+    
+    ::ng-deep {
+        .mat-mdc-dialog-container {
+            .mdc-dialog__surface {
+                overflow: hidden;
+            }
+        }
+    }
+}
+
+.line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+

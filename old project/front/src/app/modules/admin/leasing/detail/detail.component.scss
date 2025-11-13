@@ -1,0 +1,24 @@
+leasing-detail {
+    .leasing-tabs {
+        .mat-mdc-tab-body-content {
+            overflow: visible !important;
+        }
+
+        .mat-mdc-form-field {
+            font-size: 14px;
+            
+            .mat-mdc-form-field-infix {
+                min-height: 48px;
+            }
+
+            input, textarea, .mat-mdc-select {
+                font-size: 14px;
+            }
+        }
+
+        .mat-mdc-tab-label {
+            min-width: 120px;
+        }
+    }
+}
+

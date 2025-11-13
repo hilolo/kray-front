@@ -1,0 +1,215 @@
+// Filename Display Utilities
+// ==========================================
+
+// Base filename truncation utilities
+.filename-truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.filename-break {
+    word-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto;
+    max-width: 100%;
+}
+
+.filename-wrap {
+    white-space: normal;
+    word-wrap: break-word;
+    max-width: 100%;
+}
+
+// Responsive filename display
+.filename-responsive {
+    @apply text-sm;
+    
+    @media (max-width: 640px) {
+        @apply text-xs;
+    }
+    
+    @media (min-width: 1024px) {
+        @apply text-base;
+    }
+}
+
+// Filename with tooltip
+.filename-with-tooltip {
+    cursor: help;
+    border-bottom: 1px dotted currentColor;
+    
+    &:hover {
+        opacity: 0.8;
+    }
+}
+
+// Long filename specific styles
+.filename-long {
+    position: relative;
+    
+    &::after {
+        content: '...';
+        position: absolute;
+        right: 0;
+        top: 0;
+        background: inherit;
+        padding-left: 0.5rem;
+    }
+}
+
+// Filename in cards
+.filename-card {
+    @apply p-2 rounded border;
+    @apply bg-gray-50 dark:bg-gray-800;
+    @apply transition-colors duration-200;
+    
+    &:hover {
+        @apply bg-gray-100 dark:bg-gray-700;
+    }
+}
+
+// Filename in tables
+.filename-table {
+    @apply px-3 py-2;
+    @apply border-b border-gray-200 dark:border-gray-700;
+    
+    &:hover {
+        @apply bg-gray-50 dark:bg-gray-800;
+    }
+}
+
+// Filename with icon
+.filename-with-icon {
+    @apply flex items-center gap-2;
+    
+    .filename-text {
+        @apply flex-1 min-w-0;
+    }
+    
+    .filename-icon {
+        @apply flex-shrink-0;
+    }
+}
+
+// Filename size variants with better sizing
+.filename-xs {
+    @apply text-sm; // Increased from text-xs
+    max-width: 10rem; // Increased from 8rem
+    line-height: 1.4;
+}
+
+.filename-sm {
+    @apply text-base; // Increased from text-sm
+    max-width: 14rem; // Increased from 12rem
+    line-height: 1.5;
+}
+
+.filename-base {
+    @apply text-lg; // Increased from text-base
+    max-width: 18rem; // Increased from 16rem
+    line-height: 1.6;
+}
+
+.filename-lg {
+    @apply text-xl; // Increased from text-lg
+    max-width: 22rem; // Increased from 20rem
+    line-height: 1.7;
+}
+
+.filename-xl {
+    @apply text-2xl; // Increased from text-xl
+    max-width: 26rem; // Increased from 24rem
+    line-height: 1.8;
+}
+
+// Extra large filename for important displays
+.filename-2xl {
+    @apply text-3xl;
+    max-width: 30rem;
+    line-height: 1.9;
+    font-weight: 600;
+}
+
+// Filename truncation modes
+.filename-truncate-start {
+    direction: rtl;
+    text-align: left;
+    
+    &::before {
+        content: '...';
+        margin-right: 0.5rem;
+    }
+}
+
+.filename-truncate-middle {
+    position: relative;
+    
+    &::before,
+    &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        width: 1rem;
+        height: 100%;
+        background: linear-gradient(to right, transparent, currentColor);
+    }
+    
+    &::before {
+        left: 0;
+    }
+    
+    &::after {
+        right: 0;
+        background: linear-gradient(to left, transparent, currentColor);
+    }
+}
+
+// Dark mode support
+.dark {
+    .filename-card {
+        @apply bg-gray-800;
+        
+        &:hover {
+            @apply bg-gray-700;
+        }
+    }
+    
+    .filename-table {
+        @apply border-gray-700;
+        
+        &:hover {
+            @apply bg-gray-800;
+        }
+    }
+}
+
+// Animation for filename changes
+.filename-animate {
+    @apply transition-all duration-300 ease-in-out;
+}
+
+// Filename loading state
+.filename-loading {
+    @apply animate-pulse bg-gray-200 dark:bg-gray-700;
+    border-radius: 0.25rem;
+    height: 1.25rem;
+    width: 8rem;
+}
+
+// Filename error state
+.filename-error {
+    @apply text-red-500 dark:text-red-400;
+    @apply border border-red-300 dark:border-red-600;
+    @apply bg-red-50 dark:bg-red-900/20;
+    @apply rounded px-2 py-1;
+}
+
+// Filename success state
+.filename-success {
+    @apply text-green-600 dark:text-green-400;
+    @apply border border-green-300 dark:border-green-600;
+    @apply bg-green-50 dark:bg-green-900/20;
+    @apply rounded px-2 py-1;
+}

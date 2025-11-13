@@ -1,0 +1,175 @@
+<div class="flex flex-col w-full">
+    <mat-dialog-content class="flex flex-col flex-auto p-6 -m-6">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-6 pb-4 border-b">
+            <h2 class="text-2xl font-semibold">
+                {{ mode === 'create' ? 'Create Maintenance Request' : 'Edit Maintenance Request' }}
+            </h2>
+            <button mat-icon-button (click)="cancel()" [disabled]="isLoading">
+                <mat-icon [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
+            </button>
+        </div>
+
+        <!-- Form -->
+        <form [formGroup]="maintenanceForm" class="flex flex-col gap-4" [class.pointer-events-none]="isLoadingDetails" [class.opacity-50]="isLoadingDetails">
+            
+            <!-- Subject -->
+            <mat-form-field [ngClass]="formFieldHelpers" class="w-full">
+                <mat-label>Subject</mat-label>
+                <input matInput formControlName="subject" placeholder="e.g. Fix broken pipe" required>
+                <mat-icon matPrefix [svgIcon]="'heroicons_outline:document-text'"></mat-icon>
+                <mat-error *ngIf="maintenanceForm.get('subject').hasError('required')">
+                    Subject is required
+                </mat-error>
+                <mat-error *ngIf="maintenanceForm.get('subject').hasError('maxlength')">
+                    Subject must be less than 200 characters
+                </mat-error>
+            </mat-form-field>
+
+            <!-- Service Provider -->
+            <mat-form-field [ngClass]="formFieldHelpers" class="w-full">
+                <mat-label>Service Provider</mat-label>
+                <mat-select formControlName="contactId" required>
+                    <mat-option *ngFor="let contact of serviceContacts" [value]="contact.id">
+                        <div class="flex items-center gap-2">
+                            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:wrench-screwdriver'"></mat-icon>
+                            <span>{{ getContactDisplayName(contact) }}</span>
+                        </div>
+                    </mat-option>
+                </mat-select>
+                <mat-icon matPrefix [svgIcon]="'heroicons_outline:user'"></mat-icon>
+                <mat-error *ngIf="maintenanceForm.get('contactId').hasError('required')">
+                    Service provider is required
+                </mat-error>
+            </mat-form-field>
+
+            <!-- Priority and Status Row -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- Priority -->
+                <mat-form-field [ngClass]="formFieldHelpers" class="w-full">
+                    <mat-label>Priority</mat-label>
+                    <mat-select formControlName="priority" required [compareWith]="compareValues">
+                        <mat-option *ngFor="let priority of priorities" [value]="priority.value">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full" [ngClass]="'bg-' + priority.color + '-500'"></span>
+                                <span>{{ priority.label }}</span>
+                            </div>
+                        </mat-option>
+                    </mat-select>
+                    <mat-icon matPrefix [svgIcon]="'heroicons_outline:flag'"></mat-icon>
+                </mat-form-field>
+
+                <!-- Status -->
+                <mat-form-field [ngClass]="formFieldHelpers" class="w-full">
+                    <mat-label>Status</mat-label>
+                    <mat-select formControlName="status" required [compareWith]="compareValues">
+                        <mat-option *ngFor="let status of statuses" [value]="status.value">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full" [ngClass]="'bg-' + status.color + '-500'"></span>
+                                <span>{{ status.label }}</span>
+                            </div>
+                        </mat-option>
+                    </mat-select>
+                    <mat-icon matPrefix [svgIcon]="'heroicons_outline:check-circle'"></mat-icon>
+                </mat-form-field>
+            </div>
+
+            <!-- Property (Searchable) -->
+            <div class="relative w-full" #propertyDropdownContainer>
+                <mat-form-field [ngClass]="formFieldHelpers" class="w-full">
+                    <mat-label>Property</mat-label>
+                    <input matInput 
+                           type="text"
+                           [value]="isEditingProperty ? propertySearchTerm : getSelectedPropertyDisplayName()"
+                           (input)="onPropertyInput($event)"
+                           (focus)="onPropertyFocus()"
+                           (click)="$event.stopPropagation()"
+                           placeholder="Search and select property..."
+                           autocomplete="off">
+                    <mat-icon matPrefix [svgIcon]="'heroicons_outline:building-office-2'"></mat-icon>
+                    <mat-error *ngIf="maintenanceForm.get('propertyId').hasError('required')">
+                        Property is required
+                    </mat-error>
+                </mat-form-field>
+                
+                <!-- Property Dropdown -->
+                <div *ngIf="showPropertyDropdown && filteredProperties.length > 0" 
+                     class="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-64 overflow-y-auto"
+                     (click)="$event.stopPropagation()">
+                    <div *ngFor="let property of filteredProperties" 
+                         class="px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-200 dark:border-gray-700 last:border-b-0 transition-colors"
+                         (mousedown)="selectProperty(property)">
+                        <div class="flex items-start gap-3">
+                            <mat-icon class="icon-size-5 mt-0.5 flex-shrink-0 text-primary-500" [svgIcon]="'heroicons_outline:building-office-2'"></mat-icon>
+                            <div class="flex flex-col min-w-0 flex-1">
+                                <span class="font-medium text-gray-900 dark:text-white">
+                                    {{ getPropertyDisplayName(property) }}
+                                </span>
+                                <span class="text-sm text-secondary truncate" *ngIf="property.address">
+                                    {{ property.address }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- No results message -->
+                <div *ngIf="showPropertyDropdown && filteredProperties.length === 0 && propertySearchTerm" 
+                     class="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg px-4 py-3"
+                     (click)="$event.stopPropagation()">
+                    <div class="flex items-center gap-2 text-secondary">
+                        <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:magnifying-glass'"></mat-icon>
+                        <span>No properties found matching "{{ propertySearchTerm }}"</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scheduled Date and Time -->
+            <mat-form-field [ngClass]="formFieldHelpers" class="w-full">
+                <mat-label>Scheduled Date & Time</mat-label>
+                <input matInput [matDatepicker]="picker" formControlName="scheduledDateTime" required>
+                <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-datepicker #picker></mat-datepicker>
+                <mat-icon matPrefix [svgIcon]="'heroicons_outline:calendar'"></mat-icon>
+                <mat-error *ngIf="maintenanceForm.get('scheduledDateTime').hasError('required')">
+                    Scheduled date is required
+                </mat-error>
+            </mat-form-field>
+
+            <!-- Description -->
+            <mat-form-field [ngClass]="formFieldHelpers" class="w-full">
+                <mat-label>Description</mat-label>
+                <textarea matInput formControlName="description" rows="4" 
+                          placeholder="Describe the maintenance issue in detail..."></textarea>
+                <mat-icon matPrefix [svgIcon]="'heroicons_outline:document-text'"></mat-icon>
+                <mat-hint>Provide detailed information about the maintenance request</mat-hint>
+                <mat-error *ngIf="maintenanceForm.get('description').hasError('maxlength')">
+                    Description must be less than 2000 characters
+                </mat-error>
+            </mat-form-field>
+
+
+        </form>
+
+        <!-- Loading indicator -->
+        <div *ngIf="loadingContacts || loadingProperties || isLoadingDetails" class="flex items-center justify-center py-4">
+            <mat-spinner [diameter]="32"></mat-spinner>
+            <span class="ml-3 text-sm text-secondary">
+                Loading {{ isLoadingDetails ? 'maintenance details' : loadingProperties && loadingContacts ? 'data' : loadingProperties ? 'properties' : 'service providers' }}...
+            </span>
+        </div>
+
+    </mat-dialog-content>
+
+    <!-- Actions -->
+    <mat-dialog-actions class="flex items-center justify-end gap-2 px-6 py-4 border-t">
+        <button mat-stroked-button (click)="cancel()" [disabled]="isLoading">
+            Cancel
+        </button>
+        <button mat-flat-button color="primary" (click)="save()" [disabled]="isLoading || isLoadingDetails || maintenanceForm.invalid">
+            <mat-spinner *ngIf="isLoading" [diameter]="20" class="mr-2"></mat-spinner>
+            <span>{{ mode === 'create' ? 'Create' : 'Update' }}</span>
+        </button>
+    </mat-dialog-actions>
+</div>
+

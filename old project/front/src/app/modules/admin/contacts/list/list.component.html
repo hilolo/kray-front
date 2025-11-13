@@ -1,0 +1,335 @@
+<div class="absolute inset-0 flex flex-col min-w-0 overflow-hidden">
+
+    <!-- No Permission Message -->
+    <div *ngIf="!canViewContacts" class="flex flex-col items-center justify-center h-full p-8 bg-card dark:bg-transparent">
+        <mat-icon class="icon-size-24 text-gray-400 mb-4" [svgIcon]="'heroicons_outline:lock-closed'"></mat-icon>
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Access Denied</h2>
+        <p class="text-gray-600 dark:text-gray-400 text-center max-w-md">
+            You do not have permission to view contacts. Please contact your administrator to request access.
+        </p>
+    </div>
+
+    <div *ngIf="canViewContacts" class="flex flex-col h-full bg-card dark:bg-transparent">
+
+        <!-- Main -->
+        <div class="flex flex-col flex-auto overflow-hidden">
+
+            <!-- Header -->
+            <div class="flex flex-col sm:flex-row md:flex-col justify-between py-6 px-6 md:px-8 border-b flex-shrink-0">
+
+                <!-- Title -->
+                <div>
+                    <div class="text-4xl font-extrabold tracking-tight leading-none">{{displayTitle}}</div>
+                    <div class="ml-0.5 font-medium text-secondary">
+                        {{displayCount}}
+                    </div>
+                </div>
+
+                <!-- Main actions -->
+                <div class="flex items-center mt-4 sm:mt-0 md:mt-4">
+                    <!-- Search -->
+                    <div class="flex-auto">
+                        <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full min-w-50"
+                            subscriptSizing="dynamic">
+                            <mat-icon class="icon-size-5" matPrefix
+                                [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
+                            <input matInput [formControl]="searchInputControl" [autocomplete]="'off'"
+                                [placeholder]="'contacts.types.' + currentType + '.search_placeholder' | transloco">
+                        </mat-form-field>
+                    </div>
+
+                    <!-- Contact filter buttons (Company/Individual) -->
+                    <div class="ml-4 flex items-center gap-2">
+                        <button mat-stroked-button class="min-w-0" [class.!bg-primary]="showCompanies"
+                            [class.!text-white]="showCompanies" [class.!border-primary]="showCompanies"
+                            (click)="toggleCompanyFilter()">
+                            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:building-office-2'"></mat-icon>
+                            <span class="ml-2">{{ 'contacts.filter.company' | transloco }}</span>
+                        </button>
+                        <button mat-stroked-button class="min-w-0" [class.!bg-primary]="showIndividuals"
+                            [class.!text-white]="showIndividuals" [class.!border-primary]="showIndividuals"
+                            (click)="toggleIndividualFilter()">
+                            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:user'"></mat-icon>
+                            <span class="ml-2">{{ 'contacts.filter.individual' | transloco }}</span>
+                        </button>
+                    </div>
+
+                    <!-- View toggle buttons -->
+                    <div class="ml-4">
+                        <fuse-view-toggle [currentView]="currentView" (viewChange)="onViewChange($event)">
+                        </fuse-view-toggle>
+                    </div>
+
+                    <!-- Add contact button -->
+                    <button *ngIf="canEditContacts" 
+                            class="ml-4" mat-flat-button [color]="'primary'" (click)="createContact()">
+                        <mat-icon [svgIcon]="'heroicons_outline:plus'"></mat-icon>
+                        <span class="ml-2 mr-1">{{ 'contacts.actions.add' | transloco }}</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Selection Controls -->
+            <div *ngIf="(contacts$ | async)?.length > 0" class="flex items-center justify-between px-6 py-4 border-b bg-gray-50 dark:bg-gray-800">
+                <!-- Select All -->
+                <div class="flex items-center">
+                    <mat-checkbox
+                        [checked]="areAllContactsSelected()"
+                        [indeterminate]="areSomeContactsSelected()"
+                        (change)="toggleSelectAllContacts()"
+                        color="primary">
+                        <span class="text-sm font-medium">Select All</span>
+                    </mat-checkbox>
+                </div>
+
+                <!-- Delete Selected Button -->
+                <div *ngIf="selectedContactsCount > 0" class="flex items-center gap-3">
+                    <span class="text-sm text-gray-600 dark:text-gray-400">
+                        {{ selectedContactsCount }} selected
+                    </span>
+                    <button 
+                        mat-flat-button
+                        color="warn"
+                        type="button"
+                        (click)="deleteSelectedContacts()">
+                        <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                        <span class="ml-2">Delete {{ selectedContactsCount }} Selected</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Contacts display -->
+            <div class="relative flex-auto overflow-y-auto">
+                <ng-container *ngIf="contacts$ | async as contacts">
+                    <ng-container *ngIf="contacts.length; else noContacts">
+
+                        <!-- List View -->
+                        <ng-container *ngIf="currentView === 'list'">
+                            <ng-container *ngFor="let contact of contacts; trackBy: trackByFn">
+                                <!-- Contact -->
+                                <div class="z-20 flex items-center px-6 py-5 md:px-8 border-b"
+                                    [ngClass]="{'hover:bg-gray-100 dark:hover:bg-hover': !selectedContact || selectedContact.id !== contact.id,
+                                                'bg-primary-50 dark:bg-hover': selectedContact && selectedContact.id === contact.id}">
+                                    
+                                    <!-- Selection Checkbox -->
+                                    <div class="flex items-center mr-4">
+                                        <mat-checkbox
+                                            [checked]="isContactSelected(contact.id)"
+                                            (change)="toggleContactSelection(contact.id)"
+                                            color="primary"
+                                            (click)="$event.stopPropagation()">
+                                        </mat-checkbox>
+                                    </div>
+
+                                    <!-- Contact Link -->
+                                    <a class="flex items-center flex-1 cursor-pointer" [routerLink]="[contact.id]">
+                                        <div
+                                            class="flex flex-0 items-center justify-center w-10 h-10 rounded-full overflow-hidden">
+                                        <ng-container *ngIf="getAvatarUrl(contact.avatar)">
+                                            <img class="object-cover w-full h-full" [src]="getAvatarUrl(contact.avatar)"
+                                                alt="Contact avatar" />
+                                        </ng-container>
+                                        <ng-container *ngIf="!getAvatarUrl(contact.avatar)">
+                                            <div
+                                                class="flex items-center justify-center w-full h-full rounded-full text-lg uppercase bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-200">
+                                                {{contact.name.charAt(0)}}
+                                            </div>
+                                        </ng-container>
+                                    </div>
+                                    <div class="min-w-0 ml-4 flex-1">
+                                        <div class="flex items-center gap-2">
+                                            <div class="font-medium leading-5 truncate">{{contact.name}}</div>
+                                            <div *ngIf="contact.documentCount && contact.documentCount > 0" 
+                                                 class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-xs font-medium">
+                                                <mat-icon class="icon-size-3" [svgIcon]="'heroicons_solid:document'"></mat-icon>
+                                                <span>{{contact.documentCount}}</span>
+                                            </div>
+                                        </div>
+                                        <div class="leading-5 truncate text-secondary">{{contact.title}}</div>
+                                        <div class="leading-5 truncate text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                            <span class="font-bold">{{contact.identifier || 'N/A'}}</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-col items-end justify-center ml-4 space-y-1">
+                                        <!-- Email -->
+                                        <ng-container *ngIf="contact.emails && contact.emails.length > 0">
+                                            <div class="flex items-center text-sm text-secondary">
+                                                <mat-icon class="icon-size-4 mr-1.5"
+                                                    [svgIcon]="'heroicons_outline:envelope'"></mat-icon>
+                                                <span class="truncate max-w-xs">{{contact.emails[0].email}}</span>
+                                            </div>
+                                        </ng-container>
+                                        <ng-container
+                                            *ngIf="(!contact.emails || contact.emails.length === 0) && contact.email">
+                                            <div class="flex items-center text-sm text-secondary">
+                                                <mat-icon class="icon-size-4 mr-1.5"
+                                                    [svgIcon]="'heroicons_outline:envelope'"></mat-icon>
+                                                <span class="truncate max-w-xs">{{contact.email}}</span>
+                                            </div>
+                                        </ng-container>
+                                        <!-- Phone Numbers (up to 2 on same line) -->
+                                        <ng-container *ngIf="contact.phoneNumbers && contact.phoneNumbers.length > 0">
+                                            <div class="flex items-center text-sm text-secondary">
+                                                <mat-icon class="icon-size-4 mr-1.5"
+                                                    [svgIcon]="'heroicons_outline:phone'"></mat-icon>
+                                                <span>
+                                                    {{contact.phoneNumbers[0].phoneNumber}}
+                                                    <ng-container *ngIf="contact.phoneNumbers.length > 1">
+                                                        <span
+                                                            class="mx-2">•</span>{{contact.phoneNumbers[1].phoneNumber}}
+                                                    </ng-container>
+                                                </span>
+                                            </div>
+                                        </ng-container>
+                                        <ng-container
+                                            *ngIf="(!contact.phoneNumbers || contact.phoneNumbers.length === 0) && contact.phones && contact.phones.length > 0">
+                                            <div class="flex items-center text-sm text-secondary">
+                                                <mat-icon class="icon-size-4 mr-1.5"
+                                                    [svgIcon]="'heroicons_outline:phone'"></mat-icon>
+                                                <span>
+                                                    {{contact.phones[0]}}
+                                                    <ng-container *ngIf="contact.phones.length > 1">
+                                                        <span class="mx-2">•</span>{{contact.phones[1]}}
+                                                    </ng-container>
+                                                </span>
+                                            </div>
+                                        </ng-container>
+                                    </div>
+                                    </a>
+                                </div>
+                            </ng-container>
+                        </ng-container>
+
+                        <!-- Card View -->
+                        <ng-container *ngIf="currentView === 'cards'">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-6 md:p-8">
+                                <ng-container *ngFor="let contact of contacts; trackBy: trackByFn">
+                                    <div class="group relative bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 border border-gray-200 dark:border-gray-700"
+                                        [ngClass]="{'ring-2 ring-primary-500 dark:ring-primary-400': selectedContact && selectedContact.id === contact.id}">
+                                        
+                                        <!-- Selection Checkbox -->
+                                        <div class="absolute top-4 left-4 z-10">
+                                            <mat-checkbox
+                                                [checked]="isContactSelected(contact.id)"
+                                                (change)="toggleContactSelection(contact.id)"
+                                                color="primary"
+                                                (click)="$event.stopPropagation()">
+                                            </mat-checkbox>
+                                        </div>
+
+                                        <!-- Contact Link -->
+                                        <a class="block cursor-pointer" [routerLink]="[contact.id]">
+                                            <div class="p-6">
+                                            <!-- Avatar -->
+                                            <div
+                                                class="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full overflow-hidden">
+                                                <ng-container *ngIf="getAvatarUrl(contact.avatar)">
+                                                    <img class="object-cover w-full h-full"
+                                                        [src]="getAvatarUrl(contact.avatar)" alt="Contact avatar" />
+                                                </ng-container>
+                                                <ng-container *ngIf="!getAvatarUrl(contact.avatar)">
+                                                    <div
+                                                        class="flex items-center justify-center w-full h-full rounded-full text-2xl uppercase bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-200">
+                                                        {{contact.name.charAt(0)}}
+                                                    </div>
+                                                </ng-container>
+                                            </div>
+
+                                            <!-- Content -->
+                                            <div class="text-center">
+                                                <div class="flex items-center justify-center gap-2 mb-1">
+                                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white truncate">
+                                                        {{contact.name}}
+                                                    </h3>
+                                                    <div *ngIf="contact.documentCount && contact.documentCount > 0" 
+                                                         class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-xs font-medium">
+                                                        <mat-icon class="icon-size-3" [svgIcon]="'heroicons_solid:document'"></mat-icon>
+                                                        <span>{{contact.documentCount}}</span>
+                                                    </div>
+                                                </div>
+                                                <p class="text-sm text-gray-500 dark:text-gray-400 truncate">
+                                                    {{contact.title}}
+                                                </p>
+                                                <p class="text-xs text-gray-400 dark:text-gray-500 mb-3 truncate">
+                                                    <span class="font-bold">{{contact.identifier || 'N/A'}}</span>
+                                                </p>
+                                                <div class="flex flex-col items-center space-y-2">
+                                                    <!-- Email -->
+                                                    <ng-container *ngIf="contact.emails && contact.emails.length > 0">
+                                                        <div
+                                                            class="flex items-center truncate max-w-full px-2 text-xs text-gray-500 dark:text-gray-400">
+                                                            <mat-icon class="icon-size-4 mr-1.5"
+                                                                [svgIcon]="'heroicons_outline:envelope'"></mat-icon>
+                                                            <span class="truncate">{{contact.emails[0].email}}</span>
+                                                        </div>
+                                                    </ng-container>
+                                                    <ng-container
+                                                        *ngIf="(!contact.emails || contact.emails.length === 0) && contact.email">
+                                                        <div
+                                                            class="flex items-center truncate max-w-full px-2 text-xs text-gray-500 dark:text-gray-400">
+                                                            <mat-icon class="icon-size-4 mr-1.5"
+                                                                [svgIcon]="'heroicons_outline:envelope'"></mat-icon>
+                                                            <span class="truncate">{{contact.email}}</span>
+                                                        </div>
+                                                    </ng-container>
+                                                    <!-- Phone Numbers (up to 2 on same line) -->
+                                                    <ng-container
+                                                        *ngIf="contact.phoneNumbers && contact.phoneNumbers.length > 0">
+                                                        <div
+                                                            class="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                            <mat-icon class="icon-size-5 mr-1.5"
+                                                                [svgIcon]="'heroicons_outline:phone'"></mat-icon>
+                                                            <span>
+                                                                {{contact.phoneNumbers[0].phoneNumber}}
+                                                                <ng-container *ngIf="contact.phoneNumbers.length > 1">
+                                                                    <span
+                                                                        class="mx-2">•</span>{{contact.phoneNumbers[1].phoneNumber}}
+                                                                </ng-container>
+                                                            </span>
+                                                        </div>
+                                                    </ng-container>
+                                                    <ng-container
+                                                        *ngIf="(!contact.phoneNumbers || contact.phoneNumbers.length === 0) && contact.phones && contact.phones.length > 0">
+                                                        <div
+                                                            class="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                            <mat-icon class="icon-size-5 mr-1.5"
+                                                                [svgIcon]="'heroicons_outline:phone'"></mat-icon>
+                                                            <span>
+                                                                {{contact.phones[0]}}
+                                                                <ng-container *ngIf="contact.phones.length > 1">
+                                                                    <span class="mx-2">•</span>{{contact.phones[1]}}
+                                                                </ng-container>
+                                                            </span>
+                                                        </div>
+                                                    </ng-container>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        </a>
+                                    </div>
+                                </ng-container>
+                            </div>
+                        </ng-container>
+
+                    </ng-container>
+                </ng-container>
+
+                <!-- No contacts -->
+                <ng-template #noContacts>
+                    <div class="flex items-center justify-center h-full border-t">
+                        <app-no-data
+                            [message]="('contacts.types.' + currentType + '.no_items' | transloco) + '!'"></app-no-data>
+                    </div>
+                </ng-template>
+
+            </div>
+
+            <!-- Pagination -->
+            <mat-paginator class="border-t flex-shrink-0" [length]="pagination.totalItems"
+                [pageIndex]="pagination.currentPage - 1" [pageSize]="pageSize" [pageSizeOptions]="pageSizeOptions"
+                [showFirstLastButtons]="true" (page)="onPageChange($event)">
+            </mat-paginator>
+
+        </div>
+
+    </div>

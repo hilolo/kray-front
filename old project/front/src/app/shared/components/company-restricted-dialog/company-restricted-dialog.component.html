@@ -1,0 +1,36 @@
+<div class="flex flex-col w-full max-w-120 p-8 sm:p-10">
+    <!-- Icon -->
+    <div class="flex items-center justify-center w-20 h-20 mx-auto mb-8 rounded-full bg-red-100 dark:bg-red-800">
+        <mat-icon 
+            class="text-red-600 dark:text-red-400" 
+            [svgIcon]="'heroicons_outline:exclamation-triangle'"
+            style="width: 48px; height: 48px;">
+        </mat-icon>
+    </div>
+
+    <!-- Title -->
+    <div class="text-3xl font-bold text-center mb-3">
+        {{ 'company_restriction.title' | transloco }}
+    </div>
+
+    <!-- Message -->
+    <div class="text-center text-secondary mb-2">
+        {{ 'company_restriction.message' | transloco }}
+    </div>
+    
+    <div class="text-center text-secondary mb-8">
+        {{ 'company_restriction.submessage' | transloco }}
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center justify-center gap-3">
+        <button
+            mat-flat-button
+            [color]="'primary'"
+            (click)="disconnect()"
+            class="px-8">
+            <mat-icon [svgIcon]="'heroicons_outline:arrow-right-on-rectangle'"></mat-icon>
+            <span class="ml-2">{{ 'company_restriction.disconnect' | transloco }}</span>
+        </button>
+    </div>
+</div>

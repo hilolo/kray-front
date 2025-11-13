@@ -1,0 +1,292 @@
+<div class="absolute inset-0 flex flex-col min-w-0 overflow-hidden">
+
+    <!-- No Permission Message -->
+    <div *ngIf="!canViewBuildings" class="flex flex-col items-center justify-center h-full p-8 bg-card dark:bg-transparent">
+        <mat-icon class="icon-size-24 text-gray-400 mb-4" [svgIcon]="'heroicons_outline:lock-closed'"></mat-icon>
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Access Denied</h2>
+        <p class="text-gray-600 dark:text-gray-400 text-center max-w-md">
+            You do not have permission to view buildings. Please contact your administrator to request access.
+        </p>
+    </div>
+
+    <mat-drawer-container *ngIf="canViewBuildings" class="flex-auto h-full" autosize>
+        <!-- Main Content -->
+        <mat-drawer-content>
+            <div class="flex flex-col h-full bg-card dark:bg-transparent">
+
+        <!-- Main -->
+        <div class="flex flex-col flex-auto overflow-hidden">
+
+            <!-- Header -->
+            <div class="flex flex-col sm:flex-row md:flex-col justify-between py-6 px-6 md:px-8 border-b flex-shrink-0">
+
+                <!-- Title -->
+                <div>
+                    <div class="text-4xl font-extrabold tracking-tight leading-none">Buildings</div>
+                    <div class="ml-0.5 font-medium text-secondary">
+                        <ng-container *ngIf="pagination.totalItems === 0">0 Total</ng-container>
+                        <ng-container *ngIf="pagination.totalItems === 1">1 Total</ng-container>
+                        <ng-container *ngIf="pagination.totalItems > 1">{{ pagination.totalItems }} Total</ng-container>
+                    </div>
+                </div>
+
+                <!-- Main actions -->
+                <div class="flex items-center mt-4 sm:mt-0 md:mt-4">
+                    <!-- Search -->
+                    <div class="flex-auto">
+                        <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full min-w-50" subscriptSizing="dynamic">
+                            <mat-icon class="icon-size-5" matPrefix [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
+                            <input matInput [formControl]="searchControl" [autocomplete]="'off'" [placeholder]="'Search buildings...'" />
+                        </mat-form-field>
+                    </div>
+
+                    <!-- Add building button -->
+                    <button *ngIf="canEditBuildings" 
+                            class="ml-4" mat-flat-button [color]="'primary'" [routerLink]="['add']">
+                        <mat-icon [svgIcon]="'heroicons_outline:plus'"></mat-icon>
+                        <span class="ml-2 mr-1">Add Building</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Buildings list -->
+            <div class="relative flex-auto overflow-y-auto">
+                <ng-container *ngIf="buildings$ | async as buildings">
+                    <ng-container *ngIf="buildings.length; else noBuildings">
+                        
+                        <!-- Buildings Container -->
+                        <div class="p-6 md:p-8">
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <ng-container *ngFor="let building of buildings; trackBy: trackByFn">
+                                    <!-- Building Card -->
+                                    <div class="group relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-600 transform hover:-translate-y-1">
+                                    
+                                    <!-- Building Image -->
+                                    <div class="building-card-image relative h-56 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800"
+                                         [routerLink]="[building.id]"
+                                         style="cursor: pointer;">
+                                        <ng-container *ngIf="building.defaultAttachmentUrl; else buildingIcon">
+                                            <img [src]="building.defaultAttachmentUrl" 
+                                                [alt]="building.name"
+                                                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                                (error)="onImageError($event, building)" />
+                                        </ng-container>
+                                        <ng-template #buildingIcon>
+                                            <div class="w-full h-full flex items-center justify-center">
+                                                <mat-icon class="icon-size-24 text-gray-300 dark:text-gray-600 group-hover:scale-110 transition-transform duration-500" 
+                                                    [svgIcon]="'heroicons_outline:building-office-2'">
+                                                </mat-icon>
+                                            </div>
+                                        </ng-template>
+                                        
+                                        <!-- Property Count Badge -->
+                                        <div *ngIf="building.propertiesCount !== undefined" 
+                                             class="absolute top-4 right-4 px-3 py-1.5 bg-primary-600/90 dark:bg-primary-500/90 text-white rounded-full text-sm font-semibold shadow-lg backdrop-blur-sm">
+                                            <mat-icon class="icon-size-4 inline-block mr-1 -mt-0.5 text-white" [svgIcon]="'heroicons_solid:home'"></mat-icon>
+                                            {{ building.propertiesCount }} {{ building.propertiesCount === 1 ? 'Property' : 'Properties' }}
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Building Info -->
+                                    <div class="p-6">
+                                        <!-- Building Name -->
+                                        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2 truncate cursor-pointer hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                                            [routerLink]="[building.id]">
+                                            {{ building.name }}
+                                        </h3>
+                                        
+                                        <!-- Address -->
+                                        <div class="flex items-start gap-2 text-gray-600 dark:text-gray-400 mb-4">
+                                            <mat-icon class="icon-size-5 mt-0.5 flex-shrink-0" [svgIcon]="'heroicons_outline:map-pin'"></mat-icon>
+                                            <span class="text-sm line-clamp-2">
+                                                {{ building.address }}<span *ngIf="building.city">, {{ building.city }}</span>
+                                            </span>
+                                        </div>
+                                        
+                                        <!-- Building Details -->
+                                        <div class="flex items-center gap-4 mb-4 text-sm text-gray-600 dark:text-gray-400">
+                                            <div *ngIf="building.year" class="flex items-center gap-1.5">
+                                                <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:calendar'"></mat-icon>
+                                                <span>{{ building.year }}</span>
+                                            </div>
+                                            <div *ngIf="building.floor" class="flex items-center gap-1.5">
+                                                <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:building-office'"></mat-icon>
+                                                <span>{{ building.floor }} floors</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Actions -->
+                                        <div class="flex items-center gap-2">
+                                            <button mat-stroked-button 
+                                                    class="flex-1"
+                                                    [routerLink]="[building.id]">
+                                                <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:eye'"></mat-icon>
+                                                <span class="ml-2">View Details</span>
+                                            </button>
+                                            <button mat-icon-button 
+                                                    (click)="openPropertiesDrawer(building); $event.stopPropagation()"
+                                                    [matTooltip]="'Show properties'"
+                                                    class="flex-shrink-0">
+                                                <mat-icon [svgIcon]="'heroicons_outline:queue-list'">
+                                                </mat-icon>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </ng-container>
+                            </div>
+                        </div>
+
+                    </ng-container>
+
+                    <!-- No Buildings Message -->
+                    <ng-template #noBuildings>
+                        <div class="flex flex-col items-center justify-center h-full border-t">
+                            <app-no-data message="No buildings found"></app-no-data>
+                            <button mat-flat-button 
+                                    [color]="'primary'" 
+                                    [routerLink]="['add']"
+                                    class="mt-4">
+                                <mat-icon [svgIcon]="'heroicons_outline:plus'"></mat-icon>
+                                <span class="ml-2 mr-1">Add Building</span>
+                            </button>
+                        </div>
+                    </ng-template>
+                </ng-container>
+            </div>
+
+            <!-- Pagination -->
+            <mat-paginator class="border-t flex-shrink-0"
+                [length]="pagination.totalItems"
+                [pageIndex]="pagination.currentPage - 1"
+                [pageSize]="pageSize"
+                [pageSizeOptions]="pageSizeOptions"
+                [showFirstLastButtons]="true"
+                (page)="onPageChange($event)">
+            </mat-paginator>
+
+        </div>
+    </div>
+        </mat-drawer-content>
+
+        <!-- Properties Drawer -->
+        <mat-drawer #propertiesDrawer 
+                    mode="over" 
+                    position="end" 
+                    [opened]="drawerOpened"
+                    (closed)="closePropertiesDrawer()"
+                    class="properties-drawer w-full sm:w-[500px]">
+            <div class="flex flex-col h-full bg-white dark:bg-gray-900">
+                
+                <!-- Drawer Header -->
+                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-primary-50 dark:bg-gray-800">
+                    <div class="flex-1 min-w-0">
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white truncate">
+                            {{ selectedBuildingForProperties?.name }}
+                        </h2>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 truncate mt-0.5">
+                            Properties in this building
+                        </p>
+                    </div>
+                    <button mat-icon-button 
+                            (click)="closePropertiesDrawer()"
+                            class="ml-4 flex-shrink-0">
+                        <mat-icon class="text-white" [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
+                    </button>
+                </div>
+
+                <!-- Drawer Content -->
+                <div class="flex-auto overflow-y-auto p-6">
+                    
+                    <!-- Loading State -->
+                    <div *ngIf="loadingDrawerProperties" class="flex flex-col items-center justify-center py-12">
+                        <mat-icon class="icon-size-12 animate-spin text-primary-600" [svgIcon]="'heroicons_outline:arrow-path'"></mat-icon>
+                        <span class="mt-4 text-secondary">Loading properties...</span>
+                    </div>
+
+                    <!-- Properties List -->
+                    <ng-container *ngIf="!loadingDrawerProperties">
+                        <ng-container *ngIf="selectedBuildingProperties.length > 0; else noPropertiesInDrawer">
+                            <div class="space-y-4">
+                                <div *ngFor="let property of selectedBuildingProperties; trackBy: trackByFn"
+                                     class="flex flex-col gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-primary-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 hover:border-primary-400 dark:hover:border-primary-600 cursor-pointer transition-all duration-200 hover:shadow-md"
+                                     [routerLink]="['/property', property.id]"
+                                     (click)="closePropertiesDrawer()">
+                                    
+                                    <!-- Property Image/Icon -->
+                                    <div class="flex items-center gap-4">
+                                        <div class="flex-shrink-0">
+                                            <div class="w-24 h-24 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-900 shadow-sm">
+                                                <ng-container *ngIf="property.defaultAttachmentUrl; else propertyIconDrawer">
+                                                    <img [src]="property.defaultAttachmentUrl" 
+                                                        [alt]="property.name"
+                                                        class="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
+                                                </ng-container>
+                                                <ng-template #propertyIconDrawer>
+                                                    <div class="w-full h-full flex items-center justify-center">
+                                                        <mat-icon class="icon-size-10 text-primary-600 dark:text-primary-400" 
+                                                            [svgIcon]="'heroicons_outline:home'">
+                                                        </mat-icon>
+                                                    </div>
+                                                </ng-template>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Property Info -->
+                                        <div class="flex-1 min-w-0">
+                                            <div class="font-bold text-lg text-gray-900 dark:text-white truncate mb-1">
+                                                {{ property.name }}
+                                            </div>
+                                            <div class="text-sm text-gray-600 dark:text-gray-400 truncate">
+                                                <span class="font-medium">{{ property.identifier }}</span>
+                                            </div>
+                                            <div *ngIf="property.typeProperty" class="mt-1">
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                                    {{ property.typeProperty }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Property Details -->
+                                    <div class="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
+                                        <div class="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+                                            <div *ngIf="property.area" class="flex items-center gap-1.5">
+                                                <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:squares-2x2'"></mat-icon>
+                                                <span>{{ property.area }} m²</span>
+                                            </div>
+                                            <div *ngIf="property.pieces" class="flex items-center gap-1.5">
+                                                <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:home'"></mat-icon>
+                                                <span>{{ property.pieces }} rooms</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Property Price -->
+                                        <div class="text-right">
+                                            <div class="font-bold text-primary-600 dark:text-primary-400 text-lg whitespace-nowrap">
+                                                {{ property.price | pricePaymentType:property.typePaiment }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </ng-container>
+
+                        <!-- No Properties Message -->
+                        <ng-template #noPropertiesInDrawer>
+                            <div class="flex flex-col items-center justify-center py-16 text-center">
+                                <mat-icon class="icon-size-16 text-gray-300 dark:text-gray-600 mb-4" 
+                                    [svgIcon]="'heroicons_outline:home'">
+                                </mat-icon>
+                                <div class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No properties found</div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">This building doesn't have any properties yet</div>
+                            </div>
+                        </ng-template>
+                    </ng-container>
+                </div>
+            </div>
+        </mat-drawer>
+
+    </mat-drawer-container>
+</div>
+

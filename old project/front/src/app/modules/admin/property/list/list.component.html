@@ -1,0 +1,466 @@
+<div class="absolute inset-0 flex flex-col min-w-0 overflow-hidden">
+
+    <!-- No Permission Message -->
+    <div *ngIf="!canViewProperties" class="flex flex-col items-center justify-center h-full p-8 bg-card dark:bg-transparent">
+        <mat-icon class="icon-size-24 text-gray-400 mb-4" [svgIcon]="'heroicons_outline:lock-closed'"></mat-icon>
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Access Denied</h2>
+        <p class="text-gray-600 dark:text-gray-400 text-center max-w-md">
+            You do not have permission to view properties. Please contact your administrator to request access.
+        </p>
+    </div>
+
+    <div *ngIf="canViewProperties" class="flex flex-col h-full bg-card dark:bg-transparent">
+
+        <!-- Main -->
+        <div class="flex flex-col flex-auto overflow-hidden">
+
+            <!-- Header -->
+            <div class="flex flex-col py-6 px-6 md:px-8 border-b flex-shrink-0">
+
+                <!-- Title Row -->
+                <div class="mb-6">
+                    <div class="text-4xl font-extrabold tracking-tight leading-none">Properties</div>
+                    <div class="ml-0.5 font-medium text-secondary">
+                        <ng-container *ngIf="propertiesCount === 0">0 Total</ng-container>
+                        <ng-container *ngIf="propertiesCount === 1">1 Total</ng-container>
+                        <ng-container *ngIf="propertiesCount > 1">{{ propertiesCount }} Total</ng-container>
+                    </div>
+                </div>
+
+                <!-- Search, View Toggle, and Add Button Row -->
+                <div class="flex items-center justify-between gap-4 mb-4">
+                    <!-- Search with Clear Filters Button -->
+                    <div class="flex items-center gap-2 w-1/3">
+                        <mat-form-field class="fuse-mat-dense fuse-mat-rounded flex-1" subscriptSizing="dynamic">
+                            <mat-icon class="icon-size-5" matPrefix [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
+                            <input matInput [formControl]="searchControl" [autocomplete]="'off'" [placeholder]="'Search properties...'" />
+                        </mat-form-field>
+                        
+                        <!-- Clear Filters Button -->
+                        <button mat-stroked-button color="warn" *ngIf="searchControl.value || selectedPropertyType !== null || selectedCategory || selectedOwnerId"
+                            (click)="clearFilters()"
+                            class="min-w-0">
+                            <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
+                            <span>Clear Filters</span>
+                        </button>
+                    </div>
+
+                    <!-- View Toggle and Add Button -->
+                    <div class="flex items-center gap-4">
+                        <!-- View toggle buttons -->
+                        <fuse-view-toggle [currentView]="viewMode" (viewChange)="setViewMode($event)">
+                        </fuse-view-toggle>
+
+                        <!-- Add property button -->
+                        <button *ngIf="canEditProperties" 
+                                mat-flat-button [color]="'primary'" (click)="createProperty()">
+                            <mat-icon [svgIcon]="'heroicons_outline:plus'"></mat-icon>
+                            <span class="ml-2 mr-1">Add</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filters Row -->
+                <div class="flex items-center gap-4">
+                    <!-- Property Type Filter -->
+                    <div class="relative flex-1">
+                        <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+                            <mat-label>Type</mat-label>
+                            <input matInput 
+                                   type="text"
+                                   [value]="isEditingType ? typeSearchTerm : getSelectedPropertyTypeLabel()"
+                                   placeholder="Search types..."
+                                   (input)="onTypeInput($event)"
+                                   (focus)="onTypeFocus()"
+                                   (blur)="onTypeBlur()"
+                                   autocomplete="off">
+                            <mat-icon matPrefix class="icon-size-5" [svgIcon]="'heroicons_solid:squares-2x2'"></mat-icon>
+                            <button mat-icon-button matSuffix *ngIf="selectedPropertyType !== null"
+                                    (click)="clearPropertyTypeSelection()"
+                                    class="icon-size-5">
+                                <mat-icon [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
+                            </button>
+                        </mat-form-field>
+                        
+                        <!-- Dropdown -->
+                        <div *ngIf="showTypeDropdown && filteredPropertyTypes && filteredPropertyTypes.length > 0" 
+                             class="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                            <div class="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-200 dark:border-gray-700"
+                                 (mousedown)="selectPropertyType(null)">
+                                <div class="font-medium text-gray-900 dark:text-white">All Types</div>
+                            </div>
+                            <div *ngFor="let type of filteredPropertyTypes" 
+                                 class="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-200 dark:border-gray-700 last:border-b-0"
+                                 (mousedown)="selectPropertyType(type.value)">
+                                <div class="font-medium text-gray-900 dark:text-white">
+                                    {{ getPropertyTypeDisplayLabel(type) }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Category Filter -->
+                    <div class="relative flex-1" *ngIf="propertyCategories.length > 0">
+                        <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+                            <mat-label>Category</mat-label>
+                            <input matInput 
+                                   type="text"
+                                   [value]="isEditingCategory ? categorySearchTerm : getSelectedCategoryName()"
+                                   placeholder="Search categories..."
+                                   (input)="onCategoryInput($event)"
+                                   (focus)="onCategoryFocus()"
+                                   (blur)="onCategoryBlur()"
+                                   autocomplete="off">
+                            <mat-icon matPrefix class="icon-size-5" [svgIcon]="'heroicons_solid:tag'"></mat-icon>
+                            <button mat-icon-button matSuffix *ngIf="selectedCategory !== null"
+                                    (click)="clearCategorySelection()"
+                                    class="icon-size-5">
+                                <mat-icon [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
+                            </button>
+                        </mat-form-field>
+                        
+                        <!-- Dropdown -->
+                        <div *ngIf="showCategoryDropdown && filteredPropertyCategories && filteredPropertyCategories.length > 0" 
+                             class="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                            <div class="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-200 dark:border-gray-700"
+                                 (mousedown)="selectCategory(null)">
+                                <div class="font-medium text-gray-900 dark:text-white">All</div>
+                            </div>
+                            <div *ngFor="let category of filteredPropertyCategories" 
+                                 class="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-200 dark:border-gray-700 last:border-b-0"
+                                 (mousedown)="selectCategory(category)">
+                                <div class="font-medium text-gray-900 dark:text-white">{{ getPropertyCategoryLabel(category) }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Owner Filter -->
+                    <div class="relative flex-1">
+                        <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+                            <mat-label>Owner</mat-label>
+                            <input matInput 
+                                   type="text"
+                                   [value]="isEditingOwner ? ownerSearchTerm : getSelectedOwnerName()"
+                                   placeholder="Search owners..."
+                                   (input)="onOwnerInput($event)"
+                                   (focus)="onOwnerFocus()"
+                                   (blur)="onOwnerBlur()"
+                                   (keydown)="onOwnerInputKeyDown($event)"
+                                   autocomplete="off">
+                            <mat-icon matPrefix class="icon-size-5" [svgIcon]="'heroicons_solid:user'"></mat-icon>
+                            <button mat-icon-button matSuffix *ngIf="selectedOwnerId"
+                                    (click)="clearOwnerSelection()"
+                                    class="icon-size-5">
+                                <mat-icon [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
+                            </button>
+                        </mat-form-field>
+                        
+                        <!-- Dropdown -->
+                        <div *ngIf="showOwnerDropdown && filteredOwners && filteredOwners.length > 0" 
+                             class="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                            <div class="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-200 dark:border-gray-700"
+                                 (mousedown)="selectOwner(null)">
+                                <div class="font-medium text-gray-900 dark:text-white">All</div>
+                            </div>
+                            <div *ngFor="let owner of filteredOwners" 
+                                 class="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-200 dark:border-gray-700 last:border-b-0"
+                                 (mousedown)="selectOwner(owner.id)">
+                                <div class="font-medium text-gray-900 dark:text-white">
+                                    {{ owner.isACompany ? owner.companyName : (owner.firstName + ' ' + owner.lastName) }}
+                                </div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400" *ngIf="owner.identifier">
+                                    {{ owner.identifier }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Properties display -->
+            <div class="relative flex-auto overflow-y-auto">
+                <ng-container *ngIf="properties$ | async as properties">
+                    <ng-container *ngIf="properties.length; else noProperties">
+
+                        <!-- List View -->
+                        <ng-container *ngIf="viewMode === 'list'">
+                            <ng-container *ngFor="let property of properties; trackBy: trackByFn">
+                                <!-- Property -->
+                                <a class="z-20 flex items-center px-6 py-5 md:px-8 cursor-pointer border-b hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors duration-200"
+                                    [ngClass]="{'bg-primary-50 dark:bg-primary-900/20 border-l-4 border-l-primary-500': selectedProperty && selectedProperty.id === property.id}" 
+                                    [routerLink]="[property.id]">
+                                    <!-- Image -->
+                                    <div class="flex flex-0 items-center justify-center w-64 h-48 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700 shadow-sm flex-shrink-0 relative group">
+                                        <ng-container *ngIf="getDefaultAttachmentUrl(property)">
+                                            <img class="object-contain w-full h-full transition-transform duration-300 group-hover:scale-105" [src]="getDefaultAttachmentUrl(property)"
+                                                 alt="Property image" />
+                                        </ng-container>
+                                        <ng-container *ngIf="!getDefaultAttachmentUrl(property)">
+                                            <mat-icon class="icon-size-14 text-gray-400" [svgIcon]="'heroicons_outline:building-office'"></mat-icon>
+                                        </ng-container>
+                                        <!-- Reference Badge -->
+                                        <div class="absolute top-2 left-2 bg-gray-900/80 text-white px-2 py-1 rounded text-xs font-semibold backdrop-blur-sm" *ngIf="property.identifier">
+                                            {{property.identifier}}
+                                        </div>
+                                        <!-- Hover Overlay with Actions -->
+                                        <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3">
+                                            <button mat-mini-fab color="primary"
+                                                    (click)="viewProperty(property); $event.preventDefault(); $event.stopPropagation()"
+                                                    matTooltip="View details"
+                                                    class="shadow-lg">
+                                                <mat-icon [svgIcon]="'heroicons_outline:eye'"></mat-icon>
+                                            </button>
+                                            <button mat-mini-fab color="accent"
+                                                    (click)="editProperty(property); $event.preventDefault(); $event.stopPropagation()"
+                                                    matTooltip="Quick edit"
+                                                    class="shadow-lg">
+                                                <mat-icon [svgIcon]="'heroicons_outline:pencil-square'"></mat-icon>
+                                            </button>
+                                            <button *ngIf="canDeleteProperties" 
+                                                    mat-mini-fab color="warn"
+                                                    (click)="deleteProperty(property, $event)"
+                                                    matTooltip="Delete property"
+                                                    class="shadow-lg">
+                                                <mat-icon [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Main Content -->
+                                    <div class="min-w-0 ml-5 flex-1">
+                                        <!-- Title Row -->
+                                        <div class="flex items-start justify-between mb-3">
+                                            <div class="flex-1 min-w-0">
+                                                <div class="font-semibold text-lg leading-6 truncate text-gray-900 dark:text-white">
+                                                    {{property.name || property.identifier || 'Unnamed Property'}}
+                                                </div>
+                                                <div class="flex items-center gap-2 mt-2 flex-wrap">
+                                                    <!-- Category Badge -->
+                                                    <span *ngIf="property.category !== undefined && property.category !== null" 
+                                                          class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium"
+                                                          [ngClass]="{
+                                                              'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300': isCategoryLocation(property.category),
+                                                              'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300': isCategoryVente(property.category),
+                                                              'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300': isCategoryLocationVacances(property.category)
+                                                          }">
+                                                        <mat-icon class="icon-size-4 mr-1" [svgIcon]="'heroicons_outline:tag'"></mat-icon>
+                                                        {{getPropertyCategoryLabel(property.category)}}
+                                                    </span>
+                                                    <!-- Type -->
+                                                    <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300" *ngIf="property.typeProperty && getPropertyTypeLabel(property.typeProperty)">
+                                                        <mat-icon class="icon-size-4 mr-1" [svgIcon]="'heroicons_outline:building-office-2'"></mat-icon>
+                                                        {{getPropertyTypeLabel(property.typeProperty)}}
+                                                    </span>
+                                                    <!-- Furnished -->
+                                                    <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300" *ngIf="property.furnished">
+                                                        <mat-icon class="icon-size-4 mr-1" [svgIcon]="'heroicons_outline:check-circle'"></mat-icon>
+                                                        Furnished
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <!-- Price -->
+                                            <div class="flex flex-col items-end ml-4" *ngIf="property.price">
+                                                <div class="flex items-center px-4 py-3 rounded-lg bg-green-100 dark:bg-green-900/30">
+                                                    <div class="flex flex-col">
+                                                        <div class="text-2xl font-bold text-green-600 dark:text-green-400 leading-tight">
+                                                            {{property.price | pricePaymentType:property.typePaiment}}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Address -->
+                                        <div class="flex items-center text-sm text-secondary mb-2">
+                                            <mat-icon class="icon-size-4 mr-1" [svgIcon]="'heroicons_outline:map-pin'"></mat-icon>
+                                            <span class="truncate">{{property.address || property.city || 'No address'}}</span>
+                                            <span *ngIf="property.city && property.address" class="mx-1">•</span>
+                                            <span *ngIf="property.city">{{property.city}}</span>
+                                        </div>
+                                        
+                                        <!-- Owner -->
+                                        <div class="flex items-center text-sm text-secondary mb-2" *ngIf="property.ownerName">
+                                            <mat-icon class="icon-size-4 mr-1" [svgIcon]="'heroicons_outline:user-circle'"></mat-icon>
+                                            <span>{{property.ownerName}}</span>
+                                        </div>
+                                        
+                                        <!-- Stats Row -->
+                                        <div class="flex items-center gap-4 text-sm">
+                                            <!-- Area -->
+                                            <div class="flex items-center text-gray-700 dark:text-gray-300">
+                                                <mat-icon class="icon-size-4 mr-1 text-secondary" [svgIcon]="'heroicons_outline:square-2-stack'"></mat-icon>
+                                                <span class="font-medium">{{property.area || 0}}</span>
+                                                <span class="text-secondary ml-1">m²</span>
+                                            </div>
+                                            <!-- Rooms -->
+                                            <div class="flex items-center text-gray-700 dark:text-gray-300">
+                                                <mat-icon class="icon-size-4 mr-1 text-secondary" [svgIcon]="'heroicons_outline:home'"></mat-icon>
+                                                <span class="font-medium">{{property.pieces || 0}}</span>
+                                                <span class="text-secondary ml-1">rooms</span>
+                                            </div>
+                                            <!-- Bathrooms -->
+                                            <div class="flex items-center text-gray-700 dark:text-gray-300">
+                                                <mat-icon class="icon-size-4 mr-1 text-secondary" [svgIcon]="'heroicons_outline:home-modern'"></mat-icon>
+                                                <span class="font-medium">{{property.bathrooms || 0}}</span>
+                                                <span class="text-secondary ml-1">baths</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                            </ng-container>
+                        </ng-container>
+
+                        <!-- Grid View -->
+                        <ng-container *ngIf="viewMode === 'cards'">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-6 md:p-8 items-start">
+                                <ng-container *ngFor="let property of properties; trackBy: trackByFn">
+                                    <!-- Property Card -->
+                                    <a class="flex flex-col h-full rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden bg-white dark:bg-gray-800 cursor-pointer border border-gray-200 dark:border-gray-700 hover:border-primary-500 group"
+                                        [ngClass]="{'ring-2 ring-primary-500 dark:ring-primary-400': selectedProperty && selectedProperty.id === property.id}"
+                                        [routerLink]="[property.id]">
+                                        <!-- Image -->
+                                        <div class="relative h-64 bg-gray-100 dark:bg-gray-700 overflow-hidden flex-shrink-0">
+                                            <ng-container *ngIf="getDefaultAttachmentUrl(property)">
+                                                <img class="object-contain w-full h-full group-hover:scale-105 transition-transform duration-300" [src]="getDefaultAttachmentUrl(property)"
+                                                     alt="Property image" />
+                                            </ng-container>
+                                            <ng-container *ngIf="!getDefaultAttachmentUrl(property)">
+                                                <div class="flex items-center justify-center h-full">
+                                                    <mat-icon class="icon-size-16 text-gray-400" [svgIcon]="'heroicons_outline:building-office'"></mat-icon>
+                                                </div>
+                                            </ng-container>
+                                            
+                                            <!-- Reference Badge -->
+                                            <div class="absolute top-3 left-3 bg-gray-900/80 text-white px-2.5 py-1 rounded-lg text-xs font-semibold shadow-lg backdrop-blur-sm" *ngIf="property.identifier">
+                                                {{property.identifier}}
+                                            </div>
+                                            
+                                            <!-- Furnished Badge -->
+                                            <div class="absolute top-3 right-3 flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-teal-500/90 text-white shadow-lg backdrop-blur-sm" *ngIf="property.furnished">
+                                                <mat-icon class="icon-size-4 mr-1" [svgIcon]="'heroicons_outline:check-circle'"></mat-icon>
+                                                Furnished
+                                            </div>
+                                            
+                                            <!-- Hover Overlay with Actions -->
+                                            <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3">
+                                                <button mat-mini-fab color="primary"
+                                                        (click)="viewProperty(property); $event.preventDefault(); $event.stopPropagation()" 
+                                                        matTooltip="View details" 
+                                                        class="shadow-lg">
+                                                    <mat-icon [svgIcon]="'heroicons_outline:eye'"></mat-icon>
+                                                </button>
+                                                <button mat-mini-fab color="accent"
+                                                        (click)="editProperty(property); $event.preventDefault(); $event.stopPropagation()" 
+                                                        matTooltip="Quick edit" 
+                                                        class="shadow-lg">
+                                                    <mat-icon [svgIcon]="'heroicons_outline:pencil-square'"></mat-icon>
+                                                </button>
+                                                <button *ngIf="canDeleteProperties" 
+                                                        mat-mini-fab color="warn"
+                                                        (click)="deleteProperty(property, $event)"
+                                                        matTooltip="Delete property"
+                                                        class="shadow-lg">
+                                                    <mat-icon [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Content -->
+                                        <div class="flex flex-col flex-1 p-6">
+                                            <!-- Title -->
+                                            <div class="font-bold text-lg leading-6 truncate mb-2 text-gray-900 dark:text-white">
+                                                {{property.name || property.identifier || 'Unnamed Property'}}
+                                            </div>
+                                            
+                                            <!-- Address -->
+                                            <div class="flex items-start text-sm text-secondary leading-5 mb-2 min-h-[2.5rem]">
+                                                <mat-icon class="icon-size-4 mt-0.5 mr-1 flex-shrink-0" [svgIcon]="'heroicons_outline:map-pin'"></mat-icon>
+                                                <span class="line-clamp-2">{{property.address || property.city || 'No address'}}</span>
+                                            </div>
+                                            
+                                            <!-- Owner -->
+                                            <div class="flex items-center text-xs text-secondary mb-3 min-h-[1.25rem]" *ngIf="property.ownerName">
+                                                <mat-icon class="icon-size-4 mr-1" [svgIcon]="'heroicons_outline:user-circle'"></mat-icon>
+                                                <span class="truncate">{{property.ownerName}}</span>
+                                            </div>
+                                            
+                                            <!-- Spacer to push bottom content down -->
+                                            <div class="flex-1"></div>
+                                            
+                                            <!-- Bottom Section -->
+                                            <div class="mt-auto">
+                                                <!-- Category, Price, and Status Row -->
+                                                <div class="flex items-center gap-2 mb-3 flex-wrap">
+                                                    <!-- Category -->
+                                                    <div class="flex items-center px-2 py-1 rounded-md text-xs font-medium" *ngIf="property.category !== undefined && property.category !== null"
+                                                         [ngClass]="{
+                                                             'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300': isCategoryLocation(property.category),
+                                                             'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300': isCategoryVente(property.category),
+                                                             'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300': isCategoryLocationVacances(property.category)
+                                                         }">
+                                                        <mat-icon class="icon-size-4 mr-1" [svgIcon]="'heroicons_outline:tag'"></mat-icon>
+                                                        {{getPropertyCategoryLabel(property.category)}}
+                                                    </div>
+                                                    
+                                                    <!-- Price -->
+                                                    <div class="flex items-center px-3 py-2 rounded-md text-lg font-bold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" *ngIf="property.price">
+                                                        {{property.price | pricePaymentType:property.typePaiment}}
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Type -->
+                                                <div class="flex items-center text-sm text-primary-600 dark:text-primary-400 font-medium mb-3" *ngIf="property.typeProperty && getPropertyTypeLabel(property.typeProperty)">
+                                                    <mat-icon class="icon-size-4 mr-1" [svgIcon]="'heroicons_outline:building-office-2'"></mat-icon>
+                                                    {{getPropertyTypeLabel(property.typeProperty)}}
+                                                </div>
+                                                
+                                                <!-- Stats -->
+                                                <div class="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
+                                                    <div class="flex items-center text-sm text-gray-700 dark:text-gray-300">
+                                                        <mat-icon class="icon-size-5 text-secondary mr-1" [svgIcon]="'heroicons_outline:square-2-stack'"></mat-icon>
+                                                        <span class="font-semibold">{{property.area || 0}}</span>
+                                                        <span class="text-secondary ml-1">m²</span>
+                                                    </div>
+                                                    <div class="flex items-center text-sm text-gray-700 dark:text-gray-300">
+                                                        <mat-icon class="icon-size-5 text-secondary mr-1" [svgIcon]="'heroicons_outline:home'"></mat-icon>
+                                                        <span class="font-semibold">{{property.pieces || 0}}</span>
+                                                        <span class="text-secondary ml-1">rooms</span>
+                                                    </div>
+                                                    <div class="flex items-center text-sm text-gray-700 dark:text-gray-300">
+                                                        <mat-icon class="icon-size-5 text-secondary mr-1" [svgIcon]="'heroicons_outline:home-modern'"></mat-icon>
+                                                        <span class="font-semibold">{{property.bathrooms || 0}}</span>
+                                                        <span class="text-secondary ml-1">baths</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </ng-container>
+                            </div>
+                        </ng-container>
+
+                    </ng-container>
+                </ng-container>
+
+                <!-- No properties -->
+                <ng-template #noProperties>
+                    <div class="flex items-center justify-center h-full border-t">
+                        <app-no-data message="No properties found"></app-no-data>
+                    </div>
+                </ng-template>
+
+            </div>
+
+            <!-- Pagination -->
+            <mat-paginator class="border-t flex-shrink-0" [length]="pagination.totalItems"
+                [pageIndex]="pagination.currentPage - 1" [pageSize]="pageSize" [pageSizeOptions]="pageSizeOptions"
+                [showFirstLastButtons]="true" (page)="onPageChange($event)">
+            </mat-paginator>
+
+        </div>
+
+    </div>
+</div>
+
+

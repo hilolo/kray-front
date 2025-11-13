@@ -1,0 +1,594 @@
+<div class="flex flex-col min-w-0 w-full min-h-full">
+    <div *ngIf="!isLoadingContact; else loadingState" class="flex flex-col min-h-full overflow-x-hidden bg-card dark:bg-transparent w-full max-w-full lg:max-w-[95%] mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="flex flex-col flex-shrink-0 py-6 px-6 md:px-8 border-b">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                <div class="flex flex-col gap-4">
+                    <div class="flex flex-wrap items-center gap-4">
+                        <button mat-stroked-button color="primary" (click)="goBack()">
+                            <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_outline:arrow-left'"></mat-icon>
+                            Back to list
+                        </button>
+                        <button mat-raised-button color="primary" (click)="editContact()" *ngIf="contact?.id">
+                            <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_outline:pencil'"></mat-icon>
+                            Edit
+                        </button>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-slate-100 text-slate-700 dark:bg-gray-700 dark:text-gray-200" *ngIf="contact?.identifier">
+                            {{ contact?.identifier }}
+                        </span>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-primary-50 text-primary-600 dark:bg-primary-900/40 dark:text-primary-200" *ngIf="contact?.type">
+                            {{ contact.type === 'tenant' ? 'Tenant' : contact.type === 'owner' ? 'Owner' : contact.type === 'service' ? 'Service' : 'Service' }}
+                        </span>
+                    </div>
+
+                    <div class="flex items-center gap-4">
+                        <!-- Contact Avatar -->
+                        <div class="relative w-20 h-20 flex-shrink-0">
+                            <div class="w-full h-full rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center border-2 border-gray-300 dark:border-gray-600">
+                                <ng-container *ngIf="avatarUrl">
+                                    <img
+                                        class="object-cover w-full h-full"
+                                        [src]="avatarUrl"
+                                        alt="Contact avatar"/>
+                                </ng-container>
+                                <ng-container *ngIf="!avatarUrl">
+                                    <mat-icon class="icon-size-10 text-hint" [svgIcon]="'heroicons_outline:user-circle'"></mat-icon>
+                                </ng-container>
+                            </div>
+                        </div>
+                        <div class="flex-1">
+                            <div class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white leading-tight break-words">
+                                {{ displayName || 'Contact details' }}
+                            </div>
+                            <div class="flex flex-wrap items-center gap-2 text-sm text-secondary mt-2" *ngIf="contact?.email">
+                                <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:envelope'"></mat-icon>
+                                <span>{{ contact.email }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="flex-auto p-6 md:p-8 flex flex-col">
+            <div class="grid gap-6 xl:grid-cols-[30%_70%]">
+                <!-- Left column - Attachments -->
+                <div class="space-y-6">
+                    <section class="rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm shadow-gray-200/60 dark:shadow-black/30 overflow-hidden max-w-full">
+                        <div class="p-4 border-b border-gray-100 dark:border-gray-800">
+                            <div class="text-base font-semibold text-gray-900 dark:text-white">Attachments</div>
+                        </div>
+                        
+                        <div class="p-4">
+                            <ng-container *ngIf="attachments && attachments.length > 0; else noAttachments">
+                                <!-- All Attachments List -->
+                                <div class="space-y-2 max-h-[500px] overflow-y-auto">
+                                    <div *ngFor="let att of attachments; trackBy: trackByFn" 
+                                         class="flex items-center gap-4 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-primary-300 dark:hover:border-primary-600 cursor-pointer transition-all"
+                                         (click)="viewAttachment(att)">
+                                        <div class="flex-shrink-0">
+                                            <div class="w-10 h-10 rounded-lg bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center border border-primary-200 dark:border-primary-700">
+                                                <mat-icon class="icon-size-6 text-primary" [svgIcon]="getFileIcon(att.fileExtension)"></mat-icon>
+                                            </div>
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <fuse-filename-display
+                                                [filename]="att.originalFileName || att.fileName"
+                                                [maxLength]="25"
+                                                [truncateMode]="'middle'"
+                                                [showExtension]="true"
+                                                cssClass="text-sm font-medium text-gray-900 dark:text-white">
+                                            </fuse-filename-display>
+                                            <div class="flex items-center gap-2 text-xs text-secondary mt-1">
+                                                <span>{{ formatFileSize(att.fileSize) }}</span>
+                                                <span>•</span>
+                                                <span>{{ att.createdAt | date:'short' }}</span>
+                                            </div>
+                                        </div>
+                                        <mat-icon class="icon-size-5 text-hint flex-shrink-0" [svgIcon]="'heroicons_outline:arrow-top-right-on-square'"></mat-icon>
+                                    </div>
+                                </div>
+                            </ng-container>
+                            <ng-template #noAttachments>
+                                <div class="flex flex-col items-center justify-center py-6 text-center">
+                                    <mat-icon class="icon-size-12 text-hint mb-2" [svgIcon]="'heroicons_outline:document'"></mat-icon>
+                                    <div class="text-sm font-medium text-secondary">No attachments</div>
+                                </div>
+                            </ng-template>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Right column - Tabs -->
+                <div class="flex flex-col">
+                    <mat-tab-group class="w-full flex flex-col">
+                        <!-- General Information Tab (for all contact types) -->
+                        <mat-tab label="General Information">
+                            <div class="p-6 tab-content-scrollable">
+                                <div class="rounded-3xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm shadow-gray-200/60 dark:shadow-black/30 p-6">
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                                        {{ isTenant ? 'Tenant' : isOwner ? 'Owner' : isService ? 'Service' : 'Contact' }} Details
+                                    </h3>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div class="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-gray-900/70 border border-slate-100 dark:border-gray-800">
+                                            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:user'"></mat-icon>
+                                            <div>
+                                                <div class="text-xs uppercase tracking-widest text-gray-500 dark:text-gray-400">Name</div>
+                                                <div class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ displayName }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-gray-900/70 border border-slate-100 dark:border-gray-800" *ngIf="contact?.identifier">
+                                            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:hashtag'"></mat-icon>
+                                            <div>
+                                                <div class="text-xs uppercase tracking-widest text-gray-500 dark:text-gray-400">Identifier</div>
+                                                <div class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ contact.identifier }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-gray-900/70 border border-slate-100 dark:border-gray-800" *ngIf="contact?.email">
+                                            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:envelope'"></mat-icon>
+                                            <div>
+                                                <div class="text-xs uppercase tracking-widest text-gray-500 dark:text-gray-400">Email</div>
+                                                <div class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ contact.email }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-gray-900/70 border border-slate-100 dark:border-gray-800" *ngIf="contact?.phones && contact.phones.length > 0">
+                                            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:phone'"></mat-icon>
+                                            <div>
+                                                <div class="text-xs uppercase tracking-widest text-gray-500 dark:text-gray-400">Phone</div>
+                                                <div class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ contact.phones[0] }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-gray-900/70 border border-slate-100 dark:border-gray-800" *ngIf="contact?.ice">
+                                            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:identification'"></mat-icon>
+                                            <div>
+                                                <div class="text-xs uppercase tracking-widest text-gray-500 dark:text-gray-400">ICE</div>
+                                                <div class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ contact.ice }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-gray-900/70 border border-slate-100 dark:border-gray-800" *ngIf="contact?.rc">
+                                            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:document-text'"></mat-icon>
+                                            <div>
+                                                <div class="text-xs uppercase tracking-widest text-gray-500 dark:text-gray-400">RC</div>
+                                                <div class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ contact.rc }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Bank Information Section -->
+                                <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                                    <h4 class="text-md font-semibold text-gray-900 dark:text-white mb-4">Bank Information</h4>
+                                    <div *ngIf="isLoadingBanks" class="flex items-center justify-center py-6">
+                                        <mat-spinner diameter="30"></mat-spinner>
+                                    </div>
+                                    <div *ngIf="!isLoadingBanks && hasBankError" class="flex flex-col items-center justify-center py-6 text-center">
+                                        <mat-icon class="icon-size-12 text-warn mb-2" [svgIcon]="'heroicons_outline:exclamation-triangle'"></mat-icon>
+                                        <div class="text-sm font-medium text-secondary">Error loading bank information</div>
+                                    </div>
+                                    <div *ngIf="!isLoadingBanks && !hasBankError && banks.length === 0" class="flex flex-col items-center justify-center py-6 text-center">
+                                        <mat-icon class="icon-size-12 text-hint mb-2" [svgIcon]="'heroicons_outline:building-library'"></mat-icon>
+                                        <div class="text-sm font-medium text-secondary">No bank information available</div>
+                                    </div>
+                                    <div *ngIf="!isLoadingBanks && !hasBankError && banks.length > 0" class="space-y-4">
+                                        <div *ngFor="let bank of banks; trackBy: trackByFn" 
+                                             class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-900/70 p-4">
+                                            <div class="flex items-start gap-4 mb-3">
+                                                <div class="w-10 h-10 rounded-lg bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center border border-primary-200 dark:border-primary-700 flex-shrink-0">
+                                                    <mat-icon class="icon-size-6 text-primary" [svgIcon]="'heroicons_outline:building-library'"></mat-icon>
+                                                </div>
+                                                <div class="flex-1">
+                                                    <h5 class="text-base font-semibold text-gray-900 dark:text-white mb-2">
+                                                        {{ bank.bankName || 'Bank Account' }}
+                                                    </h5>
+                                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                        <div>
+                                                            <div class="text-xs uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-1">RIB</div>
+                                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100 font-mono">{{ bank.rib }}</div>
+                                                        </div>
+                                                        <div *ngIf="bank.iban">
+                                                            <div class="text-xs uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-1">IBAN</div>
+                                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100 font-mono">{{ bank.iban }}</div>
+                                                        </div>
+                                                        <div *ngIf="bank.swift">
+                                                            <div class="text-xs uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-1">SWIFT</div>
+                                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100 font-mono">{{ bank.swift }}</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </mat-tab>
+
+                        <!-- Properties Tab (if has properties or is owner) -->
+                        <mat-tab *ngIf="hasProperties || isOwner" label="Properties">
+                            <div class="p-6 tab-content-scrollable">
+                                <div *ngIf="isLoadingProperties" class="flex items-center justify-center py-12">
+                                    <mat-spinner diameter="40"></mat-spinner>
+                                </div>
+                                <div *ngIf="!isLoadingProperties && hasPropertyError" class="flex flex-col items-center justify-center py-12 text-center">
+                                    <mat-icon class="icon-size-16 text-warn mb-4" [svgIcon]="'heroicons_outline:exclamation-triangle'"></mat-icon>
+                                    <div class="text-lg font-medium text-secondary">Error loading properties</div>
+                                </div>
+                                <div *ngIf="!isLoadingProperties && !hasPropertyError && properties.length === 0" class="flex flex-col items-center justify-center py-12 text-center">
+                                    <mat-icon class="icon-size-16 text-hint mb-4" [svgIcon]="'heroicons_outline:building-office-2'"></mat-icon>
+                                    <div class="text-lg font-medium text-secondary">No properties found</div>
+                                </div>
+                                <div *ngIf="!isLoadingProperties && !hasPropertyError && properties.length > 0" class="space-y-4">
+                                    <div *ngFor="let property of properties; trackBy: trackByFn" 
+                                         class="rounded-3xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm shadow-gray-200/60 dark:shadow-black/30 overflow-hidden hover:shadow-lg transition-shadow flex flex-row">
+                                        <!-- Property Image - Left Side -->
+                                        <div class="relative w-64 flex-shrink-0 bg-gray-100 dark:bg-gray-800 overflow-hidden flex items-center" *ngIf="property.defaultAttachmentUrl">
+                                            <img [src]="property.defaultAttachmentUrl" 
+                                                 [alt]="property.name || property.identifier" 
+                                                 class="object-cover w-full h-full min-h-[200px]">
+                                            <div class="absolute top-4 right-4">
+                                                <mat-chip *ngIf="property.category !== undefined" 
+                                                          [class]="'bg-' + (property.category === 0 ? 'blue' : property.category === 1 ? 'green' : 'purple') + '-100 text-' + (property.category === 0 ? 'blue' : property.category === 1 ? 'green' : 'purple') + '-700'">
+                                                    {{ property.category === 0 ? 'Rental' : property.category === 1 ? 'Sale' : 'Holiday Rental' }}
+                                                </mat-chip>
+                                            </div>
+                                        </div>
+                                        <div class="relative w-64 flex-shrink-0 bg-gray-100 dark:bg-gray-800 flex items-center justify-center min-h-[200px]" *ngIf="!property.defaultAttachmentUrl">
+                                            <mat-icon class="icon-size-16 text-hint" [svgIcon]="'heroicons_outline:building-office-2'"></mat-icon>
+                                            <div class="absolute top-4 right-4">
+                                                <mat-chip *ngIf="property.category !== undefined" 
+                                                          [class]="'bg-' + (property.category === 0 ? 'blue' : property.category === 1 ? 'green' : 'purple') + '-100 text-' + (property.category === 0 ? 'blue' : property.category === 1 ? 'green' : 'purple') + '-700'">
+                                                    {{ property.category === 0 ? 'Rental' : property.category === 1 ? 'Sale' : 'Holiday Rental' }}
+                                                </mat-chip>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Property Content - Right Side -->
+                                        <div class="p-6 flex-1 flex flex-col">
+                                            <div class="mb-4">
+                                                <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                                                    {{ property.name || property.identifier || 'Property' }}
+                                                </h4>
+                                                <div class="flex flex-wrap items-center gap-2 text-sm text-secondary mb-2">
+                                                    <span *ngIf="property.identifier" class="inline-flex items-center gap-1">
+                                                        <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:hashtag'"></mat-icon>
+                                                        {{ property.identifier }}
+                                                    </span>
+                                                    <span *ngIf="property.address" class="inline-flex items-center gap-1">
+                                                        <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:map-pin'"></mat-icon>
+                                                        {{ property.address }}
+                                                    </span>
+                                                    <span *ngIf="property.city" class="inline-flex items-center gap-1">
+                                                        <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:building-office-2'"></mat-icon>
+                                                        {{ property.city }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        
+                                        <!-- Property Details Grid -->
+                                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-4">
+                                            <div class="flex items-start gap-4 p-3 rounded-xl bg-slate-50 dark:bg-gray-900/70 border border-slate-100 dark:border-gray-800">
+                                                <mat-icon class="icon-size-5 text-primary flex-shrink-0" [svgIcon]="'heroicons_outline:currency-dollar'"></mat-icon>
+                                                <div class="flex-1 min-w-0">
+                                                    <div class="text-xs uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-1">Price</div>
+                                                    <div class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ property.price | number:'1.2-2' }} MAD</div>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-start gap-4 p-3 rounded-xl bg-slate-50 dark:bg-gray-900/70 border border-slate-100 dark:border-gray-800">
+                                                <mat-icon class="icon-size-5 text-primary flex-shrink-0" [svgIcon]="'heroicons_outline:square-3-stack-3d'"></mat-icon>
+                                                <div class="flex-1 min-w-0">
+                                                    <div class="text-xs uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-1">Area</div>
+                                                    <div class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ property.area }} m²</div>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-50 dark:bg-gray-900/70 border border-slate-100 dark:border-gray-800" *ngIf="property.pieces">
+                                                <mat-icon class="icon-size-5 text-primary flex-shrink-0" [svgIcon]="'heroicons_outline:home'"></mat-icon>
+                                                <div class="flex-1 min-w-0">
+                                                    <div class="text-xs uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-1">Pieces</div>
+                                                    <div class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ property.pieces }}</div>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-50 dark:bg-gray-900/70 border border-slate-100 dark:border-gray-800" *ngIf="property.bathrooms">
+                                                <mat-icon class="icon-size-5 text-primary flex-shrink-0" [svgIcon]="'heroicons_outline:beaker'"></mat-icon>
+                                                <div class="flex-1 min-w-0">
+                                                    <div class="text-xs uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-1">Bathrooms</div>
+                                                    <div class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ property.bathrooms }}</div>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-50 dark:bg-gray-900/70 border border-slate-100 dark:border-gray-800" *ngIf="property.typeProperty">
+                                                <mat-icon class="icon-size-5 text-primary flex-shrink-0" [svgIcon]="'heroicons_outline:building-office'"></mat-icon>
+                                                <div class="flex-1 min-w-0">
+                                                    <div class="text-xs uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-1">Type</div>
+                                                    <div class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ property.typeProperty }}</div>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-50 dark:bg-gray-900/70 border border-slate-100 dark:border-gray-800" *ngIf="property.furnished !== undefined">
+                                                <mat-icon class="icon-size-5 text-primary flex-shrink-0" [svgIcon]="'heroicons_outline:check-circle'"></mat-icon>
+                                                <div class="flex-1 min-w-0">
+                                                    <div class="text-xs uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-1">Furnished</div>
+                                                    <div class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ property.furnished ? 'Yes' : 'No' }}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Leases for this property (only show for tenants, not owners) -->
+                                        <div *ngIf="!isOwner && getLeasesForProperty(property.id).length > 0" class="mb-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                            <div class="flex items-center justify-between mb-3">
+                                                <div class="text-sm font-semibold text-gray-700 dark:text-gray-300">Leases ({{ getLeasesForProperty(property.id).length }})</div>
+                                            </div>
+                                            <div class="space-y-2">
+                                                <div *ngFor="let lease of getLeasesForProperty(property.id); trackBy: trackByFn" 
+                                                     class="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors"
+                                                     (click)="viewLease(lease); $event.stopPropagation()">
+                                                    <div class="flex-1">
+                                                        <div class="text-sm font-medium text-gray-900 dark:text-white mb-1">
+                                                            <span class="font-semibold">{{ lease.tenantName || 'Unknown Tenant' }}</span>
+                                                        </div>
+                                                        <div class="text-xs text-gray-600 dark:text-gray-300 mb-1">
+                                                            <mat-icon class="icon-size-3 align-middle mr-1" [svgIcon]="'heroicons_outline:calendar'"></mat-icon>
+                                                            {{ lease.tenancyStart | date:'shortDate' }} - {{ lease.tenancyEnd | date:'shortDate' }}
+                                                        </div>
+                                                        <div class="text-xs text-gray-500 dark:text-gray-400">
+                                                            {{ lease.rentPrice | number:'1.2-2' }} MAD • 
+                                                            {{ lease.paymentType === 0 ? 'Monthly' : lease.paymentType === 1 ? 'Quarterly' : lease.paymentType === 2 ? 'Semi-Annually' : 'Full' }}
+                                                        </div>
+                                                    </div>
+                                                    <mat-chip *ngIf="lease.status !== undefined" 
+                                                              [class]="'bg-' + (lease.status === 0 ? 'green' : lease.status === 1 ? 'red' : 'yellow') + '-100 text-' + (lease.status === 0 ? 'green' : lease.status === 1 ? 'red' : 'yellow') + '-700'">
+                                                        {{ lease.status === 0 ? 'Active' : lease.status === 1 ? 'Expired' : 'Pending' }}
+                                                    </mat-chip>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- View Details Button -->
+                                        <div class="flex justify-end mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                            <button mat-raised-button color="primary" (click)="viewProperty(property.id); $event.stopPropagation()">
+                                                <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_outline:eye'"></mat-icon>
+                                                View Details
+                                            </button>
+                                        </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </mat-tab>
+
+                        <!-- Leases Tab (only for tenants, if has leases) -->
+                        <mat-tab *ngIf="isTenant && hasLeases" label="Leases">
+                            <div class="p-6 tab-content-scrollable">
+                                <div *ngIf="isLoadingLeases" class="flex items-center justify-center py-12">
+                                    <mat-spinner diameter="40"></mat-spinner>
+                                </div>
+                                <div *ngIf="!isLoadingLeases && hasLeasingError" class="flex flex-col items-center justify-center py-12 text-center">
+                                    <mat-icon class="icon-size-16 text-warn mb-4" [svgIcon]="'heroicons_outline:exclamation-triangle'"></mat-icon>
+                                    <div class="text-lg font-medium text-secondary">Error loading leases</div>
+                                </div>
+                                <div *ngIf="!isLoadingLeases && !hasLeasingError && leases.length === 0" class="flex flex-col items-center justify-center py-12 text-center">
+                                    <mat-icon class="icon-size-16 text-hint mb-4" [svgIcon]="'heroicons_outline:document-text'"></mat-icon>
+                                    <div class="text-lg font-medium text-secondary">No leases found</div>
+                                </div>
+                                <div *ngIf="!isLoadingLeases && !hasLeasingError && leases.length > 0" class="space-y-4">
+                                    <div *ngFor="let lease of leases; trackBy: trackByFn" 
+                                         class="rounded-3xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm shadow-gray-200/60 dark:shadow-black/30 p-6 hover:shadow-lg transition-shadow cursor-pointer"
+                                         (click)="viewLease(lease)">
+                                        <div class="flex items-start justify-between mb-4">
+                                            <div class="flex-1">
+                                                <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                                                    {{ lease.propertyName || lease.propertyAddress || 'Property' }}
+                                                </h4>
+                                                <div class="flex items-center gap-2 text-sm text-secondary">
+                                                    <span>{{ lease.tenancyStart | date:'shortDate' }}</span>
+                                                    <span>•</span>
+                                                    <span>{{ lease.tenancyEnd | date:'shortDate' }}</span>
+                                                </div>
+                                            </div>
+                                            <mat-chip *ngIf="lease.status !== undefined" 
+                                                      [class]="'bg-' + (lease.status === 0 ? 'green' : lease.status === 1 ? 'red' : 'yellow') + '-100 text-' + (lease.status === 0 ? 'green' : lease.status === 1 ? 'red' : 'yellow') + '-700'">
+                                                {{ lease.status === 0 ? 'Active' : lease.status === 1 ? 'Expired' : 'Pending' }}
+                                            </mat-chip>
+                                        </div>
+                                        <div class="grid grid-cols-2 gap-4 mt-4">
+                                            <div>
+                                                <div class="text-xs uppercase tracking-widest text-gray-500 dark:text-gray-400">Rent Price</div>
+                                                <div class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ lease.rentPrice | number:'1.2-2' }} MAD</div>
+                                            </div>
+                                            <div>
+                                                <div class="text-xs uppercase tracking-widest text-gray-500 dark:text-gray-400">Payment Type</div>
+                                                <div class="text-base font-semibold text-gray-900 dark:text-gray-100">
+                                                    {{ lease.paymentType === 0 ? 'Monthly' : lease.paymentType === 1 ? 'Quarterly' : lease.paymentType === 2 ? 'Semi-Annually' : 'Full' }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button mat-button color="primary" class="mt-4" (click)="viewProperty(lease.propertyId); $event.stopPropagation()">
+                                            View Property
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </mat-tab>
+
+                        <!-- Reservations Tab (if tenant has reservations) -->
+                        <mat-tab *ngIf="isTenant && hasReservations" label="Reservations">
+                            <div class="p-6 tab-content-scrollable">
+                                <div *ngIf="isLoadingReservations" class="flex items-center justify-center py-12">
+                                    <mat-spinner diameter="40"></mat-spinner>
+                                </div>
+                                <div *ngIf="!isLoadingReservations && hasReservationError" class="flex flex-col items-center justify-center py-12 text-center">
+                                    <mat-icon class="icon-size-16 text-warn mb-4" [svgIcon]="'heroicons_outline:exclamation-triangle'"></mat-icon>
+                                    <div class="text-lg font-medium text-secondary">Error loading reservations</div>
+                                </div>
+                                <div *ngIf="!isLoadingReservations && !hasReservationError && reservations.length === 0" class="flex flex-col items-center justify-center py-12 text-center">
+                                    <mat-icon class="icon-size-16 text-hint mb-4" [svgIcon]="'heroicons_outline:calendar'"></mat-icon>
+                                    <div class="text-lg font-medium text-secondary">No reservations found</div>
+                                </div>
+                                <div *ngIf="!isLoadingReservations && !hasReservationError && reservations.length > 0" class="space-y-4">
+                                    <div *ngFor="let reservation of reservations; trackBy: trackByFn" 
+                                         class="rounded-3xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm shadow-gray-200/60 dark:shadow-black/30 p-6 hover:shadow-lg transition-shadow cursor-pointer"
+                                         (click)="viewReservation(reservation)">
+                                        <div class="flex items-start justify-between mb-4">
+                                            <div class="flex-1">
+                                                <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                                                    {{ reservation.propertyName || reservation.propertyAddress || 'Property' }}
+                                                </h4>
+                                                <div class="flex items-center gap-2 text-sm text-secondary">
+                                                    <span>{{ reservation.startDate | date:'shortDate' }}</span>
+                                                    <span>•</span>
+                                                    <span>{{ reservation.endDate | date:'shortDate' }}</span>
+                                                    <span>•</span>
+                                                    <span>{{ reservation.durationDays }} nights</span>
+                                                </div>
+                                            </div>
+                                            <mat-chip [class]="'bg-' + (reservation.status === 0 ? 'yellow' : reservation.status === 1 ? 'green' : 'red') + '-100 text-' + (reservation.status === 0 ? 'yellow' : reservation.status === 1 ? 'green' : 'red') + '-700'">
+                                                {{ reservation.status === 0 ? 'Pending' : reservation.status === 1 ? 'Approved' : 'Rejected' }}
+                                            </mat-chip>
+                                        </div>
+                                        <div class="grid grid-cols-2 gap-4 mt-4" *ngIf="reservation.totalAmount">
+                                            <div>
+                                                <div class="text-xs uppercase tracking-widest text-gray-500 dark:text-gray-400">Total Amount</div>
+                                                <div class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ reservation.totalAmount | number:'1.2-2' }} MAD</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </mat-tab>
+
+                        <!-- Maintenance Tab (if service and has maintenances) -->
+                        <mat-tab *ngIf="isService && hasMaintenances" label="Maintenance">
+                            <div class="p-6 tab-content-scrollable">
+                                <div *ngIf="isLoadingMaintenances" class="flex items-center justify-center py-12">
+                                    <mat-spinner diameter="40"></mat-spinner>
+                                </div>
+                                <div *ngIf="!isLoadingMaintenances && hasMaintenanceError" class="flex flex-col items-center justify-center py-12 text-center">
+                                    <mat-icon class="icon-size-16 text-warn mb-4" [svgIcon]="'heroicons_outline:exclamation-triangle'"></mat-icon>
+                                    <div class="text-lg font-medium text-secondary">Error loading maintenance</div>
+                                </div>
+                                <div *ngIf="!isLoadingMaintenances && !hasMaintenanceError && maintenances.length === 0" class="flex flex-col items-center justify-center py-12 text-center">
+                                    <mat-icon class="icon-size-16 text-hint mb-4" [svgIcon]="'heroicons_outline:wrench-screwdriver'"></mat-icon>
+                                    <div class="text-lg font-medium text-secondary">No maintenance requests found</div>
+                                </div>
+                                <div *ngIf="!isLoadingMaintenances && !hasMaintenanceError && maintenances.length > 0" class="space-y-4">
+                                    <div *ngFor="let maintenance of maintenances; trackBy: trackByFn" 
+                                         class="rounded-3xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm shadow-gray-200/60 dark:shadow-black/30 p-6 hover:shadow-lg transition-shadow cursor-pointer"
+                                         (click)="viewMaintenance(maintenance)">
+                                        <div class="flex items-start justify-between mb-4">
+                                            <div class="flex-1">
+                                                <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                                                    {{ maintenance.subject }}
+                                                </h4>
+                                                <div class="flex items-center gap-2 text-sm text-secondary mb-2">
+                                                    <span>{{ maintenance.propertyName || maintenance.propertyAddress || 'Property' }}</span>
+                                                    <span>•</span>
+                                                    <span>{{ maintenance.scheduledDateTime | date:'short' }}</span>
+                                                </div>
+                                            </div>
+                                            <div class="flex gap-2">
+                                                <mat-chip [class]="'bg-' + (maintenance.priority === 1 ? 'blue' : maintenance.priority === 2 ? 'yellow' : 'red') + '-100 text-' + (maintenance.priority === 1 ? 'blue' : maintenance.priority === 2 ? 'yellow' : 'red') + '-700'">
+                                                    {{ maintenance.priority === 1 ? 'Low' : maintenance.priority === 2 ? 'Medium' : 'Urgent' }}
+                                                </mat-chip>
+                                                <mat-chip [class]="'bg-' + getMaintenanceStatusColor(maintenance.status) + '-100 text-' + getMaintenanceStatusColor(maintenance.status) + '-700'">
+                                                    {{ getMaintenanceStatusLabel(maintenance.status) }}
+                                                </mat-chip>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Property Information -->
+                                        <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                            <h5 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Property Information</h5>
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-50 dark:bg-gray-900/70 border border-slate-100 dark:border-gray-800" *ngIf="maintenance.propertyName">
+                                                    <mat-icon class="icon-size-5 text-primary flex-shrink-0" [svgIcon]="'heroicons_outline:building-office-2'"></mat-icon>
+                                                    <div class="flex-1 min-w-0">
+                                                        <div class="text-xs uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-1">Property Name</div>
+                                                        <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ maintenance.propertyName }}</div>
+                                                    </div>
+                                                </div>
+                                                <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-50 dark:bg-gray-900/70 border border-slate-100 dark:border-gray-800" *ngIf="maintenance.propertyAddress">
+                                                    <mat-icon class="icon-size-5 text-primary flex-shrink-0" [svgIcon]="'heroicons_outline:map-pin'"></mat-icon>
+                                                    <div class="flex-1 min-w-0">
+                                                        <div class="text-xs uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-1">Address</div>
+                                                        <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ maintenance.propertyAddress }}</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Owner Information -->
+                                        <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700" *ngIf="maintenance.ownerName || maintenance.ownerPhone">
+                                            <h5 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Owner Information</h5>
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-50 dark:bg-gray-900/70 border border-slate-100 dark:border-gray-800" *ngIf="maintenance.ownerName">
+                                                    <mat-icon class="icon-size-5 text-primary flex-shrink-0" [svgIcon]="'heroicons_outline:user'"></mat-icon>
+                                                    <div class="flex-1 min-w-0">
+                                                        <div class="text-xs uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-1">Owner Name</div>
+                                                        <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ maintenance.ownerName }}</div>
+                                                    </div>
+                                                </div>
+                                                <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-50 dark:bg-gray-900/70 border border-slate-100 dark:border-gray-800" *ngIf="maintenance.ownerPhone">
+                                                    <mat-icon class="icon-size-5 text-primary flex-shrink-0" [svgIcon]="'heroicons_outline:phone'"></mat-icon>
+                                                    <div class="flex-1 min-w-0">
+                                                        <div class="text-xs uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-1">Owner Phone</div>
+                                                        <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ maintenance.ownerPhone }}</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-4" *ngIf="maintenance.description">
+                                            {{ maintenance.description }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </mat-tab>
+
+                        <!-- Finance Tab -->
+                        <mat-tab label="Finance">
+                            <div class="p-6 tab-content-scrollable">
+                                <!-- Empty Finance tab -->
+                            </div>
+                        </mat-tab>
+                    </mat-tab-group>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <ng-template #loadingState>
+        <div class="flex items-center justify-center h-full py-24">
+            <mat-spinner diameter="50"></mat-spinner>
+        </div>
+    </ng-template>
+</div>
+
+<!-- Image Viewer -->
+<app-image-viewer
+    [imageUrl]="selectedImageUrl"
+    [imageName]="selectedImageName"
+    [fileSize]="selectedImageSize"
+    [images]="selectedImages"
+    [currentIndex]="selectedImageIndex"
+    [isOpen]="isImageViewerOpen"
+    (close)="closeImageViewer()"
+    (imageChanged)="onImageChanged($event)">
+</app-image-viewer>
+
+<!-- PDF Viewer -->
+<app-pdf-viewer
+    [pdfUrl]="selectedPdfUrl"
+    [pdfName]="selectedPdfName"
+    [fileSize]="selectedPdfSize"
+    [isOpen]="isPdfViewerOpen"
+    (close)="closePdfViewer()">
+</app-pdf-viewer>
+
+<!-- Document Viewer -->
+<app-document-viewer
+    [documentType]="selectedDocumentType"
+    [documentUrl]="selectedDocumentUrl"
+    [documentName]="selectedDocumentName"
+    [fileSize]="0"
+    [isOpen]="isDocumentViewerOpen"
+    (close)="closeDocumentViewer()">
+</app-document-viewer>
+
