@@ -1,4 +1,5 @@
 import { AfterViewInit, ChangeDetectionStrategy, Component, computed, ElementRef, inject, OnDestroy, signal, ViewChild, ViewContainerRef, TemplateRef, viewChild } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { ZardPageComponent } from '../../page/page.component';
 import { ZardButtonComponent } from '@shared/components/button/button.component';
 import { ZardInputDirective } from '@shared/components/input/input.directive';
@@ -33,6 +34,7 @@ interface Contact {
   standalone: true,
   imports: [
     CommonModule,
+    RouterLink,
     ZardPageComponent,
     ZardButtonComponent,
     ZardInputDirective,

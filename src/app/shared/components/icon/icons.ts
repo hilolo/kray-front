@@ -76,6 +76,10 @@ import {
   type LucideIconData,
   Circle,
   Inbox,
+  Upload,
+  Image,
+  FileSpreadsheet,
+  IdCard,
 } from 'lucide-angular';
 
 export const ZARD_ICONS = {
@@ -155,6 +159,10 @@ export const ZARD_ICONS = {
   globe: Globe,
   camera: Camera,
   pencil: Pencil,
+  upload: Upload,
+  image: Image,
+  'file-spreadsheet': FileSpreadsheet,
+  'id-card': IdCard,
 } as const satisfies Record<string, LucideIconData>;
 
 export declare type ZardIcon = keyof typeof ZARD_ICONS | LucideIconData;

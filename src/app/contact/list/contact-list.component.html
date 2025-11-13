@@ -47,7 +47,7 @@
                 <span>List View</span>
               }
             </z-button>
-            <z-button zType="default" zSize="default" class="gap-2">
+            <z-button zType="default" zSize="default" class="gap-2" routerLink="/contact/add">
               <z-icon zType="folder-plus" zSize="sm" />
               Add Contact
             </z-button>
@@ -136,8 +136,10 @@
         <!-- Card Template -->
         <ng-template #cardTemplate let-row="row">
           <div class="flex flex-col gap-3">
-            <div class="absolute top-4 left-4 flex items-center gap-2">
+            <div class="absolute top-4 left-4">
               <z-checkbox [ngModel]="isSelected(row.id)" (checkChange)="toggleSelect(row.id)" />
+            </div>
+            <div class="absolute top-4 right-4">
               <z-dropdown-menu>
                 <z-button zType="ghost" zSize="icon" class="h-8 w-8 flex-shrink-0" dropdown-trigger>
                   <z-icon zType="ellipsis" zSize="sm" />
@@ -157,7 +159,7 @@
                 </z-dropdown-menu-item>
               </z-dropdown-menu>
             </div>
-            <div class="flex flex-col gap-3 pt-12">
+            <div class="flex flex-col gap-3 pt-3">
               <div class="flex items-start justify-between gap-2">
                 <div class="flex-1 min-w-0">
                   <h3 class="font-semibold text-lg truncate">{{ row.name }}</h3>
