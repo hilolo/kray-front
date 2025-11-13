@@ -104,5 +104,29 @@ export class UserService {
   getUserPermissions(userId: string): Observable<UserPermissions> {
     return this.apiService.get<UserPermissions>(`api/userpermissions/${userId}`);
   }
+
+  /**
+   * Update user permissions
+   * PUT api/userpermissions/{userId}
+   */
+  updateUserPermissions(userId: string, permissions: UserPermissions['permissions']): Observable<UserPermissions> {
+    // Transform permissions to match API format (capitalize keys)
+    const transformedPermissions: Record<string, { View: boolean; Edit: boolean; Delete: boolean }> = {};
+    
+    Object.keys(permissions).forEach((key) => {
+      const modulePerms = permissions[key as keyof typeof permissions];
+      if (modulePerms) {
+        transformedPermissions[key] = {
+          View: modulePerms.view,
+          Edit: modulePerms.edit,
+          Delete: modulePerms.delete,
+        };
+      }
+    });
+
+    return this.apiService.put<UserPermissions>(`api/userpermissions/${userId}`, {
+      Permissions: transformedPermissions,
+    });
+  }
 }
 

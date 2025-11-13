@@ -1,6 +1,7 @@
 import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
+import { inject } from '@angular/core';
 import { catchError, throwError } from 'rxjs';
-import { toast } from 'ngx-sonner';
+import { ToastService } from '@shared/services/toast.service';
 
 /**
  * HTTP Interceptor to handle standard backend API response format
@@ -8,6 +9,8 @@ import { toast } from 'ngx-sonner';
  * Shows toast error messages for API errors
  */
 export const apiResponseInterceptor: HttpInterceptorFn = (req, next) => {
+  const toastService = inject(ToastService);
+  
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
       // Handle HTTP errors
@@ -16,9 +19,7 @@ export const apiResponseInterceptor: HttpInterceptorFn = (req, next) => {
         if (error.error.status && error.error.data !== undefined) {
           // Show toast error if status is "Failed"
           if (error.error.status === 'Failed' && error.error.message) {
-            toast.error(error.error.message, {
-              duration: 5000, // 5 seconds
-            });
+            toastService.error(error.error.message);
           }
           // Return the error in the standard format
           return throwError(() => error.error);
@@ -29,9 +30,7 @@ export const apiResponseInterceptor: HttpInterceptorFn = (req, next) => {
       // Show generic error message
       const errorMessage = error.error?.message || error.message || 'An error occurred';
       if (error.status && error.status >= 400) {
-        toast.error(errorMessage, {
-          duration: 5000, // 5 seconds
-        });
+        toastService.error(errorMessage);
       }
       
       // Return the error as-is if it doesn't follow the standard format

@@ -4,7 +4,7 @@ import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import type { ApiResponse } from '../models/api-response.model';
-import { toast } from 'ngx-sonner';
+import { ToastService } from './toast.service';
 
 /**
  * Base API service for making HTTP requests to the backend
@@ -15,6 +15,7 @@ import { toast } from 'ngx-sonner';
 })
 export class ApiService {
   private readonly http = inject(HttpClient);
+  private readonly toastService = inject(ToastService);
   private readonly baseUrl = environment.apiUrl;
 
   /**
@@ -42,9 +43,7 @@ export class ApiService {
         // Check if response has error status even with 200 OK
         if (response.status === 'Failed') {
           if (response.message) {
-            toast.error(response.message, {
-              duration: 5000, // 5 seconds
-            });
+            this.toastService.error(response.message);
           }
           throw new Error(response.message || 'Request failed');
         }
@@ -64,9 +63,7 @@ export class ApiService {
         // Check if response has error status even with 200 OK
         if (response.status === 'Failed') {
           if (response.message) {
-            toast.error(response.message, {
-              duration: 5000, // 5 seconds
-            });
+            this.toastService.error(response.message);
           }
           throw new Error(response.message || 'Request failed');
         }
@@ -86,9 +83,7 @@ export class ApiService {
         // Check if response has error status even with 200 OK
         if (response.status === 'Failed') {
           if (response.message) {
-            toast.error(response.message, {
-              duration: 5000, // 5 seconds
-            });
+            this.toastService.error(response.message);
           }
           throw new Error(response.message || 'Request failed');
         }
@@ -108,9 +103,7 @@ export class ApiService {
         // Check if response has error status even with 200 OK
         if (response.status === 'Failed') {
           if (response.message) {
-            toast.error(response.message, {
-              duration: 5000, // 5 seconds
-            });
+            this.toastService.error(response.message);
           }
           throw new Error(response.message || 'Request failed');
         }
@@ -134,9 +127,7 @@ export class ApiService {
         // Check if response has error status even with 200 OK
         if (response.status === 'Failed') {
           if (response.message) {
-            toast.error(response.message, {
-              duration: 5000, // 5 seconds
-            });
+            this.toastService.error(response.message);
           }
           throw new Error(response.message || 'Request failed');
         }

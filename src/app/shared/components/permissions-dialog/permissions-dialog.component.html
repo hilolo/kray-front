@@ -1,67 +1,67 @@
-<div class="space-y-4">
+<div class="flex flex-col h-full min-h-0 max-h-[75vh]">
   @if (isLoading()) {
     <div class="flex items-center justify-center p-8">
       <div class="text-muted-foreground">Loading permissions...</div>
     </div>
   } @else if (permissions()) {
-    <!-- Select All Permissions Header -->
-    <div class="flex items-center gap-3 p-3 rounded-lg border bg-card cursor-pointer hover:bg-accent transition-colors" (click)="toggleSelectAll()">
-      <div class="w-8 h-8 rounded bg-primary flex items-center justify-center">
-        <z-icon zType="check" zSize="sm" class="text-primary-foreground" />
+    <div class="flex flex-col space-y-4 min-h-0">
+      <!-- Select All Permissions Header -->
+      <div class="flex items-center gap-3 p-4 rounded-lg border bg-card cursor-pointer hover:bg-accent transition-colors" (click)="toggleSelectAll()">
+        <div class="w-8 h-8 rounded bg-primary flex items-center justify-center flex-shrink-0">
+          <z-icon zType="check" zSize="sm" class="text-primary-foreground" />
+        </div>
+        <span class="font-medium">Select All Permissions</span>
       </div>
-      <span class="font-medium">Select All Permissions</span>
-    </div>
 
-    <!-- Permissions Table -->
-    <div class="border rounded-lg overflow-hidden">
-      <table class="w-full">
-        <thead class="bg-muted/50">
-          <tr>
-            <th class="text-left p-4 font-semibold">Module</th>
-            <th class="text-center p-4 font-semibold">View</th>
-            <th class="text-center p-4 font-semibold">Edit</th>
-            <th class="text-center p-4 font-semibold">Delete</th>
-            <th class="text-center p-4 font-semibold">All</th>
-          </tr>
-        </thead>
-        <tbody>
+      <!-- Scrollable Permissions Grid (Responsive: 1 col on mobile, 2 on tablet, 3 on desktop) -->
+      <div class="flex-1 overflow-y-auto min-h-0 -mx-1 px-1">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           @for (module of modules; track module.key) {
-            <tr class="border-t hover:bg-muted/30 transition-colors">
-              <td class="p-4">
-                <div class="flex items-center gap-3">
-                  <z-icon [zType]="$any(module.icon)" zSize="sm" class="text-muted-foreground" />
-                  <span class="font-medium">{{ module.label }}</span>
+            <z-card class="!p-4">
+              <div class="flex flex-col gap-3">
+                <!-- Module Header -->
+                <div class="flex items-center gap-2 min-h-[32px]">
+                  <z-icon [zType]="$any(module.icon)" zSize="sm" class="text-muted-foreground flex-shrink-0" />
+                  <span class="font-semibold text-sm leading-tight">{{ module.label }}</span>
                 </div>
-              </td>
-              <td class="p-4 text-center">
-                <z-checkbox 
-                  [ngModel]="getPermission(module.key, 'view')"
-                  (ngModelChange)="updatePermission(module.key, 'view', $event)"
-                />
-              </td>
-              <td class="p-4 text-center">
-                <z-checkbox 
-                  [ngModel]="getPermission(module.key, 'edit')"
-                  (ngModelChange)="updatePermission(module.key, 'edit', $event)"
-                />
-              </td>
-              <td class="p-4 text-center">
-                <z-checkbox 
-                  zType="destructive"
-                  [ngModel]="getPermission(module.key, 'delete')"
-                  (ngModelChange)="updatePermission(module.key, 'delete', $event)"
-                />
-              </td>
-              <td class="p-4 text-center">
-                <z-checkbox 
-                  [ngModel]="getAllPermission(module.key)"
-                  (ngModelChange)="updateAllPermission(module.key, $event)"
-                />
-              </td>
-            </tr>
+
+                <!-- Permissions Checkboxes -->
+                <div class="flex flex-col gap-3">
+                  <div class="flex items-center justify-between py-1">
+                    <span class="text-sm text-muted-foreground">View</span>
+                    <z-checkbox 
+                      [ngModel]="getPermission(module.key, 'view')"
+                      (ngModelChange)="updatePermission(module.key, 'view', $event)"
+                    />
+                  </div>
+                  <div class="flex items-center justify-between py-1">
+                    <span class="text-sm text-muted-foreground">Edit</span>
+                    <z-checkbox 
+                      [ngModel]="getPermission(module.key, 'edit')"
+                      (ngModelChange)="updatePermission(module.key, 'edit', $event)"
+                    />
+                  </div>
+                  <div class="flex items-center justify-between py-1">
+                    <span class="text-sm text-muted-foreground">Delete</span>
+                    <z-checkbox 
+                      zType="destructive"
+                      [ngModel]="getPermission(module.key, 'delete')"
+                      (ngModelChange)="updatePermission(module.key, 'delete', $event)"
+                    />
+                  </div>
+                  <div class="flex items-center justify-between pt-2 mt-1 border-t py-1">
+                    <span class="text-sm font-medium">All</span>
+                    <z-checkbox 
+                      [ngModel]="getAllPermission(module.key)"
+                      (ngModelChange)="updateAllPermission(module.key, $event)"
+                    />
+                  </div>
+                </div>
+              </div>
+            </z-card>
           }
-        </tbody>
-      </table>
+        </div>
+      </div>
     </div>
   }
 </div>

@@ -5,15 +5,16 @@ import { ZardDialogRef } from '../dialog/dialog-ref';
 import { UserService } from '@shared/services/user.service';
 import { ZardCheckboxComponent } from '../checkbox/checkbox.component';
 import { ZardIconComponent } from '../icon/icon.component';
+import { ZardCardComponent } from '../card/card.component';
 import type { UserPermissions } from '@shared/models/user-permissions.model';
 import { MODULES } from '@shared/constants/modules.constant';
-import { Subject, takeUntil } from 'rxjs';
-import { toast } from 'ngx-sonner';
+import { Subject, takeUntil, Observable, tap } from 'rxjs';
+import { ToastService } from '@shared/services/toast.service';
 
 @Component({
   selector: 'app-permissions-dialog',
   standalone: true,
-  imports: [FormsModule, ZardCheckboxComponent, ZardIconComponent],
+  imports: [FormsModule, ZardCheckboxComponent, ZardIconComponent, ZardCardComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   templateUrl: './permissions-dialog.component.html',
@@ -22,11 +23,13 @@ export class PermissionsDialogComponent implements OnInit, OnDestroy {
   private readonly dialogRef = inject(ZardDialogRef);
   private readonly userService = inject(UserService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly toastService = inject(ToastService);
   private readonly data = inject<{ userId: string }>(Z_MODAL_DATA);
   private readonly destroy$ = new Subject<void>();
 
   permissions = signal<UserPermissions | null>(null);
   isLoading = signal(false);
+  isSaving = signal(false);
 
   readonly modules = MODULES;
 
@@ -53,7 +56,7 @@ export class PermissionsDialogComponent implements OnInit, OnDestroy {
           console.error('Error loading permissions:', error);
           this.isLoading.set(false);
           this.cdr.markForCheck();
-          toast.error('Failed to load permissions');
+          this.toastService.error('Failed to load permissions');
         }
       });
   }
@@ -114,6 +117,34 @@ export class PermissionsDialogComponent implements OnInit, OnDestroy {
     this.modules.forEach(module => {
       this.updateAllPermission(module.key, newValue);
     });
+  }
+
+  /**
+   * Save permissions to the API
+   */
+  savePermissions(): Observable<UserPermissions> {
+    const perms = this.permissions();
+    if (!perms) {
+      throw new Error('No permissions to save');
+    }
+
+    this.isSaving.set(true);
+    return this.userService.updateUserPermissions(this.data.userId, perms.permissions).pipe(
+      tap({
+        next: (updatedPermissions) => {
+          this.permissions.set(updatedPermissions);
+          this.isSaving.set(false);
+          this.cdr.markForCheck();
+          this.toastService.success('Permissions updated successfully');
+        },
+        error: (error) => {
+          console.error('Error saving permissions:', error);
+          this.isSaving.set(false);
+          this.cdr.markForCheck();
+          // Error toast is handled by API interceptor
+        }
+      })
+    );
   }
 }
 

@@ -18,7 +18,7 @@ import { ZardAlertDialogService } from '@shared/components/alert-dialog/alert-di
 import { ZardDialogService } from '@shared/components/dialog/dialog.service';
 import { PermissionsDialogComponent } from '@shared/components/permissions-dialog/permissions-dialog.component';
 import { Subject, takeUntil } from 'rxjs';
-import { toast } from 'ngx-sonner';
+import { ToastService } from '@shared/services/toast.service';
 import type { TeamMember } from '@shared/models/team-member.model';
 
 type SettingsSection = 'account' | 'security' | 'plan-billing' | 'team' | 'application';
@@ -50,6 +50,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
   private readonly alertDialogService = inject(ZardAlertDialogService);
   private readonly dialogService = inject(ZardDialogService);
   private readonly viewContainerRef = inject(ViewContainerRef);
+  private readonly toastService = inject(ToastService);
   private readonly destroy$ = new Subject<void>();
 
   activeSection = signal<SettingsSection>('account');
@@ -221,7 +222,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
         error: (error) => {
           console.error('Error loading team members:', error);
           this.isLoadingTeamMembers.set(false);
-          toast.error('Failed to load team members');
+          this.toastService.error('Failed to load team members');
         }
       });
   }
@@ -234,13 +235,25 @@ export class SettingsComponent implements OnInit, OnDestroy {
       zContent: PermissionsDialogComponent,
       zTitle: `Permissions - ${member.name || member.email}`,
       zWidth: '800px',
+      zCustomClasses: 'max-w-[calc(100vw-2rem)] sm:max-w-[800px]',
       zData: { userId: member.id },
       zViewContainerRef: this.viewContainerRef,
       zOkText: 'Save',
       zCancelText: 'Cancel',
-      zOnOk: () => {
-        // Handle save if needed
-        dialogRef.close();
+      zOnOk: (instance: PermissionsDialogComponent) => {
+        // Save permissions
+        instance.savePermissions()
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: () => {
+              dialogRef.close();
+            },
+            error: () => {
+              // Error is already handled in the component
+              // Don't close dialog on error
+            }
+          });
+        return false; // Prevent default close behavior
       },
     });
   }
@@ -415,7 +428,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
       };
       reader.onerror = () => {
         this.isSaving.set(false);
-        toast.error('Failed to read image file');
+        this.toastService.error('Failed to read image file');
       };
       reader.readAsDataURL(imageFile);
     } else {
@@ -432,7 +445,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
       next: (updatedUser) => {
         this.isSaving.set(false);
         this.formSubmitted.set(false); // Reset form validation state on success
-        toast.success('Account information updated successfully');
+        this.toastService.success('Account information updated successfully');
         
         // Clear the file reference after successful update
         this.profileImageFile.set(null);
@@ -477,7 +490,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.passwordForm.newPassword.set('');
         this.passwordForm.confirmPassword.set('');
         
-        toast.success('Password updated successfully');
+        this.toastService.success('Password updated successfully');
       },
       error: (error) => {
         this.isUpdatingPassword.set(false);
