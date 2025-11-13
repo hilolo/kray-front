@@ -6,6 +6,7 @@ import { ZardInputDirective } from '@shared/components/input/input.directive';
 import { ZardBadgeComponent } from '@shared/components/badge/badge.component';
 import { ZardCheckboxComponent } from '@shared/components/checkbox/checkbox.component';
 import { ZardIconComponent } from '@shared/components/icon/icon.component';
+import { ZardAvatarComponent } from '@shared/components/avatar/avatar.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
 import type { ZardIcon } from '@shared/components/icon/icons';
@@ -41,6 +42,7 @@ interface Contact {
     ZardBadgeComponent,
     ZardCheckboxComponent,
     ZardIconComponent,
+    ZardAvatarComponent,
     ZardSwitchComponent,
     ZardDatatableComponent,
     ZardDropdownMenuComponent,
@@ -413,5 +415,12 @@ export class ContactListComponent implements OnDestroy {
 
   isSelected(contactId: string): boolean {
     return this.selectedRows().has(contactId);
+  }
+
+  getInitials(name: string): string {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 0) return '?';
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
   }
 }

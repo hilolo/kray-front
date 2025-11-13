@@ -73,11 +73,13 @@
       >
         <!-- Contact ID Column Template -->
         <ng-template #contactIdCell let-value let-row="row">
-          <div class="flex flex-col gap-1">
-            <span class="font-medium">{{ row.id }}</span>
-            <z-badge zType="secondary" zShape="default" class="w-fit">
-              {{ row.category }}
-            </z-badge>
+          <div class="flex items-center gap-3">
+            <z-avatar
+              [zImage]="{ fallback: getInitials(row.name) }"
+              zType="default"
+              zSize="default"
+              zShape="circle"
+            />
           </div>
         </ng-template>
 
@@ -161,9 +163,19 @@
             </div>
             <div class="flex flex-col gap-3 pt-3">
               <div class="flex items-start justify-between gap-2">
-                <div class="flex-1 min-w-0">
-                  <h3 class="font-semibold text-lg truncate">{{ row.name }}</h3>
-                  <p class="text-sm text-muted-foreground">{{ row.id }}</p>
+                <div class="flex items-center gap-3 flex-1 min-w-0">
+                  <z-avatar
+                    [zImage]="{ fallback: getInitials(row.name) }"
+                    zType="default"
+                    zSize="default"
+                    zShape="circle"
+                  />
+                  <div class="flex-1 min-w-0">
+                    <h3 class="font-semibold text-lg truncate">{{ row.name }}</h3>
+                    <z-badge zType="secondary" zShape="default" class="w-fit mt-1">
+                      {{ row.category }}
+                    </z-badge>
+                  </div>
                 </div>
               </div>
               
@@ -183,9 +195,6 @@
               </div>
 
               <div class="flex flex-wrap items-center gap-2 pt-2 border-t">
-                <z-badge zType="secondary" zShape="default" class="w-fit">
-                  {{ row.category }}
-                </z-badge>
                 <div class="flex items-center gap-1">
                   <z-icon [zType]="getStatusIcon(row.status)" zSize="sm" />
                   <z-badge [zType]="getStatusBadgeType(row.status)" zShape="default" class="capitalize text-xs">
