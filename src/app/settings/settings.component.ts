@@ -12,6 +12,8 @@ import { ZardSelectItemComponent } from '@shared/components/select/select-item.c
 import { ZardAvatarComponent } from '@shared/components/avatar/avatar.component';
 import { ZardBadgeComponent } from '@shared/components/badge/badge.component';
 import { ZardDividerComponent } from '@shared/components/divider/divider.component';
+import { ZardAccordionComponent } from '@shared/components/accordion/accordion.component';
+import { ZardAccordionItemComponent } from '@shared/components/accordion/accordion-item.component';
 import { AuthService } from '@shared/services/auth.service';
 import { UserService } from '@shared/services/user.service';
 import { ZardAlertDialogService } from '@shared/components/alert-dialog/alert-dialog.service';
@@ -42,6 +44,8 @@ type SettingsSection = 'account' | 'security' | 'plan-billing' | 'team' | 'appli
     ZardSelectItemComponent,
     ZardAvatarComponent,
     ZardBadgeComponent,
+    ZardAccordionComponent,
+    ZardAccordionItemComponent,
   ],
   templateUrl: './settings.component.html',
 })

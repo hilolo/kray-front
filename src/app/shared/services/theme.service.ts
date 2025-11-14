@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 
-export type ThemePreset = 'default' | 'brutalist' | 'soft-pop' | 'tangerine' | 'neutral' | 'stone' | 'zinc' | 'gray' | 'slate';
+export type ThemePreset = 'default' | 'brutalist' | 'soft-pop' | 'tangerine' | 'neutral' | 'stone' | 'zinc' | 'gray' | 'slate' | 'special';
 
 export interface ThemePresetInfo {
   value: ThemePreset;
@@ -25,6 +25,7 @@ export class ThemeService {
     { value: 'zinc', label: 'Zinc', color: '#71717a' },
     { value: 'gray', label: 'Gray', color: '#6b7280' },
     { value: 'slate', label: 'Slate', color: '#64748b' },
+    { value: 'special', label: 'Special', color: '#667eea' },
   ];
 
   private readonly currentTheme = signal<ThemePreset>(this.loadTheme());

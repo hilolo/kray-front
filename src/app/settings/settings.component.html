@@ -430,91 +430,134 @@
             <div class="space-y-8">
               <h1 class="text-3xl font-bold">Application</h1>
 
-              <!-- Layout Settings -->
-              <z-card zTitle="Layout Settings" zDescription="Customize your dashboard layout preferences">
-                <div class="mb-6">
-                  <h3 class="text-sm font-medium mb-2">Preset</h3>
-                  <p class="text-sm text-muted-foreground mb-4">Choose a color theme for your dashboard</p>
-                  <z-form-field>
-                    <z-form-label>Theme</z-form-label>
-                    <z-form-control>
-                      <z-select 
-                        zPlaceholder="Select a theme" 
-                        [zValue]="currentTheme()" 
-                        (zSelectionChange)="onThemeChange($event)"
-                      >
-                        @for (preset of themePresets; track preset.value) {
-                          <z-select-item [zValue]="preset.value">
-                            <div class="flex items-center gap-2 w-full">
+              <!-- Settings Accordion -->
+              <div class="space-y-4">
+                <!-- Layout Settings -->
+                <div class="bg-card border border-border rounded-lg shadow-sm overflow-hidden">
+                  <z-accordion zType="single" class="border-0">
+                    <z-accordion-item 
+                      zTitle="Layout Settings" 
+                      zValue="layout-settings"
+                      class="!px-6 !py-5 border-b-0 !text-lg"
+                    >
+                      <div class="mb-6">
+                        <h3 class="text-sm font-medium mb-2">Preset</h3>
+                        <p class="text-sm text-muted-foreground mb-4">Choose a color theme for your dashboard</p>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                          @for (preset of themePresets; track preset.value) {
+                            <button
+                              type="button"
+                              (click)="onThemeChange(preset.value)"
+                              [class]="currentTheme() === preset.value 
+                                ? preset.value === 'special' 
+                                  ? 'border-2 border-primary bg-primary/5 ring-2 ring-primary/20 shadow-lg shadow-primary/20' 
+                                  : 'border-2 border-primary bg-primary/5 ring-2 ring-primary/20'
+                                : preset.value === 'special'
+                                  ? 'border-2 border-purple-500/60 hover:border-purple-400 hover:bg-purple-50/30 dark:hover:bg-purple-950/20 shadow-md shadow-purple-500/20'
+                                  : 'border border-border hover:border-primary/50 hover:bg-accent/50'"
+                              class="relative flex flex-col items-center gap-3 p-4 rounded-lg bg-card transition-all cursor-pointer group"
+                            >
+                              <!-- Color Swatch -->
                               <div 
-                                class="size-3 rounded-full flex-shrink-0" 
-                                [style.background-color]="preset.color"
+                                class="size-12 rounded-lg flex-shrink-0 shadow-sm border border-border/50"
+                                [style.background]="preset.color"
                               ></div>
-                              <span>{{ preset.label }}</span>
-                            </div>
-                          </z-select-item>
-                        }
-                      </z-select>
-                    </z-form-control>
-                  </z-form-field>
+                              
+                              <!-- Label -->
+                              <span class="text-sm font-medium text-center">{{ preset.label }}</span>
+                              
+                              <!-- Special Badge -->
+                              @if (preset.value === 'special') {
+                                <div class="absolute top-1 left-1">
+                                  <div class="size-4 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-sm">
+                                    <z-icon zType="sparkles" zSize="sm" class="text-white" />
+                                  </div>
+                                </div>
+                              }
+                              
+                              <!-- Selected Indicator -->
+                              @if (currentTheme() === preset.value) {
+                                <div class="absolute top-2 right-2">
+                                  <div class="size-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
+                                    <z-icon zType="check" zSize="sm" />
+                                  </div>
+                                </div>
+                              }
+                              
+                              <!-- Hover Effect -->
+                              <div class="absolute inset-0 rounded-lg bg-primary/0 group-hover:bg-primary/5 transition-colors pointer-events-none"></div>
+                            </button>
+                          }
+                        </div>
+                      </div>
+                    </z-accordion-item>
+                  </z-accordion>
                 </div>
-              </z-card>
 
-              <!-- Property Settings -->
-              <z-card zTitle="Property">
-                <!-- Default City -->
-                <div class="mb-8">
-                  <h3 class="text-xl font-semibold mb-2">Ville par Défaut</h3>
-                  <p class="text-sm text-muted-foreground mb-4">Définir la ville par défaut pour les nouvelles propriétés</p>
-                  <z-form-field>
-                    <z-form-label zRequired>Ville par Défaut*</z-form-label>
-                    <z-form-control>
-                      <z-select zPlaceholder="Select a city" [zValue]="propertySettings.defaultCity" (zSelectionChange)="propertySettings.defaultCity = $event">
-                        <z-select-item zValue="tanger">Tanger</z-select-item>
-                        <z-select-item zValue="casablanca">Casablanca</z-select-item>
-                        <z-select-item zValue="rabat">Rabat</z-select-item>
-                      </z-select>
-                    </z-form-control>
-                  </z-form-field>
+                <!-- Property Settings -->
+                <div class="bg-card border border-border rounded-lg shadow-sm overflow-hidden">
+                  <z-accordion zType="single" class="border-0">
+                    <z-accordion-item 
+                      zTitle="Property" 
+                      zValue="property"
+                      class="!px-6 !py-5 border-b-0 !text-lg"
+                    >
+                      <!-- Default City -->
+                      <div class="mb-8">
+                        <h3 class="text-xl font-semibold mb-2">Ville par Défaut</h3>
+                        <p class="text-sm text-muted-foreground mb-4">Définir la ville par défaut pour les nouvelles propriétés</p>
+                        <z-form-field>
+                          <z-form-label zRequired>Ville par Défaut*</z-form-label>
+                          <z-form-control>
+                            <z-select zPlaceholder="Select a city" [zValue]="propertySettings.defaultCity" (zSelectionChange)="propertySettings.defaultCity = $event">
+                              <z-select-item zValue="tanger">Tanger</z-select-item>
+                              <z-select-item zValue="casablanca">Casablanca</z-select-item>
+                              <z-select-item zValue="rabat">Rabat</z-select-item>
+                            </z-select>
+                          </z-form-control>
+                        </z-form-field>
+                      </div>
+
+                      <!-- Categories and References -->
+                      <div>
+                        <h3 class="text-xl font-semibold mb-2">Catégories et Références</h3>
+                        <p class="text-sm text-muted-foreground mb-4">Gérer les catégories de propriétés et leurs termes de référence</p>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <!-- Location Card -->
+                          <z-card zTitle="Location" zDescription="Location references" class="p-4">
+                            <z-form-field>
+                              <z-form-label zRequired>Reference</z-form-label>
+                              <z-form-control>
+                                <input z-input type="text" [(ngModel)]="propertySettings.locationRef" name="locationRef" class="w-full" />
+                              </z-form-control>
+                            </z-form-field>
+                          </z-card>
+
+                          <!-- Vente Card -->
+                          <z-card zTitle="Vente" zDescription="Sale references" class="p-4">
+                            <z-form-field>
+                              <z-form-label zRequired>Reference</z-form-label>
+                              <z-form-control>
+                                <input z-input type="text" [(ngModel)]="propertySettings.saleRef" name="saleRef" class="w-full" />
+                              </z-form-control>
+                            </z-form-field>
+                          </z-card>
+
+                          <!-- Vacance Card -->
+                          <z-card zTitle="Vacance" zDescription="Vacation references" class="p-4">
+                            <z-form-field>
+                              <z-form-label zRequired>Reference</z-form-label>
+                              <z-form-control>
+                                <input z-input type="text" [(ngModel)]="propertySettings.vacationRef" name="vacationRef" class="w-full" />
+                              </z-form-control>
+                            </z-form-field>
+                          </z-card>
+                        </div>
+                      </div>
+                    </z-accordion-item>
+                  </z-accordion>
                 </div>
-
-                <!-- Categories and References -->
-                <div>
-                  <h3 class="text-xl font-semibold mb-2">Catégories et Références</h3>
-                  <p class="text-sm text-muted-foreground mb-4">Gérer les catégories de propriétés et leurs termes de référence</p>
-                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <!-- Location Card -->
-                    <z-card zTitle="Location" zDescription="Location references" class="p-4">
-                      <z-form-field>
-                        <z-form-label zRequired>Reference</z-form-label>
-                        <z-form-control>
-                          <input z-input type="text" [(ngModel)]="propertySettings.locationRef" name="locationRef" class="w-full" />
-                        </z-form-control>
-                      </z-form-field>
-                    </z-card>
-
-                    <!-- Vente Card -->
-                    <z-card zTitle="Vente" zDescription="Sale references" class="p-4">
-                      <z-form-field>
-                        <z-form-label zRequired>Reference</z-form-label>
-                        <z-form-control>
-                          <input z-input type="text" [(ngModel)]="propertySettings.saleRef" name="saleRef" class="w-full" />
-                        </z-form-control>
-                      </z-form-field>
-                    </z-card>
-
-                    <!-- Vacance Card -->
-                    <z-card zTitle="Vacance" zDescription="Vacation references" class="p-4">
-                      <z-form-field>
-                        <z-form-label zRequired>Reference</z-form-label>
-                        <z-form-control>
-                          <input z-input type="text" [(ngModel)]="propertySettings.vacationRef" name="vacationRef" class="w-full" />
-                        </z-form-control>
-                      </z-form-field>
-                    </z-card>
-                  </div>
-                </div>
-              </z-card>
+              </div>
             </div>
           }
 
