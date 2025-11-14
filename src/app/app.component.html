@@ -1,2 +1,5 @@
 <router-outlet />
 <z-toast />
+@if (commandPaletteService.isOpen()) {
+  <z-command-default />
+}

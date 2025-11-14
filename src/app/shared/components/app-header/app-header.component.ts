@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal, ViewContainerRef, ViewEncapsulation, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, HostListener, inject, input, signal, ViewContainerRef, ViewEncapsulation, OnDestroy } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 import { Router } from '@angular/router';
 import type { ClassValue } from 'clsx';
@@ -11,6 +11,7 @@ import { ZardDropdownModule } from '@shared/components/dropdown/dropdown.module'
 import { TranslateModule } from '@ngx-translate/core';
 import { ZardAlertDialogService } from '@shared/components/alert-dialog/alert-dialog.service';
 import { AuthService } from '@shared/services/auth.service';
+import { CommandPaletteService } from '@shared/services/command-palette.service';
 
 @Component({
   selector: 'app-header',
@@ -25,6 +26,7 @@ export class AppHeaderComponent implements OnDestroy {
   private readonly darkmodeService = inject(DarkModeService);
   private readonly languageService = inject(LanguageService);
   private readonly alertDialogService = inject(ZardAlertDialogService);
+  private readonly commandPaletteService = inject(CommandPaletteService);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly viewContainerRef = inject(ViewContainerRef);
@@ -67,6 +69,25 @@ export class AppHeaderComponent implements OnDestroy {
         this.authService.logout();
       }
     });
+  }
+
+  /**
+   * Open the command palette
+   */
+  openCommandPalette(): void {
+    this.commandPaletteService.open();
+  }
+
+  /**
+   * Handle Cmd+K (or Ctrl+K) keyboard shortcut to open command palette
+   */
+  @HostListener('document:keydown', ['$event'])
+  onKeyDown(event: KeyboardEvent): void {
+    // Check for Cmd+K (Mac) or Ctrl+K (Windows/Linux)
+    if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
+      event.preventDefault();
+      this.openCommandPalette();
+    }
   }
 
   ngOnDestroy(): void {
