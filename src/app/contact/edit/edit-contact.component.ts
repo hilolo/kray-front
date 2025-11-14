@@ -6,6 +6,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { ContactType, routeParamToContactType, contactTypeToRouteParam, stringToContactType, type Contact, type Attachment } from '@shared/models/contact/contact.model';
 import type { ContactFormData } from '@shared/models/contact/contact-form.model';
 import type { CreateContactRequest, AttachmentInput } from '@shared/models/contact/create-contact-request.model';
+import type { UpdateContactRequest } from '@shared/models/contact/update-contact-request.model';
 import { ContactService } from '@shared/services/contact.service';
 import { UserService } from '@shared/services/user.service';
 import { ZardPageComponent } from '../../page/page.component';
@@ -17,6 +18,7 @@ import { ZardInputGroupComponent } from '@shared/components/input-group/input-gr
 import { ZardSwitchComponent } from '@shared/components/switch/switch.component';
 import { ZardCardComponent } from '@shared/components/card/card.component';
 import { ZardFileViewerComponent } from '@shared/components/file-viewer/file-viewer.component';
+import { ZardImageHoverPreviewDirective } from '@shared/components/image-hover-preview/image-hover-preview.component';
 import { ImageItem } from '@shared/image-viewer/image-viewer.component';
 import { getFileViewerType } from '@shared/utils/file-type.util';
 
@@ -54,6 +56,7 @@ interface ExistingAttachment {
     ZardSwitchComponent,
     ZardCardComponent,
     ZardFileViewerComponent,
+    ZardImageHoverPreviewDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './edit-contact.component.html',
@@ -95,6 +98,7 @@ export class EditContactComponent implements OnInit, OnDestroy {
   // File upload
   readonly uploadedFiles = signal<UploadedFile[]>([]);
   readonly existingAttachments = signal<ExistingAttachment[]>([]);
+  readonly attachmentsToDelete = signal<Set<string>>(new Set()); // Track attachment IDs to delete
   readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
 
   // File viewer
@@ -115,13 +119,25 @@ export class EditContactComponent implements OnInit, OnDestroy {
   // Computed values
   readonly isCompany = computed(() => this.formData().isCompany);
   readonly hasUploadedFiles = computed(() => this.uploadedFiles().length > 0);
-  readonly hasExistingAttachments = computed(() => this.existingAttachments().length > 0);
+  readonly hasExistingAttachments = computed(() => {
+    const toDelete = this.attachmentsToDelete();
+    return this.existingAttachments().some(att => !toDelete.has(att.id));
+  });
+
+  readonly existingAttachmentsCount = computed(() => {
+    const toDelete = this.attachmentsToDelete();
+    return this.existingAttachments().filter(att => !toDelete.has(att.id)).length;
+  });
   readonly hasAnyAttachments = computed(() => this.hasUploadedFiles() || this.hasExistingAttachments());
   readonly uploadedFilesSize = computed(() => {
     return this.uploadedFiles().reduce((total, file) => total + file.size, 0);
   });
   readonly existingAttachmentsSize = computed(() => {
-    return this.existingAttachments().reduce((total, att) => total + att.size, 0);
+    // Only count attachments that are not marked for deletion
+    const toDelete = this.attachmentsToDelete();
+    return this.existingAttachments()
+      .filter(att => !toDelete.has(att.id))
+      .reduce((total, att) => total + att.size, 0);
   });
   readonly totalFileSize = computed(() => {
     return this.uploadedFilesSize() + this.existingAttachmentsSize();
@@ -130,11 +146,12 @@ export class EditContactComponent implements OnInit, OnDestroy {
   // Get all images from attachments (for image viewer navigation)
   readonly allImages = computed<ImageItem[]>(() => {
     const images: ImageItem[] = [];
+    const toDelete = this.attachmentsToDelete();
     
-    // Add existing attachments that are images
+    // Add existing attachments that are images (excluding deleted ones)
     const existing = this.existingAttachments();
     existing.forEach(att => {
-      if (getFileViewerType(att.url) === 'image') {
+      if (!toDelete.has(att.id) && getFileViewerType(att.url) === 'image') {
         images.push({
           url: att.url,
           name: att.name,
@@ -366,6 +383,9 @@ export class EditContactComponent implements OnInit, OnDestroy {
       }));
       this.existingAttachments.set(existing);
     }
+    
+    // Reset attachments to delete when loading a contact
+    this.attachmentsToDelete.set(new Set());
   }
 
   /**
@@ -387,6 +407,7 @@ export class EditContactComponent implements OnInit, OnDestroy {
     this.avatarFile.set(null);
     this.uploadedFiles.set([]);
     this.existingAttachments.set([]);
+    this.attachmentsToDelete.set(new Set());
     this.formSubmitted.set(false);
   }
 
@@ -509,6 +530,35 @@ export class EditContactComponent implements OnInit, OnDestroy {
     this.uploadedFiles.update(files => files.filter(f => f.id !== fileId));
   }
 
+  /**
+   * Delete an existing attachment (mark for deletion)
+   */
+  onDeleteAttachment(attachmentId: string): void {
+    this.attachmentsToDelete.update(set => {
+      const newSet = new Set(set);
+      newSet.add(attachmentId);
+      return newSet;
+    });
+  }
+
+  /**
+   * Restore a deleted attachment (unmark for deletion)
+   */
+  onRestoreAttachment(attachmentId: string): void {
+    this.attachmentsToDelete.update(set => {
+      const newSet = new Set(set);
+      newSet.delete(attachmentId);
+      return newSet;
+    });
+  }
+
+  /**
+   * Check if an attachment is marked for deletion
+   */
+  isAttachmentMarkedForDeletion(attachmentId: string): boolean {
+    return this.attachmentsToDelete().has(attachmentId);
+  }
+
   formatFileSize(bytes: number): string {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -572,6 +622,13 @@ export class EditContactComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Get file viewer type (for template use)
+   */
+  getFileViewerType(url: string): ReturnType<typeof getFileViewerType> {
+    return getFileViewerType(url);
+  }
+
+  /**
    * Download file
    */
   downloadFile(url: string, name: string): void {
@@ -608,35 +665,68 @@ export class EditContactComponent implements OnInit, OnDestroy {
 
     const data = this.formData();
     const contactType = this.contactType();
+    const contactId = this.contactId();
 
-    // Prepare the request
-    this.prepareCreateRequest(data, contactType, currentUser.companyId)
-      .then((request) => {
-        // Call the API
-        this.contactService.create(request)
-          .pipe(takeUntil(this.destroy$))
-          .subscribe({
-            next: (createdContact) => {
-              console.log('Contact created successfully:', createdContact);
-              
-              // Reset form submitted state on successful submission
-              this.formSubmitted.set(false);
-              this.isSaving.set(false);
-              
-              // Navigate back to list
-              this.router.navigate(['/contact', contactTypeToRouteParam(contactType)]);
-            },
-            error: (error) => {
-              console.error('Error creating contact:', error);
-              this.isSaving.set(false);
-              // Error is already handled by ApiService (toast notification)
-            },
-          });
-      })
-      .catch((error) => {
-        console.error('Error preparing request:', error);
-        this.isSaving.set(false);
-      });
+    // Check if we're in edit mode
+    if (contactId && this.isEditMode()) {
+      // Update existing contact
+      this.prepareUpdateRequest(data, contactId, currentUser.companyId)
+        .then((request) => {
+          // Call the API
+          this.contactService.update(contactId, request)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+              next: (updatedContact) => {
+                console.log('Contact updated successfully:', updatedContact);
+                
+                // Reset form submitted state on successful submission
+                this.formSubmitted.set(false);
+                this.isSaving.set(false);
+                
+                // Navigate back to list
+                this.router.navigate(['/contact', contactTypeToRouteParam(contactType)]);
+              },
+              error: (error) => {
+                console.error('Error updating contact:', error);
+                this.isSaving.set(false);
+                // Error is already handled by ApiService (toast notification)
+              },
+            });
+        })
+        .catch((error) => {
+          console.error('Error preparing update request:', error);
+          this.isSaving.set(false);
+        });
+    } else {
+      // Create new contact
+      this.prepareCreateRequest(data, contactType, currentUser.companyId)
+        .then((request) => {
+          // Call the API
+          this.contactService.create(request)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+              next: (createdContact) => {
+                console.log('Contact created successfully:', createdContact);
+                
+                // Reset form submitted state on successful submission
+                this.formSubmitted.set(false);
+                this.isSaving.set(false);
+                
+                // Navigate back to list
+                this.router.navigate(['/contact', contactTypeToRouteParam(contactType)]);
+              },
+              error: (error) => {
+                console.error('Error creating contact:', error);
+                this.isSaving.set(false);
+                // Error is already handled by ApiService (toast notification)
+              },
+            });
+        })
+        .catch((error) => {
+          console.error('Error preparing request:', error);
+          this.isSaving.set(false);
+        });
+    }
   }
 
   /**
@@ -706,6 +796,97 @@ export class EditContactComponent implements OnInit, OnDestroy {
       } catch (error) {
         console.error('Error converting files to base64:', error);
       }
+    }
+
+    return request;
+  }
+
+  /**
+   * Prepare UpdateContactRequest from form data
+   */
+  private async prepareUpdateRequest(
+    formData: ContactFormData,
+    contactId: string,
+    companyId: string
+  ): Promise<UpdateContactRequest> {
+    const request: UpdateContactRequest = {
+      id: contactId,
+    };
+
+    // Add personal or company fields
+    if (formData.isCompany) {
+      request.companyName = formData.companyName.trim() || undefined;
+      request.ice = formData.ice.trim() || undefined;
+      request.rc = formData.rc.trim() || undefined;
+    } else {
+      request.firstName = formData.firstName.trim() || undefined;
+      request.lastName = formData.lastName.trim() || undefined;
+    }
+
+    // Add identifier if changed
+    if (formData.identifier && formData.identifier.trim()) {
+      request.identifier = formData.identifier.trim();
+    }
+
+    // Add contact details
+    if (formData.email && formData.email.trim()) {
+      request.email = formData.email.trim();
+    }
+
+    // Add phone numbers (filter out empty ones)
+    const phones = formData.phoneNumbers
+      .map((phone) => phone.trim())
+      .filter((phone) => phone !== '');
+    if (phones.length > 0) {
+      request.phones = phones;
+    }
+
+    // Handle avatar
+    const avatarFile = this.avatarFile();
+    const currentAvatarUrl = this.avatarUrl();
+    
+    if (avatarFile) {
+      // New avatar file selected - convert to base64
+      try {
+        const avatarBase64 = await this.fileToBase64(avatarFile);
+        request.avatar = avatarBase64;
+        request.removeAvatar = false;
+      } catch (error) {
+        console.error('Error converting avatar to base64:', error);
+      }
+    } else if (!currentAvatarUrl) {
+      // Avatar was removed - set removeAvatar flag
+      request.removeAvatar = true;
+      request.avatar = undefined;
+    } else {
+      // Avatar not changed - preserve existing (don't send avatar field)
+      // Backend will preserve existing avatar when avatar is null/empty and removeAvatar is false/not set
+    }
+
+    // Handle attachments to add (newly uploaded files)
+    const uploadedFiles = this.uploadedFiles();
+    if (uploadedFiles.length > 0) {
+      try {
+        const attachments: AttachmentInput[] = await Promise.all(
+          uploadedFiles.map(async (uploadedFile) => {
+            const base64Content = await this.fileToBase64(uploadedFile.file);
+            return {
+              fileName: uploadedFile.name,
+              base64Content: base64Content,
+              root: 'contact', // Default root for contact attachments
+            };
+          })
+        );
+        request.attachmentsToAdd = attachments;
+      } catch (error) {
+        console.error('Error converting files to base64:', error);
+      }
+    }
+
+    // Handle attachments to delete
+    const attachmentsToDelete = Array.from(this.attachmentsToDelete());
+    if (attachmentsToDelete.length > 0) {
+      request.attachmentsToDelete = attachmentsToDelete;
     }
 
     return request;

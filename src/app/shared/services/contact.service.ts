@@ -4,6 +4,7 @@ import { ApiService } from './api.service';
 import type { ContactListRequest } from '../models/contact/contact-list-request.model';
 import type { ContactListResponse } from '../models/contact/contact-list-response.model';
 import type { CreateContactRequest } from '../models/contact/create-contact-request.model';
+import type { UpdateContactRequest } from '../models/contact/update-contact-request.model';
 import type { Contact } from '../models/contact/contact.model';
 
 /**
@@ -43,6 +44,17 @@ export class ContactService {
    */
   getById(id: string, includeRelated: boolean = false): Observable<Contact> {
     return this.apiService.get<Contact>(`Contact/${id}?includeRelated=${includeRelated}`);
+  }
+
+  /**
+   * Update an existing contact
+   * PUT api/Contact/{id}
+   * @param id Contact ID
+   * @param request Contact update data
+   * @returns Observable of updated contact
+   */
+  update(id: string, request: UpdateContactRequest): Observable<Contact> {
+    return this.apiService.put<Contact>(`Contact/${id}`, request);
   }
 }
 

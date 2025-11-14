@@ -24,6 +24,7 @@ import { CommonModule } from '@angular/common';
 import type { Contact, ContactTypeString } from '@shared/models/contact/contact.model';
 import { ContactType, routeParamToContactType, contactTypeToString, contactTypeToRouteParam } from '@shared/models/contact/contact.model';
 import { ContactService } from '@shared/services/contact.service';
+import { getFileViewerType } from '@shared/utils/file-type.util';
 
 @Component({
   selector: 'app-contact-list',
@@ -350,5 +351,39 @@ export class ContactListComponent implements OnInit, OnDestroy {
 
   getContactTypeLabel(): string {
     return this.contactTypeString();
+  }
+
+  /**
+   * Get image attachments from a contact
+   */
+  getImageAttachments(contact: Contact): string[] {
+    if (!contact.attachments || contact.attachments.length === 0) {
+      return [];
+    }
+    return contact.attachments
+      .filter(att => getFileViewerType(att.url) === 'image')
+      .map(att => att.url);
+  }
+
+  /**
+   * Check if contact has image attachments
+   */
+  hasImageAttachments(contact: Contact): boolean {
+    return this.getImageAttachments(contact).length > 0;
+  }
+
+  /**
+   * Get first image attachment URL
+   */
+  getFirstImageAttachment(contact: Contact): string | null {
+    const images = this.getImageAttachments(contact);
+    return images.length > 0 ? images[0] : null;
+  }
+
+  /**
+   * Check if a file URL is an image
+   */
+  isImage(url: string): boolean {
+    return getFileViewerType(url) === 'image';
   }
 }
