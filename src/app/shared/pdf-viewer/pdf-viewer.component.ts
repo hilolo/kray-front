@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, inject, input, output, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, inject, input, OnDestroy, output, signal, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ZardButtonComponent } from '@shared/components/button/button.component';
@@ -18,7 +18,7 @@ import { ZardIconComponent } from '@shared/components/icon/icon.component';
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ZardPdfViewerComponent {
+export class ZardPdfViewerComponent implements OnDestroy {
   private readonly sanitizer = inject(DomSanitizer);
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -29,20 +29,24 @@ export class ZardPdfViewerComponent {
 
   readonly close = output<void>();
 
-  // Safe URL for iframe
-  protected readonly safePdfUrl = computed<SafeResourceUrl>(() => {
-    const url = this.pdfUrl();
-    if (!url) {
-      return this.sanitizer.bypassSecurityTrustResourceUrl('');
-    }
-    
-    // Use direct PDF embed
-    const finalUrl = url + '#toolbar=1&navpanes=1&scrollbar=1&view=FitH';
-    return this.sanitizer.bypassSecurityTrustResourceUrl(finalUrl);
-  });
+  // Safe URL for iframe - using signal for async blob handling
+  protected readonly safePdfUrl = signal<SafeResourceUrl>(this.sanitizer.bypassSecurityTrustResourceUrl(''));
+  protected readonly isLoading = signal<boolean>(false);
+  protected readonly loadError = signal<boolean>(false);
+  private objectUrl: string | null = null;
 
-  protected readonly isLoading = computed(() => false);
-  protected readonly loadError = computed(() => false);
+  constructor() {
+    // Effect to update PDF URL when pdfUrl input changes
+    effect(() => {
+      const url = this.pdfUrl();
+      this.updatePdfUrl(url);
+    });
+  }
+
+  ngOnDestroy(): void {
+    // Clean up object URL when component is destroyed
+    this.cleanupObjectUrl();
+  }
 
   // Formatted file size
   protected readonly formattedFileSize = computed(() => {
@@ -58,9 +62,72 @@ export class ZardPdfViewerComponent {
   });
 
   /**
+   * Update/Reload PDF URL for safe display in iframe
+   * Fetches the PDF as a blob to work around backend content-type issues
+   */
+  updatePdfUrl(url?: string): void {
+    const targetUrl = url ?? this.pdfUrl();
+    if (!targetUrl) {
+      this.cleanupObjectUrl();
+      this.safePdfUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(''));
+      this.isLoading.set(false);
+      this.loadError.set(false);
+      this.cdr.markForCheck();
+      return;
+    }
+
+    // Clean up previous object URL
+    this.cleanupObjectUrl();
+
+    this.isLoading.set(true);
+    this.loadError.set(false);
+    this.cdr.markForCheck();
+
+    // Fetch the PDF as a blob to override the incorrect content-type from the server
+    // This fixes the issue where backend sets response-content-type to image types
+    fetch(targetUrl)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.blob();
+      })
+      .then(blob => {
+        // Create a new blob with the correct content type
+        const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+        
+        // Create an object URL for the blob
+        this.objectUrl = window.URL.createObjectURL(pdfBlob);
+        
+        // Use the object URL in the iframe
+        this.safePdfUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(this.objectUrl));
+        this.isLoading.set(false);
+        this.cdr.markForCheck();
+      })
+      .catch(error => {
+        console.error('PDF Viewer - Error loading PDF:', error);
+        this.loadError.set(true);
+        this.isLoading.set(false);
+        this.cdr.markForCheck();
+      });
+  }
+
+  /**
+   * Clean up object URL
+   */
+  private cleanupObjectUrl(): void {
+    if (this.objectUrl) {
+      window.URL.revokeObjectURL(this.objectUrl);
+      this.objectUrl = null;
+    }
+  }
+
+  /**
    * Close the PDF viewer
    */
   closeViewer(): void {
+    // Clean up object URL if it exists
+    this.cleanupObjectUrl();
     this.close.emit();
   }
 
