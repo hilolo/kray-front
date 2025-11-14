@@ -32,9 +32,6 @@
             @if (pdfName()) {
               <div class="pdf-name">{{ pdfName() }}</div>
             }
-            @if (formattedFileSize()) {
-              <div class="file-size">{{ formattedFileSize() }}</div>
-            }
           </div>
         </div>
       }
@@ -50,7 +47,7 @@
           <div class="error-state">
             <z-icon zType="triangle-alert" class="error-icon" />
             <p>Failed to load PDF</p>
-            <z-button zType="default" zSize="sm" (click)="updatePdfUrl()">
+            <z-button zType="default" (click)="updatePdfUrl()">
               Retry
             </z-button>
           </div>

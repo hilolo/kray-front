@@ -17,26 +17,44 @@
         
         <!-- Action Buttons -->
         <div class="flex items-center gap-2">
-          <z-button zType="ghost" zSize="default" (click)="selectAllFiles()">
+          @if (canNavigateBack()) {
+            <z-button zType="ghost" zSize="default" (click)="navigateBack()" [disabled]="isLoading()">
+              <z-icon zType="chevron-left" class="mr-2" />
+              Back
+            </z-button>
+          }
+          <z-button zType="ghost" zSize="default" (click)="refresh()" [disabled]="isLoading()">
+            <z-icon zType="refresh-cw" class="mr-2" [class.animate-spin]="isLoading()" />
+            Refresh
+          </z-button>
+          <z-button zType="ghost" zSize="default" (click)="selectAllFiles()" [disabled]="isLoading()">
             Select All
           </z-button>
           @if (hasSelectedFiles()) {
-            <z-button zType="ghost" zSize="default" (click)="deselectAllFiles()">
+            <z-button zType="ghost" zSize="default" (click)="deselectAllFiles()" [disabled]="isLoading()">
               Deselect All
             </z-button>
           }
-          <z-button zType="default" zSize="default" (click)="uploadFile()">
-            <z-icon zType="upload" class="mr-2" />
-            Upload File
+          <z-button zType="default" zSize="default" (click)="uploadFile()" [disabled]="isLoading() || isUploading()">
+            <z-icon zType="upload" class="mr-2" [class.animate-spin]="isUploading()" />
+            @if (isUploading()) {
+              Uploading...
+            } @else {
+              Upload File(s)
+            }
           </z-button>
-          <z-button zType="default" zSize="default" (click)="createNewFolder()">
+          <z-button zType="default" zSize="default" (click)="createNewFolder()" [disabled]="isLoading()">
             <z-icon zType="folder-plus" class="mr-2" />
             New Folder
           </z-button>
           @if (hasSelectedFiles()) {
-            <z-button zType="destructive" zSize="default" (click)="deleteSelectedFiles()">
-              <z-icon zType="x" class="mr-2" />
-              Delete ({{ selectedFileIds().size }})
+            <z-button zType="destructive" zSize="default" (click)="deleteSelectedFiles()" [disabled]="isLoading() || isDeleting()">
+              <z-icon zType="x" class="mr-2" [class.animate-spin]="isDeleting()" />
+              @if (isDeleting()) {
+                Deleting...
+              } @else {
+                Delete ({{ selectedFileIds().size }})
+              }
             </z-button>
           }
         </div>
@@ -46,14 +64,14 @@
       <div class="flex items-center gap-2">
         <z-breadcrumb>
           <z-breadcrumb-list>
-            @for (segment of pathSegments(); track segment.route; let i = $index) {
+            @for (segment of pathSegments(); track segment.root ?? 'root'; let i = $index) {
               <z-breadcrumb-item>
                 @if (i === pathSegments().length - 1) {
                   <z-breadcrumb-page>
                     {{ segment.label }}
                   </z-breadcrumb-page>
                 } @else {
-                  <z-breadcrumb-link [zLink]="segment.route">
+                  <z-breadcrumb-link [zLink]="currentRoutePath()" (click)="navigateToPath(segment.root, $event)">
                     {{ segment.label }}
                   </z-breadcrumb-link>
                 }
@@ -75,7 +93,7 @@
               <z-card 
                 class="cursor-pointer hover:shadow-md transition-shadow relative group"
                 [class.border-primary]="selectedItem()?.id === folder.id && selectedItem()?.type === 'folder'"
-                (click)="selectItem(folder)"
+                (click)="navigateToFolder(folder)"
               >
                 <div class="flex flex-col items-center gap-2 p-3">
                   <!-- Info Icon -->
@@ -89,7 +107,6 @@
                   <!-- Folder Name -->
                   <div class="text-center w-full">
                     <h3 class="font-medium text-xs truncate">{{ folder.name }}</h3>
-                    <p class="text-[10px] text-muted-foreground mt-0.5">{{ folder.fileCount }} files</p>
                   </div>
                 </div>
               </z-card>
@@ -141,8 +158,16 @@
         </div>
       }
 
+      <!-- Loading State -->
+      @if (isLoading()) {
+        <div class="flex flex-col items-center justify-center py-12 text-center">
+          <z-icon zType="loader-circle" class="text-muted-foreground mb-4 animate-spin" zSize="lg" />
+          <h3 class="text-lg font-semibold mb-2">Loading...</h3>
+        </div>
+      }
+
       <!-- Empty State -->
-      @if (filteredFolders().length === 0 && filteredFiles().length === 0) {
+      @if (!isLoading() && filteredFolders().length === 0 && filteredFiles().length === 0) {
         <div class="flex flex-col items-center justify-center py-12 text-center">
           <z-icon zType="folder" class="text-muted-foreground mb-4" zSize="lg" />
           <h3 class="text-lg font-semibold mb-2">
@@ -161,7 +186,10 @@
     [fileUrl]="fileViewerUrl()"
     [fileName]="fileViewerName()"
     [fileSize]="fileViewerSize()"
+    [images]="fileViewerImages()"
+    [currentIndex]="fileViewerCurrentIndex()"
     (close)="fileViewerOpen.set(false)"
+    (imageChanged)="onImageChanged($event)"
   />
 </z-page>
 

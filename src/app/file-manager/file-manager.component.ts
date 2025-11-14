@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal, ViewContainerRef, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, OnInit, signal, ViewContainerRef, ViewEncapsulation } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import type { ClassValue } from 'clsx';
@@ -13,6 +13,12 @@ import { ZardAlertDialogService } from '@shared/components/alert-dialog/alert-di
 import { mergeClasses } from '@shared/utils/merge-classes';
 import { fileManagerVariants } from './file-manager.variants';
 import { ZardFileViewerComponent } from '@shared/components/file-viewer/file-viewer.component';
+import { AttachmentService } from '@shared/services/attachment.service';
+import type { FileManagerItem as ApiFileManagerItem } from '@shared/models/attachment/file-manager-item.model';
+import { catchError, finalize } from 'rxjs/operators';
+import { of } from 'rxjs';
+import { ImageItem } from '@shared/image-viewer/image-viewer.component';
+import { getFileViewerType } from '@shared/utils/file-type.util';
 
 export interface FileItem {
   id: string;
@@ -53,33 +59,22 @@ export type FileManagerItem = FileItem | FolderItem;
     '[class]': 'classes()',
   },
 })
-export class FileManagerComponent {
+export class FileManagerComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly alertDialogService = inject(ZardAlertDialogService);
   private readonly viewContainerRef = inject(ViewContainerRef);
+  private readonly attachmentService = inject(AttachmentService);
 
-  readonly zFolders = input<FolderItem[]>([
-    { id: '1', name: 'Personal', fileCount: 57, type: 'folder' },
-    { id: '2', name: 'Photos', fileCount: 907, type: 'folder' },
-    { id: '3', name: 'Work', fileCount: 24, type: 'folder' },
-  ]);
-  readonly zFiles = input<FileItem[]>([
-    { id: '1', name: 'Biometric portrait', extension: 'jpg', type: 'file' },
-    { id: '2', name: 'Contract #123', extension: 'pdf', type: 'file' },
-    { id: '3', name: 'Crash logs', extension: 'txt', type: 'file' },
-    { id: '4', name: 'DMCA notice #42', extension: 'doc', type: 'file' },
-    { id: '5', name: 'Estimated budget', extension: 'xls', type: 'file' },
-    { id: '6', name: 'Invoices', extension: 'pdf', type: 'file' },
-    { id: '7', name: 'Personal projects', extension: 'doc', type: 'file' },
-    { id: '8', name: 'Prices', extension: 'doc', type: 'file' },
-    { id: '9', name: 'Scanned image 202...', extension: 'jpg', type: 'file' },
-    { id: '10', name: 'Scanned image 202...', extension: 'jpg', type: 'file' },
-    { id: '11', name: 'Shopping list', extension: 'doc', type: 'file' },
-    { id: '12', name: 'Summer budget', extension: 'xls', type: 'file' },
-    { id: '13', name: 'System logs', extension: 'txt', type: 'file' },
-  ]);
-  readonly zCurrentPath = input<string>('/');
   readonly class = input<ClassValue>('');
+
+  // API data
+  readonly folders = signal<FolderItem[]>([]);
+  readonly files = signal<FileItem[]>([]);
+  readonly apiPath = signal<ApiFileManagerItem[]>([]);
+  readonly currentRoot = signal<string | undefined>(undefined);
+  readonly isLoading = signal(false);
+  readonly isDeleting = signal(false);
+  readonly isUploading = signal(false);
 
   readonly selectedItem = signal<FileManagerItem | null>(null);
   readonly selectedFileIds = signal<Set<string>>(new Set());
@@ -90,6 +85,8 @@ export class FileManagerComponent {
   readonly fileViewerUrl = signal<string>('');
   readonly fileViewerName = signal<string>('');
   readonly fileViewerSize = signal<number>(0);
+  readonly fileViewerImages = signal<ImageItem[]>([]); // All images for navigation
+  readonly fileViewerCurrentIndex = signal<number>(0); // Current image index
 
   protected readonly classes = computed(() => mergeClasses(fileManagerVariants(), this.class()));
 
@@ -107,7 +104,7 @@ export class FileManagerComponent {
   // Filtered folders based on search
   readonly filteredFolders = computed(() => {
     const search = this.searchTerm().toLowerCase().trim();
-    const folders = this.zFolders();
+    const folders = this.folders();
     if (!search) return folders;
     return folders.filter(folder => folder.name.toLowerCase().includes(search));
   });
@@ -115,7 +112,7 @@ export class FileManagerComponent {
   // Filtered files based on search
   readonly filteredFiles = computed(() => {
     const search = this.searchTerm().toLowerCase().trim();
-    const files = this.zFiles();
+    const files = this.files();
     if (!search) return files;
     return files.filter(file => 
       file.name.toLowerCase().includes(search) || 
@@ -123,9 +120,34 @@ export class FileManagerComponent {
     );
   });
 
+  // Get all images from current folder files (for image viewer navigation)
+  // This includes filtered images based on search term
+  readonly allImages = computed<ImageItem[]>(() => {
+    const files = this.filteredFiles(); // Use filtered files to respect search
+    const images: ImageItem[] = [];
+    
+    files.forEach(file => {
+      if (file.url && getFileViewerType(file.url) === 'image') {
+        images.push({
+          url: file.url,
+          name: file.name,
+          size: file.size || 0,
+        });
+      }
+    });
+    
+    return images;
+  });
+
   // Check if a specific file is selected
   isFileSelected(fileId: string): boolean {
     return this.selectedFileIds().has(fileId);
+  }
+
+  // Get file extension from filename
+  getFileExtension(filename: string): string {
+    const parts = filename.split('.');
+    return parts.length > 1 ? parts[parts.length - 1] : '';
   }
 
   // Get file extension color
@@ -165,8 +187,9 @@ export class FileManagerComponent {
 
   // Navigate to folder
   navigateToFolder(folder: FolderItem): void {
-    // This would typically update the current path and load folder contents
-    console.log('Navigate to folder:', folder);
+    // Use folder.id as the root parameter
+    this.currentRoot.set(folder.id);
+    this.loadFileManagerData(folder.id);
   }
 
   // Navigate to file
@@ -180,14 +203,170 @@ export class FileManagerComponent {
     }
   }
 
+  // Load file manager data from API
+  loadFileManagerData(root?: string): void {
+    this.isLoading.set(true);
+    const search = this.searchTerm().trim() || undefined;
+    
+    this.attachmentService.getFileManagerItems(root, search)
+      .pipe(
+        catchError((error) => {
+          console.error('Error loading file manager data:', error);
+          return of({ folders: [], files: [], path: [] });
+        }),
+        finalize(() => this.isLoading.set(false))
+      )
+      .subscribe((response) => {
+        // Map API files to FileItem first (needed for counting)
+        const mappedFiles: FileItem[] = response.files.map((file) => {
+          const extension = this.getFileExtension(file.name);
+          return {
+            id: file.id,
+            name: file.name,
+            extension: extension,
+            type: 'file' as const,
+            url: file.url,
+            size: file.size ? parseInt(file.size, 10) : undefined,
+          };
+        });
+
+        // Map API folders to FolderItem and calculate file count
+        const mappedFolders: FolderItem[] = response.folders.map((folder) => {
+          // Count files that belong to this folder (matching folderId)
+          const fileCount = response.files.filter(
+            file => file.folderId === folder.id
+          ).length;
+          
+          return {
+            id: folder.id,
+            name: folder.name,
+            fileCount: fileCount,
+            type: 'folder' as const,
+          };
+        });
+
+        this.folders.set(mappedFolders);
+        this.files.set(mappedFiles);
+        this.apiPath.set(response.path);
+      });
+  }
+
+  // Refresh current folder
+  refresh(): void {
+    this.loadFileManagerData(this.currentRoot());
+  }
+
+  // Navigate back using path
+  navigateBack(): void {
+    const path = this.apiPath();
+    if (path.length > 1) {
+      // Navigate to parent folder (second to last item in path)
+      const parentFolder = path[path.length - 2];
+      this.currentRoot.set(parentFolder.id);
+      this.loadFileManagerData(parentFolder.id);
+    } else if (path.length === 1) {
+      // Navigate to root
+      this.currentRoot.set(undefined);
+      this.loadFileManagerData();
+    } else {
+      // Already at root, do nothing
+      this.currentRoot.set(undefined);
+      this.loadFileManagerData();
+    }
+  }
+
+  // Check if can navigate back
+  readonly canNavigateBack = computed(() => {
+    const path = this.apiPath();
+    return path.length > 0;
+  });
+
   /**
-   * Open file in appropriate viewer
+   * Check if file format is supported by viewers
+   */
+  isFileFormatSupported(url: string): boolean {
+    const viewerType = getFileViewerType(url);
+    return viewerType !== 'unknown';
+  }
+
+  /**
+   * Download file
+   */
+  downloadFile(url: string, name: string): void {
+    // Fetch the file and trigger download
+    fetch(url)
+      .then(response => response.blob())
+      .then(blob => {
+        const blobUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(blobUrl);
+      })
+      .catch(error => {
+        console.error('Error downloading file:', error);
+        // Fallback: open in new tab
+        window.open(url, '_blank');
+      });
+  }
+
+  /**
+   * Open file in appropriate viewer or show unsupported format dialog
    */
   openFile(url: string, name: string, size: number): void {
+    // Check if file format is supported
+    if (!this.isFileFormatSupported(url)) {
+      // Show modal for unsupported format
+      const dialogRef = this.alertDialogService.info({
+        zTitle: 'Format Not Supported',
+        zDescription: `The file format "${this.getFileExtension(name).toUpperCase() || 'UNKNOWN'}" is not supported for viewing.\n\nPlease download the file to open it.`,
+        zOkText: 'Download',
+        zViewContainerRef: this.viewContainerRef,
+      });
+
+      dialogRef.afterClosed().subscribe((result) => {
+        if (result) {
+          this.downloadFile(url, name);
+        }
+      });
+      return;
+    }
+
     this.fileViewerUrl.set(url);
     this.fileViewerName.set(name);
     this.fileViewerSize.set(size);
+    
+    // If it's an image, set up image navigation (only filtered images)
+    if (getFileViewerType(url) === 'image') {
+      const allImages = this.allImages(); // This already uses filteredFiles
+      // Find the index of the current image
+      const currentIndex = allImages.findIndex(img => img.url === url);
+      this.fileViewerCurrentIndex.set(currentIndex >= 0 ? currentIndex : 0);
+      this.fileViewerImages.set(allImages);
+    } else {
+      // For non-images, clear images array
+      this.fileViewerImages.set([]);
+      this.fileViewerCurrentIndex.set(0);
+    }
+    
     this.fileViewerOpen.set(true);
+  }
+
+  /**
+   * Handle image change event from file viewer
+   */
+  onImageChanged(index: number): void {
+    this.fileViewerCurrentIndex.set(index);
+    const images = this.fileViewerImages();
+    if (images && images.length > 0 && index >= 0 && index < images.length) {
+      const currentImage = images[index];
+      this.fileViewerUrl.set(currentImage.url);
+      this.fileViewerName.set(currentImage.name);
+      this.fileViewerSize.set(currentImage.size);
+    }
   }
 
   // Go back to home
@@ -229,23 +408,59 @@ export class FileManagerComponent {
   onSearchChange(event: Event): void {
     const target = event.target as HTMLInputElement;
     this.searchTerm.set(target.value);
+    // Reload data with search term
+    this.loadFileManagerData(this.currentRoot());
   }
 
-  // Upload new file
+  // Upload new file(s)
   uploadFile(): void {
     // Create a file input element
     const input = document.createElement('input');
     input.type = 'file';
-    input.multiple = false;
+    input.multiple = true; // Allow multiple file selection
     input.onchange = (event: Event) => {
       const target = event.target as HTMLInputElement;
       if (target.files && target.files.length > 0) {
-        const file = target.files[0];
-        console.log('Upload file:', file);
-        // Here you would typically upload the file to your backend
+        const files = Array.from(target.files);
+        this.uploadFiles(files);
       }
     };
     input.click();
+  }
+
+  /**
+   * Upload multiple files to the current folder
+   */
+  uploadFiles(files: File[]): void {
+    if (files.length === 0) {
+      return;
+    }
+
+    // Get current root folder
+    const root = this.currentRoot();
+
+    this.isUploading.set(true);
+
+    this.attachmentService.uploadFilesMultipart(files, root)
+      .pipe(
+        catchError((error) => {
+          console.error('Error uploading files:', error);
+          // Error is already handled by ApiService (toast notification)
+          throw error; // Re-throw to prevent success callback
+        }),
+        finalize(() => {
+          this.isUploading.set(false);
+        })
+      )
+      .subscribe({
+        next: () => {
+          // Success - refresh file list
+          this.refresh();
+        },
+        error: () => {
+          // Error already handled in catchError and by ApiService
+        }
+      });
   }
 
   // Create new folder
@@ -262,16 +477,9 @@ export class FileManagerComponent {
   deleteSelectedFiles(): void {
     const selectedIds = this.selectedFileIds();
     if (selectedIds.size > 0) {
-      const fileNames = Array.from(selectedIds)
-        .map(id => {
-          const file = this.zFiles().find(f => f.id === id);
-          return file?.name || id;
-        })
-        .join(', ');
-      
       const dialogRef = this.alertDialogService.confirm({
         zTitle: 'Delete Files',
-        zDescription: `Are you sure you want to delete ${selectedIds.size} file(s)?\n\n${fileNames}`,
+        zDescription: `Are you sure you want to delete ${selectedIds.size} file(s)?`,
         zOkText: 'Delete',
         zCancelText: 'Cancel',
         zOkDestructive: true,
@@ -280,28 +488,53 @@ export class FileManagerComponent {
 
       dialogRef.afterClosed().subscribe((result) => {
         if (result) {
-          console.log('Delete files:', Array.from(selectedIds));
-          // Here you would typically delete the files from your backend
-          this.selectedFileIds.set(new Set());
+          const fileIdsArray = Array.from(selectedIds);
+          this.isDeleting.set(true);
+          
+          this.attachmentService.bulkDelete(fileIdsArray)
+            .pipe(
+              catchError((error) => {
+                console.error('Error deleting files:', error);
+                // Error is already handled by ApiService (toast notification)
+                throw error; // Re-throw to prevent success callback
+              }),
+              finalize(() => {
+                this.isDeleting.set(false);
+              })
+            )
+            .subscribe({
+              next: () => {
+                // Success - clear selections and refresh
+                this.selectedFileIds.set(new Set());
+                this.refresh();
+              },
+              error: () => {
+                // Error already handled in catchError and by ApiService
+                // Keep selections so user can retry
+              }
+            });
         }
       });
     }
   }
 
-  // Get path segments for breadcrumb
+  // Get current route path for breadcrumb links
+  readonly currentRoutePath = computed(() => {
+    return this.router.url.split('?')[0]; // Get path without query params
+  });
+
+  // Get path segments for breadcrumb from API path
   readonly pathSegments = computed(() => {
-    const path = this.zCurrentPath();
-    if (path === '/') return [{ label: 'Home', route: '/' }];
+    const path = this.apiPath();
+    if (path.length === 0) {
+      return [{ label: 'Home', root: undefined as string | undefined }];
+    }
     
-    const segments = path.split('/').filter(s => s);
-    const result = [{ label: 'Home', route: '/' }];
-    
-    let currentPath = '';
-    segments.forEach(segment => {
-      currentPath += `/${segment}`;
+    const result: Array<{ label: string; root: string | undefined }> = [{ label: 'Home', root: undefined }];
+    path.forEach((item) => {
       result.push({
-        label: segment.charAt(0).toUpperCase() + segment.slice(1),
-        route: currentPath,
+        label: item.name,
+        root: item.id,
       });
     });
     
@@ -309,9 +542,19 @@ export class FileManagerComponent {
   });
 
   // Navigate to path segment
-  navigateToPath(route: string): void {
-    // This would typically update the current path
-    console.log('Navigate to path:', route);
+  navigateToPath(root: string | undefined, event?: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    this.currentRoot.set(root);
+    this.loadFileManagerData(root);
+  }
+
+  // Initialize component
+  ngOnInit(): void {
+    // Load initial data
+    this.loadFileManagerData();
   }
 }
 

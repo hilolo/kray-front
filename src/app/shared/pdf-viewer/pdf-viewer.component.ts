@@ -29,10 +29,11 @@ export class ZardPdfViewerComponent implements OnDestroy {
 
   readonly close = output<void>();
 
-  // Safe URL for iframe - using signal for async blob handling
+  // Safe URL for iframe
   protected readonly safePdfUrl = signal<SafeResourceUrl>(this.sanitizer.bypassSecurityTrustResourceUrl(''));
   protected readonly isLoading = signal<boolean>(false);
   protected readonly loadError = signal<boolean>(false);
+  
   private objectUrl: string | null = null;
 
   constructor() {
@@ -44,22 +45,37 @@ export class ZardPdfViewerComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    // Clean up object URL when component is destroyed
+    // Clean up object URL on component destruction
     this.cleanupObjectUrl();
   }
 
   // Formatted file size
   protected readonly formattedFileSize = computed(() => {
     const size = this.fileSize();
-    if (!size || size === 0) {
+    if (!size || size === 0 || isNaN(size) || size < 0) {
       return '';
     }
     
     const mb = 1024 * 1024;
     const sizeInMB = size / mb;
     
-    return sizeInMB.toFixed(2) + ' MB';
+    // If the result is 0 or very small, return empty string
+    if (sizeInMB <= 0) {
+      return '';
+    }
+    
+    return sizeInMB.toFixed(2);
   });
+
+  /**
+   * Clean up object URL
+   */
+  private cleanupObjectUrl(): void {
+    if (this.objectUrl) {
+      window.URL.revokeObjectURL(this.objectUrl);
+      this.objectUrl = null;
+    }
+  }
 
   /**
    * Update/Reload PDF URL for safe display in iframe
@@ -67,17 +83,16 @@ export class ZardPdfViewerComponent implements OnDestroy {
    */
   updatePdfUrl(url?: string): void {
     const targetUrl = url ?? this.pdfUrl();
+    // Clean up previous object URL
+    this.cleanupObjectUrl();
+
     if (!targetUrl) {
-      this.cleanupObjectUrl();
       this.safePdfUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(''));
       this.isLoading.set(false);
       this.loadError.set(false);
       this.cdr.markForCheck();
       return;
     }
-
-    // Clean up previous object URL
-    this.cleanupObjectUrl();
 
     this.isLoading.set(true);
     this.loadError.set(false);
@@ -102,31 +117,23 @@ export class ZardPdfViewerComponent implements OnDestroy {
         // Use the object URL in the iframe
         this.safePdfUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(this.objectUrl));
         this.isLoading.set(false);
+        this.loadError.set(false);
         this.cdr.markForCheck();
       })
       .catch(error => {
         console.error('PDF Viewer - Error loading PDF:', error);
         this.loadError.set(true);
         this.isLoading.set(false);
+        this.safePdfUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(''));
         this.cdr.markForCheck();
       });
-  }
-
-  /**
-   * Clean up object URL
-   */
-  private cleanupObjectUrl(): void {
-    if (this.objectUrl) {
-      window.URL.revokeObjectURL(this.objectUrl);
-      this.objectUrl = null;
-    }
   }
 
   /**
    * Close the PDF viewer
    */
   closeViewer(): void {
-    // Clean up object URL if it exists
+    // Clean up object URL when closing
     this.cleanupObjectUrl();
     this.close.emit();
   }
