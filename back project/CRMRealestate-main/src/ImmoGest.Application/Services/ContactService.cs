@@ -144,6 +144,13 @@ namespace ImmoGest.Application.Services
                                 // Calculate file size from base64
                                 var fileSize = CalculateBase64FileSize(docDto.Base64Content);
 
+                                // Convert base64 to bytes first
+                                var fileBytes = Convert.FromBase64String(docDto.Base64Content);
+
+                                // Generate immutable storage hash based on CompanyId and file content
+                                // This ensures same file + same company = same hash (works even when name changes)
+                                var storageHash = GenerateStorageHash(entity.CompanyId, fileBytes);
+
                                 // Upload to S3 using unified path structure (similar to property)
                                 var contactFolder = _fileHelper.GetContactFolderNameFromProperties(
                             entity.FirstName,
@@ -153,10 +160,15 @@ namespace ImmoGest.Application.Services
                             entity.Id
                         );
                                 var root = S3PathConstants.GetContactAttachmentsPath(contactFolder);
-                                var s3Key = _fileHelper.BuildAttachmentS3Key(entity.CompanyId, root, originalFileName);
                                 
-                                // Convert base64 to bytes and upload directly to S3
-                                var fileBytes = Convert.FromBase64String(docDto.Base64Content);
+                                // Build S3 key using StorageHash (immutable, never changes)
+                                var s3Key = S3PathConstants.BuildAttachmentKey(
+                                    entity.CompanyId.ToString(),
+                                    storageHash,
+                                    originalFileName
+                                );
+                                
+                                // Upload to S3
                                 using (var stream = new MemoryStream(fileBytes))
                                 {
                                     await _s3StorageService.UploadFileAsync(GetBucketName(), s3Key, stream);
@@ -170,6 +182,7 @@ namespace ImmoGest.Application.Services
                                     FileExtension = fileExtension,
                                     FileSize = fileSize,
                                     Root = S3PathConstants.GetContactAttachmentsPath(contactFolder),
+                                    StorageHash = storageHash,  // Use StorageHash for S3 operations
                                     ContactId = entity.Id,
                                     CompanyId = entity.CompanyId
                                 };
@@ -418,6 +431,13 @@ namespace ImmoGest.Application.Services
                                 // Calculate file size from base64
                                 var fileSize = CalculateBase64FileSize(docDto.Base64Content);
 
+                                // Convert base64 to bytes first
+                                var fileBytes = Convert.FromBase64String(docDto.Base64Content);
+
+                                // Generate immutable storage hash based on CompanyId and file content
+                                // This ensures same file + same company = same hash (works even when name changes)
+                                var storageHash = GenerateStorageHash(entity.CompanyId, fileBytes);
+
                                 // Upload to S3 using unified path structure (similar to property)
                                 var contactFolder = _fileHelper.GetContactFolderNameFromProperties(
                             entity.FirstName,
@@ -427,10 +447,15 @@ namespace ImmoGest.Application.Services
                             entity.Id
                         );
                                 var root = S3PathConstants.GetContactAttachmentsPath(contactFolder);
-                                var s3Key = _fileHelper.BuildAttachmentS3Key(entity.CompanyId, root, originalFileName);
                                 
-                                // Convert base64 to bytes and upload directly to S3
-                                var fileBytes = Convert.FromBase64String(docDto.Base64Content);
+                                // Build S3 key using StorageHash (immutable, never changes)
+                                var s3Key = S3PathConstants.BuildAttachmentKey(
+                                    entity.CompanyId.ToString(),
+                                    storageHash,
+                                    originalFileName
+                                );
+                                
+                                // Upload to S3
                                 using (var stream = new MemoryStream(fileBytes))
                                 {
                                     await _s3StorageService.UploadFileAsync(GetBucketName(), s3Key, stream);
@@ -444,6 +469,7 @@ namespace ImmoGest.Application.Services
                                     FileExtension = fileExtension,
                                     FileSize = fileSize,
                                     Root = S3PathConstants.GetContactAttachmentsPath(contactFolder),
+                                    StorageHash = storageHash,  // Use StorageHash for S3 operations
                                     ContactId = entity.Id,
                                     CompanyId = entity.CompanyId
                                 };
@@ -1278,6 +1304,33 @@ namespace ImmoGest.Application.Services
         /// <param name="fileBytes">File content as byte array</param>
         /// <returns>SHA256 hash as hexadecimal string</returns>
         private string GenerateAvatarStorageHash(Guid companyId, byte[] fileBytes)
+        {
+            using (var sha256 = SHA256.Create())
+            {
+                // Combine CompanyId and file content for hashing
+                var companyIdBytes = Encoding.UTF8.GetBytes(companyId.ToString());
+                var combinedBytes = new byte[companyIdBytes.Length + fileBytes.Length];
+                
+                // Copy companyId bytes first, then file bytes
+                Buffer.BlockCopy(companyIdBytes, 0, combinedBytes, 0, companyIdBytes.Length);
+                Buffer.BlockCopy(fileBytes, 0, combinedBytes, companyIdBytes.Length, fileBytes.Length);
+                
+                // Compute hash
+                var hashBytes = sha256.ComputeHash(combinedBytes);
+                
+                // Convert to hexadecimal string
+                return BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
+            }
+        }
+
+        /// <summary>
+        /// Generate immutable storage hash for attachment based on CompanyId and file content
+        /// This ensures same file + same company = same hash (works even when name changes)
+        /// </summary>
+        /// <param name="companyId">Company ID</param>
+        /// <param name="fileBytes">File content as byte array</param>
+        /// <returns>SHA256 hash as hexadecimal string</returns>
+        private string GenerateStorageHash(Guid companyId, byte[] fileBytes)
         {
             using (var sha256 = SHA256.Create())
             {
