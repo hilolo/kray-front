@@ -6,7 +6,7 @@ import { UserService } from '@shared/services/user.service';
 import { ZardCheckboxComponent } from '../checkbox/checkbox.component';
 import { ZardIconComponent } from '../icon/icon.component';
 import { ZardCardComponent } from '../card/card.component';
-import type { UserPermissions } from '@shared/models/user-permissions.model';
+import type { UserPermissions } from '@shared/models/user/user-permissions.model';
 import { MODULES } from '@shared/constants/modules.constant';
 import { Subject, takeUntil, Observable, tap } from 'rxjs';
 import { ToastService } from '@shared/services/toast.service';

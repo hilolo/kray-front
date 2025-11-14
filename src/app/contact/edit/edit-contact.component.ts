@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
-import type { ContactType } from '../list/contact-list.component';
+import type { ContactType } from '@shared/models/contact/contact.model';
+import type { ContactFormData } from '@shared/models/contact/contact-form.model';
 import { ZardPageComponent } from '../../page/page.component';
 import { ZardButtonComponent } from '@shared/components/button/button.component';
 import { ZardInputDirective } from '@shared/components/input/input.directive';
@@ -12,25 +13,6 @@ import { ZardFormFieldComponent, ZardFormControlComponent, ZardFormLabelComponen
 import { ZardInputGroupComponent } from '@shared/components/input-group/input-group.component';
 import { ZardSwitchComponent } from '@shared/components/switch/switch.component';
 import { ZardCardComponent } from '@shared/components/card/card.component';
-
-interface ContactFormData {
-  // Personal Information
-  firstName: string;
-  lastName: string;
-  identifier: string;
-  
-  // Company Information
-  companyName: string;
-  ice: string;
-  rc: string;
-  
-  // Contact Details
-  phoneNumbers: string[];
-  email: string;
-  
-  // Settings
-  isCompany: boolean;
-}
 
 interface UploadedFile {
   id: string;

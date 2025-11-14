@@ -3,7 +3,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import type { ApiResponse } from '../models/api-response.model';
+import type { ApiResponse } from '../models/api/api-response.model';
 import { ToastService } from './toast.service';
 
 /**

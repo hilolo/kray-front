@@ -19,7 +19,7 @@ import { ZardDialogService } from '@shared/components/dialog/dialog.service';
 import { PermissionsDialogComponent } from '@shared/components/permissions-dialog/permissions-dialog.component';
 import { Subject, takeUntil } from 'rxjs';
 import { ToastService } from '@shared/services/toast.service';
-import type { TeamMember } from '@shared/models/team-member.model';
+import type { TeamMember } from '@shared/models/user/team-member.model';
 
 type SettingsSection = 'account' | 'security' | 'plan-billing' | 'team' | 'application';
 

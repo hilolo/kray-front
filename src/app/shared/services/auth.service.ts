@@ -2,8 +2,8 @@ import { Injectable, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { ApiService } from './api.service';
-import type { LoginResponseData } from '../models/api-response.model';
-import type { User } from '../models/user.model';
+import type { LoginResponseData } from '../models/auth/login-response.model';
+import type { User } from '../models/user/user.model';
 
 /**
  * Authentication service

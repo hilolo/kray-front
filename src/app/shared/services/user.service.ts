@@ -2,9 +2,9 @@ import { Injectable, inject, signal, computed } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import { AuthService } from './auth.service';
 import { ApiService } from './api.service';
-import type { User } from '../models/user.model';
-import type { TeamMember } from '../models/team-member.model';
-import type { UserPermissions } from '../models/user-permissions.model';
+import type { User } from '../models/user/user.model';
+import type { TeamMember } from '../models/user/team-member.model';
+import type { UserPermissions } from '../models/user/user-permissions.model';
 
 /**
  * User service

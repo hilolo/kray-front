@@ -21,20 +21,7 @@ import { ZardSelectComponent } from '@shared/components/select/select.component'
 import { ZardSelectItemComponent } from '@shared/components/select/select-item.component';
 import { Subject, takeUntil } from 'rxjs';
 import { CommonModule } from '@angular/common';
-
-export type ContactType = 'tenants' | 'owners' | 'services';
-
-interface Contact {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  company: string;
-  status: 'active' | 'inactive' | 'pending';
-  priority: 'high' | 'medium' | 'low';
-  category: string;
-  type: ContactType;
-}
+import type { Contact, ContactType } from '@shared/models/contact/contact.model';
 
 @Component({
   selector: 'app-contact-list',

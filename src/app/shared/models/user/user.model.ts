@@ -1,4 +1,4 @@
-import type { Company } from './company.model';
+import type { Company } from '../company/company.model';
 
 /**
  * User model from backend
