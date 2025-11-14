@@ -88,6 +88,91 @@
       display: flex;
       gap: 8px;
       align-items: center;
+      
+      .viewer-action-btn {
+        background-color: hsl(var(--muted));
+        border: 1px solid hsl(var(--border));
+        color: hsl(var(--foreground));
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        
+        &:hover {
+          background-color: hsl(var(--accent));
+          border-color: hsl(var(--accent));
+          color: hsl(var(--accent-foreground));
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        }
+        
+        &:active {
+          transform: scale(0.95);
+        }
+      }
+      
+      .close-button {
+        &:hover {
+          background-color: hsl(var(--destructive) / 0.1);
+          border-color: hsl(var(--destructive));
+          color: hsl(var(--destructive));
+        }
+      }
+    }
+  }
+}
+
+/* Light mode - make buttons like image viewer */
+@media (prefers-color-scheme: light) {
+  .viewer-header {
+    .header-content {
+      .action-buttons {
+        .viewer-action-btn {
+          background-color: rgba(255, 255, 255, 0.15);
+          backdrop-filter: blur(15px);
+          border: 2px solid rgba(255, 255, 255, 0.2);
+          color: white;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+          
+          &:hover {
+            background-color: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+          }
+        }
+        
+        .close-button {
+          background-color: rgba(239, 68, 68, 0.2);
+          border-color: rgba(239, 68, 68, 0.4);
+          color: white;
+          
+          &:hover {
+            background-color: rgba(239, 68, 68, 0.3);
+            border-color: rgba(239, 68, 68, 0.6);
+          }
+        }
+      }
+    }
+  }
+  
+  /* Add dark overlay effect to header in light mode for better button visibility */
+  .viewer-header {
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    
+    .header-content {
+      .title-section {
+        .title {
+          color: white;
+        }
+        
+        .file-size {
+          color: rgba(255, 255, 255, 0.85);
+        }
+        
+        .title-icon {
+          color: white;
+        }
+      }
     }
   }
 }

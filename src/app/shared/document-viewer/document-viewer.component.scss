@@ -32,10 +32,11 @@
   right: 0;
 }
 
-/* Header Styles */
+/* Header Styles - Match image viewer design */
 .viewer-header {
-  background: hsl(var(--background));
-  border-bottom: 1px solid hsl(var(--border));
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   padding: 16px 24px;
   flex-shrink: 0;
   
@@ -52,7 +53,7 @@
       
       .title-icon {
         margin-right: 12px;
-        color: hsl(var(--primary));
+        color: white;
         flex-shrink: 0;
       }
       
@@ -66,7 +67,7 @@
       .title {
         font-size: 20px;
         font-weight: 600;
-        color: hsl(var(--foreground));
+        color: white;
         margin: 0;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -76,7 +77,7 @@
       .file-size {
         font-size: 13px;
         font-weight: 500;
-        color: hsl(var(--muted-foreground));
+        color: rgba(255, 255, 255, 0.85);
         margin-top: 2px;
         display: flex;
         align-items: center;
@@ -88,6 +89,85 @@
       display: flex;
       gap: 8px;
       align-items: center;
+      
+      .viewer-action-btn {
+        background-color: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(15px);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        transition: all 0.3s ease;
+        
+        &:hover {
+          background-color: rgba(255, 255, 255, 0.25);
+          border-color: rgba(255, 255, 255, 0.4);
+          transform: scale(1.05);
+        }
+        
+        &:active {
+          transform: scale(0.95);
+        }
+      }
+      
+      .close-button {
+        background-color: rgba(239, 68, 68, 0.2);
+        border-color: rgba(239, 68, 68, 0.4);
+        color: white;
+        
+        &:hover {
+          background-color: rgba(239, 68, 68, 0.3);
+          border-color: rgba(239, 68, 68, 0.6);
+          transform: scale(1.05);
+        }
+      }
+    }
+  }
+}
+
+/* Light mode - same design as dark mode (dark header with white buttons) */
+@media (prefers-color-scheme: light) {
+  .viewer-header {
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    
+    .header-content {
+      .title-section {
+        .title {
+          color: white;
+        }
+        
+        .file-size {
+          color: rgba(255, 255, 255, 0.85);
+        }
+        
+        .title-icon {
+          color: white;
+        }
+      }
+      
+      .action-buttons {
+        .viewer-action-btn {
+          background-color: rgba(255, 255, 255, 0.2);
+          border-color: rgba(255, 255, 255, 0.3);
+          color: white;
+          
+          &:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+          }
+        }
+        
+        .close-button {
+          background-color: rgba(239, 68, 68, 0.25);
+          border-color: rgba(239, 68, 68, 0.5);
+          color: white;
+          
+          &:hover {
+            background-color: rgba(239, 68, 68, 0.35);
+            border-color: rgba(239, 68, 68, 0.7);
+          }
+        }
+      }
     }
   }
 }

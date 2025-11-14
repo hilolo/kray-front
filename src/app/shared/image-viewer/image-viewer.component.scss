@@ -56,6 +56,66 @@
   z-index: 10;
 }
 
+/* Action Buttons (Download and Close) */
+.download-button,
+.close-button {
+  background-color: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(15px);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: scale(1.05);
+  }
+  
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+/* Close Button - Make it more prominent */
+.close-button {
+  background-color: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+  
+  &:hover {
+    background-color: rgba(239, 68, 68, 0.3);
+    border-color: rgba(239, 68, 68, 0.6);
+  }
+}
+
+/* Light mode support - ensure buttons are visible */
+@media (prefers-color-scheme: light) {
+  .image-viewer-overlay {
+    background-color: rgba(0, 0, 0, 0.95);
+  }
+  
+  .download-button,
+  .close-button {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: white;
+    
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.3);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+  }
+  
+  .close-button {
+    background-color: rgba(239, 68, 68, 0.25);
+    border-color: rgba(239, 68, 68, 0.5);
+    
+    &:hover {
+      background-color: rgba(239, 68, 68, 0.35);
+      border-color: rgba(239, 68, 68, 0.7);
+    }
+  }
+}
+
 /* Navigation Buttons Container */
 .navigation-buttons {
   position: absolute;
