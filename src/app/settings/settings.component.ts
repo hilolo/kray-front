@@ -20,6 +20,7 @@ import { PermissionsDialogComponent } from '@shared/components/permissions-dialo
 import { Subject, takeUntil } from 'rxjs';
 import { ToastService } from '@shared/services/toast.service';
 import type { TeamMember } from '@shared/models/user/team-member.model';
+import { ThemeService, type ThemePreset } from '@shared/services/theme.service';
 
 type SettingsSection = 'account' | 'security' | 'plan-billing' | 'team' | 'application';
 
@@ -51,6 +52,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
   private readonly dialogService = inject(ZardDialogService);
   private readonly viewContainerRef = inject(ViewContainerRef);
   private readonly toastService = inject(ToastService);
+  private readonly themeService = inject(ThemeService);
   private readonly destroy$ = new Subject<void>();
 
   activeSection = signal<SettingsSection>('account');
@@ -139,6 +141,14 @@ export class SettingsComponent implements OnInit, OnDestroy {
   appSettings = {
     language: 'fr',
   };
+
+  // Theme settings
+  readonly currentTheme = this.themeService.getCurrentThemeSignal();
+  readonly themePresets = this.themeService.themePresets;
+
+  onThemeChange(theme: string): void {
+    this.themeService.setTheme(theme as ThemePreset);
+  }
 
   // Computed signals for reactive user and company data
   readonly currentUser = computed(() => this.userService.getCurrentUser());
