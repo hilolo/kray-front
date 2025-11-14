@@ -26,6 +26,13 @@ export interface Attachment {
 }
 
 /**
+ * List preferences for contact (client-side only, not from backend)
+ */
+export interface ContactList {
+  viewType: 'list' | 'card';
+}
+
+/**
  * Contact model from backend
  */
 export interface Contact {
@@ -46,6 +53,7 @@ export interface Contact {
   companyId: string;
   createdAt: string;
   updatedAt: string;
+  list?: ContactList; // Client-side only: list preferences
 }
 
 /**

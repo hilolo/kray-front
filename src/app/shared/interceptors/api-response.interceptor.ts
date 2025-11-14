@@ -13,6 +13,15 @@ export const apiResponseInterceptor: HttpInterceptorFn = (req, next) => {
   
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
+      // Don't show toast for 401 errors - they're handled by token refresh interceptor
+      // But still allow them to pass through so token refresh can handle them
+      if (error.status === 401) {
+        // Return the error as-is so token refresh interceptor can handle it
+        // The token refresh interceptor runs before this one, so if it didn't handle it,
+        // we should pass it through without transformation
+        return throwError(() => error);
+      }
+
       // Handle HTTP errors
       if (error.error) {
         // If the error response follows the standard format

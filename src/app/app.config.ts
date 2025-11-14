@@ -6,6 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { CustomTranslateLoader } from './shared/services/custom-translate-loader';
 import { apiResponseInterceptor } from './shared/interceptors/api-response.interceptor';
 import { authTokenInterceptor } from './shared/interceptors/auth-token.interceptor';
+import { tokenRefreshInterceptor } from './shared/interceptors/token-refresh.interceptor';
 
 import { routes } from './app.routes';
 
@@ -20,7 +21,11 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideHttpClient(
       withFetch(),
-      withInterceptors([apiResponseInterceptor, authTokenInterceptor])
+      withInterceptors([
+        authTokenInterceptor,      // 1. Add token to requests first
+        tokenRefreshInterceptor,    // 2. Handle 401 and refresh token (must be before apiResponseInterceptor)
+        apiResponseInterceptor,    // 3. Handle response format and errors last (runs first on error, so we skip 401)
+      ])
     ),
     ...TranslateModule.forRoot({
       defaultLanguage: 'en',

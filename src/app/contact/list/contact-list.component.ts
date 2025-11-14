@@ -25,6 +25,7 @@ import type { Contact, ContactTypeString } from '@shared/models/contact/contact.
 import { ContactType, routeParamToContactType, contactTypeToString, contactTypeToRouteParam } from '@shared/models/contact/contact.model';
 import { ContactService } from '@shared/services/contact.service';
 import { getFileViewerType } from '@shared/utils/file-type.util';
+import { ContactListPreferencesService } from '@shared/services/contact-list-preferences.service';
 
 @Component({
   selector: 'app-contact-list',
@@ -59,6 +60,7 @@ export class ContactListComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly contactService = inject(ContactService);
+  private readonly preferencesService = inject(ContactListPreferencesService);
   private readonly destroy$ = new Subject<void>();
 
   readonly contactType = signal<ContactType>(ContactType.Tenant);
@@ -107,6 +109,11 @@ export class ContactListComponent implements OnInit, OnDestroy {
     const type = routeParamToContactType(typeParam);
     this.contactType.set(type);
     this.contactTypeString.set(contactTypeToString(type));
+    
+    // Load view type preference for this contact type
+    const savedViewType = this.preferencesService.getViewType(type);
+    this.viewMode.set(savedViewType);
+    
     this.loadContacts();
 
     // Also listen to route changes in case of navigation
@@ -115,6 +122,11 @@ export class ContactListComponent implements OnInit, OnDestroy {
       const updatedType = routeParamToContactType(updatedTypeParam);
       this.contactType.set(updatedType);
       this.contactTypeString.set(contactTypeToString(updatedType));
+      
+      // Load view type preference for the new contact type
+      const newSavedViewType = this.preferencesService.getViewType(updatedType);
+      this.viewMode.set(newSavedViewType);
+      
       this.loadContacts();
     });
   }
@@ -209,7 +221,10 @@ export class ContactListComponent implements OnInit, OnDestroy {
   }
 
   toggleViewMode(): void {
-    this.viewMode.set(this.viewMode() === 'list' ? 'card' : 'list');
+    const newViewMode = this.viewMode() === 'list' ? 'card' : 'list';
+    this.viewMode.set(newViewMode);
+    // Save view type preference for current contact type
+    this.preferencesService.setViewType(this.contactType(), newViewMode);
   }
 
   showArchiveConfirmation(): void {
