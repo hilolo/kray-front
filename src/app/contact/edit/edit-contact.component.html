@@ -1,12 +1,22 @@
-<z-page zTitle="Add Contact">
+<z-page [zTitle]="isEditMode() ? 'Edit Contact' : 'Add Contact'">
   <div class="flex flex-col h-full">
     <!-- Header Section -->
     <div class="space-y-4 pb-6">
       <div class="flex items-center justify-between">
         <div>
-          <h2 class="text-3xl font-bold mb-2">Add New Contact</h2>
+          <h2 class="text-3xl font-bold mb-2">
+            @if (isEditMode()) {
+              Edit Contact
+            } @else {
+              Add New Contact
+            }
+          </h2>
           <p class="text-muted-foreground">
-            Create a new contact by filling in the information below
+            @if (isEditMode()) {
+              Update the contact information below
+            } @else {
+              Create a new contact by filling in the information below
+            }
           </p>
         </div>
         <div class="flex gap-2">
@@ -30,6 +40,14 @@
 
     <!-- Main Form Card -->
     <div class="flex-1 overflow-auto">
+      @if (isLoading()) {
+        <div class="flex items-center justify-center h-full">
+          <div class="flex flex-col items-center gap-4">
+            <z-icon zType="loader-circle" zSize="lg" class="animate-spin text-primary" />
+            <p class="text-muted-foreground">Loading contact data...</p>
+          </div>
+        </div>
+      } @else {
       <z-card class="max-w-7xl mx-auto">
         <div class="p-8 space-y-8">
           <!-- Top Row: Avatar (Left) and Contact Type (Right) -->
@@ -58,16 +76,7 @@
                 >
                   <z-icon zType="camera" zSize="sm" />
                 </button>
-                @if (avatarUrl()) {
-                  <button
-                    type="button"
-                    (click)="onRemoveAvatar()"
-                    class="absolute top-0 right-0 bg-destructive text-destructive-foreground rounded-full p-2 hover:bg-destructive/90 transition-colors shadow-lg"
-                    title="Remove avatar"
-                  >
-                    <z-icon zType="x" zSize="sm" />
-                  </button>
-                }
+               
                 <input
                   #avatarInput
                   type="file"
@@ -82,7 +91,11 @@
             <div class="flex-shrink-0 space-y-2 text-right">
               <h3 class="text-lg font-semibold">Contact Type</h3>
               <p class="text-sm text-muted-foreground">
-                Toggle to switch between individual and company contact
+                @if (isEditMode()) {
+                  Contact type cannot be changed after creation
+                } @else {
+                  Toggle to switch between individual and company contact
+                }
               </p>
               <div class="flex items-center justify-end gap-3 pt-2">
                 <span class="text-sm font-medium" [class.text-muted-foreground]="formData().isCompany">
@@ -91,6 +104,7 @@
                 <z-switch
                   [ngModel]="formData().isCompany"
                   (checkChange)="onCompanyToggle($event)"
+                  [disabled]="isEditMode()"
                 />
                 <span class="text-sm font-medium" [class.text-muted-foreground]="!formData().isCompany">
                   Company
@@ -363,13 +377,61 @@
               />
             </div>
 
+            <!-- Existing Attachments List -->
+            @if (hasExistingAttachments()) {
+              <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                  <h4 class="text-sm font-medium">Existing Attachments</h4>
+                  <span class="text-xs text-muted-foreground">
+                    {{ existingAttachments().length }} file{{ existingAttachments().length > 1 ? 's' : '' }}
+                  </span>
+                </div>
+                <div class="space-y-2">
+                  @for (attachment of existingAttachments(); track attachment.id) {
+                    <div class="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/30 transition-colors group" [class.cursor-pointer]="isFileFormatSupported(attachment.url)" (click)="isFileFormatSupported(attachment.url) && openFile(attachment.url, attachment.name, attachment.size)">
+                      <div class="flex-shrink-0 w-10 h-10 rounded bg-primary/10 flex items-center justify-center">
+                        <z-icon zType="file" class="text-primary" zSize="sm" />
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <p class="font-medium text-sm truncate">{{ attachment.name }}</p>
+                        <p class="text-xs text-muted-foreground">{{ formatFileSize(attachment.size) }}</p>
+                      </div>
+                      <div class="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                        @if (isFileFormatSupported(attachment.url)) {
+                          <z-button
+                            zType="ghost"
+                            zSize="icon"
+                            class="text-muted-foreground hover:text-primary"
+                            (click)="$event.stopPropagation(); openFile(attachment.url, attachment.name, attachment.size)"
+                            [attr.aria-label]="'Open file'"
+                          >
+                            <z-icon zType="arrow-right" zSize="sm" />
+                          </z-button>
+                        } @else {
+                          <z-button
+                            zType="ghost"
+                            zSize="icon"
+                            class="text-muted-foreground hover:text-primary"
+                            (click)="$event.stopPropagation(); downloadFile(attachment.url, attachment.name)"
+                            [attr.aria-label]="'Download file'"
+                          >
+                            <z-icon zType="download" zSize="sm" />
+                          </z-button>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
             <!-- Uploaded Files List -->
             @if (hasUploadedFiles()) {
               <div class="space-y-3">
                 <div class="flex items-center justify-between">
-                  <h4 class="text-sm font-medium">Uploaded Files</h4>
+                  <h4 class="text-sm font-medium">New Files to Upload</h4>
                   <span class="text-xs text-muted-foreground">
-                    {{ uploadedFiles().length }} file{{ uploadedFiles().length > 1 ? 's' : '' }} · {{ formatFileSize(totalFileSize()) }}
+                    {{ uploadedFiles().length }} file{{ uploadedFiles().length > 1 ? 's' : '' }} · {{ formatFileSize(uploadedFilesSize()) }}
                   </span>
                 </div>
                 <div class="space-y-2">
@@ -395,10 +457,20 @@
                 </div>
               </div>
             }
+
+            <!-- Total Files Summary -->
+            @if (hasAnyAttachments()) {
+              <div class="pt-2 border-t">
+                <p class="text-xs text-muted-foreground text-center">
+                  Total: {{ (existingAttachments().length + uploadedFiles().length) }} file{{ (existingAttachments().length + uploadedFiles().length) > 1 ? 's' : '' }} · {{ formatFileSize(totalFileSize()) }}
+                </p>
+              </div>
+            }
           </div>
 
         </div>
       </z-card>
+      }
     </div>
   </div>
 
@@ -422,4 +494,16 @@
   <ng-template #phoneIconTemplate>
     <z-icon zType="smartphone" zSize="sm" />
   </ng-template>
+
+  <!-- File Viewer -->
+  <z-file-viewer
+    [isOpen]="fileViewerOpen()"
+    [fileUrl]="fileViewerUrl()"
+    [fileName]="fileViewerName()"
+    [fileSize]="fileViewerSize()"
+    [images]="fileViewerImages()"
+    [currentIndex]="fileViewerCurrentIndex()"
+    (close)="fileViewerOpen.set(false)"
+    (imageChanged)="onImageChanged($event)"
+  />
 </z-page>

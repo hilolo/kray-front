@@ -14,7 +14,7 @@ type OnChangeType = (value: any) => void;
   exportAs: 'zSwitch',
   template: `
     <span class="flex items-center space-x-2" (mousedown)="onSwitchChange()">
-      <button [id]="zId() || uniqueId()" type="button" role="switch" [attr.data-state]="status()" [attr.aria-checked]="checked()" [disabled]="disabled()" [class]="classes()">
+      <button [id]="zId() || uniqueId()" type="button" role="switch" [attr.data-state]="status()" [attr.aria-checked]="checked()" [disabled]="isDisabled()" [class]="classes()">
         <span
           [attr.data-size]="zSize()"
           [attr.data-state]="status()"
@@ -44,6 +44,7 @@ export class ZardSwitchComponent implements ControlValueAccessor {
   readonly zType = input<ZardSwitchVariants['zType']>('default');
   readonly zSize = input<ZardSwitchVariants['zSize']>('default');
   readonly zId = input<string>('');
+  readonly disabled = input<boolean>(false);
 
   /* eslint-disable-next-line @typescript-eslint/no-empty-function */
   private onChange: OnChangeType = () => {};
@@ -55,7 +56,7 @@ export class ZardSwitchComponent implements ControlValueAccessor {
   protected readonly uniqueId = signal<string>(generateId('switch'));
   protected checked = signal<boolean>(true);
   protected status = computed(() => (this.checked() ? 'checked' : 'unchecked'));
-  protected disabled = signal(false);
+  protected disabledState = signal(false);
 
   writeValue(val: boolean): void {
     this.checked.set(val);
@@ -69,8 +70,10 @@ export class ZardSwitchComponent implements ControlValueAccessor {
     this.onTouched = fn;
   }
 
+  protected readonly isDisabled = computed(() => this.disabled() || this.disabledState());
+
   onSwitchChange(): void {
-    if (this.disabled()) return;
+    if (this.isDisabled()) return;
 
     this.checked.update(checked => !checked);
     this.onTouched();
@@ -79,6 +82,6 @@ export class ZardSwitchComponent implements ControlValueAccessor {
   }
 
   setDisabledState(isDisabled: boolean): void {
-    this.disabled.set(isDisabled);
+    this.disabledState.set(isDisabled);
   }
 }

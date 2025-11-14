@@ -118,7 +118,7 @@
                   </div>
                   
                   <!-- File Icon with Extension Badge -->
-                  <div class="relative cursor-pointer flex items-center justify-center mb-2" (click)="selectItem(file)">
+                  <div class="relative cursor-pointer flex items-center justify-center mb-2" (click)="file.url ? openFile(file.url, file.name, file.size || 0) : selectItem(file)">
                     <div class="relative">
                       <z-icon [zType]="getFileIconType(file.extension)" class="text-muted-foreground !w-12 !h-12" zSize="xl" />
                       <div 
@@ -131,7 +131,7 @@
                   </div>
                   
                   <!-- File Name -->
-                  <div class="text-center w-full cursor-pointer" (click)="selectItem(file)">
+                  <div class="text-center w-full cursor-pointer" (click)="file.url ? openFile(file.url, file.name, file.size || 0) : selectItem(file)">
                     <p class="text-xs font-medium truncate" [title]="file.name">{{ file.name }}</p>
                   </div>
                 </div>
@@ -154,5 +154,14 @@
         </div>
       }
     </div>
+
+  <!-- File Viewer -->
+  <z-file-viewer
+    [isOpen]="fileViewerOpen()"
+    [fileUrl]="fileViewerUrl()"
+    [fileName]="fileViewerName()"
+    [fileSize]="fileViewerSize()"
+    (close)="fileViewerOpen.set(false)"
+  />
 </z-page>
 

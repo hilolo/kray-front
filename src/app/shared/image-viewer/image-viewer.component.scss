@@ -1,0 +1,239 @@
+/* Image Viewer Overlay */
+.image-viewer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.95);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Image Viewer Modal */
+.image-viewer-modal {
+  position: relative;
+  width: 95%;
+  height: 95%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  animation: zoomIn 0.3s ease-in-out;
+}
+
+@keyframes zoomIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Action Buttons Container */
+.action-buttons {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+}
+
+/* Navigation Buttons Container */
+.navigation-buttons {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 20px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Navigation Buttons */
+.nav-button {
+  pointer-events: auto;
+  background-color: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(15px);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: scale(1.05);
+  }
+}
+
+/* Previous Button */
+.prev-button {
+  margin-right: auto;
+}
+
+/* Next Button */
+.next-button {
+  margin-left: auto;
+}
+
+/* Image Info */
+.image-info {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  max-width: 60%;
+  z-index: 10;
+  background-color: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(15px);
+  border-radius: 12px;
+  padding: 16px 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.image-name {
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-size {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 15px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.image-counter {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 8px;
+  padding: 4px 8px;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+  text-align: center;
+  display: inline-block;
+}
+
+/* Image Content */
+.image-content {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 40px 40px 40px;
+}
+
+/* Full Size Image */
+.full-size-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .image-viewer-overlay {
+    left: 0;
+    width: 100vw;
+  }
+}
+
+@media (max-width: 768px) {
+  .image-viewer-overlay {
+    left: 0;
+    width: 100vw;
+  }
+  
+  .image-viewer-modal {
+    width: 100%;
+    height: 100%;
+  }
+  
+  .action-buttons {
+    top: 10px;
+    right: 10px;
+    gap: 6px;
+  }
+  
+  .image-info {
+    top: 10px;
+    left: 10px;
+    max-width: 50%;
+    padding: 12px 16px;
+  }
+  
+  .image-name {
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+  
+  .file-size {
+    font-size: 13px;
+  }
+  
+  .image-content {
+    padding: 60px 20px 20px 20px;
+  }
+  
+  .navigation-buttons {
+    padding: 0 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .image-viewer-overlay {
+    left: 0;
+    width: 100vw;
+  }
+  
+  .image-info {
+    max-width: 45%;
+    padding: 10px 14px;
+  }
+  
+  .image-name {
+    font-size: 12px;
+    margin-bottom: 3px;
+  }
+  
+  .file-size {
+    font-size: 11px;
+  }
+  
+  .navigation-buttons {
+    padding: 0 5px;
+  }
+  
+  .image-counter {
+    font-size: 14px;
+    padding: 3px 6px;
+  }
+}

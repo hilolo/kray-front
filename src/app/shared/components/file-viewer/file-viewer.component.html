@@ -1,0 +1,45 @@
+<!-- Unified File Viewer - automatically shows the correct viewer based on file type -->
+@if (showImageViewer()) {
+  <z-image-viewer
+    [isOpen]="isOpen()"
+    [imageUrl]="fileUrl()"
+    [imageName]="fileName()"
+    [fileSize]="fileSize()"
+    [images]="imageItems()"
+    [currentIndex]="currentImageIndex()"
+    (close)="onClose()"
+    (imageChanged)="onImageChanged($event)"
+  />
+}
+
+@if (showPdfViewer()) {
+  <z-pdf-viewer
+    [isOpen]="isOpen()"
+    [pdfUrl]="fileUrl()"
+    [pdfName]="fileName()"
+    [fileSize]="fileSize()"
+    (close)="onClose()"
+  />
+}
+
+@if (showDocumentViewer()) {
+  <z-document-viewer
+    [isOpen]="isOpen()"
+    [documentUrl]="fileUrl()"
+    [documentName]="fileName()"
+    [fileSize]="fileSize()"
+    [documentType]="documentType()"
+    (close)="onClose()"
+  />
+}
+
+@if (showVideoViewer()) {
+  <z-video-viewer
+    [isOpen]="isOpen()"
+    [videoUrl]="fileUrl()"
+    [videoName]="fileName()"
+    [fileSize]="fileSize()"
+    (close)="onClose()"
+  />
+}
+

@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
-import { ContactType, routeParamToContactType, contactTypeToRouteParam } from '@shared/models/contact/contact.model';
+import { ContactType, routeParamToContactType, contactTypeToRouteParam, stringToContactType, type Contact, type Attachment } from '@shared/models/contact/contact.model';
 import type { ContactFormData } from '@shared/models/contact/contact-form.model';
 import type { CreateContactRequest, AttachmentInput } from '@shared/models/contact/create-contact-request.model';
 import { ContactService } from '@shared/services/contact.service';
@@ -16,6 +16,9 @@ import { ZardFormFieldComponent, ZardFormControlComponent, ZardFormLabelComponen
 import { ZardInputGroupComponent } from '@shared/components/input-group/input-group.component';
 import { ZardSwitchComponent } from '@shared/components/switch/switch.component';
 import { ZardCardComponent } from '@shared/components/card/card.component';
+import { ZardFileViewerComponent } from '@shared/components/file-viewer/file-viewer.component';
+import { ImageItem } from '@shared/image-viewer/image-viewer.component';
+import { getFileViewerType } from '@shared/utils/file-type.util';
 
 interface UploadedFile {
   id: string;
@@ -24,6 +27,14 @@ interface UploadedFile {
   type: string;
   uploadDate: Date;
   file: File;
+}
+
+interface ExistingAttachment {
+  id: string;
+  name: string;
+  size: number;
+  url: string;
+  createdAt: string;
 }
 
 @Component({
@@ -42,6 +53,7 @@ interface UploadedFile {
     ZardInputGroupComponent,
     ZardSwitchComponent,
     ZardCardComponent,
+    ZardFileViewerComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './edit-contact.component.html',
@@ -54,6 +66,10 @@ export class EditContactComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
 
   readonly contactType = signal<ContactType>(ContactType.Tenant);
+  readonly contactId = signal<string | null>(null);
+  readonly isEditMode = computed(() => this.contactId() !== null);
+  readonly isLoading = signal(false);
+  
   // Form data
   readonly formData = signal<ContactFormData>({
     firstName: '',
@@ -78,7 +94,16 @@ export class EditContactComponent implements OnInit, OnDestroy {
 
   // File upload
   readonly uploadedFiles = signal<UploadedFile[]>([]);
+  readonly existingAttachments = signal<ExistingAttachment[]>([]);
   readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
+
+  // File viewer
+  readonly fileViewerOpen = signal(false);
+  readonly fileViewerUrl = signal<string>('');
+  readonly fileViewerName = signal<string>('');
+  readonly fileViewerSize = signal<number>(0);
+  readonly fileViewerImages = signal<ImageItem[]>([]); // All images for navigation
+  readonly fileViewerCurrentIndex = signal<number>(0); // Current image index
 
   // Icon templates for input groups
   readonly userIconTemplate = viewChild.required<TemplateRef<void>>('userIconTemplate');
@@ -90,8 +115,45 @@ export class EditContactComponent implements OnInit, OnDestroy {
   // Computed values
   readonly isCompany = computed(() => this.formData().isCompany);
   readonly hasUploadedFiles = computed(() => this.uploadedFiles().length > 0);
-  readonly totalFileSize = computed(() => {
+  readonly hasExistingAttachments = computed(() => this.existingAttachments().length > 0);
+  readonly hasAnyAttachments = computed(() => this.hasUploadedFiles() || this.hasExistingAttachments());
+  readonly uploadedFilesSize = computed(() => {
     return this.uploadedFiles().reduce((total, file) => total + file.size, 0);
+  });
+  readonly existingAttachmentsSize = computed(() => {
+    return this.existingAttachments().reduce((total, att) => total + att.size, 0);
+  });
+  readonly totalFileSize = computed(() => {
+    return this.uploadedFilesSize() + this.existingAttachmentsSize();
+  });
+
+  // Get all images from attachments (for image viewer navigation)
+  readonly allImages = computed<ImageItem[]>(() => {
+    const images: ImageItem[] = [];
+    
+    // Add existing attachments that are images
+    const existing = this.existingAttachments();
+    existing.forEach(att => {
+      if (getFileViewerType(att.url) === 'image') {
+        images.push({
+          url: att.url,
+          name: att.name,
+          size: att.size,
+        });
+      }
+    });
+    
+    // Add uploaded files that are images
+    const uploaded = this.uploadedFiles();
+    uploaded.forEach(file => {
+      if (file.type.startsWith('image/')) {
+        // For uploaded files, we don't have a URL yet, but we can create a preview
+        // For now, we'll skip uploaded files until they're uploaded to the server
+        // In a real scenario, you'd create object URLs for preview
+      }
+    });
+    
+    return images;
   });
 
   // Form validation computed signals
@@ -214,11 +276,18 @@ export class EditContactComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     // Get contact type from route path
-    // Routes: /contact/tenants/add, /contact/owners/add, /contact/services/add
+    // Routes: /contact/tenants/add, /contact/owners/add, /contact/services/add, /contact/tenants/:id
     const routePath = this.route.snapshot.routeConfig?.path || 'tenants/add';
     const typeParam = routePath.split('/')[0]; // Extract 'tenants', 'owners', or 'services'
     const type = routeParamToContactType(typeParam);
     this.contactType.set(type);
+
+    // Check if we're in edit mode (has ID in route params)
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) {
+      this.contactId.set(id);
+      this.loadContact(id);
+    }
 
     // Also listen to route changes in case of navigation
     this.route.url.pipe(takeUntil(this.destroy$)).subscribe(() => {
@@ -226,7 +295,99 @@ export class EditContactComponent implements OnInit, OnDestroy {
       const updatedTypeParam = updatedRoutePath.split('/')[0];
       const updatedType = routeParamToContactType(updatedTypeParam);
       this.contactType.set(updatedType);
+
+      // Check for ID in route params
+      const updatedId = this.route.snapshot.paramMap.get('id');
+      if (updatedId && updatedId !== this.contactId()) {
+        this.contactId.set(updatedId);
+        this.loadContact(updatedId);
+      } else if (!updatedId) {
+        this.contactId.set(null);
+        this.resetForm();
+      }
     });
+  }
+
+  /**
+   * Load contact data by ID
+   */
+  private loadContact(id: string): void {
+    this.isLoading.set(true);
+    
+    this.contactService.getById(id, false)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (contact) => {
+          this.populateFormFromContact(contact);
+          this.isLoading.set(false);
+        },
+        error: (error) => {
+          console.error('Error loading contact:', error);
+          this.isLoading.set(false);
+          // Error is already handled by ApiService (toast notification)
+        },
+      });
+  }
+
+  /**
+   * Populate form with contact data
+   */
+  private populateFormFromContact(contact: Contact): void {
+    // Set contact type
+    const type = stringToContactType(contact.type);
+    this.contactType.set(type);
+
+    // Populate form data
+    this.formData.set({
+      firstName: contact.firstName || '',
+      lastName: contact.lastName || '',
+      identifier: contact.identifier || '',
+      companyName: contact.companyName || '',
+      ice: contact.ice || '',
+      rc: contact.rc || '',
+      phoneNumbers: contact.phones && contact.phones.length > 0 ? contact.phones : [''],
+      email: contact.email || '',
+      isCompany: contact.isACompany,
+    });
+
+    // Set avatar if exists
+    if (contact.avatar) {
+      this.avatarUrl.set(contact.avatar);
+    }
+
+    // Set existing attachments
+    if (contact.attachments && contact.attachments.length > 0) {
+      const existing: ExistingAttachment[] = contact.attachments.map(att => ({
+        id: att.id,
+        name: att.originalFileName || att.fileName,
+        size: att.fileSize,
+        url: att.url,
+        createdAt: att.createdAt,
+      }));
+      this.existingAttachments.set(existing);
+    }
+  }
+
+  /**
+   * Reset form to initial state
+   */
+  private resetForm(): void {
+    this.formData.set({
+      firstName: '',
+      lastName: '',
+      identifier: '',
+      companyName: '',
+      ice: '',
+      rc: '',
+      phoneNumbers: [''],
+      email: '',
+      isCompany: false,
+    });
+    this.avatarUrl.set(null);
+    this.avatarFile.set(null);
+    this.uploadedFiles.set([]);
+    this.existingAttachments.set([]);
+    this.formSubmitted.set(false);
   }
 
   ngOnDestroy(): void {
@@ -362,6 +523,67 @@ export class EditContactComponent implements OnInit, OnDestroy {
     if (type.includes('word') || type.includes('document')) return 'file-text';
     if (type.includes('excel') || type.includes('spreadsheet')) return 'file-spreadsheet';
     return 'file';
+  }
+
+  /**
+   * Open file in appropriate viewer
+   */
+  openFile(url: string, name: string, size: number): void {
+    this.fileViewerUrl.set(url);
+    this.fileViewerName.set(name);
+    this.fileViewerSize.set(size);
+    
+    // If it's an image, set up image navigation
+    if (getFileViewerType(url) === 'image') {
+      const allImages = this.allImages();
+      // Find the index of the current image
+      const currentIndex = allImages.findIndex(img => img.url === url);
+      this.fileViewerCurrentIndex.set(currentIndex >= 0 ? currentIndex : 0);
+      this.fileViewerImages.set(allImages);
+    } else {
+      // For non-images, clear images array
+      this.fileViewerImages.set([]);
+      this.fileViewerCurrentIndex.set(0);
+    }
+    
+    this.fileViewerOpen.set(true);
+  }
+
+  /**
+   * Handle image change event from file viewer
+   */
+  onImageChanged(index: number): void {
+    this.fileViewerCurrentIndex.set(index);
+    const images = this.fileViewerImages();
+    if (images && images.length > 0 && index >= 0 && index < images.length) {
+      const image = images[index];
+      this.fileViewerUrl.set(image.url);
+      this.fileViewerName.set(image.name);
+      this.fileViewerSize.set(image.size);
+    }
+  }
+
+  /**
+   * Check if file format is supported (can be viewed)
+   */
+  isFileFormatSupported(url: string): boolean {
+    const viewerType = getFileViewerType(url);
+    return viewerType !== 'unknown';
+  }
+
+  /**
+   * Download file
+   */
+  downloadFile(url: string, name: string): void {
+    // Create a temporary anchor element and trigger download
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = name;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 
   // Form submission

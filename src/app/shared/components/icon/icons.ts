@@ -25,6 +25,7 @@ import {
   CodeXml,
   Copy,
   CreditCard,
+  Download,
   Ellipsis,
   Eye,
   EyeOff,
@@ -58,8 +59,10 @@ import {
   PanelLeft,
   Paperclip,
   Pencil,
+  Play,
   Plus,
   Puzzle,
+  RefreshCw,
   Save,
   Search,
   Send,
@@ -179,6 +182,9 @@ export const ZARD_ICONS = {
   mic: Mic,
   'message-circle': MessageCircle,
   'help-circle': HelpCircle,
+  download: Download,
+  play: Play,
+  'refresh-cw': RefreshCw,
 } as const satisfies Record<string, LucideIconData>;
 
 export declare type ZardIcon = keyof typeof ZARD_ICONS | LucideIconData;

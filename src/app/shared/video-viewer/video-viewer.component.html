@@ -1,0 +1,58 @@
+<!-- Video Viewer Modal -->
+@if (isOpen()) {
+  <div class="video-viewer-overlay" (click)="closeViewer()">
+    <div class="video-viewer-modal" (click)="$event.stopPropagation()">
+      <!-- Header -->
+      <div class="viewer-header">
+        <div class="header-content">
+          <div class="title-section">
+            <z-icon zType="play" class="title-icon" />
+            <div class="title-info">
+              <h2 class="title">{{ videoName() || 'Video' }}</h2>
+              @if (formattedFileSize()) {
+                <div class="file-size">{{ formattedFileSize() }}</div>
+              }
+            </div>
+          </div>
+          <div class="action-buttons">
+            <z-button
+              zType="ghost"
+              zSize="icon"
+              class="download-button viewer-action-btn"
+              (click)="downloadVideo()"
+              [attr.aria-label]="'Download video'"
+            >
+              <z-icon zType="download" />
+            </z-button>
+            <z-button
+              zType="ghost"
+              zSize="icon"
+              class="close-button viewer-action-btn"
+              (click)="closeViewer()"
+              [attr.aria-label]="'Close video viewer'"
+            >
+              <z-icon zType="x" />
+            </z-button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Video Content -->
+      <div class="viewer-content">
+        <div class="video-container">
+          <!-- Video Player -->
+          @if (videoUrl()) {
+            <video
+              #videoElement
+              [src]="videoUrl()"
+              class="video-player"
+              preload="metadata"
+              controls>
+              Your browser does not support the video tag.
+            </video>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+}

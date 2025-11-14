@@ -1,0 +1,56 @@
+<!-- PDF Viewer Modal -->
+@if (isOpen()) {
+  <div class="pdf-viewer-overlay" (click)="closeViewer()">
+    <div class="pdf-viewer-modal" (click)="$event.stopPropagation()">
+      <!-- Action Buttons -->
+      <div class="action-buttons">
+        <z-button
+          zType="ghost"
+          zSize="icon"
+          class="download-button"
+          (click)="downloadPdf()"
+          [attr.aria-label]="'Download PDF'"
+        >
+          <z-icon zType="download" />
+        </z-button>
+        
+        <z-button
+          zType="ghost"
+          zSize="icon"
+          class="close-button"
+          (click)="closeViewer()"
+          [attr.aria-label]="'Close PDF viewer'"
+        >
+          <z-icon zType="x" />
+        </z-button>
+      </div>
+
+      <!-- PDF Info -->
+      @if (pdfName() || formattedFileSize()) {
+        <div class="pdf-info">
+          <div class="info-card">
+            @if (pdfName()) {
+              <div class="pdf-name">{{ pdfName() }}</div>
+            }
+            @if (formattedFileSize()) {
+              <div class="file-size">{{ formattedFileSize() }}</div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- PDF Content -->
+      <div class="pdf-content">
+        @if (safePdfUrl()) {
+          <iframe
+            [src]="safePdfUrl()"
+            class="pdf-iframe"
+            frameborder="0"
+            allowfullscreen
+            type="application/pdf">
+          </iframe>
+        }
+      </div>
+    </div>
+  </div>
+}

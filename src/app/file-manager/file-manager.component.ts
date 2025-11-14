@@ -12,12 +12,15 @@ import { ZardBreadcrumbModule } from '@shared/components/breadcrumb/breadcrumb.m
 import { ZardAlertDialogService } from '@shared/components/alert-dialog/alert-dialog.service';
 import { mergeClasses } from '@shared/utils/merge-classes';
 import { fileManagerVariants } from './file-manager.variants';
+import { ZardFileViewerComponent } from '@shared/components/file-viewer/file-viewer.component';
 
 export interface FileItem {
   id: string;
   name: string;
   extension: string;
   type: 'file';
+  url?: string; // Optional URL for file viewing
+  size?: number; // Optional file size
 }
 
 export interface FolderItem {
@@ -41,6 +44,7 @@ export type FileManagerItem = FileItem | FolderItem;
     ZardCheckboxComponent,
     ZardInputDirective,
     ZardBreadcrumbModule,
+    ZardFileViewerComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
@@ -80,6 +84,12 @@ export class FileManagerComponent {
   readonly selectedItem = signal<FileManagerItem | null>(null);
   readonly selectedFileIds = signal<Set<string>>(new Set());
   readonly searchTerm = signal<string>('');
+
+  // File viewer
+  readonly fileViewerOpen = signal(false);
+  readonly fileViewerUrl = signal<string>('');
+  readonly fileViewerName = signal<string>('');
+  readonly fileViewerSize = signal<number>(0);
 
   protected readonly classes = computed(() => mergeClasses(fileManagerVariants(), this.class()));
 
@@ -161,8 +171,23 @@ export class FileManagerComponent {
 
   // Navigate to file
   navigateToFile(file: FileItem): void {
-    // This would typically open or download the file
-    console.log('Open file:', file);
+    // If file has URL, open in viewer
+    if (file.url) {
+      this.openFile(file.url, file.name, file.size || 0);
+    } else {
+      // Otherwise, just log (in real app, would fetch URL from backend)
+      console.log('Open file:', file);
+    }
+  }
+
+  /**
+   * Open file in appropriate viewer
+   */
+  openFile(url: string, name: string, size: number): void {
+    this.fileViewerUrl.set(url);
+    this.fileViewerName.set(name);
+    this.fileViewerSize.set(size);
+    this.fileViewerOpen.set(true);
   }
 
   // Go back to home

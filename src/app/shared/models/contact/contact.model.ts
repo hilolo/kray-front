@@ -13,6 +13,19 @@ export enum ContactType {
 export type ContactTypeString = 'Owner' | 'Tenant' | 'Service';
 
 /**
+ * Attachment model from backend
+ */
+export interface Attachment {
+  id: string;
+  fileName: string;
+  originalFileName: string;
+  fileExtension: string;
+  fileSize: number;
+  url: string;
+  createdAt: string;
+}
+
+/**
  * Contact model from backend
  */
 export interface Contact {
@@ -28,6 +41,7 @@ export interface Contact {
   email: string;
   phones: string[];
   avatar: string | null;
+  attachments?: Attachment[];
   attachmentCount: number;
   companyId: string;
   createdAt: string;

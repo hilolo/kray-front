@@ -33,5 +33,16 @@ export class ContactService {
   create(request: CreateContactRequest): Observable<Contact> {
     return this.apiService.post<Contact>('Contact/create', request);
   }
+
+  /**
+   * Get a contact by ID
+   * GET api/Contact/{id}?includeRelated=false
+   * @param id Contact ID
+   * @param includeRelated Whether to include related entities (default: false)
+   * @returns Observable of contact
+   */
+  getById(id: string, includeRelated: boolean = false): Observable<Contact> {
+    return this.apiService.get<Contact>(`Contact/${id}?includeRelated=${includeRelated}`);
+  }
 }
 

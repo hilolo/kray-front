@@ -12,6 +12,10 @@ export const contactRoutes: Routes = [
     component: EditContactComponent,
   },
   {
+    path: 'tenants/:id',
+    component: EditContactComponent,
+  },
+  {
     path: 'owners',
     component: ContactListComponent,
   },
@@ -20,11 +24,19 @@ export const contactRoutes: Routes = [
     component: EditContactComponent,
   },
   {
+    path: 'owners/:id',
+    component: EditContactComponent,
+  },
+  {
     path: 'services',
     component: ContactListComponent,
   },
   {
     path: 'services/add',
+    component: EditContactComponent,
+  },
+  {
+    path: 'services/:id',
     component: EditContactComponent,
   },
   {

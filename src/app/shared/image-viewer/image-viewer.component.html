@@ -1,0 +1,77 @@
+<!-- Image Viewer Modal -->
+@if (isOpen()) {
+  <div class="image-viewer-overlay" (click)="closeViewer()">
+    <div class="image-viewer-modal" (click)="$event.stopPropagation()">
+      <!-- Action Buttons -->
+      <div class="action-buttons">
+        <z-button
+          zType="ghost"
+          zSize="icon"
+          class="download-button"
+          (click)="downloadImage()"
+          [attr.aria-label]="'Download image'"
+        >
+          <z-icon zType="download" />
+        </z-button>
+        
+        <z-button
+          zType="ghost"
+          zSize="icon"
+          class="close-button"
+          (click)="closeViewer()"
+          [attr.aria-label]="'Close image viewer'"
+        >
+          <z-icon zType="x" />
+        </z-button>
+      </div>
+
+      <!-- Navigation Buttons -->
+      @if (hasMultipleImages()) {
+        <div class="navigation-buttons">
+          <z-button
+            zType="ghost"
+            zSize="icon"
+            class="nav-button prev-button"
+            (click)="goToPrevious()"
+            [attr.aria-label]="'Previous image'"
+          >
+            <z-icon zType="chevron-left" />
+          </z-button>
+          
+          <z-button
+            zType="ghost"
+            zSize="icon"
+            class="nav-button next-button"
+            (click)="goToNext()"
+            [attr.aria-label]="'Next image'"
+          >
+            <z-icon zType="chevron-right" />
+          </z-button>
+        </div>
+      }
+
+      <!-- Image Info -->
+      @if (currentImageName() || formattedFileSize() || imageCounter()) {
+        <div class="image-info">
+          @if (currentImageName()) {
+            <div class="image-name">{{ currentImageName() }}</div>
+          }
+          @if (formattedFileSize()) {
+            <div class="file-size">{{ formattedFileSize() }}</div>
+          }
+          @if (imageCounter()) {
+            <div class="image-counter">{{ imageCounter() }}</div>
+          }
+        </div>
+      }
+
+      <!-- Image Content -->
+      <div class="image-content">
+        <img
+          [src]="currentImageUrl()"
+          [alt]="currentImageName() || 'Full size image'"
+          class="full-size-image">
+      </div>
+    </div>
+  </div>
+}

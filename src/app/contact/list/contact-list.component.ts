@@ -1,5 +1,5 @@
 import { AfterViewInit, ChangeDetectionStrategy, Component, computed, ElementRef, inject, OnDestroy, OnInit, signal, ViewChild, ViewContainerRef, TemplateRef, viewChild } from '@angular/core';
-import { RouterLink, ActivatedRoute } from '@angular/router';
+import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { ZardPageComponent } from '../../page/page.component';
 import { ZardButtonComponent } from '@shared/components/button/button.component';
 import { ZardInputDirective } from '@shared/components/input/input.directive';
@@ -56,6 +56,7 @@ export class ContactListComponent implements OnInit, OnDestroy {
   private readonly alertDialogService = inject(ZardAlertDialogService);
   private readonly viewContainerRef = inject(ViewContainerRef);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly contactService = inject(ContactService);
   private readonly destroy$ = new Subject<void>();
 
@@ -277,8 +278,8 @@ export class ContactListComponent implements OnInit, OnDestroy {
   }
 
   onEditContact(contact: Contact): void {
-    console.log('Edit contact:', contact);
-    // TODO: Implement edit functionality
+    const route = `/contact/${contactTypeToRouteParam(this.contactType())}/${contact.id}`;
+    this.router.navigate([route]);
   }
 
   onDeleteContact(contact: Contact): void {
