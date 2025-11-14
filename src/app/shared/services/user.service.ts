@@ -73,7 +73,7 @@ export class UserService {
    * PUT https://localhost:5001/api/user/me
    */
   updateUser(userData: { name?: string; phone?: string; avatar?: string }): Observable<User> {
-    return this.apiService.put<User>('api/user/me', userData).pipe(
+    return this.apiService.put<User>('user/me', userData).pipe(
       tap((updatedUser) => {
         // Update user in AuthService which will sync with localStorage
         this.authService.setUser(updatedUser);
@@ -86,7 +86,7 @@ export class UserService {
    * PATCH https://localhost:5001/api/user/updatePassword
    */
   updatePassword(passwordData: { currentPassword: string; newPassword: string; confirmPassword: string }): Observable<any> {
-    return this.apiService.patch('api/user/updatePassword', passwordData);
+    return this.apiService.patch('user/updatePassword', passwordData);
   }
 
   /**
@@ -94,7 +94,7 @@ export class UserService {
    * GET api/user/team
    */
   getTeamMembers(): Observable<TeamMember[]> {
-    return this.apiService.get<TeamMember[]>('api/user/team');
+    return this.apiService.get<TeamMember[]>('user/team');
   }
 
   /**
@@ -102,7 +102,7 @@ export class UserService {
    * GET api/userpermissions/{userId}
    */
   getUserPermissions(userId: string): Observable<UserPermissions> {
-    return this.apiService.get<UserPermissions>(`api/userpermissions/${userId}`);
+    return this.apiService.get<UserPermissions>(`userpermissions/${userId}`);
   }
 
   /**
@@ -124,7 +124,7 @@ export class UserService {
       }
     });
 
-    return this.apiService.put<UserPermissions>(`api/userpermissions/${userId}`, {
+    return this.apiService.put<UserPermissions>(`userpermissions/${userId}`, {
       Permissions: transformedPermissions,
     });
   }

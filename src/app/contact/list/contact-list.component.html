@@ -70,7 +70,7 @@
         <ng-template #contactIdCell let-value let-row="row">
           <div class="flex items-center gap-3">
             <z-avatar
-              [zImage]="{ fallback: getInitials(row.name) }"
+              [zImage]="row.avatar ? { url: row.avatar, fallback: getInitials(row) } : { fallback: getInitials(row) }"
               zType="default"
               zSize="default"
               zShape="circle"
@@ -81,38 +81,24 @@
         <!-- Name Column Template -->
         <ng-template #nameCell let-value let-row="row">
           <div class="flex flex-col gap-1">
-            <span class="font-medium">{{ row.name }}</span>
-            <span class="text-sm text-muted-foreground">{{ row.email }}</span>
-            <span class="text-sm text-muted-foreground">{{ row.phone }}</span>
-            <span class="text-sm text-muted-foreground">{{ row.company }}</span>
+            <span class="font-medium">{{ getContactName(row) }}</span>
+            @if (row.identifier) {
+              <span class="text-sm text-muted-foreground">{{ row.identifier }}</span>
+            }
+            @if (row.email) {
+              <span class="text-sm text-muted-foreground">{{ row.email }}</span>
+            }
+            @if (getContactPhone(row)) {
+              <span class="text-sm text-muted-foreground">{{ getContactPhone(row) }}</span>
+            }
           </div>
         </ng-template>
 
         <!-- Type Column Template -->
         <ng-template #typeCell let-value let-row="row">
-          <z-badge zType="secondary" zShape="default" class="capitalize">
-            {{ row.type }}
+          <z-badge zType="secondary" zShape="default">
+            {{ row.isACompany ? 'Company' : 'Individual' }}
           </z-badge>
-        </ng-template>
-
-        <!-- Status Column Template -->
-        <ng-template #statusCell let-value let-row="row">
-          <div class="flex items-center gap-2">
-            <z-icon [zType]="getStatusIcon(row.status)" zSize="sm" />
-            <z-badge [zType]="getStatusBadgeType(row.status)" zShape="default" class="capitalize">
-              {{ row.status }}
-            </z-badge>
-          </div>
-        </ng-template>
-
-        <!-- Priority Column Template -->
-        <ng-template #priorityCell let-value let-row="row">
-          <div class="flex items-center gap-2">
-            <z-icon [zType]="getPriorityIcon(row.priority)" zSize="sm" />
-            <z-badge [zType]="getPriorityBadgeType(row.priority)" zShape="default" class="capitalize">
-              {{ row.priority }}
-            </z-badge>
-          </div>
         </ng-template>
 
         <!-- Actions Column Template -->
@@ -139,7 +125,7 @@
 
         <!-- Card Template -->
         <ng-template #cardTemplate let-row="row">
-          <div class="flex flex-col gap-3">
+          <div class="flex flex-col gap-4 relative">
             <div class="absolute top-4 left-4">
               <z-checkbox [ngModel]="isSelected(row.id)" (checkChange)="toggleSelect(row.id)" />
             </div>
@@ -163,53 +149,46 @@
                 </z-dropdown-menu-item>
               </z-dropdown-menu>
             </div>
-            <div class="flex flex-col gap-3 pt-3">
-              <div class="flex items-start justify-between gap-2">
-                <div class="flex items-center gap-3 flex-1 min-w-0">
-                  <z-avatar
-                    [zImage]="{ fallback: getInitials(row.name) }"
-                    zType="default"
-                    zSize="default"
-                    zShape="circle"
-                  />
-                  <div class="flex-1 min-w-0">
-                    <h3 class="font-semibold text-lg truncate">{{ row.name }}</h3>
-                    <z-badge zType="secondary" zShape="default" class="w-fit mt-1">
-                      {{ row.category }}
-                    </z-badge>
-                  </div>
+            
+            <!-- Avatar centered and large -->
+            <div class="flex justify-center pt-8">
+              <z-avatar
+                [zImage]="row.avatar ? { url: row.avatar, fallback: getInitials(row) } : { fallback: getInitials(row) }"
+                zType="default"
+                zSize="lg"
+                zShape="circle"
+                class="w-24 h-24"
+              />
+            </div>
+            
+            <!-- Name and badge centered -->
+            <div class="flex flex-col items-center gap-2">
+              <h3 class="font-semibold text-lg text-center">{{ getContactName(row) }}</h3>
+              <z-badge zType="secondary" zShape="default" class="w-fit">
+                {{ row.isACompany ? 'Company' : 'Individual' }}
+              </z-badge>
+            </div>
+            
+            <!-- Contact details -->
+            <div class="space-y-2 px-4">
+              @if (row.identifier) {
+                <div class="flex items-center gap-2 text-sm">
+                  <z-icon zType="id-card" zSize="sm" class="text-muted-foreground" />
+                  <span class="text-muted-foreground truncate">{{ row.identifier }}</span>
                 </div>
-              </div>
-              
-              <div class="space-y-2">
+              }
+              @if (row.email) {
                 <div class="flex items-center gap-2 text-sm">
                   <z-icon zType="mail" zSize="sm" class="text-muted-foreground" />
                   <span class="text-muted-foreground truncate">{{ row.email }}</span>
                 </div>
+              }
+              @if (getContactPhone(row)) {
                 <div class="flex items-center gap-2 text-sm">
                   <z-icon zType="smartphone" zSize="sm" class="text-muted-foreground" />
-                  <span class="text-muted-foreground">{{ row.phone }}</span>
+                  <span class="text-muted-foreground">{{ getContactPhone(row) }}</span>
                 </div>
-                <div class="flex items-center gap-2 text-sm">
-                  <z-icon zType="building" zSize="sm" class="text-muted-foreground" />
-                  <span class="text-muted-foreground truncate">{{ row.company }}</span>
-                </div>
-              </div>
-
-              <div class="flex flex-wrap items-center gap-2 pt-2 border-t">
-                <div class="flex items-center gap-1">
-                  <z-icon [zType]="getStatusIcon(row.status)" zSize="sm" />
-                  <z-badge [zType]="getStatusBadgeType(row.status)" zShape="default" class="capitalize text-xs">
-                    {{ row.status }}
-                  </z-badge>
-                </div>
-                <div class="flex items-center gap-1">
-                  <z-icon [zType]="getPriorityIcon(row.priority)" zSize="sm" />
-                  <z-badge [zType]="getPriorityBadgeType(row.priority)" zShape="default" class="capitalize text-xs">
-                    {{ row.priority }}
-                  </z-badge>
-                </div>
-              </div>
+              }
             </div>
           </div>
         </ng-template>

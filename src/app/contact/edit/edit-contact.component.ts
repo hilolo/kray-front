@@ -3,8 +3,11 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
-import type { ContactType } from '@shared/models/contact/contact.model';
+import { ContactType, routeParamToContactType, contactTypeToRouteParam } from '@shared/models/contact/contact.model';
 import type { ContactFormData } from '@shared/models/contact/contact-form.model';
+import type { CreateContactRequest, AttachmentInput } from '@shared/models/contact/create-contact-request.model';
+import { ContactService } from '@shared/services/contact.service';
+import { UserService } from '@shared/services/user.service';
 import { ZardPageComponent } from '../../page/page.component';
 import { ZardButtonComponent } from '@shared/components/button/button.component';
 import { ZardInputDirective } from '@shared/components/input/input.directive';
@@ -46,9 +49,11 @@ interface UploadedFile {
 export class EditContactComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly contactService = inject(ContactService);
+  private readonly userService = inject(UserService);
   private readonly destroy$ = new Subject<void>();
 
-  readonly contactType = signal<ContactType>('tenants');
+  readonly contactType = signal<ContactType>(ContactType.Tenant);
   // Form data
   readonly formData = signal<ContactFormData>({
     firstName: '',
@@ -208,14 +213,19 @@ export class EditContactComponent implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
-    // Get contact type from route params
-    this.route.params.pipe(takeUntil(this.destroy$)).subscribe(params => {
-      const type = params['type'] as ContactType;
-      if (type && ['tenants', 'owners', 'services'].includes(type)) {
-        this.contactType.set(type);
-      } else {
-        this.contactType.set('tenants');
-      }
+    // Get contact type from route path
+    // Routes: /contact/tenants/add, /contact/owners/add, /contact/services/add
+    const routePath = this.route.snapshot.routeConfig?.path || 'tenants/add';
+    const typeParam = routePath.split('/')[0]; // Extract 'tenants', 'owners', or 'services'
+    const type = routeParamToContactType(typeParam);
+    this.contactType.set(type);
+
+    // Also listen to route changes in case of navigation
+    this.route.url.pipe(takeUntil(this.destroy$)).subscribe(() => {
+      const updatedRoutePath = this.route.snapshot.routeConfig?.path || 'tenants/add';
+      const updatedTypeParam = updatedRoutePath.split('/')[0];
+      const updatedType = routeParamToContactType(updatedTypeParam);
+      this.contactType.set(updatedType);
     });
   }
 
@@ -364,31 +374,142 @@ export class EditContactComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Get company ID from user service
+    const currentUser = this.userService.getCurrentUser();
+    if (!currentUser || !currentUser.companyId) {
+      console.error('User or company ID not found');
+      return;
+    }
+
     // Set loading state
     this.isSaving.set(true);
 
     const data = this.formData();
+    const contactType = this.contactType();
 
-    // TODO: Implement save logic (API call)
-    console.log('Saving contact:', data);
-    console.log('Uploaded files:', this.uploadedFiles());
-    
-    // Simulate API call
-    setTimeout(() => {
-      // Reset form submitted state on successful submission
-      this.formSubmitted.set(false);
-      this.isSaving.set(false);
-      
-      // Navigate back to list
-      const type = this.contactType();
-      this.router.navigate(['/contact', type]);
-    }, 1000);
+    // Prepare the request
+    this.prepareCreateRequest(data, contactType, currentUser.companyId)
+      .then((request) => {
+        // Call the API
+        this.contactService.create(request)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: (createdContact) => {
+              console.log('Contact created successfully:', createdContact);
+              
+              // Reset form submitted state on successful submission
+              this.formSubmitted.set(false);
+              this.isSaving.set(false);
+              
+              // Navigate back to list
+              this.router.navigate(['/contact', contactTypeToRouteParam(contactType)]);
+            },
+            error: (error) => {
+              console.error('Error creating contact:', error);
+              this.isSaving.set(false);
+              // Error is already handled by ApiService (toast notification)
+            },
+          });
+      })
+      .catch((error) => {
+        console.error('Error preparing request:', error);
+        this.isSaving.set(false);
+      });
+  }
+
+  /**
+   * Prepare CreateContactRequest from form data
+   */
+  private async prepareCreateRequest(
+    formData: ContactFormData,
+    contactType: ContactType,
+    companyId: string
+  ): Promise<CreateContactRequest> {
+    const request: CreateContactRequest = {
+      identifier: formData.identifier.trim(),
+      type: contactType,
+      isACompany: formData.isCompany,
+      companyId: companyId,
+    };
+
+    // Add personal or company fields
+    if (formData.isCompany) {
+      request.companyName = formData.companyName.trim() || undefined;
+      request.ice = formData.ice.trim() || undefined;
+      request.rc = formData.rc.trim() || undefined;
+    } else {
+      request.firstName = formData.firstName.trim() || undefined;
+      request.lastName = formData.lastName.trim() || undefined;
+    }
+
+    // Add contact details
+    if (formData.email && formData.email.trim()) {
+      request.email = formData.email.trim();
+    }
+
+    // Add phone numbers (filter out empty ones)
+    const phones = formData.phoneNumbers
+      .map((phone) => phone.trim())
+      .filter((phone) => phone !== '');
+    if (phones.length > 0) {
+      request.phones = phones;
+    }
+
+    // Convert avatar to base64 if present
+    const avatarFile = this.avatarFile();
+    if (avatarFile) {
+      try {
+        const avatarBase64 = await this.fileToBase64(avatarFile);
+        request.avatar = avatarBase64;
+      } catch (error) {
+        console.error('Error converting avatar to base64:', error);
+      }
+    }
+
+    // Convert uploaded files to attachments
+    const uploadedFiles = this.uploadedFiles();
+    if (uploadedFiles.length > 0) {
+      try {
+        const attachments: AttachmentInput[] = await Promise.all(
+          uploadedFiles.map(async (uploadedFile) => {
+            const base64Content = await this.fileToBase64(uploadedFile.file);
+            return {
+              fileName: uploadedFile.name,
+              base64Content: base64Content,
+              root: 'contact', // Default root for contact attachments
+            };
+          })
+        );
+        request.attachments = attachments;
+      } catch (error) {
+        console.error('Error converting files to base64:', error);
+      }
+    }
+
+    return request;
+  }
+
+  /**
+   * Convert File to base64 string
+   */
+  private fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        // Remove data URL prefix (e.g., "data:image/png;base64,")
+        const base64 = result.includes(',') ? result.split(',')[1] : result;
+        resolve(base64);
+      };
+      reader.onerror = (error) => reject(error);
+      reader.readAsDataURL(file);
+    });
   }
 
   onCancel(): void {
     // Navigate back to list
     const type = this.contactType();
-    this.router.navigate(['/contact', type]);
+    this.router.navigate(['/contact', contactTypeToRouteParam(type)]);
   }
 
   // Phone number handlers

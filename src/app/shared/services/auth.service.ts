@@ -31,7 +31,7 @@ export class AuthService {
    * POST https://localhost:5001/api/user/sign-in
    */
   login(email: string, password: string): Observable<LoginResponseData> {
-    return this.apiService.post<LoginResponseData>('api/user/sign-in', {
+    return this.apiService.post<LoginResponseData>('user/sign-in', {
       email,
       password,
     }).pipe(
@@ -55,7 +55,7 @@ export class AuthService {
    * POST https://localhost:5001/api/user/sign-in-with-token
    */
   signInWithToken(): Observable<LoginResponseData> {
-    return this.apiService.post<LoginResponseData>('api/user/sign-in-with-token', {}).pipe(
+    return this.apiService.post<LoginResponseData>('user/sign-in-with-token', {}).pipe(
       tap((response) => {
         // Update user and token with fresh data
         this.setUser(response.user);

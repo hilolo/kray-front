@@ -21,7 +21,9 @@ import { ZardSelectComponent } from '@shared/components/select/select.component'
 import { ZardSelectItemComponent } from '@shared/components/select/select-item.component';
 import { Subject, takeUntil } from 'rxjs';
 import { CommonModule } from '@angular/common';
-import type { Contact, ContactType } from '@shared/models/contact/contact.model';
+import type { Contact, ContactTypeString } from '@shared/models/contact/contact.model';
+import { ContactType, routeParamToContactType, contactTypeToString, contactTypeToRouteParam } from '@shared/models/contact/contact.model';
+import { ContactService } from '@shared/services/contact.service';
 
 @Component({
   selector: 'app-contact-list',
@@ -54,9 +56,11 @@ export class ContactListComponent implements OnInit, OnDestroy {
   private readonly alertDialogService = inject(ZardAlertDialogService);
   private readonly viewContainerRef = inject(ViewContainerRef);
   private readonly route = inject(ActivatedRoute);
+  private readonly contactService = inject(ContactService);
   private readonly destroy$ = new Subject<void>();
 
-  readonly contactType = signal<ContactType>('tenants');
+  readonly contactType = signal<ContactType>(ContactType.Tenant);
+  readonly contactTypeString = signal<ContactTypeString>('Tenant');
   readonly searchQuery = signal('');
   readonly selectedRows = signal<Set<string>>(new Set());
   readonly currentPage = signal(1);
@@ -65,132 +69,18 @@ export class ContactListComponent implements OnInit, OnDestroy {
   readonly viewMode = signal<'list' | 'card'>('list');
   readonly showArchived = signal(false);
   readonly archivedContacts = signal<Contact[]>([]);
+  readonly contacts = signal<Contact[]>([]);
+  readonly isLoading = signal(false);
+  readonly totalPages = signal(1);
+  readonly totalItems = signal(0);
 
   toggleShowArchived(value: boolean): void {
     this.showArchived.set(value);
     // Clear selection and reset to first page when switching views
     this.selectedRows.set(new Set());
     this.currentPage.set(1);
+    this.loadContacts();
   }
-
-  // Sample contact data
-  readonly allContacts = signal<Contact[]>([
-    {
-      id: 'CONTACT-8782',
-      name: 'John Doe',
-      email: 'john.doe@example.com',
-      phone: '+1 234 567 8900',
-      company: 'Acme Corp',
-      status: 'active',
-      priority: 'medium',
-      category: 'Client',
-      type: 'tenants',
-    },
-    {
-      id: 'CONTACT-7878',
-      name: 'Jane Smith',
-      email: 'jane.smith@example.com',
-      phone: '+1 234 567 8901',
-      company: 'Tech Solutions',
-      status: 'pending',
-      priority: 'medium',
-      category: 'Lead',
-      type: 'owners',
-    },
-    {
-      id: 'CONTACT-7839',
-      name: 'Bob Johnson',
-      email: 'bob.johnson@example.com',
-      phone: '+1 234 567 8902',
-      company: 'Global Inc',
-      status: 'active',
-      priority: 'high',
-      category: 'Partner',
-      type: 'services',
-    },
-    {
-      id: 'CONTACT-5562',
-      name: 'Alice Williams',
-      email: 'alice.williams@example.com',
-      phone: '+1 234 567 8903',
-      company: 'Startup Co',
-      status: 'inactive',
-      priority: 'medium',
-      category: 'Vendor',
-      type: 'tenants',
-    },
-    {
-      id: 'CONTACT-8686',
-      name: 'Charlie Brown',
-      email: 'charlie.brown@example.com',
-      phone: '+1 234 567 8904',
-      company: 'Design Studio',
-      status: 'active',
-      priority: 'low',
-      category: 'Client',
-      type: 'owners',
-    },
-    {
-      id: 'CONTACT-1280',
-      name: 'Diana Prince',
-      email: 'diana.prince@example.com',
-      phone: '+1 234 567 8905',
-      company: 'Enterprise Ltd',
-      status: 'active',
-      priority: 'high',
-      category: 'Client',
-      type: 'tenants',
-    },
-    {
-      id: 'CONTACT-7262',
-      name: 'Edward Norton',
-      email: 'edward.norton@example.com',
-      phone: '+1 234 567 8906',
-      company: 'Media Group',
-      status: 'pending',
-      priority: 'medium',
-      category: 'Lead',
-      type: 'services',
-    },
-    {
-      id: 'CONTACT-1138',
-      name: 'Fiona Apple',
-      email: 'fiona.apple@example.com',
-      phone: '+1 234 567 8907',
-      company: 'Music Corp',
-      status: 'active',
-      priority: 'low',
-      category: 'Partner',
-      type: 'owners',
-    },
-    {
-      id: 'CONTACT-7184',
-      name: 'George Lucas',
-      email: 'george.lucas@example.com',
-      phone: '+1 234 567 8908',
-      company: 'Film Studios',
-      status: 'inactive',
-      priority: 'medium',
-      category: 'Vendor',
-      type: 'tenants',
-    },
-    {
-      id: 'CONTACT-5160',
-      name: 'Helen Mirren',
-      email: 'helen.mirren@example.com',
-      phone: '+1 234 567 8909',
-      company: 'Theater Co',
-      status: 'active',
-      priority: 'high',
-      category: 'Client',
-      type: 'services',
-    },
-  ]);
-
-  readonly contacts = computed(() => {
-    const type = this.contactType();
-    return this.allContacts().filter(contact => contact.type === type);
-  });
 
   readonly filteredContacts = computed(() => {
     const query = this.searchQuery().toLowerCase();
@@ -199,22 +89,58 @@ export class ContactListComponent implements OnInit, OnDestroy {
     if (!query) return contactsToShow;
     return contactsToShow.filter(
       (contact) =>
-        contact.name.toLowerCase().includes(query) ||
+        this.getContactName(contact).toLowerCase().includes(query) ||
         contact.email.toLowerCase().includes(query) ||
-        contact.company.toLowerCase().includes(query) ||
+        contact.companyName.toLowerCase().includes(query) ||
+        contact.identifier.toLowerCase().includes(query) ||
         contact.id.toLowerCase().includes(query)
     );
   });
 
   ngOnInit(): void {
-    // Get contact type from route params
-    this.route.params.pipe(takeUntil(this.destroy$)).subscribe(params => {
-      const type = params['type'] as ContactType;
-      if (type && ['tenants', 'owners', 'services'].includes(type)) {
-        this.contactType.set(type);
-      } else {
-        this.contactType.set('tenants');
-      }
+    // Get contact type from route path
+    // Routes: /contact/tenants, /contact/owners, /contact/services
+    // The route config path is 'tenants', 'owners', or 'services'
+    const typeParam = this.route.snapshot.routeConfig?.path || 'tenants';
+    const type = routeParamToContactType(typeParam);
+    this.contactType.set(type);
+    this.contactTypeString.set(contactTypeToString(type));
+    this.loadContacts();
+
+    // Also listen to route changes in case of navigation
+    this.route.params.pipe(takeUntil(this.destroy$)).subscribe(() => {
+      const updatedTypeParam = this.route.snapshot.routeConfig?.path || 'tenants';
+      const updatedType = routeParamToContactType(updatedTypeParam);
+      this.contactType.set(updatedType);
+      this.contactTypeString.set(contactTypeToString(updatedType));
+      this.loadContacts();
+    });
+  }
+
+  loadContacts(): void {
+    if (this.showArchived()) {
+      // For archived contacts, we might need a different endpoint
+      // For now, just return empty
+      return;
+    }
+
+    this.isLoading.set(true);
+    this.contactService.list({
+      currentPage: this.currentPage(),
+      pageSize: this.pageSize(),
+      ignore: false,
+      type: this.contactType(),
+    }).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (response) => {
+        this.contacts.set(response.result);
+        this.totalPages.set(response.totalPages);
+        this.totalItems.set(response.totalItems);
+        this.isLoading.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading contacts:', error);
+        this.isLoading.set(false);
+      },
     });
   }
 
@@ -236,12 +162,6 @@ export class ContactListComponent implements OnInit, OnDestroy {
     return 'No contacts available';
   });
 
-  readonly totalPages = computed(() => {
-    const total = this.filteredContacts().length;
-    const size = this.pageSize();
-    return Math.ceil(total / size);
-  });
-
   readonly hasData = computed(() => {
     return this.filteredContacts().length > 0;
   });
@@ -250,8 +170,6 @@ export class ContactListComponent implements OnInit, OnDestroy {
   readonly contactIdCell = viewChild<TemplateRef<any>>('contactIdCell');
   readonly nameCell = viewChild<TemplateRef<any>>('nameCell');
   readonly typeCell = viewChild<TemplateRef<any>>('typeCell');
-  readonly statusCell = viewChild<TemplateRef<any>>('statusCell');
-  readonly priorityCell = viewChild<TemplateRef<any>>('priorityCell');
   readonly actionsCell = viewChild<TemplateRef<any>>('actionsCell');
 
   // Define columns for datatable
@@ -274,18 +192,6 @@ export class ContactListComponent implements OnInit, OnDestroy {
       cellTemplate: this.typeCell(),
     },
     {
-      key: 'status',
-      label: 'Status',
-      sortable: true,
-      cellTemplate: this.statusCell(),
-    },
-    {
-      key: 'priority',
-      label: 'Priority',
-      sortable: true,
-      cellTemplate: this.priorityCell(),
-    },
-    {
       key: 'actions',
       label: '',
       width: '50px',
@@ -296,6 +202,8 @@ export class ContactListComponent implements OnInit, OnDestroy {
   onSearchChange(value: string): void {
     this.searchQuery.set(value);
     this.currentPage.set(1);
+    // Note: Search is done client-side on filteredContacts
+    // If you want server-side search, call loadContacts() here
   }
 
   toggleViewMode(): void {
@@ -330,7 +238,7 @@ export class ContactListComponent implements OnInit, OnDestroy {
     );
     
     // Remove archived contacts from the active list
-    const updatedAllContacts = this.allContacts().filter(
+    const updatedContacts = this.contacts().filter(
       (contact) => !selectedIds.includes(contact.id)
     );
     
@@ -338,7 +246,7 @@ export class ContactListComponent implements OnInit, OnDestroy {
     const updatedArchived = [...this.archivedContacts(), ...contactsToArchive];
     
     // Update contacts and archived lists, clear selection
-    this.allContacts.set(updatedAllContacts);
+    this.contacts.set(updatedContacts);
     this.archivedContacts.set(updatedArchived);
     this.selectedRows.set(new Set());
   }
@@ -348,56 +256,19 @@ export class ContactListComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  getStatusIcon(status: Contact['status']): 'circle-check' | 'circle' | 'circle-x' {
-    switch (status) {
-      case 'active':
-        return 'circle-check';
-      case 'pending':
-        return 'circle';
-      case 'inactive':
-        return 'circle-x';
-      default:
-        return 'circle';
+  getContactName(contact: Contact): string {
+    if (contact.isACompany && contact.companyName) {
+      return contact.companyName;
     }
+    return `${contact.firstName} ${contact.lastName}`.trim() || contact.identifier;
   }
 
-  getPriorityIcon(priority: Contact['priority']): 'chevron-up' | 'arrow-right' | 'chevron-down' {
-    switch (priority) {
-      case 'high':
-        return 'chevron-up';
-      case 'medium':
-        return 'arrow-right';
-      case 'low':
-        return 'chevron-down';
-      default:
-        return 'arrow-right';
-    }
+  getContactDisplayName(contact: Contact): string {
+    return this.getContactName(contact);
   }
 
-  getStatusBadgeType(status: Contact['status']): 'default' | 'secondary' | 'destructive' | 'outline' {
-    switch (status) {
-      case 'active':
-        return 'default';
-      case 'pending':
-        return 'secondary';
-      case 'inactive':
-        return 'destructive';
-      default:
-        return 'outline';
-    }
-  }
-
-  getPriorityBadgeType(priority: Contact['priority']): 'default' | 'secondary' | 'destructive' | 'outline' {
-    switch (priority) {
-      case 'high':
-        return 'destructive';
-      case 'medium':
-        return 'secondary';
-      case 'low':
-        return 'outline';
-      default:
-        return 'default';
-    }
+  getContactPhone(contact: Contact): string {
+    return contact.phones && contact.phones.length > 0 ? contact.phones[0] : '';
   }
 
   onViewContact(contact: Contact): void {
@@ -411,9 +282,10 @@ export class ContactListComponent implements OnInit, OnDestroy {
   }
 
   onDeleteContact(contact: Contact): void {
+    const contactName = this.getContactName(contact);
     const dialogRef = this.alertDialogService.confirm({
       zTitle: 'Delete Contact',
-      zDescription: `Are you sure you want to delete ${contact.name}? This action cannot be undone.`,
+      zDescription: `Are you sure you want to delete ${contactName}? This action cannot be undone.`,
       zOkText: 'Delete',
       zCancelText: 'Cancel',
       zOkDestructive: true,
@@ -423,8 +295,8 @@ export class ContactListComponent implements OnInit, OnDestroy {
     dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result) => {
       if (result) {
         // Remove contact from the list
-        const updatedContacts = this.allContacts().filter((c) => c.id !== contact.id);
-        this.allContacts.set(updatedContacts);
+        const updatedContacts = this.contacts().filter((c) => c.id !== contact.id);
+        this.contacts.set(updatedContacts);
         
         // Remove from selection if selected
         const newSet = new Set(this.selectedRows());
@@ -436,11 +308,13 @@ export class ContactListComponent implements OnInit, OnDestroy {
 
   onPageChange(page: number): void {
     this.currentPage.set(page);
+    this.loadContacts();
   }
 
   onPageSizeChange(size: number): void {
     this.pageSize.set(size);
     this.currentPage.set(1); // Reset to first page when page size changes
+    this.loadContacts();
   }
 
   onSelectionChange(selection: Set<string>): void {
@@ -461,7 +335,8 @@ export class ContactListComponent implements OnInit, OnDestroy {
     return this.selectedRows().has(contactId);
   }
 
-  getInitials(name: string): string {
+  getInitials(contact: Contact): string {
+    const name = this.getContactName(contact);
     const parts = name.trim().split(/\s+/);
     if (parts.length === 0) return '?';
     if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
@@ -469,12 +344,10 @@ export class ContactListComponent implements OnInit, OnDestroy {
   }
 
   getAddContactRoute(): string {
-    const type = this.contactType();
-    return `/contact/${type}/add`;
+    return `/contact/${contactTypeToRouteParam(this.contactType())}/add`;
   }
 
   getContactTypeLabel(): string {
-    const type = this.contactType();
-    return type.charAt(0).toUpperCase() + type.slice(1);
+    return this.contactTypeString();
   }
 }
