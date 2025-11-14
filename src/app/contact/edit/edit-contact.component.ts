@@ -632,15 +632,29 @@ export class EditContactComponent implements OnInit, OnDestroy {
    * Download file
    */
   downloadFile(url: string, name: string): void {
-    // Create a temporary anchor element and trigger download
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = name;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // Fetch the file and trigger download
+    fetch(url)
+      .then(response => response.blob())
+      .then(blob => {
+        const blobUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(blobUrl);
+      })
+      .catch(error => {
+        console.error('Error downloading file:', error);
+        // Fallback: try direct download (may not work for cross-origin URLs)
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      });
   }
 
   // Form submission

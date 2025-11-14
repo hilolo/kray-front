@@ -25,7 +25,7 @@ import type { Contact, ContactTypeString } from '@shared/models/contact/contact.
 import { ContactType, routeParamToContactType, contactTypeToString, contactTypeToRouteParam } from '@shared/models/contact/contact.model';
 import { ContactService } from '@shared/services/contact.service';
 import { getFileViewerType } from '@shared/utils/file-type.util';
-import { ContactListPreferencesService } from '@shared/services/contact-list-preferences.service';
+import { RoutePreferencesService } from '@shared/services/route-preferences.service';
 
 @Component({
   selector: 'app-contact-list',
@@ -60,7 +60,7 @@ export class ContactListComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly contactService = inject(ContactService);
-  private readonly preferencesService = inject(ContactListPreferencesService);
+  private readonly preferencesService = inject(RoutePreferencesService);
   private readonly destroy$ = new Subject<void>();
 
   readonly contactType = signal<ContactType>(ContactType.Tenant);
@@ -68,8 +68,8 @@ export class ContactListComponent implements OnInit, OnDestroy {
   readonly searchQuery = signal('');
   readonly selectedRows = signal<Set<string>>(new Set());
   readonly currentPage = signal(1);
-  readonly pageSize = signal(10);
   readonly pageSizeOptions = signal([10, 20, 50, 100]);
+  readonly pageSize = signal(10); // Will be initialized from preferences in ngOnInit
   readonly viewMode = signal<'list' | 'card'>('list');
   readonly showArchived = signal(false);
   readonly archivedContacts = signal<Contact[]>([]);
@@ -110,9 +110,16 @@ export class ContactListComponent implements OnInit, OnDestroy {
     this.contactType.set(type);
     this.contactTypeString.set(contactTypeToString(type));
     
-    // Load view type preference for this contact type
-    const savedViewType = this.preferencesService.getViewType(type);
+    // Get route key for preferences (e.g., 'contact/tenants', 'contact/owners', 'contact/services')
+    const routeKey = this.getRouteKey();
+    
+    // Load view type preference for this route
+    const savedViewType = this.preferencesService.getViewType(routeKey);
     this.viewMode.set(savedViewType);
+    
+    // Load page size preference for this route
+    const savedPageSize = this.preferencesService.getPageSize(routeKey);
+    this.pageSize.set(savedPageSize);
     
     this.loadContacts();
 
@@ -123,12 +130,28 @@ export class ContactListComponent implements OnInit, OnDestroy {
       this.contactType.set(updatedType);
       this.contactTypeString.set(contactTypeToString(updatedType));
       
-      // Load view type preference for the new contact type
-      const newSavedViewType = this.preferencesService.getViewType(updatedType);
+      // Get route key for the new route
+      const newRouteKey = this.getRouteKey();
+      
+      // Load view type preference for the new route
+      const newSavedViewType = this.preferencesService.getViewType(newRouteKey);
       this.viewMode.set(newSavedViewType);
+      
+      // Load page size preference for the new route
+      const newSavedPageSize = this.preferencesService.getPageSize(newRouteKey);
+      this.pageSize.set(newSavedPageSize);
       
       this.loadContacts();
     });
+  }
+
+  /**
+   * Get the route key for preferences storage
+   * Format: 'contact/{type}' (e.g., 'contact/tenants', 'contact/owners', 'contact/services')
+   */
+  private getRouteKey(): string {
+    const typeParam = this.route.snapshot.routeConfig?.path || 'tenants';
+    return `contact/${typeParam}`;
   }
 
   loadContacts(): void {
@@ -223,8 +246,9 @@ export class ContactListComponent implements OnInit, OnDestroy {
   toggleViewMode(): void {
     const newViewMode = this.viewMode() === 'list' ? 'card' : 'list';
     this.viewMode.set(newViewMode);
-    // Save view type preference for current contact type
-    this.preferencesService.setViewType(this.contactType(), newViewMode);
+    // Save view type preference for current route
+    const routeKey = this.getRouteKey();
+    this.preferencesService.setViewType(routeKey, newViewMode);
   }
 
   showArchiveConfirmation(): void {
@@ -331,6 +355,9 @@ export class ContactListComponent implements OnInit, OnDestroy {
   onPageSizeChange(size: number): void {
     this.pageSize.set(size);
     this.currentPage.set(1); // Reset to first page when page size changes
+    // Save page size preference for current route
+    const routeKey = this.getRouteKey();
+    this.preferencesService.setPageSize(routeKey, size);
     this.loadContacts();
   }
 
