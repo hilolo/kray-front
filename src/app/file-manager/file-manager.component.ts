@@ -34,6 +34,7 @@ export interface FolderItem {
   name: string;
   fileCount: number;
   type: 'folder';
+  isTemporary?: boolean; // Indicates if folder is temporary (created but no files uploaded yet)
 }
 
 export type FileManagerItem = FileItem | FolderItem;
@@ -79,6 +80,7 @@ export class FileManagerComponent implements OnInit {
   readonly selectedItem = signal<FileManagerItem | null>(null);
   readonly selectedFileIds = signal<Set<string>>(new Set());
   readonly searchTerm = signal<string>('');
+  readonly temporaryFolders = signal<Set<string>>(new Set()); // Track temporary folder paths
 
   // File viewer
   readonly fileViewerOpen = signal(false);
@@ -105,8 +107,36 @@ export class FileManagerComponent implements OnInit {
   readonly filteredFolders = computed(() => {
     const search = this.searchTerm().toLowerCase().trim();
     const folders = this.folders();
-    if (!search) return folders;
-    return folders.filter(folder => folder.name.toLowerCase().includes(search));
+    const temporaryPaths = this.temporaryFolders();
+    
+    // Add temporary folders that aren't in the API response yet
+    const allFolders = [...folders];
+    const currentRoot = this.currentRoot();
+    
+    temporaryPaths.forEach(path => {
+      // Only show temporary folders that match current location
+      const pathParts = path.split('/');
+      const folderName = pathParts[pathParts.length - 1];
+      const parentPath = pathParts.length > 1 ? pathParts.slice(0, -1).join('/') : undefined;
+      
+      // Check if this temporary folder should be shown in current view
+      const shouldShow = 
+        (currentRoot === undefined && parentPath === undefined) || // Root level
+        (currentRoot === parentPath); // Same parent level
+      
+      if (shouldShow && !allFolders.some(f => f.id === path)) {
+        allFolders.push({
+          id: path,
+          name: folderName,
+          fileCount: 0,
+          type: 'folder',
+          isTemporary: true,
+        });
+      }
+    });
+    
+    if (!search) return allFolders;
+    return allFolders.filter(folder => folder.name.toLowerCase().includes(search));
   });
 
   // Filtered files based on search
@@ -279,6 +309,17 @@ export class FileManagerComponent implements OnInit {
   readonly canNavigateBack = computed(() => {
     const path = this.apiPath();
     return path.length > 0;
+  });
+
+  // Check if current folder is empty (no folders and no files)
+  readonly isCurrentFolderEmpty = computed(() => {
+    return this.filteredFolders().length === 0 && this.filteredFiles().length === 0 && !this.isLoading();
+  });
+
+  // Check if current folder is a temporary folder
+  readonly isCurrentFolderTemporary = computed(() => {
+    const currentRoot = this.currentRoot();
+    return currentRoot ? this.temporaryFolders().has(currentRoot) : false;
   });
 
   /**
@@ -454,7 +495,14 @@ export class FileManagerComponent implements OnInit {
       )
       .subscribe({
         next: () => {
-          // Success - refresh file list
+          // Success - remove from temporary folders if files were uploaded to a temporary folder
+          const tempFolders = new Set(this.temporaryFolders());
+          if (root && tempFolders.has(root)) {
+            tempFolders.delete(root);
+            this.temporaryFolders.set(tempFolders);
+          }
+          
+          // Refresh file list to show newly uploaded files
           this.refresh();
         },
         error: () => {
@@ -463,13 +511,61 @@ export class FileManagerComponent implements OnInit {
       });
   }
 
+  /**
+   * Sanitize folder name to be used in path
+   * Removes invalid characters and trims whitespace
+   */
+  private sanitizeFolderName(name: string): string {
+    // Remove invalid characters for folder names
+    // Allow: letters, numbers, spaces, hyphens, underscores
+    return name
+      .trim()
+      .replace(/[^a-zA-Z0-9\s\-_]/g, '') // Remove invalid characters
+      .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+      .trim();
+  }
+
+  /**
+   * Build folder path from current root and folder name
+   */
+  private buildFolderPath(folderName: string): string {
+    const sanitizedName = this.sanitizeFolderName(folderName);
+    const currentRoot = this.currentRoot();
+    
+    if (currentRoot) {
+      // If we're in a folder, append the new folder name
+      return `${currentRoot}/${sanitizedName}`;
+    } else {
+      // If we're at root, use folder name as root
+      return sanitizedName;
+    }
+  }
+
   // Create new folder
   createNewFolder(): void {
     const folderName = prompt('Enter folder name:');
     if (folderName && folderName.trim()) {
-      console.log('Create new folder:', folderName.trim());
-      // Here you would typically create the folder in your backend
-      // For now, this is just a placeholder
+      const sanitizedName = this.sanitizeFolderName(folderName);
+      
+      if (!sanitizedName) {
+        this.alertDialogService.warning({
+          zTitle: 'Invalid Folder Name',
+          zDescription: 'Folder name contains only invalid characters. Please use letters, numbers, spaces, hyphens, or underscores.',
+          zViewContainerRef: this.viewContainerRef,
+        });
+        return;
+      }
+
+      // Build the folder path
+      const folderPath = this.buildFolderPath(sanitizedName);
+      
+      // Add to temporary folders set (don't navigate, just show it in the list)
+      const tempFolders = new Set(this.temporaryFolders());
+      tempFolders.add(folderPath);
+      this.temporaryFolders.set(tempFolders);
+      
+      // Refresh to show the new temporary folder
+      this.refresh();
     }
   }
 
