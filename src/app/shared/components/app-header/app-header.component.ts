@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, HostListener, inject, input, signal, ViewContainerRef, ViewEncapsulation, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, HostListener, inject, input, OnInit, signal, ViewContainerRef, ViewEncapsulation, OnDestroy } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 import { Router } from '@angular/router';
 import type { ClassValue } from 'clsx';
@@ -22,7 +22,7 @@ import { CommandPaletteService } from '@shared/services/command-palette.service'
   encapsulation: ViewEncapsulation.None,
   templateUrl: './app-header.component.html',
 })
-export class AppHeaderComponent implements OnDestroy {
+export class AppHeaderComponent implements OnInit, OnDestroy {
   private readonly darkmodeService = inject(DarkModeService);
   private readonly languageService = inject(LanguageService);
   private readonly alertDialogService = inject(ZardAlertDialogService);
@@ -38,6 +38,12 @@ export class AppHeaderComponent implements OnDestroy {
   readonly currentLanguage = this.languageService.getCurrentLanguageSignal();
   readonly currentTheme = this.darkmodeService.getCurrentThemeSignal();
   readonly logoError = signal(false);
+  readonly isFullscreen = signal(false);
+
+  ngOnInit(): void {
+    // Initialize fullscreen state
+    this.isFullscreen.set(!!document.fullscreenElement);
+  }
 
   toggleTheme(): void {
     this.darkmodeService.toggleTheme();
@@ -76,6 +82,35 @@ export class AppHeaderComponent implements OnDestroy {
    */
   openCommandPalette(): void {
     this.commandPaletteService.open();
+  }
+
+  /**
+   * Toggle fullscreen mode
+   */
+  toggleFullscreen(): void {
+    if (!document.fullscreenElement) {
+      // Enter fullscreen
+      document.documentElement.requestFullscreen().then(() => {
+        this.isFullscreen.set(true);
+      }).catch((err) => {
+        console.error('Error attempting to enable fullscreen:', err);
+      });
+    } else {
+      // Exit fullscreen
+      document.exitFullscreen().then(() => {
+        this.isFullscreen.set(false);
+      }).catch((err) => {
+        console.error('Error attempting to exit fullscreen:', err);
+      });
+    }
+  }
+
+  /**
+   * Listen for fullscreen changes (e.g., user presses ESC)
+   */
+  @HostListener('document:fullscreenchange')
+  onFullscreenChange(): void {
+    this.isFullscreen.set(!!document.fullscreenElement);
   }
 
   /**

@@ -58,6 +58,20 @@
         </z-dropdown-menu-item>
       </z-dropdown-menu>
 
+      <!-- Fullscreen Toggle -->
+      <z-button
+        (click)="toggleFullscreen()"
+        zType="ghost"
+        zSize="icon"
+        [attr.aria-label]="isFullscreen() ? ('Exit fullscreen' | translate) : ('Enter fullscreen' | translate)"
+      >
+        @if (isFullscreen()) {
+          <z-icon zType="minimize2" />
+        } @else {
+          <z-icon zType="maximize2" />
+        }
+      </z-button>
+
       <!-- Dark Mode Toggle -->
       <z-button
         (click)="toggleTheme()"

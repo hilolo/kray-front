@@ -50,8 +50,10 @@ import {
   LogOut,
   Mail,
   MapPin,
+  Maximize2,
   MessageCircle,
   Mic,
+  Minimize2,
   Monitor,
   Moon,
   MoveRight,
@@ -185,6 +187,8 @@ export const ZARD_ICONS = {
   download: Download,
   play: Play,
   'refresh-cw': RefreshCw,
+  maximize2: Maximize2,
+  minimize2: Minimize2,
 } as const satisfies Record<string, LucideIconData>;
 
 export declare type ZardIcon = keyof typeof ZARD_ICONS | LucideIconData;
