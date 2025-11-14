@@ -1,0 +1,60 @@
+<z-page zTitle="Tasks">
+  <div class="flex flex-col h-full min-h-0 overflow-y-auto">
+    <!-- Page Header -->
+    <div class="flex-shrink-0 mb-6">
+      <div class="flex items-center justify-between mb-4 pr-6">
+        <div>
+          <h2 class="text-3xl font-bold mb-2">Tasks</h2>
+          <p class="text-muted-foreground">
+            Manage your tasks using the Kanban board. Drag and drop tasks between columns to update their status.
+          </p>
+        </div>
+        
+        <!-- Top Right: Month Navigation and New Task Button -->
+        <div class="flex items-center gap-4">
+          <!-- Month Navigation -->
+          <div class="flex items-center gap-2">
+            <z-button
+              zType="outline"
+              zSize="icon"
+              (click)="goToPreviousMonth()"
+              [attr.aria-label]="'Previous month'"
+            >
+              <z-icon zType="chevron-left" zSize="sm" />
+            </z-button>
+            
+            <div class="flex items-center gap-2 px-4 py-2 bg-muted rounded-md min-w-[180px] justify-center">
+              <span class="text-sm font-semibold">{{ monthYearDisplay() }}</span>
+            </div>
+            
+            <z-button
+              zType="outline"
+              zSize="icon"
+              (click)="goToNextMonth()"
+              [attr.aria-label]="'Next month'"
+            >
+              <z-icon zType="chevron-right" zSize="sm" />
+            </z-button>
+          </div>
+          
+          <!-- New Task Button -->
+          <z-button
+            zType="default"
+            zSize="default"
+            class="gap-2"
+            (click)="addNewTask()"
+          >
+            <z-icon zType="plus" zSize="sm" />
+            <span>New Task</span>
+          </z-button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kanban Board - Full Height and Scrollable -->
+    <div class="flex-shrink-0 flex justify-center pb-4">
+      <z-kanban [columns]="kanbanColumns()" />
+    </div>
+  </div>
+</z-page>
+

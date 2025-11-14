@@ -4,6 +4,7 @@ import { LoginComponent } from './login/login.component';
 import { HeroiconExampleComponent } from './shared/components/icon/heroicon-example.component';
 import { AiChatComponent } from './ai-chat/ai-chat.component';
 import { FileManagerComponent } from './file-manager/file-manager.component';
+import { TasksComponent } from './tasks/tasks.component';
 import { authGuard } from './shared/guards/auth.guard';
 import { loginGuard } from './shared/guards/login.guard';
 
@@ -41,6 +42,11 @@ export const routes: Routes = [
   {
     path: 'file-manager',
     component: FileManagerComponent,
+    canActivate: [authGuard],
+  },
+  {
+    path: 'tasks',
+    component: TasksComponent,
     canActivate: [authGuard],
   },
 ];

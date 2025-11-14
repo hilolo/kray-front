@@ -45,6 +45,7 @@
     "reservations": "Reservations",
     "inventaires": "Inventories",
     "etatDesLieux": "Condition Report",
+    "tasks": "Tasks",
     "aiChat": "AI Chat",
     "fileManager": "File Manager"
   },
