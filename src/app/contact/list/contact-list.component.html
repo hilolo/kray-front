@@ -127,7 +127,7 @@
         <ng-template #cardTemplate let-row="row">
           <div class="flex flex-col relative h-full">
             <!-- Header: Checkbox and Actions -->
-            <div class="flex items-start justify-between mb-4 -mt-6">
+            <div class="flex items-start justify-between mb-3 -mt-6">
               <z-checkbox [ngModel]="isSelected(row.id)" (checkChange)="toggleSelect(row.id)" />
               <z-dropdown-menu>
                 <z-button zType="ghost" zSize="icon" class="h-8 w-8 flex-shrink-0" dropdown-trigger>
