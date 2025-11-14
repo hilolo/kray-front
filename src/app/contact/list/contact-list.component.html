@@ -27,7 +27,7 @@
           <!-- Buttons on right - Archive first, then Card View, then Add Contact -->
           <div class="flex gap-2 items-center ml-auto">
             @if (hasSelectedContacts()) {
-              <z-button zType="outline" zSize="default" class="gap-2 bg-amber-500 hover:bg-amber-600 text-white border-amber-500 hover:border-amber-600 shadow-xs" (click)="showArchiveConfirmation()">
+              <z-button zType="outline" zSize="default" class="gap-2 bg-yellow-400 hover:bg-yellow-500 text-yellow-950 border-yellow-400 hover:border-yellow-500 dark:bg-yellow-600 dark:hover:bg-yellow-700 dark:text-yellow-50 dark:border-yellow-600 dark:hover:border-yellow-700 shadow-xs" (click)="showArchiveConfirmation()">
                 <z-icon zType="folder" zSize="sm" />
                 Archive
               </z-button>
@@ -125,11 +125,10 @@
 
         <!-- Card Template -->
         <ng-template #cardTemplate let-row="row">
-          <div class="flex flex-col gap-4 relative">
-            <div class="absolute top-4 left-4">
+          <div class="flex flex-col relative h-full">
+            <!-- Header: Checkbox and Actions -->
+            <div class="flex items-start justify-between mb-4 -mt-6">
               <z-checkbox [ngModel]="isSelected(row.id)" (checkChange)="toggleSelect(row.id)" />
-            </div>
-            <div class="absolute top-4 right-4">
               <z-dropdown-menu>
                 <z-button zType="ghost" zSize="icon" class="h-8 w-8 flex-shrink-0" dropdown-trigger>
                   <z-icon zType="ellipsis" zSize="sm" />
@@ -150,45 +149,48 @@
               </z-dropdown-menu>
             </div>
             
-            <!-- Avatar centered and large -->
-            <div class="flex justify-center pt-8">
-              <z-avatar
-                [zImage]="row.avatar ? { url: row.avatar, fallback: getInitials(row) } : { fallback: getInitials(row) }"
-                zType="default"
-                zSize="lg"
-                zShape="circle"
-                class="w-24 h-24"
-              />
-            </div>
-            
-            <!-- Name and badge centered -->
-            <div class="flex flex-col items-center gap-2">
-              <h3 class="font-semibold text-lg text-center">{{ getContactName(row) }}</h3>
-              <z-badge zType="secondary" zShape="default" class="w-fit">
-                {{ row.isACompany ? 'Company' : 'Individual' }}
-              </z-badge>
-            </div>
-            
-            <!-- Contact details -->
-            <div class="space-y-2 px-4">
-              @if (row.identifier) {
-                <div class="flex items-center gap-2 text-sm">
-                  <z-icon zType="id-card" zSize="sm" class="text-muted-foreground" />
-                  <span class="text-muted-foreground truncate">{{ row.identifier }}</span>
+            <!-- Main content: Image/Type on left, Name/Details on right -->
+            <div class="flex gap-4 flex-1">
+              <!-- Left side: Avatar and Type badge -->
+              <div class="flex flex-col items-center gap-2.5 flex-shrink-0">
+                <z-avatar
+                  [zImage]="row.avatar ? { url: row.avatar, fallback: getInitials(row) } : { fallback: getInitials(row) }"
+                  zType="default"
+                  zSize="lg"
+                  zShape="circle"
+                  class="w-16 h-16"
+                />
+                <z-badge zType="secondary" zShape="default" class="w-fit text-xs">
+                  {{ row.isACompany ? 'Company' : 'Individual' }}
+                </z-badge>
+              </div>
+              
+              <!-- Right side: Name and Contact details -->
+              <div class="flex flex-col gap-2.5 flex-1 min-w-0">
+                <h3 class="font-semibold text-sm leading-tight">{{ getContactName(row) }}</h3>
+                
+                <!-- Contact details -->
+                <div class="space-y-1.5">
+                  @if (row.identifier) {
+                    <div class="flex items-center gap-2 text-xs">
+                      <z-icon zType="id-card" zSize="sm" class="text-muted-foreground flex-shrink-0" />
+                      <span class="text-muted-foreground truncate">{{ row.identifier }}</span>
+                    </div>
+                  }
+                  @if (row.email) {
+                    <div class="flex items-center gap-2 text-xs">
+                      <z-icon zType="mail" zSize="sm" class="text-muted-foreground flex-shrink-0" />
+                      <span class="text-muted-foreground truncate">{{ row.email }}</span>
+                    </div>
+                  }
+                  @if (getContactPhone(row)) {
+                    <div class="flex items-center gap-2 text-xs">
+                      <z-icon zType="smartphone" zSize="sm" class="text-muted-foreground flex-shrink-0" />
+                      <span class="text-muted-foreground truncate">{{ getContactPhone(row) }}</span>
+                    </div>
+                  }
                 </div>
-              }
-              @if (row.email) {
-                <div class="flex items-center gap-2 text-sm">
-                  <z-icon zType="mail" zSize="sm" class="text-muted-foreground" />
-                  <span class="text-muted-foreground truncate">{{ row.email }}</span>
-                </div>
-              }
-              @if (getContactPhone(row)) {
-                <div class="flex items-center gap-2 text-sm">
-                  <z-icon zType="smartphone" zSize="sm" class="text-muted-foreground" />
-                  <span class="text-muted-foreground">{{ getContactPhone(row) }}</span>
-                </div>
-              }
+              </div>
             </div>
           </div>
         </ng-template>
