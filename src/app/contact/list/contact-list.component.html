@@ -60,6 +60,18 @@
                 </button>
               </div>
             </div>
+            <!-- Reset Button -->
+            @if (hasActiveFilters()) {
+              <z-button 
+                zType="outline" 
+                zSize="default" 
+                class="gap-2"
+                (click)="resetFilters()"
+              >
+                <z-icon zType="x" zSize="sm" />
+                <span>Reset</span>
+              </z-button>
+            }
           </div>
           <!-- Buttons on right - Archive first, then Card View, then Add Contact -->
           <div class="flex gap-2 items-center ml-auto">

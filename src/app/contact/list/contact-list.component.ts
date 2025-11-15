@@ -237,6 +237,26 @@ export class ContactListComponent implements OnInit, OnDestroy {
     this.loadContacts();
   }
 
+  readonly hasActiveFilters = computed(() => {
+    return this.searchQuery().trim().length > 0 || this.contactTypeFilter() !== 'all';
+  });
+
+  resetFilters(): void {
+    this.searchQuery.set('');
+    this.searchInput.set('');
+    this.contactTypeFilter.set('all');
+    this.currentPage.set(1);
+    
+    // Clear search from query parameters
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { searchTerm: null },
+      queryParamsHandling: 'merge',
+    });
+    
+    this.loadContacts();
+  }
+
   readonly selectedCount = computed(() => {
     return this.selectedRows().size;
   });
