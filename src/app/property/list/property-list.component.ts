@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, computed, inject, OnDestroy, OnInit, signal, TemplateRef, ViewContainerRef, viewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, computed, effect, inject, OnDestroy, OnInit, signal, TemplateRef, ViewContainerRef, viewChild } from '@angular/core';
 import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { ZardPageComponent } from '../../page/page.component';
 import { ZardButtonComponent } from '@shared/components/button/button.component';
@@ -85,6 +85,20 @@ export class PropertyListComponent implements OnInit, OnDestroy {
   readonly ownerOptions = signal<ZardComboboxOption[]>([]);
   readonly selectedOwnerId = signal<string | null>(null);
   readonly isLoadingOwners = signal(false);
+  
+  // Reference to owner combobox for clearing
+  readonly ownerComboboxRef = viewChild<ZardComboboxComponent>('ownerCombobox');
+  
+  // Property Types
+  readonly propertyTypeOptions = signal<string[]>([]);
+  readonly selectedPropertyTypes = signal<string[]>([]);
+  
+  readonly selectedPropertyTypesDisplay = computed(() => {
+    const selected = this.selectedPropertyTypes();
+    if (selected.length === 0) return '';
+    if (selected.length === 1) return selected[0];
+    return `${selected.length} types selected`;
+  });
 
   // Template references for custom cells
   readonly propertyIdCell = viewChild<TemplateRef<any>>('propertyIdCell');
@@ -157,7 +171,9 @@ export class PropertyListComponent implements OnInit, OnDestroy {
   });
 
   readonly showResetButton = computed(() => {
-    return (this.searchQuery() && this.searchQuery().trim() !== '') || this.selectedOwnerId() !== null;
+    return (this.searchQuery() && this.searchQuery().trim() !== '') || 
+           this.selectedOwnerId() !== null || 
+           this.selectedPropertyTypes().length > 0;
   });
 
   ngOnInit(): void {
@@ -198,6 +214,7 @@ export class PropertyListComponent implements OnInit, OnDestroy {
     
     this.loadProperties();
     this.loadOwners();
+    this.loadPropertyTypes();
   }
 
   /**
@@ -214,6 +231,8 @@ export class PropertyListComponent implements OnInit, OnDestroy {
       pageSize: this.pageSize(),
       ignore: false,
       ...(this.searchQuery() && this.searchQuery().trim() ? { searchQuery: this.searchQuery().trim() } : {}),
+      ...(this.selectedOwnerId() ? { contactId: this.selectedOwnerId()! } : {}),
+      ...(this.selectedPropertyTypes().length > 0 ? { typeProperties: this.selectedPropertyTypes() } : {}),
     };
     
     this.propertyService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
@@ -276,8 +295,33 @@ export class PropertyListComponent implements OnInit, OnDestroy {
 
   onOwnerChange(ownerId: string | null): void {
     this.selectedOwnerId.set(ownerId);
-    // TODO: Filter properties by owner if needed
-    // For now, just store the selected owner ID
+    this.currentPage.set(1);
+    this.loadProperties();
+  }
+  
+  loadPropertyTypes(): void {
+    try {
+      const settingsStr = localStorage.getItem('settings');
+      if (settingsStr) {
+        const settings = JSON.parse(settingsStr);
+        if (settings.propertyTypes && Array.isArray(settings.propertyTypes)) {
+          this.propertyTypeOptions.set(settings.propertyTypes);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading property types from localStorage:', error);
+    }
+  }
+  
+  togglePropertyType(type: string): void {
+    const current = this.selectedPropertyTypes();
+    if (current.includes(type)) {
+      this.selectedPropertyTypes.set(current.filter(t => t !== type));
+    } else {
+      this.selectedPropertyTypes.set([...current, type]);
+    }
+    this.currentPage.set(1);
+    this.loadProperties();
   }
 
   onResetFilters(): void {
@@ -288,6 +332,18 @@ export class PropertyListComponent implements OnInit, OnDestroy {
     
     // Clear owner selection
     this.selectedOwnerId.set(null);
+    
+    // Clear combobox internal value using ControlValueAccessor
+    setTimeout(() => {
+      const combobox = this.ownerComboboxRef();
+      if (combobox) {
+        // Clear internal value - writeValue is part of ControlValueAccessor interface
+        (combobox as any).writeValue(null);
+      }
+    }, 0);
+    
+    // Clear property types selection
+    this.selectedPropertyTypes.set([]);
     
     // Reload properties
     this.loadProperties();

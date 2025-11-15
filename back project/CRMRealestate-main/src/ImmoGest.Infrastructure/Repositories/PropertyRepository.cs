@@ -129,10 +129,16 @@ namespace ImmoGest.Infrastructure.Repositories
                     query = query.Where(p => p.Identifier.Contains(filter.Identifier));
                 }
 
-                // Filter by type property
+                // Filter by type property (single)
                 if (!string.IsNullOrEmpty(filter.TypeProperty))
                 {
                     query = query.Where(p => p.TypeProperty == filter.TypeProperty);
+                }
+
+                // Filter by multiple property types
+                if (filter.TypeProperties != null && filter.TypeProperties.Count > 0)
+                {
+                    query = query.Where(p => filter.TypeProperties.Contains(p.TypeProperty));
                 }
 
                 // Filter by payment type

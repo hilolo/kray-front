@@ -13,6 +13,7 @@ export interface PropertyListRequest {
   companyId?: string;
   identifier?: string;
   typeProperty?: string;
+  typeProperties?: string[]; // Multiple property types
   typePaiment?: TypePaiment;
   minPrice?: number;
   maxPrice?: number;

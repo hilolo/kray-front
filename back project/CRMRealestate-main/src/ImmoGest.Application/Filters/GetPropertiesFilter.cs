@@ -9,6 +9,7 @@ namespace ImmoGest.Application.Filters
     {
         public string Identifier { get; set; }
         public string TypeProperty { get; set; }
+        public List<string> TypeProperties { get; set; } // Multiple property types
         public TypePaiment? TypePaiment { get; set; }
         public float? MinPrice { get; set; }
         public float? MaxPrice { get; set; }
