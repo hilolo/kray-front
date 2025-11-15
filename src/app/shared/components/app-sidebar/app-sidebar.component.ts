@@ -6,7 +6,7 @@ import { LayoutModule } from '@shared/components/layout/layout.module';
 import { ZardIconComponent } from '@shared/components/icon/icon.component';
 import { ZardDropdownModule } from '@shared/components/dropdown/dropdown.module';
 import type { ZardIcon } from '@shared/components/icon/icons';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ZardSheetService } from '@shared/components/sheet/sheet.service';
 import { ZardSheetRef } from '@shared/components/sheet/sheet-ref';
 import { ZardAvatarComponent } from '@shared/components/avatar/avatar.component';
@@ -14,12 +14,13 @@ import { ZardDividerComponent } from '@shared/components/divider/divider.compone
 import { UserService } from '@shared/services/user.service';
 import { AuthService } from '@shared/services/auth.service';
 import { ZardAlertDialogService } from '@shared/components/alert-dialog/alert-dialog.service';
+import { ZardTooltipModule } from '@shared/components/tooltip/tooltip';
 
 @Component({
   selector: 'app-sidebar',
   exportAs: 'appSidebar',
   standalone: true,
-  imports: [LayoutModule, ZardIconComponent, ZardDropdownModule, RouterLink, RouterLinkActive, TranslateModule, ZardAvatarComponent, ZardDividerComponent],
+  imports: [LayoutModule, ZardIconComponent, ZardDropdownModule, RouterLink, RouterLinkActive, TranslateModule, ZardAvatarComponent, ZardDividerComponent, ZardTooltipModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   templateUrl: './app-sidebar.component.html',
@@ -34,6 +35,7 @@ export class AppSidebarComponent implements OnDestroy {
   private readonly viewContainerRef = inject(ViewContainerRef);
   private readonly authService = inject(AuthService);
   private readonly alertDialogService = inject(ZardAlertDialogService);
+  private readonly translateService = inject(TranslateService);
   private readonly destroy$ = new Subject<void>();
   private readonly storageKey = 'sidebarCollapsed';
 
@@ -138,6 +140,17 @@ export class AppSidebarComponent implements OnDestroy {
 
   getRouterLinkActiveOptions(route: string): { exact: boolean } {
     return route === '/' ? { exact: true } : { exact: false };
+  }
+
+  getTooltipText(item: { label: string; labelKey?: string }): string | null {
+    // Show tooltip when collapsed (inverse of previous behavior)
+    if (!this.sidebarCollapsed()) {
+      return null;
+    }
+    if (item.labelKey) {
+      return this.translateService.instant(item.labelKey);
+    }
+    return item.label;
   }
 
   onSettingsClick(): void {
