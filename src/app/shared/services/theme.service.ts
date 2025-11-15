@@ -68,7 +68,6 @@ export class ThemeService {
    */
   applyCurrentTheme(): void {
     const theme = this.currentTheme();
-    console.log('Applying theme:', theme);
     this.applyTheme(theme);
   }
 
@@ -83,13 +82,11 @@ export class ThemeService {
     try {
       const saved = localStorage.getItem(this.storageKey) as ThemePreset | null;
       if (saved && this.isValidTheme(saved)) {
-        console.log('Theme loaded from localStorage:', saved);
         return saved;
       }
     } catch (error) {
       console.error('Error loading theme from localStorage:', error);
     }
-    console.log('Using default theme');
     return 'default';
   }
 
@@ -132,9 +129,6 @@ export class ThemeService {
     // Add current theme class
     if (theme !== 'default') {
       html.classList.add(`theme-${theme}`);
-      console.log('Added theme class:', `theme-${theme}`);
-    } else {
-      console.log('Using default theme (no class added)');
     }
 
     // Set data attribute for CSS targeting (but don't overwrite dark mode's data-theme)

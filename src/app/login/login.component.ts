@@ -102,7 +102,6 @@ export class LoginComponent {
                 this.isLoading.set(false);
                 // Get return URL from route parameters or default to home
                 const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
-                console.log('[LoginComponent] ✅ All login steps completed, navigating to:', returnUrl);
                 // Navigate to return URL or home on successful login
                 this.router.navigate([returnUrl]);
               },
@@ -111,7 +110,6 @@ export class LoginComponent {
                 // Continue even if settings fetch fails
                 this.isLoading.set(false);
                 const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
-                console.log('[LoginComponent] ⚠️ Settings fetch failed, but navigating to:', returnUrl);
                 this.router.navigate([returnUrl]);
               },
             });
@@ -121,7 +119,6 @@ export class LoginComponent {
             // Even if this fails, we still have the initial login data
             this.isLoading.set(false);
             const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
-            console.log('[LoginComponent] ⚠️ Sign in with token failed, but navigating to:', returnUrl);
             this.router.navigate([returnUrl]);
           },
         });
