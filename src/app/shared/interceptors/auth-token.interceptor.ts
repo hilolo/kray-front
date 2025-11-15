@@ -7,6 +7,13 @@ import { AuthService } from '../services/auth.service';
  * Adds Authorization header with Bearer token if user is authenticated
  */
 export const authTokenInterceptor: HttpInterceptorFn = (req, next) => {
+  // Skip interceptor for static assets (translation files, images, etc.)
+  const url = req.url.toLowerCase();
+  const isAssetRequest = url.startsWith('/assets/') || url.includes('/assets/');
+  if (isAssetRequest) {
+    return next(req);
+  }
+
   const authService = inject(AuthService);
   const token = authService.getToken();
 

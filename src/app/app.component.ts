@@ -23,17 +23,47 @@ export class AppComponent implements OnInit {
   title = 'admintemmplate';
 
   ngOnInit(): void {
+    console.log('[AppComponent] ngOnInit() called');
+    console.log('[AppComponent] TranslateService currentLang:', this.translateService.currentLang);
+    console.log('[AppComponent] TranslateService defaultLang:', this.translateService.defaultLang);
+    console.log('[AppComponent] TranslateService langs:', this.translateService.getLangs());
+    
     this.darkmodeService.initTheme();
     // Apply theme preset after dark mode is initialized
     // Use setTimeout to ensure DOM is ready and dark mode is applied first
     setTimeout(() => {
       this.themeService.applyCurrentTheme();
     }, 0);
+    
     // Set TranslateService in LanguageService
+    // Translations are already loaded via APP_INITIALIZER, so we just sync the service
+    console.log('[AppComponent] Setting TranslateService in LanguageService...');
     this.languageService.setTranslateService(this.translateService);
-    // Initialize translation service with current language
+    
+    // Ensure language is synced (translations are already loaded)
     const currentLang = this.languageService.getCurrentLanguage();
-    this.translateService.setDefaultLang('en');
-    this.translateService.use(currentLang).subscribe();
+    console.log('[AppComponent] LanguageService currentLang:', currentLang);
+    console.log('[AppComponent] TranslateService currentLang:', this.translateService.currentLang);
+    
+    if (this.translateService.currentLang !== currentLang) {
+      console.log('[AppComponent] ⚠️ Language mismatch! Syncing...');
+      console.log('[AppComponent] Calling translateService.use(' + currentLang + ')...');
+      this.translateService.use(currentLang).subscribe({
+        next: () => {
+          console.log('[AppComponent] ✅ Language synced successfully');
+        },
+        error: (err) => {
+          console.error('[AppComponent] ❌ Error syncing language:', err);
+        }
+      });
+    } else {
+      console.log('[AppComponent] ✅ Languages are in sync');
+    }
+    
+    // Test a translation
+    const testKey = 'page.dashboard.title';
+    const testTranslation = this.translateService.instant(testKey);
+    console.log('[AppComponent] Test translation for "' + testKey + '":', testTranslation);
+    console.log('[AppComponent] Translation is ready:', testTranslation !== testKey);
   }
 }

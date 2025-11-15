@@ -12,10 +12,16 @@ export const tokenRefreshInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const tokenRefreshService = inject(TokenRefreshService);
 
+  // Skip interceptor for static assets (translation files, images, etc.)
+  const url = req.url.toLowerCase();
+  const isAssetRequest = url.startsWith('/assets/') || url.includes('/assets/');
+  if (isAssetRequest) {
+    return next(req);
+  }
+
   // Check if token is empty before making the request
   const currentToken = authService.getToken();
   if (!currentToken || currentToken.trim() === '') {
-    const url = req.url.toLowerCase();
     const isSignInEndpoint = url.includes('/sign-in') || url.includes('/sign-in-with-token');
     
     // If token is empty and not a sign-in endpoint, try to refresh first
@@ -46,7 +52,13 @@ export const tokenRefreshInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
+      // Skip interceptor for static assets
       const url = req.url.toLowerCase();
+      const isAssetRequest = url.startsWith('/assets/') || url.includes('/assets/');
+      if (isAssetRequest) {
+        return throwError(() => error);
+      }
+
       const isSignInEndpoint = url.includes('/sign-in') || url.includes('/sign-in-with-token');
       const hasToken = !!authService.getToken();
       
