@@ -36,39 +36,37 @@
               />
             </div>
             <!-- Property Type multi-select -->
-            <div class="flex items-center gap-2">
-              <div class="w-full sm:w-[200px]">
-                <z-dropdown-menu>
-                  <z-button zType="outline" zSize="default" class="w-full justify-between" dropdown-trigger>
-                    <span>{{ selectedPropertyTypes().length > 0 ? selectedPropertyTypesDisplay() : 'Select types...' }}</span>
-                    <z-icon zType="chevron-down" zSize="sm" class="opacity-50" />
-                  </z-button>
-                  @for (type of propertyTypeOptions(); track type) {
-                    <z-dropdown-menu-item (click)="$event.preventDefault(); $event.stopPropagation(); togglePropertyType(type)">
-                      <div class="flex items-center gap-2 w-full pointer-events-none">
-                        <z-checkbox
-                          [ngModel]="selectedPropertyTypes().includes(type)"
-                          (checkChange)="togglePropertyType(type)"
-                          (click)="$event.stopPropagation()"
-                          class="pointer-events-auto"
-                        />
-                        <span>{{ type }}</span>
-                      </div>
-                    </z-dropdown-menu-item>
-                  }
-                </z-dropdown-menu>
-              </div>
-              <!-- Reset button -->
-              @if (showResetButton()) {
-                <z-button zType="outline" zSize="default" class="gap-2 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground" (click)="onResetFilters()">
-                  <z-icon zType="x" zSize="sm" />
-                  <span>Reset</span>
+            <div class="w-full sm:w-[200px]">
+              <z-dropdown-menu>
+                <z-button zType="outline" zSize="default" class="w-full justify-between" dropdown-trigger>
+                  <span>{{ selectedPropertyTypes().length > 0 ? selectedPropertyTypesDisplay() : 'Select types...' }}</span>
+                  <z-icon zType="chevron-down" zSize="sm" class="opacity-50" />
                 </z-button>
-              }
+                @for (type of propertyTypeOptions(); track type) {
+                  <z-dropdown-menu-item (click)="$event.preventDefault(); $event.stopPropagation(); togglePropertyType(type)">
+                    <div class="flex items-center gap-2 w-full pointer-events-none">
+                      <z-checkbox
+                        [ngModel]="selectedPropertyTypes().includes(type)"
+                        (checkChange)="togglePropertyType(type)"
+                        (click)="$event.stopPropagation()"
+                        class="pointer-events-auto"
+                      />
+                      <span>{{ type }}</span>
+                    </div>
+                  </z-dropdown-menu-item>
+                }
+              </z-dropdown-menu>
             </div>
           </div>
-          <!-- Buttons on right - Card View, then Add Property -->
+          <!-- Buttons on right - Reset, Card View, then Add Property -->
           <div class="flex gap-2 items-center ml-auto">
+            <!-- Reset button -->
+            @if (showResetButton()) {
+              <z-button zType="outline" zSize="default" class="gap-2 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground" (click)="onResetFilters()">
+                <z-icon zType="x" zSize="sm" />
+                <span>Reset</span>
+              </z-button>
+            }
             <z-button zType="outline" zSize="default" class="gap-2" (click)="toggleViewMode()">
               @if (viewMode() === 'list') {
                 <z-icon zType="layout-dashboard" zSize="sm" />
@@ -127,11 +125,23 @@
 
         <!-- Reference Column Template -->
         <ng-template #referenceCell let-value let-row="row">
-          @if (row.identifier) {
-            <span class="font-bold text-base">{{ row.identifier }}</span>
-          } @else {
-            <span class="text-muted-foreground">-</span>
-          }
+          <div class="flex flex-col gap-1">
+            @if (row.identifier) {
+              <span class="font-bold text-base">{{ row.identifier }}</span>
+            } @else {
+              <span class="text-muted-foreground">-</span>
+            }
+            @if (getOwnerName(row) || getOwnerReference(row)) {
+              <div class="flex flex-col gap-0.5 text-xs text-muted-foreground">
+                @if (getOwnerName(row)) {
+                  <span>{{ getOwnerName(row) }}</span>
+                }
+                @if (getOwnerReference(row)) {
+                  <span class="font-medium">{{ getOwnerReference(row) }}</span>
+                }
+              </div>
+            }
+          </div>
         </ng-template>
 
         <!-- Address Column Template -->

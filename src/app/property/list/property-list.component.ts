@@ -478,6 +478,35 @@ export class PropertyListComponent implements OnInit, OnDestroy {
     return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
   }
 
+  getOwnerName(property: Property): string {
+    // First try ownerName from property
+    if (property.ownerName) {
+      return property.ownerName;
+    }
+    
+    // Then try contact object
+    if (property.contact) {
+      // If companyName exists and is not empty, it's a company
+      if (property.contact.companyName && property.contact.companyName.trim() !== '') {
+        return property.contact.companyName;
+      } else {
+        // Otherwise, it's a person - use firstName and lastName
+        const firstName = property.contact.firstName || '';
+        const lastName = property.contact.lastName || '';
+        return `${firstName} ${lastName}`.trim();
+      }
+    }
+    
+    return '';
+  }
+
+  getOwnerReference(property: Property): string {
+    if (property.contact && property.contact.identifier) {
+      return property.contact.identifier;
+    }
+    return '';
+  }
+
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();

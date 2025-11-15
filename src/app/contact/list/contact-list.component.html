@@ -60,7 +60,16 @@
                 </button>
               </div>
             </div>
-            <!-- Reset Button -->
+          </div>
+          <!-- Buttons on right - Archive first, then Reset, Card View, then Add Contact -->
+          <div class="flex gap-2 items-center ml-auto">
+            @if (hasSelectedContacts()) {
+              <z-button zType="outline" zSize="default" class="gap-2 bg-yellow-400 hover:bg-yellow-500 text-yellow-950 border-yellow-400 hover:border-yellow-500 dark:bg-yellow-600 dark:hover:bg-yellow-700 dark:text-yellow-50 dark:border-yellow-600 dark:hover:border-yellow-700 shadow-xs" (click)="showArchiveConfirmation()">
+                <z-icon zType="folder" zSize="sm" />
+                Archive
+              </z-button>
+            }
+            <!-- Reset button -->
             @if (hasActiveFilters()) {
               <z-button 
                 zType="outline" 
@@ -70,15 +79,6 @@
               >
                 <z-icon zType="x" zSize="sm" />
                 <span>Reset</span>
-              </z-button>
-            }
-          </div>
-          <!-- Buttons on right - Archive first, then Card View, then Add Contact -->
-          <div class="flex gap-2 items-center ml-auto">
-            @if (hasSelectedContacts()) {
-              <z-button zType="outline" zSize="default" class="gap-2 bg-yellow-400 hover:bg-yellow-500 text-yellow-950 border-yellow-400 hover:border-yellow-500 dark:bg-yellow-600 dark:hover:bg-yellow-700 dark:text-yellow-50 dark:border-yellow-600 dark:hover:border-yellow-700 shadow-xs" (click)="showArchiveConfirmation()">
-                <z-icon zType="folder" zSize="sm" />
-                Archive
               </z-button>
             }
             <z-button zType="outline" zSize="default" class="gap-2" (click)="toggleViewMode()">
