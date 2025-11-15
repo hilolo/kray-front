@@ -413,8 +413,18 @@
                           }
                         </div>
                       </div>
+                      <div class="flex items-center gap-2">
+                        <div class="relative flex-shrink-0">
+                          <z-icon [zType]="getRoleIcon(member.role || '')" zSize="sm" class="text-muted-foreground" />
+                          <div class="absolute -top-1 -right-1 size-3 rounded-full bg-primary border-2 border-background flex items-center justify-center">
+                            <svg class="size-1.5 text-primary-foreground" fill="currentColor" viewBox="0 0 20 20">
+                              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                          </div>
+                        </div>
+                        <span class="text-sm font-medium">{{ member.role || 'No role' }}</span>
+                      </div>
                       <div class="flex items-center gap-3">
-                        <z-badge [zType]="member.role === 'Admin' || member.role === 'Administrator' ? 'destructive' : 'default'">{{ member.role }}</z-badge>
                         <button type="button" class="p-2 hover:bg-accent rounded-lg transition-colors" (click)="openPermissionsDialog(member)">
                           <z-icon zType="pencil" zSize="sm" class="text-muted-foreground" />
                         </button>

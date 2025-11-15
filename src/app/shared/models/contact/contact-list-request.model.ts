@@ -8,5 +8,6 @@ export interface ContactListRequest {
   pageSize: number;
   ignore: boolean;
   type: ContactType;
+  searchQuery?: string;
 }
 

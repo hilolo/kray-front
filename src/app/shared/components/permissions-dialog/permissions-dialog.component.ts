@@ -24,7 +24,7 @@ export class PermissionsDialogComponent implements OnInit, OnDestroy {
   private readonly userService = inject(UserService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly toastService = inject(ToastService);
-  private readonly data = inject<{ userId: string }>(Z_MODAL_DATA);
+  readonly data = inject<{ userId: string; currentRole?: string }>(Z_MODAL_DATA);
   private readonly destroy$ = new Subject<void>();
 
   permissions = signal<UserPermissions | null>(null);
@@ -32,6 +32,15 @@ export class PermissionsDialogComponent implements OnInit, OnDestroy {
   isSaving = signal(false);
 
   readonly modules = MODULES;
+
+  /**
+   * Get icon for a role based on role value
+   */
+  getRoleIcon(role: string): 'user' | 'users' {
+    const roleLower = role?.toLowerCase() || '';
+    if (roleLower.includes('admin')) return 'user';
+    return 'users'; // default icon for User role
+  }
 
   ngOnInit(): void {
     this.loadPermissions();

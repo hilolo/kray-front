@@ -5,6 +5,23 @@
     </div>
   } @else if (permissions()) {
     <div class="flex flex-col space-y-4 min-h-0">
+      <!-- Role Display -->
+      @if (data.currentRole) {
+        <div class="border-b pb-4">
+          <div class="flex items-center gap-3 px-3 py-2">
+            <div class="relative flex-shrink-0">
+              <z-icon [zType]="getRoleIcon(data.currentRole)" zSize="sm" class="text-muted-foreground" />
+              <div class="absolute -top-1 -right-1 size-3 rounded-full bg-primary border-2 border-background flex items-center justify-center">
+                <svg class="size-1.5 text-primary-foreground" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+              </div>
+            </div>
+            <span class="text-sm font-medium">{{ data.currentRole }}</span>
+          </div>
+        </div>
+      }
+
       <!-- Select All Permissions Header -->
       <div class="flex items-center gap-3 p-4 rounded-lg border bg-card cursor-pointer hover:bg-accent transition-colors" (click)="toggleSelectAll()">
         <div class="w-8 h-8 rounded bg-primary flex items-center justify-center flex-shrink-0">

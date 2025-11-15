@@ -19,10 +19,11 @@ import { ZardDividerComponent } from '@shared/components/divider/divider.compone
 import { ZardPaginationComponent } from '@shared/components/pagination/pagination.component';
 import { ZardSelectComponent } from '@shared/components/select/select.component';
 import { ZardSelectItemComponent } from '@shared/components/select/select-item.component';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import type { Contact, ContactTypeString } from '@shared/models/contact/contact.model';
 import { ContactType, routeParamToContactType, contactTypeToString, contactTypeToRouteParam } from '@shared/models/contact/contact.model';
+import type { ContactListRequest } from '@shared/models/contact/contact-list-request.model';
 import { ContactService } from '@shared/services/contact.service';
 import { getFileViewerType } from '@shared/utils/file-type.util';
 import { RoutePreferencesService } from '@shared/services/route-preferences.service';
@@ -62,10 +63,12 @@ export class ContactListComponent implements OnInit, OnDestroy {
   private readonly contactService = inject(ContactService);
   private readonly preferencesService = inject(RoutePreferencesService);
   private readonly destroy$ = new Subject<void>();
+  private readonly searchInputSubject = new Subject<string>();
 
   readonly contactType = signal<ContactType>(ContactType.Tenant);
   readonly contactTypeString = signal<ContactTypeString>('Tenant');
-  readonly searchQuery = signal('');
+  readonly searchQuery = signal(''); // Actual search term sent to server
+  readonly searchInput = signal(''); // Input field value (for two-way binding)
   readonly selectedRows = signal<Set<string>>(new Set());
   readonly currentPage = signal(1);
   readonly pageSizeOptions = signal([10, 20, 50, 100]);
@@ -86,19 +89,9 @@ export class ContactListComponent implements OnInit, OnDestroy {
     this.loadContacts();
   }
 
+  // Since we're using server-side search, filteredContacts just returns contacts
   readonly filteredContacts = computed(() => {
-    const query = this.searchQuery().toLowerCase();
-    const contactsToShow = this.showArchived() ? this.archivedContacts() : this.contacts();
-    
-    if (!query) return contactsToShow;
-    return contactsToShow.filter(
-      (contact) =>
-        this.getContactName(contact).toLowerCase().includes(query) ||
-        contact.email.toLowerCase().includes(query) ||
-        contact.companyName.toLowerCase().includes(query) ||
-        contact.identifier.toLowerCase().includes(query) ||
-        contact.id.toLowerCase().includes(query)
-    );
+    return this.showArchived() ? this.archivedContacts() : this.contacts();
   });
 
   ngOnInit(): void {
@@ -121,6 +114,31 @@ export class ContactListComponent implements OnInit, OnDestroy {
     const savedPageSize = this.preferencesService.getPageSize(routeKey);
     this.pageSize.set(savedPageSize);
     
+    // Load search term from query parameters
+    const searchTerm = this.route.snapshot.queryParams['searchTerm'] || '';
+    if (searchTerm) {
+      this.searchQuery.set(searchTerm); 
+      this.searchInput.set(searchTerm);
+    }
+    
+    // Set up debounced search subscription
+    this.searchInputSubject
+      .pipe(
+        debounceTime(300), // Wait 300ms after user stops typing
+        distinctUntilChanged(), // Only trigger if value actually changed
+        takeUntil(this.destroy$)
+      )
+      .subscribe((value) => {
+        const trimmedValue = value.trim();
+        // Only search if 3+ characters, otherwise clear search
+        if (trimmedValue.length >= 3) {
+          this.performSearch(trimmedValue);
+        } else if (trimmedValue.length === 0 && this.searchQuery()) {
+          // Clear search if input is empty
+          this.performSearch('');
+        }
+      });
+    
     this.loadContacts();
 
     // Also listen to route changes in case of navigation
@@ -141,7 +159,32 @@ export class ContactListComponent implements OnInit, OnDestroy {
       const newSavedPageSize = this.preferencesService.getPageSize(newRouteKey);
       this.pageSize.set(newSavedPageSize);
       
+      // Load search term from query parameters
+      const updatedSearchTerm = this.route.snapshot.queryParams['searchTerm'] || '';
+      if (updatedSearchTerm) {
+        this.searchQuery.set(updatedSearchTerm);
+        this.searchInput.set(updatedSearchTerm);
+      } else {
+        this.searchQuery.set('');
+        this.searchInput.set('');
+      }
+      
       this.loadContacts();
+    });
+
+    // Listen to query parameter changes (for search term)
+    // This handles browser back/forward navigation
+    this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe((params) => {
+      const searchTerm = params['searchTerm'] || '';
+      const currentSearchQuery = this.searchQuery();
+      
+      // Only update if search term actually changed (and not from our own navigation)
+      if (searchTerm !== currentSearchQuery) {
+        this.searchQuery.set(searchTerm);
+        this.searchInput.set(searchTerm);
+        this.currentPage.set(1);
+        this.loadContacts();
+      }
     });
   }
 
@@ -162,12 +205,15 @@ export class ContactListComponent implements OnInit, OnDestroy {
     }
 
     this.isLoading.set(true);
-    this.contactService.list({
+    const request: ContactListRequest = {
       currentPage: this.currentPage(),
       pageSize: this.pageSize(),
       ignore: false,
       type: this.contactType(),
-    }).pipe(takeUntil(this.destroy$)).subscribe({
+      ...(this.searchQuery() && this.searchQuery().trim() ? { searchQuery: this.searchQuery().trim() } : {}),
+    };
+    
+    this.contactService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response) => {
         this.contacts.set(response.result);
         this.totalPages.set(response.totalPages);
@@ -236,11 +282,50 @@ export class ContactListComponent implements OnInit, OnDestroy {
     },
   ]);
 
-  onSearchChange(value: string): void {
-    this.searchQuery.set(value);
-    this.currentPage.set(1);
-    // Note: Search is done client-side on filteredContacts
-    // If you want server-side search, call loadContacts() here
+  onSearchInputChange(value: string): void {
+    // Update the input value
+    this.searchInput.set(value);
+    // Emit to subject for debounced search
+    this.searchInputSubject.next(value);
+  }
+
+  /**
+   * Perform search with the given search term
+   * Updates query parameters and triggers API call
+   */
+  private performSearch(searchTerm: string): void {
+    const currentSearchQuery = this.searchQuery();
+    
+    // Only update if search term actually changed
+    if (searchTerm !== currentSearchQuery) {
+      this.searchQuery.set(searchTerm);
+      this.currentPage.set(1);
+      
+      // Update query parameters to persist search term
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { searchTerm: searchTerm || null },
+        queryParamsHandling: 'merge',
+      });
+      
+      // Load contacts immediately
+      this.loadContacts();
+    }
+  }
+
+  onSearchSubmit(): void {
+    // Optional: Trigger search immediately when Enter is pressed (bypasses debounce)
+    const searchTerm = this.searchInput().trim();
+    if (searchTerm.length >= 3 || searchTerm.length === 0) {
+      this.performSearch(searchTerm);
+    }
+  }
+
+  onSearchKeyDown(event: KeyboardEvent): void {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      this.onSearchSubmit();
+    }
   }
 
   toggleViewMode(): void {

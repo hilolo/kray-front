@@ -10,7 +10,6 @@ import { ZardCardComponent } from '@shared/components/card/card.component';
 import { ZardSelectComponent } from '@shared/components/select/select.component';
 import { ZardSelectItemComponent } from '@shared/components/select/select-item.component';
 import { ZardAvatarComponent } from '@shared/components/avatar/avatar.component';
-import { ZardBadgeComponent } from '@shared/components/badge/badge.component';
 import { ZardDividerComponent } from '@shared/components/divider/divider.component';
 import { ZardAccordionComponent } from '@shared/components/accordion/accordion.component';
 import { ZardAccordionItemComponent } from '@shared/components/accordion/accordion-item.component';
@@ -43,7 +42,6 @@ type SettingsSection = 'account' | 'security' | 'plan-billing' | 'team' | 'appli
     ZardSelectComponent,
     ZardSelectItemComponent,
     ZardAvatarComponent,
-    ZardBadgeComponent,
     ZardAccordionComponent,
     ZardAccordionItemComponent,
   ],
@@ -154,6 +152,15 @@ export class SettingsComponent implements OnInit, OnDestroy {
     this.themeService.setTheme(theme as ThemePreset);
   }
 
+  /**
+   * Get icon for a role based on role value
+   */
+  getRoleIcon(role: string): 'user' | 'users' {
+    const roleLower = role?.toLowerCase() || '';
+    if (roleLower.includes('admin')) return 'user';
+    return 'users'; // default icon for User role
+  }
+
   // Computed signals for reactive user and company data
   readonly currentUser = computed(() => this.userService.getCurrentUser());
   readonly currentCompany = computed(() => this.userService.company());
@@ -250,17 +257,19 @@ export class SettingsComponent implements OnInit, OnDestroy {
       zTitle: `Permissions - ${member.name || member.email}`,
       zWidth: '800px',
       zCustomClasses: 'max-w-[calc(100vw-2rem)] sm:max-w-[800px]',
-      zData: { userId: member.id },
+      zData: { userId: member.id, currentRole: member.role },
       zViewContainerRef: this.viewContainerRef,
       zOkText: 'Save',
       zCancelText: 'Cancel',
       zOnOk: (instance: PermissionsDialogComponent) => {
-        // Save permissions
+        // Save permissions and role
         instance.savePermissions()
           .pipe(takeUntil(this.destroy$))
           .subscribe({
             next: () => {
               dialogRef.close();
+              // Reload team members to reflect changes
+              this.loadTeamMembers();
             },
             error: () => {
               // Error is already handled in the component
