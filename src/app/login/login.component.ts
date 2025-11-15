@@ -9,6 +9,7 @@ import { ZardButtonComponent } from '@shared/components/button/button.component'
 import { ZardIconComponent } from '@shared/components/icon/icon.component';
 import { DarkModeService } from '@shared/services/darkmode.service';
 import { AuthService } from '@shared/services/auth.service';
+import { SettingsService } from '@shared/services/settings.service';
 
 @Component({
   selector: 'app-login',
@@ -30,6 +31,7 @@ export class LoginComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly darkmodeService = inject(DarkModeService);
   private readonly authService = inject(AuthService);
+  private readonly settingsService = inject(SettingsService);
 
   email = 'admin@admin.com';
   password = 'admin';
@@ -91,11 +93,26 @@ export class LoginComponent {
         this.authService.signInWithToken().subscribe({
           next: (tokenResponse) => {
             console.log('Sign in with token successful:', tokenResponse);
-            this.isLoading.set(false);
-            // Get return URL from route parameters or default to home
-            const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
-            // Navigate to return URL or home on successful login
-            this.router.navigate([returnUrl]);
+            // Fetch and store settings after successful login
+            this.settingsService.getSettings().subscribe({
+              next: (settings) => {
+                console.log('Settings fetched successfully:', settings);
+                // Store settings in localStorage
+                localStorage.setItem('settings', JSON.stringify(settings));
+                this.isLoading.set(false);
+                // Get return URL from route parameters or default to home
+                const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
+                // Navigate to return URL or home on successful login
+                this.router.navigate([returnUrl]);
+              },
+              error: (settingsError) => {
+                console.error('Error fetching settings:', settingsError);
+                // Continue even if settings fetch fails
+                this.isLoading.set(false);
+                const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
+                this.router.navigate([returnUrl]);
+              },
+            });
           },
           error: (tokenError) => {
             console.error('Sign in with token error:', tokenError);

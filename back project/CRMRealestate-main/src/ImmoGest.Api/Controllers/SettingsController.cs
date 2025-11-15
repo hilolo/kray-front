@@ -5,13 +5,14 @@ using ImmoGest.Application.Interfaces;
 using ImmoGest.Domain.Auth.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ResultNet;
 
 namespace ImmoGest.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
-    public class SettingsController : ControllerBase
+    public class SettingsController : Base
     {
         private readonly ISettingsService _settingsService;
         private readonly ISession _session;
@@ -23,27 +24,15 @@ namespace ImmoGest.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<SettingsDto>> Get()
+        public async Task<ActionResult<Result<SettingsDto>>> Get()
         {
-            var settings = await _settingsService.GetByCompanyIdAsync(_session.CompanyId);
-            if (settings == null)
-                return NotFound();
-
-            return Ok(settings);
+            return ActionResultFor(await _settingsService.GetByCompanyIdAsync(_session.CompanyId));
         }
 
         [HttpPut]
-        public async Task<ActionResult<SettingsDto>> Update(UpdateSettingsDto updateSettingsDto)
+        public async Task<ActionResult<Result<SettingsDto>>> Update(UpdateSettingsDto updateSettingsDto)
         {
-            try
-            {
-                var settings = await _settingsService.UpdateAsync(_session.CompanyId, updateSettingsDto);
-                return Ok(settings);
-            }
-            catch (ArgumentException)
-            {
-                return NotFound();
-            }
+            return ActionResultFor(await _settingsService.UpdateAsync(_session.CompanyId, updateSettingsDto));
         }
     }
 }

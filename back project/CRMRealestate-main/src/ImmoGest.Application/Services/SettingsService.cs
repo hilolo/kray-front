@@ -7,6 +7,8 @@ using ImmoGest.Application.Interfaces;
 using ImmoGest.Domain.Entities;
 using ImmoGest.Domain.Repositories;
 using System.Text.Json;
+using ResultNet;
+using ImmoGest.Domain;
 
 namespace ImmoGest.Application.Services
 {
@@ -21,19 +23,20 @@ namespace ImmoGest.Application.Services
             _mapper = mapper;
         }
 
-        public async Task<SettingsDto?> GetByCompanyIdAsync(Guid companyId)
+        public async Task<Result<SettingsDto>> GetByCompanyIdAsync(Guid companyId)
         {
             var settings = await _settingsRepository.GetByCompanyIdAsync(companyId.ToString());
-            if (settings == null) return null;
+            if (settings == null)
+                return Result.Failure<SettingsDto>().WithCode(MessageCode.NotFound);
 
-            return MapToDto(settings);
+            return Result.Success(MapToDto(settings));
         }
 
-        public async Task<SettingsDto> UpdateAsync(Guid companyId, UpdateSettingsDto updateSettingsDto)
+        public async Task<Result<SettingsDto>> UpdateAsync(Guid companyId, UpdateSettingsDto updateSettingsDto)
         {
             var existingSettings = await _settingsRepository.GetByCompanyIdAsync(companyId.ToString());
             if (existingSettings == null)
-                throw new ArgumentException("Settings not found");
+                return Result.Failure<SettingsDto>().WithCode(MessageCode.NotFound);
 
             existingSettings.DefaultCity = updateSettingsDto.DefaultCity;
             existingSettings.CategoriesJson = JsonSerializer.Serialize(updateSettingsDto.Categories);
@@ -42,7 +45,7 @@ namespace ImmoGest.Application.Services
             existingSettings.PropertyTypesJson = JsonSerializer.Serialize(updateSettingsDto.PropertyTypes);
 
             var updatedSettings = await _settingsRepository.UpdateAsync(existingSettings);
-            return MapToDto(updatedSettings);
+            return Result.Success(MapToDto(updatedSettings));
         }
 
         private SettingsDto MapToDto(Settings settings)

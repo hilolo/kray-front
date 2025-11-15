@@ -635,6 +635,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
             this.propertySettings.features.set(settings.features || []);
             this.propertySettings.amenities.set(settings.amenities || []);
             this.propertySettings.propertyTypes.set(settings.propertyTypes || []);
+            
+            // Update localStorage with the updated settings
+            localStorage.setItem('settings', JSON.stringify(settings));
+            console.log('Settings updated in localStorage:', settings);
           }
           this.isSavingPropertySettings.set(false);
           this.toastService.success('Property settings updated successfully');
