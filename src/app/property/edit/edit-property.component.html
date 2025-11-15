@@ -321,6 +321,58 @@
                   </div>
                 </div>
 
+                <!-- Amenities and Features Section -->
+                <div class="space-y-6 pb-6 border-b">
+                  <div>
+                    <h3 class="text-lg font-semibold mb-1">Amenities and Features</h3>
+                    <p class="text-sm text-muted-foreground">
+                      Select the amenities and features available for this property
+                    </p>
+                  </div>
+
+                  <!-- Amenities -->
+                  @if (amenitiesOptions().length > 0) {
+                    <div class="space-y-3">
+                      <h4 class="text-sm font-medium text-foreground">Amenities</h4>
+                      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                        @for (amenity of amenitiesOptions(); track amenity) {
+                          <label class="flex items-center gap-2 p-2 rounded-md border border-border hover:bg-accent/50 transition-colors cursor-pointer">
+                            <z-checkbox
+                              [ngModel]="isAmenityOrFeatureSelected('amenity', amenity)"
+                              (checkChange)="toggleAmenityOrFeature('amenity', amenity)"
+                            />
+                            <span class="text-sm flex-1">{{ amenity }}</span>
+                          </label>
+                        }
+                      </div>
+                    </div>
+                  }
+
+                  <!-- Features -->
+                  @if (featuresOptions().length > 0) {
+                    <div class="space-y-3">
+                      <h4 class="text-sm font-medium text-foreground">Features</h4>
+                      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                        @for (feature of featuresOptions(); track feature) {
+                          <label class="flex items-center gap-2 p-2 rounded-md border border-border hover:bg-accent/50 transition-colors cursor-pointer">
+                            <z-checkbox
+                              [ngModel]="isAmenityOrFeatureSelected('feature', feature)"
+                              (checkChange)="toggleAmenityOrFeature('feature', feature)"
+                            />
+                            <span class="text-sm flex-1">{{ feature }}</span>
+                          </label>
+                        }
+                      </div>
+                    </div>
+                  }
+
+                  @if (amenitiesOptions().length === 0 && featuresOptions().length === 0) {
+                    <div class="text-sm text-muted-foreground italic">
+                      No amenities or features available. Please configure them in Settings.
+                    </div>
+                  }
+                </div>
+
                 <!-- Owner Section -->
                 <div class="space-y-6 pb-6 border-b">
                   <div>

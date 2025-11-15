@@ -183,6 +183,8 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
   readonly propertyTypes = signal<string[]>([]);
   readonly categories = signal<Category[]>([]);
   readonly defaultCity = signal<string>('');
+  readonly amenitiesOptions = signal<string[]>([]);
+  readonly featuresOptions = signal<string[]>([]);
   
   // City options (same as in settings)
   readonly cityOptions = ['Tanger', 'Casablanca', 'Rabat', 'Kenitra', 'Agadir'];
@@ -667,6 +669,14 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
         } else {
           console.log('[Default City] No defaultCity found in settings');
         }
+
+        if (settings.amenities && Array.isArray(settings.amenities)) {
+          this.amenitiesOptions.set(settings.amenities);
+        }
+
+        if (settings.features && Array.isArray(settings.features)) {
+          this.featuresOptions.set(settings.features);
+        }
       }
     } catch (error) {
       console.error('Error loading settings from localStorage:', error);
@@ -1094,5 +1104,29 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
     if (!contactId) return 'Select owner';
     const owner = this.owners().find(o => o.id === contactId);
     return owner ? this.getOwnerDisplayName(owner) : 'Select owner';
+  }
+
+  /**
+   * Toggle amenity/feature selection
+   */
+  toggleAmenityOrFeature(type: 'amenity' | 'feature', value: string): void {
+    const field = type === 'amenity' ? 'equipment' : 'features';
+    const currentValues = this.formData()[field];
+    
+    if (currentValues.includes(value)) {
+      // Remove if already selected
+      this.updateField(field, currentValues.filter(v => v !== value));
+    } else {
+      // Add if not selected
+      this.updateField(field, [...currentValues, value]);
+    }
+  }
+
+  /**
+   * Check if amenity/feature is selected
+   */
+  isAmenityOrFeatureSelected(type: 'amenity' | 'feature', value: string): boolean {
+    const field = type === 'amenity' ? 'equipment' : 'features';
+    return this.formData()[field].includes(value);
   }
 }
