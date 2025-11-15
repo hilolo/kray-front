@@ -16,7 +16,7 @@ export const layoutVariants = cva('flex w-full min-h-0', {
 export type LayoutVariants = VariantProps<typeof layoutVariants>;
 
 // Header Variants
-export const headerVariants = cva('flex items-center px-4 bg-background border-b border-border shrink-0', {
+export const headerVariants = cva('flex items-center px-5 h-14 bg-background border-b border-border shrink-0', {
   variants: {},
 });
 export type HeaderVariants = VariantProps<typeof headerVariants>;
@@ -33,7 +33,7 @@ export type ContentVariants = VariantProps<typeof contentVariants>;
 
 // Sidebar Variants
 export const sidebarVariants = cva(
-  'relative flex flex-col h-full transition-all duration-300 ease-in-out border-r shrink-0 p-2 bg-sidebar text-sidebar-foreground border-sidebar-border',
+  'relative flex flex-col h-full transition-all duration-300 ease-in-out border-r shrink-0 bg-sidebar text-sidebar-foreground border-sidebar-border',
 );
 
 export const sidebarTriggerVariants = cva(
