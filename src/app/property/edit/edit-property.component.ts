@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, inject, OnDestroy, OnInit, signal, TemplateRef, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, ElementRef, inject, OnDestroy, OnInit, signal, TemplateRef, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -14,9 +14,12 @@ import { ZardSelectItemComponent } from '@shared/components/select/select-item.c
 import { ZardCheckboxComponent } from '@shared/components/checkbox/checkbox.component';
 import { ZardCardComponent } from '@shared/components/card/card.component';
 import { ZardImageHoverPreviewDirective } from '@shared/components/image-hover-preview/image-hover-preview.component';
+import { ZardComboboxComponent, ZardComboboxOption } from '@shared/components/combobox/combobox.component';
+import { ZardDialogService } from '@shared/components/dialog/dialog.service';
 import { PropertyService } from '@shared/services/property.service';
 import { UserService } from '@shared/services/user.service';
 import { ContactService } from '@shared/services/contact.service';
+import { EditContactComponent } from '../../contact/edit/edit-contact.component';
 import type { Property } from '@shared/models/property/property.model';
 import { PropertyCategory, TypePaiment, AttachmentDetails } from '@shared/models/property/property.model';
 import type { CreatePropertyRequest, PropertyImageInput } from '@shared/models/property/create-property-request.model';
@@ -83,6 +86,7 @@ type PropertyFormData = {
     ZardCheckboxComponent,
     ZardCardComponent,
     ZardImageHoverPreviewDirective,
+    ZardComboboxComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './edit-property.component.html',
@@ -93,6 +97,8 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
   private readonly propertyService = inject(PropertyService);
   private readonly userService = inject(UserService);
   private readonly contactService = inject(ContactService);
+  private readonly dialogService = inject(ZardDialogService);
+  private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroy$ = new Subject<void>();
 
   // Effect to sync default city after settings load
@@ -170,6 +176,7 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
 
   // Contacts/Owners
   readonly owners = signal<Contact[]>([]);
+  readonly ownerOptions = signal<ZardComboboxOption[]>([]);
   readonly isLoadingOwners = signal(false);
 
   // Settings
@@ -489,11 +496,152 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
     this.contactService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response) => {
         this.owners.set(response.result);
+        // Convert contacts to combobox options
+        const options: ZardComboboxOption[] = response.result.map(contact => ({
+          value: contact.id,
+          label: this.getOwnerDisplayName(contact),
+        }));
+        this.ownerOptions.set(options);
         this.isLoadingOwners.set(false);
       },
       error: (error) => {
         console.error('Error loading owners:', error);
         this.isLoadingOwners.set(false);
+      },
+    });
+  }
+
+  /**
+   * Open dialog to add a new owner
+   */
+  openAddOwnerDialog(): void {
+    const dialogRef = this.dialogService.create({
+      zContent: EditContactComponent,
+      zTitle: 'Add Owner',
+      zWidth: '1200px',
+      zCustomClasses: 'max-w-[calc(100vw-2rem)] sm:max-w-[1200px] max-h-[90vh] overflow-hidden flex flex-col',
+      zData: { contactType: ContactType.Owner },
+      zHideFooter: true,
+      zClosable: true,
+    });
+
+    // Flag to prevent multiple calls to handleNewOwnerCreated
+    let ownerHandled = false;
+    let checkInterval: any = null;
+
+    // Helper function to handle the new owner (with duplicate prevention)
+    const handleResult = (result: any) => {
+      if (ownerHandled) {
+        return;
+      }
+      if (result && result.contactId) {
+        ownerHandled = true;
+        const newContactId = result.contactId;
+        if (checkInterval) {
+          clearInterval(checkInterval);
+        }
+        this.handleNewOwnerCreated(newContactId);
+        return true;
+      }
+      return false;
+    };
+
+    // Try to access result through multiple methods
+    const getResult = () => {
+      // Method 1: Use the public getResult method if available
+      if (typeof (dialogRef as any)?.getResult === 'function') {
+        const methodResult = (dialogRef as any).getResult();
+        if (methodResult) {
+          return methodResult;
+        }
+      }
+
+      // Method 2: Direct access to result property (protected, but accessible via any)
+      const directResult = (dialogRef as any)?.result;
+      if (directResult) {
+        return directResult;
+      }
+
+      // Method 3: Access through component instance (if it stores the result)
+      const componentInstance = (dialogRef as any)?.componentInstance;
+      if (componentInstance && (componentInstance as any).dialogResult) {
+        return (componentInstance as any).dialogResult;
+      }
+
+      return undefined;
+    };
+
+    // Use a longer polling period since contact creation is async and can take time
+    let attempts = 0;
+    const maxAttempts = 120; // 12 seconds total (contact creation can take time)
+    checkInterval = setInterval(() => {
+      attempts++;
+      const result = getResult();
+      
+      if (handleResult(result)) {
+        // Already handled in handleResult
+      } else if (attempts >= maxAttempts) {
+        clearInterval(checkInterval);
+      }
+    }, 100);
+
+    // Also try to get result after multiple delays (in case polling misses it)
+    // Contact creation is async, so we need longer delays
+    [300, 1000, 2000, 3000, 5000, 8000, 10000].forEach(delay => {
+      setTimeout(() => {
+        if (ownerHandled) return;
+        const delayedResult = getResult();
+        handleResult(delayedResult);
+      }, delay);
+    });
+  }
+
+  /**
+   * Handle the creation of a new owner
+   */
+  private handleNewOwnerCreated(newContactId: string): void {
+    // Reload owners list to include the new owner
+    this.isLoadingOwners.set(true);
+    const request = {
+      currentPage: 1,
+      pageSize: 1000,
+      ignore: false,
+      type: ContactType.Owner,
+    };
+    
+    this.contactService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (response) => {
+        this.owners.set(response.result || []);
+        
+        // Convert contacts to combobox options
+        const options: ZardComboboxOption[] = (response.result || []).map(contact => ({
+          value: contact.id,
+          label: this.getOwnerDisplayName(contact),
+        }));
+        
+        this.ownerOptions.set(options);
+        this.isLoadingOwners.set(false);
+        
+        // Force change detection
+        this.cdr.detectChanges();
+        
+        // Wait a bit for the combobox to update, then select the new owner
+        setTimeout(() => {
+          this.updateField('contactId', newContactId);
+          this.cdr.detectChanges();
+          
+          // Verify the update
+          setTimeout(() => {
+            this.cdr.detectChanges();
+          }, 100);
+        }, 300);
+      },
+      error: (error) => {
+        console.error('Error reloading owners:', error);
+        this.isLoadingOwners.set(false);
+        // Still try to select the new owner even if reload failed
+        this.updateField('contactId', newContactId);
+        this.cdr.detectChanges();
       },
     });
   }
@@ -584,13 +732,20 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
   }
 
   getOwnerDisplayName(contact: Contact): string {
+    let name = '';
     if (contact.isACompany && contact.companyName) {
-      return contact.companyName;
+      name = contact.companyName;
+    } else {
+      const firstName = contact.firstName || '';
+      const lastName = contact.lastName || '';
+      name = `${firstName} ${lastName}`.trim();
     }
-    const firstName = contact.firstName || '';
-    const lastName = contact.lastName || '';
-    const name = `${firstName} ${lastName}`.trim();
-    return name || contact.identifier || 'Unnamed Owner';
+    
+    // Add reference if available
+    if (contact.identifier) {
+      return name ? `${name} (${contact.identifier})` : contact.identifier;
+    }
+    return name || 'Unnamed Owner';
   }
 
   // Image handlers

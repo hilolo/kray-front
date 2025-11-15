@@ -333,17 +333,29 @@
                   <z-form-field>
                     <z-form-label zRequired>Owner</z-form-label>
                     <z-form-control [errorMessage]="contactIdError()">
-                      <z-select
-                        [zValue]="formData().contactId || ''"
-                        [zLabel]="getOwnerLabel()"
-                        (zSelectionChange)="updateField('contactId', $event)"
-                      >
-                        @for (owner of owners(); track owner.id) {
-                          <z-select-item [zValue]="owner.id">
-                            {{ getOwnerDisplayName(owner) }}
-                          </z-select-item>
-                        }
-                      </z-select>
+                      <div class="flex gap-2">
+                        <z-combobox
+                          [options]="ownerOptions()"
+                          [value]="formData().contactId || null"
+                          [placeholder]="'Select owner...'"
+                          [searchPlaceholder]="'Search owners...'"
+                          [emptyText]="'No owners found'"
+                          [searchable]="true"
+                          [disabled]="isLoadingOwners()"
+                          (zValueChange)="updateField('contactId', $event || '')"
+                          [zWidth]="'full'"
+                          class="flex-1 [&_z-command-list]:max-h-[500px] [&_z-popover]:!w-[400px]"
+                        />
+                        <z-button
+                          zType="outline"
+                          zSize="default"
+                          (click)="openAddOwnerDialog()"
+                          title="Add new owner"
+                          class="flex-shrink-0"
+                        >
+                          <z-icon zType="plus" zSize="sm" />
+                        </z-button>
+                      </div>
                     </z-form-control>
                   </z-form-field>
                 </div>

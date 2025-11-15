@@ -17,6 +17,13 @@ export class ZardDialogRef<T = any, R = any, U = any> {
   protected result?: R;
   componentInstance: T | null = null;
 
+  /**
+   * Get the dialog result
+   */
+  getResult(): R | undefined {
+    return this.result;
+  }
+
   constructor(
     private overlayRef: OverlayRef,
     private config: ZardDialogOptions<T, U>,

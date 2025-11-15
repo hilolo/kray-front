@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, ElementRef, inject, OnDestroy, OnInit, signal, TemplateRef, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, inject, OnDestroy, OnInit, signal, TemplateRef, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -9,6 +9,8 @@ import type { CreateContactRequest, AttachmentInput } from '@shared/models/conta
 import type { UpdateContactRequest } from '@shared/models/contact/update-contact-request.model';
 import { ContactService } from '@shared/services/contact.service';
 import { UserService } from '@shared/services/user.service';
+import { ZardDialogRef } from '@shared/components/dialog/dialog-ref';
+import { Z_MODAL_DATA } from '@shared/components/dialog/dialog.service';
 import { ZardPageComponent } from '../../page/page.component';
 import { ZardButtonComponent } from '@shared/components/button/button.component';
 import { ZardInputDirective } from '@shared/components/input/input.directive';
@@ -66,12 +68,26 @@ export class EditContactComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly contactService = inject(ContactService);
   private readonly userService = inject(UserService);
+  readonly dialogRef = inject(ZardDialogRef, { optional: true });
+  private readonly dialogData = inject<{ contactType?: ContactType }>(Z_MODAL_DATA, { optional: true });
   private readonly destroy$ = new Subject<void>();
 
   readonly contactType = signal<ContactType>(ContactType.Tenant);
   readonly contactId = signal<string | null>(null);
   readonly isEditMode = computed(() => this.contactId() !== null);
   readonly isLoading = signal(false);
+  readonly isDialogMode = computed(() => this.dialogRef !== null);
+
+  // Effect to ensure contactType is set from dialogData if provided (runs immediately on init)
+  private readonly contactTypeEffect = effect(() => {
+    // If dialogData has contactType, ensure it's set (this runs immediately when component is created)
+    if (this.dialogData?.contactType !== undefined) {
+      const currentType = this.contactType();
+      if (currentType !== this.dialogData.contactType) {
+        this.contactType.set(this.dialogData.contactType);
+      }
+    }
+  });
   
   // Form data
   readonly formData = signal<ContactFormData>({
@@ -292,12 +308,18 @@ export class EditContactComponent implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
-    // Get contact type from route path
-    // Routes: /contact/tenants/add, /contact/owners/add, /contact/services/add, /contact/tenants/:id
-    const routePath = this.route.snapshot.routeConfig?.path || 'tenants/add';
-    const typeParam = routePath.split('/')[0]; // Extract 'tenants', 'owners', or 'services'
-    const type = routeParamToContactType(typeParam);
-    this.contactType.set(type);
+    // Check if we're in dialog mode (dialogData provided)
+    if (this.dialogData?.contactType) {
+      // Lock contactType when provided via dialog data (e.g., from property page)
+      this.contactType.set(this.dialogData.contactType);
+    } else {
+      // Get contact type from route path
+      // Routes: /contact/tenants/add, /contact/owners/add, /contact/services/add, /contact/tenants/:id
+      const routePath = this.route.snapshot.routeConfig?.path || 'tenants/add';
+      const typeParam = routePath.split('/')[0]; // Extract 'tenants', 'owners', or 'services'
+      const type = routeParamToContactType(typeParam);
+      this.contactType.set(type);
+    }
 
     // Check if we're in edit mode (has ID in route params)
     const id = this.route.snapshot.paramMap.get('id');
@@ -307,11 +329,15 @@ export class EditContactComponent implements OnInit, OnDestroy {
     }
 
     // Also listen to route changes in case of navigation
+    // IMPORTANT: Skip contactType updates when in dialog mode to preserve the type passed from dialog
     this.route.url.pipe(takeUntil(this.destroy$)).subscribe(() => {
-      const updatedRoutePath = this.route.snapshot.routeConfig?.path || 'tenants/add';
-      const updatedTypeParam = updatedRoutePath.split('/')[0];
-      const updatedType = routeParamToContactType(updatedTypeParam);
-      this.contactType.set(updatedType);
+      // Only update contactType from route if NOT in dialog mode
+      if (!this.isDialogMode() && !this.dialogData?.contactType) {
+        const updatedRoutePath = this.route.snapshot.routeConfig?.path || 'tenants/add';
+        const updatedTypeParam = updatedRoutePath.split('/')[0];
+        const updatedType = routeParamToContactType(updatedTypeParam);
+        this.contactType.set(updatedType);
+      }
 
       // Check for ID in route params
       const updatedId = this.route.snapshot.paramMap.get('id');
@@ -678,7 +704,16 @@ export class EditContactComponent implements OnInit, OnDestroy {
     this.isSaving.set(true);
 
     const data = this.formData();
-    const contactType = this.contactType();
+    // CRITICAL: Use dialogData.contactType if available (from property page), otherwise use signal value
+    // This ensures the type is always correct when opened from property page
+    let contactType = this.contactType();
+    if (this.dialogData?.contactType !== undefined) {
+      contactType = this.dialogData.contactType;
+      // Also update the signal to keep it in sync
+      if (this.contactType() !== contactType) {
+        this.contactType.set(contactType);
+      }
+    }
     const contactId = this.contactId();
 
     // Check if we're in edit mode
@@ -697,8 +732,13 @@ export class EditContactComponent implements OnInit, OnDestroy {
                 this.formSubmitted.set(false);
                 this.isSaving.set(false);
                 
-                // Navigate back to list
-                this.router.navigate(['/contact', contactTypeToRouteParam(contactType)]);
+                // If in dialog mode, close dialog with contactId
+                if (this.dialogRef) {
+                  this.dialogRef.close({ contactId: updatedContact.id });
+                } else {
+                  // Navigate back to list
+                  this.router.navigate(['/contact', contactTypeToRouteParam(contactType)]);
+                }
               },
               error: (error) => {
                 console.error('Error updating contact:', error);
@@ -720,14 +760,21 @@ export class EditContactComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this.destroy$))
             .subscribe({
               next: (createdContact) => {
-                console.log('Contact created successfully:', createdContact);
-                
                 // Reset form submitted state on successful submission
                 this.formSubmitted.set(false);
                 this.isSaving.set(false);
                 
-                // Navigate back to list
-                this.router.navigate(['/contact', contactTypeToRouteParam(contactType)]);
+                // If in dialog mode, close dialog with contactId
+                if (this.dialogRef) {
+                  const result = { contactId: createdContact.id };
+                  // Use setTimeout to ensure the result is set before closing
+                  setTimeout(() => {
+                    this.dialogRef!.close(result);
+                  }, 50);
+                } else {
+                  // Navigate back to list
+                  this.router.navigate(['/contact', contactTypeToRouteParam(contactType)]);
+                }
               },
               error: (error) => {
                 console.error('Error creating contact:', error);

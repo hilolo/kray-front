@@ -1,17 +1,17 @@
-<z-page [zTitle]="isEditMode() ? 'Edit Contact' : 'Add Contact'">
-  <div class="flex flex-col h-full">
+@if (isDialogMode()) {
+  <div class="flex flex-col h-full min-h-0 overflow-hidden max-h-[85vh]">
     <!-- Header Section -->
-    <div class="space-y-4 pb-6">
+    <div class="space-y-3 pb-4 flex-shrink-0">
       <div class="flex items-center justify-between">
         <div>
-          <h2 class="text-3xl font-bold mb-2">
+          <h2 class="text-2xl font-bold mb-1">
             @if (isEditMode()) {
               Edit Contact
             } @else {
               Add New Contact
             }
           </h2>
-          <p class="text-muted-foreground">
+          <p class="text-sm text-muted-foreground">
             @if (isEditMode()) {
               Update the contact information below
             } @else {
@@ -20,7 +20,7 @@
           </p>
         </div>
         <div class="flex gap-2">
-          <z-button zType="outline" zSize="default" [disabled]="isSaving()" (click)="!isSaving() && onCancel()">
+          <z-button zType="outline" zSize="default" [disabled]="isSaving()" (click)="!isSaving() && dialogRef?.close()">
             Cancel
           </z-button>
           <z-button [zType]="isSaving() || !isFormValid() ? 'ghost' : 'default'" [disabled]="isSaving()" (click)="!isSaving() && onSave()">
@@ -39,7 +39,7 @@
     </div>
 
     <!-- Main Form Card -->
-    <div class="flex-1 overflow-auto">
+    <div class="flex-1 min-h-0 overflow-y-auto">
       @if (isLoading()) {
         <div class="flex items-center justify-center h-full">
           <div class="flex flex-col items-center gap-4">
@@ -48,503 +48,566 @@
           </div>
         </div>
       } @else {
-      <z-card class="max-w-7xl mx-auto">
-        <div class="p-8 space-y-8">
-          <!-- Top Row: Avatar (Left) and Contact Type (Right) -->
-          <div class="flex items-start justify-between gap-8 pb-6 border-b">
-            <!-- Avatar Image -->
-            <div class="flex-shrink-0">
-              <div class="relative">
-                @if (avatarUrl()) {
-                  <div class="w-32 h-32 rounded-full overflow-hidden border-4 border-border">
-                    <img
-                      [src]="avatarUrl()"
-                      alt="Contact avatar"
-                      class="w-full h-full object-cover"
-                    />
-                  </div>
-                } @else {
-                  <div class="w-32 h-32 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-primary-foreground text-4xl font-bold border-4 border-border">
-                    {{ getInitials() }}
-                  </div>
-                }
-                <button
-                  type="button"
-                  (click)="onAvatarClick()"
-                  class="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-3 hover:bg-primary/90 transition-colors shadow-lg"
-                  title="Change avatar"
-                >
-                  <z-icon zType="camera" zSize="sm" />
-                </button>
-               
+        <z-card class="w-full">
+          <div class="p-6 space-y-6">
+            <ng-container *ngTemplateOutlet="formContent"></ng-container>
+          </div>
+        </z-card>
+      }
+    </div>
+  </div>
+} @else {
+  <z-page [zTitle]="isEditMode() ? 'Edit Contact' : 'Add Contact'">
+    <div class="flex flex-col h-full">
+      <!-- Header Section -->
+      <div class="space-y-4 pb-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-3xl font-bold mb-2">
+              @if (isEditMode()) {
+                Edit Contact
+              } @else {
+                Add New Contact
+              }
+            </h2>
+            <p class="text-muted-foreground">
+              @if (isEditMode()) {
+                Update the contact information below
+              } @else {
+                Create a new contact by filling in the information below
+              }
+            </p>
+          </div>
+          <div class="flex gap-2">
+            <z-button zType="outline" zSize="default" [disabled]="isSaving()" (click)="!isSaving() && onCancel()">
+              Cancel
+            </z-button>
+            <z-button [zType]="isSaving() || !isFormValid() ? 'ghost' : 'default'" [disabled]="isSaving()" (click)="!isSaving() && onSave()">
+              @if (isSaving()) {
+                <span class="flex items-center gap-2">
+                  <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+                  Saving...
+                </span>
+              } @else {
+                <z-icon zType="check" zSize="sm" class="mr-2" />
+                Save Contact
+              }
+            </z-button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Form Card -->
+      <div class="flex-1 overflow-auto">
+        @if (isLoading()) {
+          <div class="flex items-center justify-center h-full">
+            <div class="flex flex-col items-center gap-4">
+              <z-icon zType="loader-circle" zSize="lg" class="animate-spin text-primary" />
+              <p class="text-muted-foreground">Loading contact data...</p>
+            </div>
+          </div>
+        } @else {
+          <z-card class="max-w-7xl mx-auto">
+            <div class="p-8 space-y-8">
+              <ng-container *ngTemplateOutlet="formContent"></ng-container>
+            </div>
+          </z-card>
+        }
+      </div>
+    </div>
+  </z-page>
+}
+
+<!-- Shared Form Content Template -->
+<ng-template #formContent>
+  <!-- Top Row: Avatar (Left) and Contact Type (Right) -->
+  <div class="flex items-start justify-between gap-6 pb-4 border-b">
+    <!-- Avatar Image -->
+    <div class="flex-shrink-0">
+      <div class="relative">
+        @if (avatarUrl()) {
+          <div class="w-24 h-24 rounded-full overflow-hidden border-4 border-border">
+            <img
+              [src]="avatarUrl()"
+              alt="Contact avatar"
+              class="w-full h-full object-cover"
+            />
+          </div>
+        } @else {
+          <div class="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-primary-foreground text-3xl font-bold border-4 border-border">
+            {{ getInitials() }}
+          </div>
+        }
+        <button
+          type="button"
+          (click)="onAvatarClick()"
+          class="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-2 hover:bg-primary/90 transition-colors shadow-lg"
+          title="Change avatar"
+        >
+          <z-icon zType="camera" zSize="sm" />
+        </button>
+       
+        <input
+          #avatarInput
+          type="file"
+          accept="image/*"
+          (change)="onAvatarSelected($event)"
+          class="hidden"
+        />
+      </div>
+    </div>
+
+    <!-- Company Toggle -->
+    <div class="flex-shrink-0 space-y-1 text-right">
+      <h3 class="text-lg font-semibold">Contact Type</h3>
+      <p class="text-sm text-muted-foreground">
+        @if (isEditMode()) {
+          Contact type cannot be changed after creation
+        } @else {
+          Toggle to switch between individual and company contact
+        }
+      </p>
+      <div class="flex items-center justify-end gap-3 pt-2">
+        <span class="text-sm font-medium" [class.text-muted-foreground]="formData().isCompany">
+          Individual
+        </span>
+        <z-switch
+          [ngModel]="formData().isCompany"
+          (checkChange)="onCompanyToggle($event)"
+          [disabled]="isEditMode()"
+        />
+        <span class="text-sm font-medium" [class.text-muted-foreground]="!formData().isCompany">
+          Company
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section Headers Row: Personal Information | Contact Details -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Left Column Header -->
+    <div>
+      <h3 class="text-lg font-semibold mb-1">
+        @if (isCompany()) {
+          Company Information
+        } @else {
+          Personal Information
+        }
+      </h3>
+      <p class="text-sm text-muted-foreground">
+        @if (isCompany()) {
+          Enter the company details
+        } @else {
+          Enter the personal details
+        }
+      </p>
+    </div>
+
+    <!-- Right Column Header -->
+    <div>
+      <h3 class="text-lg font-semibold mb-1">Contact Details</h3>
+      <p class="text-sm text-muted-foreground">
+        How can we reach this contact?
+      </p>
+    </div>
+  </div>
+
+  <!-- Form Fields Row: Personal Information | Contact Details -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Left Column: Personal/Company Information -->
+    <div class="space-y-4">
+      @if (isCompany()) {
+        <!-- Company Fields -->
+        <div class="space-y-4">
+          <z-form-field>
+            <z-form-label zRequired>Company Name</z-form-label>
+            <z-form-control [errorMessage]="companyNameError()">
+              <z-input-group [zPrefix]="buildingIconTemplate">
                 <input
-                  #avatarInput
-                  type="file"
-                  accept="image/*"
-                  (change)="onAvatarSelected($event)"
-                  class="hidden"
+                  z-input
+                  type="text"
+                  [ngModel]="formData().companyName"
+                  (ngModelChange)="updateField('companyName', $event)"
+                  placeholder="Enter company name"
+                  [zStatus]="companyNameHasError() ? 'error' : undefined"
+                  class="w-full"
                 />
-              </div>
-            </div>
+              </z-input-group>
+            </z-form-control>
+          </z-form-field>
 
-            <!-- Company Toggle -->
-            <div class="flex-shrink-0 space-y-2 text-right">
-              <h3 class="text-lg font-semibold">Contact Type</h3>
-              <p class="text-sm text-muted-foreground">
-                @if (isEditMode()) {
-                  Contact type cannot be changed after creation
-                } @else {
-                  Toggle to switch between individual and company contact
-                }
-              </p>
-              <div class="flex items-center justify-end gap-3 pt-2">
-                <span class="text-sm font-medium" [class.text-muted-foreground]="formData().isCompany">
-                  Individual
-                </span>
-                <z-switch
-                  [ngModel]="formData().isCompany"
-                  (checkChange)="onCompanyToggle($event)"
-                  [disabled]="isEditMode()"
+          <z-form-field>
+            <z-form-label zRequired>ICE</z-form-label>
+            <z-form-control [errorMessage]="iceError()" helpText="Identifiant Commun de l'Entreprise">
+              <z-input-group [zPrefix]="idCardIconTemplate">
+                <input
+                  z-input
+                  type="text"
+                  [ngModel]="formData().ice"
+                  (ngModelChange)="updateField('ice', $event)"
+                  placeholder="Enter ICE number"
+                  [zStatus]="iceHasError() ? 'error' : undefined"
+                  class="w-full"
                 />
-                <span class="text-sm font-medium" [class.text-muted-foreground]="!formData().isCompany">
-                  Company
-                </span>
-              </div>
+              </z-input-group>
+            </z-form-control>
+          </z-form-field>
+
+          <z-form-field>
+            <z-form-label zRequired>RC</z-form-label>
+            <z-form-control [errorMessage]="rcError()" helpText="Registre de Commerce">
+              <z-input-group [zPrefix]="idCardIconTemplate">
+                <input
+                  z-input
+                  type="text"
+                  [ngModel]="formData().rc"
+                  (ngModelChange)="updateField('rc', $event)"
+                  placeholder="Enter RC number"
+                  [zStatus]="rcHasError() ? 'error' : undefined"
+                  class="w-full"
+                />
+              </z-input-group>
+            </z-form-control>
+          </z-form-field>
+        </div>
+      } @else {
+        <!-- Personal Fields -->
+        <div class="space-y-4">
+          <z-form-field>
+            <z-form-label zRequired>First Name</z-form-label>
+            <z-form-control [errorMessage]="firstNameError()">
+              <z-input-group [zPrefix]="userIconTemplate">
+                <input
+                  z-input
+                  type="text"
+                  [ngModel]="formData().firstName"
+                  (ngModelChange)="updateField('firstName', $event)"
+                  placeholder="Enter first name"
+                  [zStatus]="firstNameHasError() ? 'error' : undefined"
+                  class="w-full"
+                />
+              </z-input-group>
+            </z-form-control>
+          </z-form-field>
+
+          <z-form-field>
+            <z-form-label zRequired>Last Name</z-form-label>
+            <z-form-control [errorMessage]="lastNameError()">
+              <z-input-group [zPrefix]="userIconTemplate">
+                <input
+                  z-input
+                  type="text"
+                  [ngModel]="formData().lastName"
+                  (ngModelChange)="updateField('lastName', $event)"
+                  placeholder="Enter last name"
+                  [zStatus]="lastNameHasError() ? 'error' : undefined"
+                  class="w-full"
+                />
+              </z-input-group>
+            </z-form-control>
+          </z-form-field>
+
+          <z-form-field>
+            <z-form-label zRequired>Identifier</z-form-label>
+            <z-form-control [errorMessage]="identifierError()" helpText="National ID or Passport number">
+              <z-input-group [zPrefix]="idCardIconTemplate">
+                <input
+                  z-input
+                  type="text"
+                  [ngModel]="formData().identifier"
+                  (ngModelChange)="updateField('identifier', $event)"
+                  placeholder="Enter identifier"
+                  [zStatus]="identifierHasError() ? 'error' : undefined"
+                  class="w-full"
+                />
+              </z-input-group>
+            </z-form-control>
+          </z-form-field>
+        </div>
+      }
+    </div>
+
+    <!-- Right Column: Contact Details -->
+    <div class="space-y-4">
+      <!-- First Phone Number and Email (Same Row) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <z-form-field>
+          <z-form-label zRequired>Phone Number</z-form-label>
+          <z-form-control [errorMessage]="phoneNumberError()">
+            <div class="flex gap-2">
+              <z-input-group [zPrefix]="phoneIconTemplate" class="flex-1">
+                <input
+                  z-input
+                  type="tel"
+                  [ngModel]="formData().phoneNumbers[0]"
+                  (ngModelChange)="updatePhoneNumber(0, $event)"
+                  placeholder="+212 (605) 000-0000"
+                  [zStatus]="phoneNumberHasError() ? 'error' : undefined"
+                  class="w-full"
+                />
+              </z-input-group>
+              <z-button
+                zType="outline"
+                zSize="icon"
+                class="flex-shrink-0"
+                (click)="addPhoneNumber()"
+                title="Add another phone number"
+              >
+                <z-icon zType="folder-plus" zSize="sm" />
+              </z-button>
             </div>
-          </div>
+          </z-form-control>
+        </z-form-field>
 
-          <!-- Section Headers Row: Personal Information | Contact Details -->
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <!-- Left Column Header -->
-            <div>
-              <h3 class="text-lg font-semibold mb-1">
-                @if (isCompany()) {
-                  Company Information
-                } @else {
-                  Personal Information
-                }
-              </h3>
-              <p class="text-sm text-muted-foreground">
-                @if (isCompany()) {
-                  Enter the company details
-                } @else {
-                  Enter the personal details
-                }
-              </p>
-            </div>
+        <z-form-field>
+          <z-form-label>Email Address</z-form-label>
+          <z-form-control>
+            <z-input-group [zPrefix]="mailIconTemplate">
+              <input
+                z-input
+                type="email"
+                [ngModel]="formData().email"
+                (ngModelChange)="updateField('email', $event)"
+                placeholder="name@example.com"
+                class="w-full"
+              />
+            </z-input-group>
+          </z-form-control>
+        </z-form-field>
+      </div>
 
-            <!-- Right Column Header -->
-            <div>
-              <h3 class="text-lg font-semibold mb-1">Contact Details</h3>
-              <p class="text-sm text-muted-foreground">
-                How can we reach this contact?
-              </p>
-            </div>
-          </div>
-
-          <!-- Form Fields Row: Personal Information | Contact Details -->
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <!-- Left Column: Personal/Company Information -->
-            <div class="space-y-6">
-
-                @if (isCompany()) {
-                  <!-- Company Fields -->
-                  <div class="space-y-6">
-                    <z-form-field>
-                      <z-form-label zRequired>Company Name</z-form-label>
-                      <z-form-control [errorMessage]="companyNameError()">
-                        <z-input-group [zPrefix]="buildingIconTemplate">
-                          <input
-                            z-input
-                            type="text"
-                            [ngModel]="formData().companyName"
-                            (ngModelChange)="updateField('companyName', $event)"
-                            placeholder="Enter company name"
-                            [zStatus]="companyNameHasError() ? 'error' : undefined"
-                            class="w-full"
-                          />
-                        </z-input-group>
-                      </z-form-control>
-                    </z-form-field>
-
-                    <z-form-field>
-                      <z-form-label zRequired>ICE</z-form-label>
-                      <z-form-control [errorMessage]="iceError()" helpText="Identifiant Commun de l'Entreprise">
-                        <z-input-group [zPrefix]="idCardIconTemplate">
-                          <input
-                            z-input
-                            type="text"
-                            [ngModel]="formData().ice"
-                            (ngModelChange)="updateField('ice', $event)"
-                            placeholder="Enter ICE number"
-                            [zStatus]="iceHasError() ? 'error' : undefined"
-                            class="w-full"
-                          />
-                        </z-input-group>
-                      </z-form-control>
-                    </z-form-field>
-
-                    <z-form-field>
-                      <z-form-label zRequired>RC</z-form-label>
-                      <z-form-control [errorMessage]="rcError()" helpText="Registre de Commerce">
-                        <z-input-group [zPrefix]="idCardIconTemplate">
-                          <input
-                            z-input
-                            type="text"
-                            [ngModel]="formData().rc"
-                            (ngModelChange)="updateField('rc', $event)"
-                            placeholder="Enter RC number"
-                            [zStatus]="rcHasError() ? 'error' : undefined"
-                            class="w-full"
-                          />
-                        </z-input-group>
-                      </z-form-control>
-                    </z-form-field>
-                  </div>
-                } @else {
-                  <!-- Personal Fields -->
-                  <div class="space-y-6">
-                    <z-form-field>
-                      <z-form-label zRequired>First Name</z-form-label>
-                      <z-form-control [errorMessage]="firstNameError()">
-                        <z-input-group [zPrefix]="userIconTemplate">
-                          <input
-                            z-input
-                            type="text"
-                            [ngModel]="formData().firstName"
-                            (ngModelChange)="updateField('firstName', $event)"
-                            placeholder="Enter first name"
-                            [zStatus]="firstNameHasError() ? 'error' : undefined"
-                            class="w-full"
-                          />
-                        </z-input-group>
-                      </z-form-control>
-                    </z-form-field>
-
-                    <z-form-field>
-                      <z-form-label zRequired>Last Name</z-form-label>
-                      <z-form-control [errorMessage]="lastNameError()">
-                        <z-input-group [zPrefix]="userIconTemplate">
-                          <input
-                            z-input
-                            type="text"
-                            [ngModel]="formData().lastName"
-                            (ngModelChange)="updateField('lastName', $event)"
-                            placeholder="Enter last name"
-                            [zStatus]="lastNameHasError() ? 'error' : undefined"
-                            class="w-full"
-                          />
-                        </z-input-group>
-                      </z-form-control>
-                    </z-form-field>
-
-                    <z-form-field>
-                      <z-form-label zRequired>Identifier</z-form-label>
-                      <z-form-control [errorMessage]="identifierError()" helpText="National ID or Passport number">
-                        <z-input-group [zPrefix]="idCardIconTemplate">
-                          <input
-                            z-input
-                            type="text"
-                            [ngModel]="formData().identifier"
-                            (ngModelChange)="updateField('identifier', $event)"
-                            placeholder="Enter identifier"
-                            [zStatus]="identifierHasError() ? 'error' : undefined"
-                            class="w-full"
-                          />
-                        </z-input-group>
-                      </z-form-control>
-                    </z-form-field>
-                  </div>
-                }
-            </div>
-
-            <!-- Right Column: Contact Details -->
-            <div class="space-y-6">
-              <!-- First Phone Number and Email (Same Row) -->
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <z-form-field>
-                  <z-form-label zRequired>Phone Number</z-form-label>
-                  <z-form-control [errorMessage]="phoneNumberError()">
-                    <div class="flex gap-2">
-                      <z-input-group [zPrefix]="phoneIconTemplate" class="flex-1">
-                        <input
-                          z-input
-                          type="tel"
-                          [ngModel]="formData().phoneNumbers[0]"
-                          (ngModelChange)="updatePhoneNumber(0, $event)"
-                          placeholder="+212 (605) 000-0000"
-                          [zStatus]="phoneNumberHasError() ? 'error' : undefined"
-                          class="w-full"
-                        />
-                      </z-input-group>
-                      <z-button
-                        zType="outline"
-                        zSize="icon"
-                        class="flex-shrink-0"
-                        (click)="addPhoneNumber()"
-                        title="Add another phone number"
-                      >
-                        <z-icon zType="folder-plus" zSize="sm" />
-                      </z-button>
-                    </div>
-                  </z-form-control>
-                </z-form-field>
-
-                <z-form-field>
-                  <z-form-label>Email Address</z-form-label>
-                  <z-form-control>
-                    <z-input-group [zPrefix]="mailIconTemplate">
+      <!-- Additional Phone Numbers -->
+      @if (formData().phoneNumbers.length > 1) {
+        <div class="space-y-3">
+          @for (phone of formData().phoneNumbers; track $index) {
+            @if ($index > 0) {
+              <z-form-field>
+                <z-form-control>
+                  <div class="flex gap-2">
+                    <z-input-group [zPrefix]="phoneIconTemplate" class="flex-1">
                       <input
                         z-input
-                        type="email"
-                        [ngModel]="formData().email"
-                        (ngModelChange)="updateField('email', $event)"
-                        placeholder="name@example.com"
+                        type="tel"
+                        [ngModel]="phone"
+                        (ngModelChange)="updatePhoneNumber($index, $event)"
+                        placeholder="+212 (605) 000-0000"
                         class="w-full"
                       />
                     </z-input-group>
-                  </z-form-control>
-                </z-form-field>
-              </div>
-
-              <!-- Additional Phone Numbers -->
-              @if (formData().phoneNumbers.length > 1) {
-                <div class="space-y-3">
-                  @for (phone of formData().phoneNumbers; track $index) {
-                    @if ($index > 0) {
-                      <z-form-field>
-                        <z-form-control>
-                          <div class="flex gap-2">
-                            <z-input-group [zPrefix]="phoneIconTemplate" class="flex-1">
-                              <input
-                                z-input
-                                type="tel"
-                                [ngModel]="phone"
-                                (ngModelChange)="updatePhoneNumber($index, $event)"
-                                placeholder="+212 (605) 000-0000"
-                                class="w-full"
-                              />
-                            </z-input-group>
-                            <z-button
-                              zType="ghost"
-                              zSize="icon"
-                              class="flex-shrink-0 text-muted-foreground hover:text-destructive"
-                              (click)="removePhoneNumber($index)"
-                            >
-                              <z-icon zType="x" zSize="sm" />
-                            </z-button>
-                          </div>
-                        </z-form-control>
-                      </z-form-field>
-                    }
-                  }
-                </div>
-              }
-            </div>
-          </div>
-
-          <!-- Upload Documents Section -->
-          <div class="space-y-6 pt-6 border-t">
-            <div>
-              <h3 class="text-lg font-semibold mb-1">Documents</h3>
-              <p class="text-sm text-muted-foreground">
-                Attach relevant documents (optional)
-              </p>
-            </div>
-
-            <!-- Upload Area -->
-            <div
-              class="relative border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 hover:bg-accent/5 transition-all cursor-pointer group"
-              (click)="onUploadClick()"
-            >
-              <div class="flex flex-col items-center gap-3">
-                <div class="w-12 h-12 rounded-full bg-primary/10 group-hover:bg-primary/20 flex items-center justify-center transition-colors">
-                  <z-icon zType="upload" class="text-primary" />
-                </div>
-                <div>
-                  <p class="font-medium">Click to upload or drag and drop</p>
-                  <p class="text-sm text-muted-foreground mt-1">
-                    PDF, DOC, DOCX, XLS, XLSX, or images (Max 10MB per file)
-                  </p>
-                </div>
-              </div>
-              <input
-                #fileInput
-                type="file"
-                multiple
-                (change)="onFilesSelected($event)"
-                class="hidden"
-              />
-            </div>
-
-            <!-- Existing Attachments List -->
-            @if (hasExistingAttachments()) {
-              <div class="space-y-3">
-                <div class="flex items-center justify-between">
-                  <h4 class="text-sm font-medium">Existing Attachments</h4>
-                  <span class="text-xs text-muted-foreground">
-                    {{ existingAttachmentsCount() }} file{{ existingAttachmentsCount() > 1 ? 's' : '' }}
-                  </span>
-                </div>
-                <div class="space-y-2">
-                  @for (attachment of existingAttachments(); track attachment.id) {
-                    @if (!isAttachmentMarkedForDeletion(attachment.id)) {
-                      <div 
-                        class="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/30 transition-colors group" 
-                        [class.cursor-pointer]="isFileFormatSupported(attachment.url)" 
-                        (click)="isFileFormatSupported(attachment.url) && openFile(attachment.url, attachment.name, attachment.size)"
-                        [zImageHoverPreview]="getFileViewerType(attachment.url) === 'image' ? attachment.url : null"
-                        [zAlt]="attachment.name"
-                        [zPosition]="'right'"
-                        [zMaxWidth]="'400px'"
-                        [zMaxHeight]="'400px'"
-                      >
-                        <div class="flex-shrink-0 w-10 h-10 rounded bg-primary/10 flex items-center justify-center">
-                          <z-icon [zType]="getFileViewerType(attachment.url) === 'image' ? 'image' : 'file'" class="text-primary" zSize="sm" />
-                        </div>
-                        <div class="flex-1 min-w-0">
-                          <p class="font-medium text-sm truncate">{{ attachment.name }}</p>
-                          <p class="text-xs text-muted-foreground">{{ formatFileSize(attachment.size) }}</p>
-                        </div>
-                        <div class="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-                          @if (isFileFormatSupported(attachment.url)) {
-                            <z-button
-                              zType="ghost"
-                              zSize="icon"
-                              class="text-muted-foreground hover:text-primary"
-                              (click)="$event.stopPropagation(); openFile(attachment.url, attachment.name, attachment.size)"
-                              [attr.aria-label]="'Open file'"
-                            >
-                              <z-icon zType="arrow-right" zSize="sm" />
-                            </z-button>
-                          } @else {
-                            <z-button
-                              zType="ghost"
-                              zSize="icon"
-                              class="text-muted-foreground hover:text-primary"
-                              (click)="$event.stopPropagation(); downloadFile(attachment.url, attachment.name)"
-                              [attr.aria-label]="'Download file'"
-                            >
-                              <z-icon zType="download" zSize="sm" />
-                            </z-button>
-                          }
-                          <z-button
-                            zType="ghost"
-                            zSize="icon"
-                            class="text-muted-foreground hover:text-destructive"
-                            (click)="$event.stopPropagation(); onDeleteAttachment(attachment.id)"
-                            [attr.aria-label]="'Delete file'"
-                          >
-                            <z-icon zType="x" zSize="sm" />
-                          </z-button>
-                        </div>
-                      </div>
-                    } @else {
-                      <div class="flex items-center gap-3 p-3 rounded-lg border border-destructive/50 bg-destructive/5 opacity-60 group">
-                        <div class="flex-shrink-0 w-10 h-10 rounded bg-destructive/10 flex items-center justify-center">
-                          <z-icon zType="file" class="text-destructive" zSize="sm" />
-                        </div>
-                        <div class="flex-1 min-w-0">
-                          <p class="font-medium text-sm truncate line-through">{{ attachment.name }}</p>
-                          <p class="text-xs text-muted-foreground">{{ formatFileSize(attachment.size) }}</p>
-                        </div>
-                        <div class="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <z-button
-                            zType="ghost"
-                            zSize="icon"
-                            class="text-muted-foreground hover:text-primary"
-                            (click)="onRestoreAttachment(attachment.id)"
-                            [attr.aria-label]="'Restore file'"
-                          >
-                            <z-icon zType="refresh-cw" zSize="sm" />
-                          </z-button>
-                        </div>
-                      </div>
-                    }
-                  }
-                </div>
-              </div>
+                    <z-button
+                      zType="ghost"
+                      zSize="icon"
+                      class="flex-shrink-0 text-muted-foreground hover:text-destructive"
+                      (click)="removePhoneNumber($index)"
+                    >
+                      <z-icon zType="x" zSize="sm" />
+                    </z-button>
+                  </div>
+                </z-form-control>
+              </z-form-field>
             }
-
-            <!-- Uploaded Files List -->
-            @if (hasUploadedFiles()) {
-              <div class="space-y-3">
-                <div class="flex items-center justify-between">
-                  <h4 class="text-sm font-medium">New Files to Upload</h4>
-                  <span class="text-xs text-muted-foreground">
-                    {{ uploadedFiles().length }} file{{ uploadedFiles().length > 1 ? 's' : '' }} · {{ formatFileSize(uploadedFilesSize()) }}
-                  </span>
-                </div>
-                <div class="space-y-2">
-                  @for (file of uploadedFiles(); track file.id) {
-                    <div class="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/30 transition-colors group">
-                      <div class="flex-shrink-0 w-10 h-10 rounded bg-primary/10 flex items-center justify-center">
-                        <z-icon [zType]="getFileIcon(file.type)" class="text-primary" zSize="sm" />
-                      </div>
-                      <div class="flex-1 min-w-0">
-                        <p class="font-medium text-sm truncate">{{ file.name }}</p>
-                        <p class="text-xs text-muted-foreground">{{ formatFileSize(file.size) }}</p>
-                      </div>
-                      <z-button
-                        zType="ghost"
-                        zSize="icon"
-                        class="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-                        (click)="onRemoveFile(file.id)"
-                      >
-                        <z-icon zType="x" zSize="sm" />
-                      </z-button>
-                    </div>
-                  }
-                </div>
-              </div>
-            }
-
-            <!-- Total Files Summary -->
-            @if (hasAnyAttachments()) {
-              <div class="pt-2 border-t">
-                <p class="text-xs text-muted-foreground text-center">
-                  Total: {{ (existingAttachmentsCount() + uploadedFiles().length) }} file{{ (existingAttachmentsCount() + uploadedFiles().length) > 1 ? 's' : '' }} · {{ formatFileSize(totalFileSize()) }}
-                </p>
-              </div>
-            }
-          </div>
-
+          }
         </div>
-      </z-card>
       }
     </div>
   </div>
 
-  <!-- Icon Templates -->
-  <ng-template #userIconTemplate>
-    <z-icon zType="user" zSize="sm" />
-  </ng-template>
+  <!-- Upload Documents Section -->
+  <div class="space-y-4 pt-4 border-t">
+    <div>
+      <h3 class="text-lg font-semibold mb-1">Documents</h3>
+      <p class="text-sm text-muted-foreground">
+        Attach relevant documents (optional)
+      </p>
+    </div>
 
-  <ng-template #idCardIconTemplate>
-    <z-icon zType="id-card" zSize="sm" />
-  </ng-template>
+    <!-- Upload Area -->
+    <div
+      class="relative border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 hover:bg-accent/5 transition-all cursor-pointer group"
+      (click)="onUploadClick()"
+    >
+      <div class="flex flex-col items-center gap-3">
+        <div class="w-12 h-12 rounded-full bg-primary/10 group-hover:bg-primary/20 flex items-center justify-center transition-colors">
+          <z-icon zType="upload" class="text-primary" />
+        </div>
+        <div>
+          <p class="font-medium">Click to upload or drag and drop</p>
+          <p class="text-sm text-muted-foreground mt-1">
+            PDF, DOC, DOCX, XLS, XLSX, or images (Max 10MB per file)
+          </p>
+        </div>
+      </div>
+      <input
+        #fileInput
+        type="file"
+        multiple
+        (change)="onFilesSelected($event)"
+        class="hidden"
+      />
+    </div>
 
-  <ng-template #buildingIconTemplate>
-    <z-icon zType="building" zSize="sm" />
-  </ng-template>
+    <!-- Existing Attachments List -->
+    @if (hasExistingAttachments()) {
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <h4 class="text-sm font-medium">Existing Attachments</h4>
+          <span class="text-xs text-muted-foreground">
+            {{ existingAttachmentsCount() }} file{{ existingAttachmentsCount() > 1 ? 's' : '' }}
+          </span>
+        </div>
+        <div class="space-y-2">
+          @for (attachment of existingAttachments(); track attachment.id) {
+            @if (!isAttachmentMarkedForDeletion(attachment.id)) {
+              <div 
+                class="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/30 transition-colors group" 
+                [class.cursor-pointer]="isFileFormatSupported(attachment.url)" 
+                (click)="isFileFormatSupported(attachment.url) && openFile(attachment.url, attachment.name, attachment.size)"
+                [zImageHoverPreview]="getFileViewerType(attachment.url) === 'image' ? attachment.url : null"
+                [zAlt]="attachment.name"
+                [zPosition]="'right'"
+                [zMaxWidth]="'400px'"
+                [zMaxHeight]="'400px'"
+              >
+                <div class="flex-shrink-0 w-10 h-10 rounded bg-primary/10 flex items-center justify-center">
+                  <z-icon [zType]="getFileViewerType(attachment.url) === 'image' ? 'image' : 'file'" class="text-primary" zSize="sm" />
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="font-medium text-sm truncate">{{ attachment.name }}</p>
+                  <p class="text-xs text-muted-foreground">{{ formatFileSize(attachment.size) }}</p>
+                </div>
+                <div class="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                  @if (isFileFormatSupported(attachment.url)) {
+                    <z-button
+                      zType="ghost"
+                      zSize="icon"
+                      class="text-muted-foreground hover:text-primary"
+                      (click)="$event.stopPropagation(); openFile(attachment.url, attachment.name, attachment.size)"
+                      [attr.aria-label]="'Open file'"
+                    >
+                      <z-icon zType="arrow-right" zSize="sm" />
+                    </z-button>
+                  } @else {
+                    <z-button
+                      zType="ghost"
+                      zSize="icon"
+                      class="text-muted-foreground hover:text-primary"
+                      (click)="$event.stopPropagation(); downloadFile(attachment.url, attachment.name)"
+                      [attr.aria-label]="'Download file'"
+                    >
+                      <z-icon zType="download" zSize="sm" />
+                    </z-button>
+                  }
+                  <z-button
+                    zType="ghost"
+                    zSize="icon"
+                    class="text-muted-foreground hover:text-destructive"
+                    (click)="$event.stopPropagation(); onDeleteAttachment(attachment.id)"
+                    [attr.aria-label]="'Delete file'"
+                  >
+                    <z-icon zType="x" zSize="sm" />
+                  </z-button>
+                </div>
+              </div>
+            } @else {
+              <div class="flex items-center gap-3 p-3 rounded-lg border border-destructive/50 bg-destructive/5 opacity-60 group">
+                <div class="flex-shrink-0 w-10 h-10 rounded bg-destructive/10 flex items-center justify-center">
+                  <z-icon zType="file" class="text-destructive" zSize="sm" />
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="font-medium text-sm truncate line-through">{{ attachment.name }}</p>
+                  <p class="text-xs text-muted-foreground">{{ formatFileSize(attachment.size) }}</p>
+                </div>
+                <div class="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <z-button
+                    zType="ghost"
+                    zSize="icon"
+                    class="text-muted-foreground hover:text-primary"
+                    (click)="onRestoreAttachment(attachment.id)"
+                    [attr.aria-label]="'Restore file'"
+                  >
+                    <z-icon zType="refresh-cw" zSize="sm" />
+                  </z-button>
+                </div>
+              </div>
+            }
+          }
+        </div>
+      </div>
+    }
 
-  <ng-template #mailIconTemplate>
-    <z-icon zType="mail" zSize="sm" />
-  </ng-template>
+    <!-- Uploaded Files List -->
+    @if (hasUploadedFiles()) {
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <h4 class="text-sm font-medium">New Files to Upload</h4>
+          <span class="text-xs text-muted-foreground">
+            {{ uploadedFiles().length }} file{{ uploadedFiles().length > 1 ? 's' : '' }} · {{ formatFileSize(uploadedFilesSize()) }}
+          </span>
+        </div>
+        <div class="space-y-2">
+          @for (file of uploadedFiles(); track file.id) {
+            <div class="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/30 transition-colors group">
+              <div class="flex-shrink-0 w-10 h-10 rounded bg-primary/10 flex items-center justify-center">
+                <z-icon [zType]="getFileIcon(file.type)" class="text-primary" zSize="sm" />
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="font-medium text-sm truncate">{{ file.name }}</p>
+                <p class="text-xs text-muted-foreground">{{ formatFileSize(file.size) }}</p>
+              </div>
+              <z-button
+                zType="ghost"
+                zSize="icon"
+                class="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                (click)="onRemoveFile(file.id)"
+              >
+                <z-icon zType="x" zSize="sm" />
+              </z-button>
+            </div>
+          }
+        </div>
+      </div>
+    }
 
-  <ng-template #phoneIconTemplate>
-    <z-icon zType="smartphone" zSize="sm" />
-  </ng-template>
+    <!-- Total Files Summary -->
+    @if (hasAnyAttachments()) {
+      <div class="pt-2 border-t">
+        <p class="text-xs text-muted-foreground text-center">
+          Total: {{ (existingAttachmentsCount() + uploadedFiles().length) }} file{{ (existingAttachmentsCount() + uploadedFiles().length) > 1 ? 's' : '' }} · {{ formatFileSize(totalFileSize()) }}
+        </p>
+      </div>
+    }
+  </div>
+</ng-template>
 
-  <!-- File Viewer -->
-  <z-file-viewer
-    [isOpen]="fileViewerOpen()"
-    [fileUrl]="fileViewerUrl()"
-    [fileName]="fileViewerName()"
-    [fileSize]="fileViewerSize()"
-    [images]="fileViewerImages()"
-    [currentIndex]="fileViewerCurrentIndex()"
-    (close)="fileViewerOpen.set(false)"
-    (imageChanged)="onImageChanged($event)"
-  />
-</z-page>
+<!-- Icon Templates -->
+<ng-template #userIconTemplate>
+  <z-icon zType="user" zSize="sm" />
+</ng-template>
+
+<ng-template #idCardIconTemplate>
+  <z-icon zType="id-card" zSize="sm" />
+</ng-template>
+
+<ng-template #buildingIconTemplate>
+  <z-icon zType="building" zSize="sm" />
+</ng-template>
+
+<ng-template #mailIconTemplate>
+  <z-icon zType="mail" zSize="sm" />
+</ng-template>
+
+<ng-template #phoneIconTemplate>
+  <z-icon zType="smartphone" zSize="sm" />
+</ng-template>
+
+<!-- File Viewer -->
+<z-file-viewer
+  [isOpen]="fileViewerOpen()"
+  [fileUrl]="fileViewerUrl()"
+  [fileName]="fileViewerName()"
+  [fileSize]="fileViewerSize()"
+  [images]="fileViewerImages()"
+  [currentIndex]="fileViewerCurrentIndex()"
+  (close)="fileViewerOpen.set(false)"
+  (imageChanged)="onImageChanged($event)"
+/>
