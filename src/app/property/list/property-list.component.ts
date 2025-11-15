@@ -19,6 +19,7 @@ import { ZardSelectComponent } from '@shared/components/select/select.component'
 import { ZardSelectItemComponent } from '@shared/components/select/select-item.component';
 import { ZardImageHoverPreviewDirective } from '@shared/components/image-hover-preview/image-hover-preview.component';
 import { ZardComboboxComponent, ZardComboboxOption } from '@shared/components/combobox/combobox.component';
+import { ZardSwitchComponent } from '@shared/components/switch/switch.component';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import type { Property } from '@shared/models/property/property.model';
@@ -52,6 +53,7 @@ import { ContactType } from '@shared/models/contact/contact.model';
     ZardSelectItemComponent,
     ZardComboboxComponent,
     ZardImageHoverPreviewDirective,
+    ZardSwitchComponent,
     TranslateModule,
     FormsModule,
     PropertyPricePipe,
@@ -77,6 +79,8 @@ export class PropertyListComponent implements OnInit, OnDestroy {
   readonly pageSizeOptions = signal([10, 20, 50, 100]);
   readonly pageSize = signal(10); // Will be initialized from preferences in ngOnInit
   readonly viewMode = signal<'list' | 'card'>('list');
+  readonly showArchived = signal(false);
+  readonly archivedProperties = signal<Property[]>([]);
   readonly properties = signal<Property[]>([]);
   readonly isLoading = signal(false);
   readonly totalPages = signal(1);
@@ -148,10 +152,13 @@ export class PropertyListComponent implements OnInit, OnDestroy {
   ]);
 
   readonly filteredProperties = computed(() => {
-    return this.properties();
+    return this.showArchived() ? this.archivedProperties() : this.properties();
   });
 
   readonly emptyMessage = computed(() => {
+    if (this.showArchived()) {
+      return 'No archived properties found';
+    }
     if (this.searchQuery()) {
       return 'No properties match your search';
     }
@@ -225,6 +232,12 @@ export class PropertyListComponent implements OnInit, OnDestroy {
   }
 
   loadProperties(): void {
+    if (this.showArchived()) {
+      // For archived properties, we might need a different endpoint
+      // For now, just return empty
+      return;
+    }
+
     this.isLoading.set(true);
     const request: PropertyListRequest = {
       currentPage: this.currentPage(),
@@ -394,6 +407,55 @@ export class PropertyListComponent implements OnInit, OnDestroy {
     // Save view type preference for current route
     const routeKey = this.getRouteKey();
     this.preferencesService.setViewType(routeKey, newViewMode);
+  }
+
+  toggleShowArchived(value: boolean): void {
+    this.showArchived.set(value);
+    // Clear selection and reset to first page when switching views
+    this.selectedRows.set(new Set());
+    this.currentPage.set(1);
+    this.loadProperties();
+  }
+
+  showArchiveConfirmation(): void {
+    const selectedCount = this.selectedCount();
+    const dialogRef = this.alertDialogService.confirm({
+      zTitle: 'Archive Properties',
+      zDescription: `Are you sure you want to archive ${selectedCount} propert${selectedCount > 1 ? 'ies' : 'y'}?`,
+      zOkText: 'Archive',
+      zCancelText: 'Cancel',
+      zOkDestructive: true,
+      zViewContainerRef: this.viewContainerRef,
+    });
+
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result) => {
+      if (result) {
+        this.archiveSelectedProperties();
+      }
+    });
+  }
+
+  archiveSelectedProperties(): void {
+    // Get selected property IDs
+    const selectedIds = Array.from(this.selectedRows());
+    
+    // Get properties to archive
+    const propertiesToArchive = this.properties().filter(
+      (property) => selectedIds.includes(property.id)
+    );
+    
+    // Remove archived properties from the active list
+    const updatedProperties = this.properties().filter(
+      (property) => !selectedIds.includes(property.id)
+    );
+    
+    // Add to archived list
+    const updatedArchived = [...this.archivedProperties(), ...propertiesToArchive];
+    
+    // Update properties and archived lists, clear selection
+    this.properties.set(updatedProperties);
+    this.archivedProperties.set(updatedArchived);
+    this.selectedRows.set(new Set());
   }
 
   onViewProperty(property: Property): void {
