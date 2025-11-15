@@ -3,8 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
-import { LayoutComponent } from '@shared/components/layout/layout.component';
-import { ContentComponent } from '@shared/components/layout/content.component';
 import { ZardPageComponent } from '../../page/page.component';
 import { ZardButtonComponent } from '@shared/components/button/button.component';
 import { ZardInputDirective } from '@shared/components/input/input.directive';
@@ -72,8 +70,6 @@ type PropertyFormData = {
   imports: [
     CommonModule,
     FormsModule,
-    LayoutComponent,
-    ContentComponent,
     ZardPageComponent,
     ZardButtonComponent,
     ZardInputDirective,
@@ -118,6 +114,20 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
         setTimeout(() => {
           console.log('[Default City] Final city value:', this.formData().city);
         }, 100);
+      }, 100);
+    }
+  });
+
+  // Effect to generate identifier when categories are loaded and in add mode
+  private readonly identifierEffect = effect(() => {
+    const categories = this.categories();
+    const isEdit = this.isEditMode();
+    const identifier = this.formData().identifier;
+    
+    // Generate identifier if: categories are loaded, we're in add mode, and identifier is empty
+    if (categories.length > 0 && !isEdit && (!identifier || identifier.trim() === '')) {
+      setTimeout(() => {
+        this.generateIdentifier();
       }, 100);
     }
   });
@@ -560,30 +570,17 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Handle category change - auto-fill identifier with reference
+   * Handle category change - regenerate identifier
    */
   onCategoryChange(category: PropertyCategory): void {
-    // Get previous category reference before updating
-    const previousCategory = this.formData().category;
-    const previousReference = this.getCategoryReference(previousCategory);
-    const currentIdentifier = this.formData().identifier;
-    
     // Update category field directly (without triggering onCategoryChange again)
     this.formData.update(data => ({
       ...data,
       category: category,
     }));
     
-    // Auto-fill identifier with category reference if identifier is empty or matches previous category reference
-    if (!currentIdentifier || currentIdentifier.trim() === '' || currentIdentifier === previousReference) {
-      const newReference = this.getCategoryReference(category);
-      if (newReference) {
-        this.formData.update(data => ({
-          ...data,
-          identifier: newReference,
-        }));
-      }
-    }
+    // Regenerate identifier when category changes
+    this.generateIdentifier();
   }
 
   getOwnerDisplayName(contact: Contact): string {

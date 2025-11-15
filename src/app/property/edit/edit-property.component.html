@@ -1,7 +1,7 @@
 <z-page [zTitle]="isEditMode() ? 'Edit Property' : 'Add Property'">
-      <div class="flex flex-col h-full">
+      <div class="flex flex-col min-h-0 h-full">
         <!-- Header Section -->
-        <div class="space-y-4 pb-6">
+        <div class="space-y-4 pb-6 flex-shrink-0">
           <div class="flex items-center justify-between">
             <div>
               <h2 class="text-3xl font-bold mb-2">
@@ -39,7 +39,7 @@
         </div>
 
         <!-- Main Form -->
-        <div class="flex-1 overflow-auto">
+        <div class="flex-1 min-h-0 overflow-y-auto">
           @if (isLoading()) {
             <div class="flex items-center justify-center h-full">
               <div class="flex flex-col items-center gap-4">
@@ -223,7 +223,7 @@
                             (ngModelChange)="updateField('area', +$event)"
                             placeholder="0"
                             min="0"
-                            step="0.01"
+                            step="100"
                             [zStatus]="areaHasError() ? 'error' : undefined"
                             class="w-full"
                           />
@@ -242,7 +242,7 @@
                             (ngModelChange)="updateField('pieces', +$event)"
                             placeholder="0"
                             min="0"
-                            step="0.1"
+                            step="1"
                             [zStatus]="piecesHasError() ? 'error' : undefined"
                             class="w-full"
                           />
@@ -261,7 +261,7 @@
                             (ngModelChange)="updateField('bathrooms', +$event)"
                             placeholder="0"
                             min="0"
-                            step="0.1"
+                            step="1"
                             class="w-full"
                           />
                         </z-input-group>
