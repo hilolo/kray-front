@@ -78,6 +78,7 @@ export class ContactListComponent implements OnInit, OnDestroy {
   readonly archivedContacts = signal<Contact[]>([]);
   readonly contacts = signal<Contact[]>([]);
   readonly isLoading = signal(false);
+  readonly isDeleting = signal(false);
   readonly totalPages = signal(1);
   readonly totalItems = signal(0);
   readonly contactTypeFilter = signal<'all' | 'individual' | 'company'>('all'); // Filter for Individual/Company
@@ -414,14 +415,23 @@ export class ContactListComponent implements OnInit, OnDestroy {
 
     dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result) => {
       if (result) {
-        // Remove contact from the list
-        const updatedContacts = this.contacts().filter((c) => c.id !== contact.id);
-        this.contacts.set(updatedContacts);
-        
-        // Remove from selection if selected
-        const newSet = new Set(this.selectedRows());
-        newSet.delete(contact.id);
-        this.selectedRows.set(newSet);
+        this.isDeleting.set(true);
+        this.contactService.delete(contact.id).pipe(takeUntil(this.destroy$)).subscribe({
+          next: () => {
+            // Reload contacts to get updated list from server
+            this.loadContacts();
+            // Remove from selection if selected
+            const newSet = new Set(this.selectedRows());
+            newSet.delete(contact.id);
+            this.selectedRows.set(newSet);
+            this.isDeleting.set(false);
+          },
+          error: (error) => {
+            console.error('Error deleting contact:', error);
+            this.isDeleting.set(false);
+            // Error is already handled by ApiService (toast notification)
+          },
+        });
       }
     });
   }

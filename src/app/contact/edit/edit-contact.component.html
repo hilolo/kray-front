@@ -58,9 +58,9 @@
   </div>
 } @else {
   <z-page [zTitle]="isEditMode() ? 'Edit Contact' : 'Add Contact'">
-    <div class="flex flex-col h-full">
+    <div class="flex flex-col h-full min-h-0 overflow-hidden">
       <!-- Header Section -->
-      <div class="space-y-4 pb-6">
+      <div class="space-y-4 pb-6 flex-shrink-0">
         <div class="flex items-center justify-between">
           <div>
             <h2 class="text-3xl font-bold mb-2">
@@ -98,7 +98,7 @@
       </div>
 
       <!-- Main Form Card -->
-      <div class="flex-1 overflow-auto">
+      <div class="flex-1 min-h-0 overflow-y-auto">
         @if (isLoading()) {
           <div class="flex items-center justify-center h-full">
             <div class="flex flex-col items-center gap-4">

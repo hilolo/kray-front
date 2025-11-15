@@ -83,6 +83,7 @@ export class PropertyListComponent implements OnInit, OnDestroy {
   readonly archivedProperties = signal<Property[]>([]);
   readonly properties = signal<Property[]>([]);
   readonly isLoading = signal(false);
+  readonly isDeleting = signal(false);
   readonly totalPages = signal(1);
   readonly totalItems = signal(0);
   readonly owners = signal<Contact[]>([]);
@@ -480,14 +481,23 @@ export class PropertyListComponent implements OnInit, OnDestroy {
 
     dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result) => {
       if (result) {
-        // Remove property from the list
-        const updatedProperties = this.properties().filter((p) => p.id !== property.id);
-        this.properties.set(updatedProperties);
-        
-        // Remove from selection if selected
-        const newSet = new Set(this.selectedRows());
-        newSet.delete(property.id);
-        this.selectedRows.set(newSet);
+        this.isDeleting.set(true);
+        this.propertyService.delete(property.id).pipe(takeUntil(this.destroy$)).subscribe({
+          next: () => {
+            // Reload properties to get updated list from server
+            this.loadProperties();
+            // Remove from selection if selected
+            const newSet = new Set(this.selectedRows());
+            newSet.delete(property.id);
+            this.selectedRows.set(newSet);
+            this.isDeleting.set(false);
+          },
+          error: (error) => {
+            console.error('Error deleting property:', error);
+            this.isDeleting.set(false);
+            // Error is already handled by ApiService (toast notification)
+          },
+        });
       }
     });
   }

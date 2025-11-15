@@ -56,5 +56,15 @@ export class ContactService {
   update(id: string, request: UpdateContactRequest): Observable<Contact> {
     return this.apiService.put<Contact>(`Contact/${id}`, request);
   }
+
+  /**
+   * Delete a contact (soft delete)
+   * DELETE api/Contact/{id}
+   * @param id Contact ID
+   * @returns Observable of result
+   */
+  delete(id: string): Observable<void> {
+    return this.apiService.delete<void>(`Contact/${id}`);
+  }
 }
 
