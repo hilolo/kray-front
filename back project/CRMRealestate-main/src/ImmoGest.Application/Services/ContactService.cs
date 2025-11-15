@@ -1401,5 +1401,46 @@ namespace ImmoGest.Application.Services
         }
 
         #endregion
+
+        /// <summary>
+        /// Update the archive status of a contact
+        /// </summary>
+        public async Task<Result<ContactDto>> UpdateArchiveStatusAsync(UpdateContactArchiveStatusDto dto)
+        {
+            try
+            {
+                var contactResult = await _contactRepository.GetById(dto.ContactId);
+                if (!contactResult.IsSuccess() || contactResult.Data == null)
+                {
+                    return Result.Failure<ContactDto>();
+                }
+
+                var contact = contactResult.Data;
+
+                // Ensure the contact belongs to the current company
+                if (contact.CompanyId != _session.CompanyId)
+                {
+                    return Result.Failure<ContactDto>();
+                }
+
+                // Update archive status
+                contact.IsArchived = dto.IsArchived;
+                contact.LastModifiedOn = DateTimeOffset.UtcNow;
+                contact.BuildSearchTerms();
+
+                var updateResult = await _contactRepository.Update(contact);
+                if (!updateResult.IsSuccess())
+                {
+                    return Result.Failure<ContactDto>();
+                }
+
+                // Return updated contact as DTO
+                return await GetByIdAsync<ContactDto>(dto.ContactId);
+            }
+            catch (Exception ex)
+            {
+                return Result.Failure<ContactDto>();
+            }
+        }
     }
 }

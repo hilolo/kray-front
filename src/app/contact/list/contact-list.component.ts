@@ -85,15 +85,21 @@ export class ContactListComponent implements OnInit, OnDestroy {
 
   toggleShowArchived(value: boolean): void {
     this.showArchived.set(value);
-    // Clear selection and reset to first page when switching views
+    // Clear selection immediately
     this.selectedRows.set(new Set());
+    // Clear all filters
+    this.searchQuery.set('');
+    this.searchInput.set('');
+    this.contactTypeFilter.set('all');
+    // Reset to first page
     this.currentPage.set(1);
+    // Load contacts - selection will be cleared again after data loads to ensure datatable resets
     this.loadContacts();
   }
 
   // Since we're using server-side search, filteredContacts just returns contacts
   readonly filteredContacts = computed(() => {
-    return this.showArchived() ? this.archivedContacts() : this.contacts();
+    return this.contacts();
   });
 
   ngOnInit(): void {
@@ -178,12 +184,6 @@ export class ContactListComponent implements OnInit, OnDestroy {
   }
 
   loadContacts(): void {
-    if (this.showArchived()) {
-      // For archived contacts, we might need a different endpoint
-      // For now, just return empty
-      return;
-    }
-
     this.isLoading.set(true);
     const request: ContactListRequest = {
       currentPage: this.currentPage(),
@@ -192,6 +192,8 @@ export class ContactListComponent implements OnInit, OnDestroy {
       type: this.contactType(),
       ...(this.searchQuery() && this.searchQuery().trim() ? { searchQuery: this.searchQuery().trim() } : {}),
       ...(this.contactTypeFilter() !== 'all' ? { isACompany: this.contactTypeFilter() === 'company' } : {}),
+      // Only include isArchived when showing archived (true), otherwise omit it so backend defaults to false
+      ...(this.showArchived() ? { isArchived: true } : {}),
     };
     
     this.contactService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
@@ -200,10 +202,14 @@ export class ContactListComponent implements OnInit, OnDestroy {
         this.totalPages.set(response.totalPages);
         this.totalItems.set(response.totalItems);
         this.isLoading.set(false);
+        // Ensure selection is cleared after data loads (forces datatable to reset)
+        this.selectedRows.set(new Set());
       },
       error: (error) => {
         console.error('Error loading contacts:', error);
         this.isLoading.set(false);
+        // Clear selection on error too
+        this.selectedRows.set(new Set());
       },
     });
   }
@@ -349,27 +355,66 @@ export class ContactListComponent implements OnInit, OnDestroy {
     });
   }
 
+  showUnarchiveConfirmation(): void {
+    const selectedCount = this.selectedCount();
+    const dialogRef = this.alertDialogService.confirm({
+      zTitle: 'Unarchive Contacts',
+      zDescription: `Are you sure you want to unarchive ${selectedCount} contact${selectedCount > 1 ? 's' : ''}?`,
+      zOkText: 'Unarchive',
+      zCancelText: 'Cancel',
+      zOkDestructive: false,
+      zViewContainerRef: this.viewContainerRef,
+    });
+
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result) => {
+      if (result) {
+        this.unarchiveSelectedContacts();
+      }
+    });
+  }
+
   archiveSelectedContacts(): void {
-    // Get selected contact IDs
     const selectedIds = Array.from(this.selectedRows());
+    if (selectedIds.length === 0) return;
+
+    this.isDeleting.set(true);
     
-    // Get contacts to archive
-    const contactsToArchive = this.contacts().filter(
-      (contact) => selectedIds.includes(contact.id)
+    // Archive each selected contact via API
+    const archivePromises = selectedIds.map(id => 
+      this.contactService.updateArchiveStatus(id, true).pipe(takeUntil(this.destroy$)).toPromise()
     );
+
+    Promise.all(archivePromises).then(() => {
+      // Reload contacts to get updated list from server
+      this.loadContacts();
+      this.selectedRows.set(new Set());
+      this.isDeleting.set(false);
+    }).catch((error) => {
+      console.error('Error archiving contacts:', error);
+      this.isDeleting.set(false);
+    });
+  }
+
+  unarchiveSelectedContacts(): void {
+    const selectedIds = Array.from(this.selectedRows());
+    if (selectedIds.length === 0) return;
+
+    this.isDeleting.set(true);
     
-    // Remove archived contacts from the active list
-    const updatedContacts = this.contacts().filter(
-      (contact) => !selectedIds.includes(contact.id)
+    // Unarchive each selected contact via API
+    const unarchivePromises = selectedIds.map(id => 
+      this.contactService.updateArchiveStatus(id, false).pipe(takeUntil(this.destroy$)).toPromise()
     );
-    
-    // Add to archived list
-    const updatedArchived = [...this.archivedContacts(), ...contactsToArchive];
-    
-    // Update contacts and archived lists, clear selection
-    this.contacts.set(updatedContacts);
-    this.archivedContacts.set(updatedArchived);
-    this.selectedRows.set(new Set());
+
+    Promise.all(unarchivePromises).then(() => {
+      // Reload contacts to get updated list from server
+      this.loadContacts();
+      this.selectedRows.set(new Set());
+      this.isDeleting.set(false);
+    }).catch((error) => {
+      console.error('Error unarchiving contacts:', error);
+      this.isDeleting.set(false);
+    });
   }
 
   ngOnDestroy(): void {

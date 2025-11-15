@@ -66,5 +66,19 @@ export class ContactService {
   delete(id: string): Observable<void> {
     return this.apiService.delete<void>(`Contact/${id}`);
   }
+
+  /**
+   * Update the archive status of a contact
+   * PATCH api/Contact/archive-status
+   * @param contactId Contact ID
+   * @param isArchived Archive status
+   * @returns Observable of updated contact
+   */
+  updateArchiveStatus(contactId: string, isArchived: boolean): Observable<Contact> {
+    return this.apiService.patch<Contact>('Contact/archive-status', {
+      contactId,
+      isArchived,
+    });
+  }
 }
 

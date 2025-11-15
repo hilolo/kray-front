@@ -65,13 +65,20 @@
               </z-dropdown-menu>
             </div>
           </div>
-          <!-- Buttons on right - Archive first, then Reset, Card View, then Add Property -->
+          <!-- Buttons on right - Archive/Unarchive first, then Reset, Card View, then Add Property -->
           <div class="flex gap-2 items-center ml-auto">
             @if (hasSelectedProperties()) {
-              <z-button zType="outline" zSize="default" class="gap-2 bg-yellow-400 hover:bg-yellow-500 text-yellow-950 border-yellow-400 hover:border-yellow-500 dark:bg-yellow-600 dark:hover:bg-yellow-700 dark:text-yellow-50 dark:border-yellow-600 dark:hover:border-yellow-700 shadow-xs" (click)="showArchiveConfirmation()">
-                <z-icon zType="folder" zSize="sm" />
-                Archive
-              </z-button>
+              @if (showArchived()) {
+                <z-button zType="outline" zSize="default" class="gap-2 bg-green-400 hover:bg-green-500 text-green-950 border-green-400 hover:border-green-500 dark:bg-green-600 dark:hover:bg-green-700 dark:text-green-50 dark:border-green-600 dark:hover:border-green-700 shadow-xs" (click)="showUnarchiveConfirmation()">
+                  <z-icon zType="folder-open" zSize="sm" />
+                  Unarchive
+                </z-button>
+              } @else {
+                <z-button zType="outline" zSize="default" class="gap-2 bg-yellow-400 hover:bg-yellow-500 text-yellow-950 border-yellow-400 hover:border-yellow-500 dark:bg-yellow-600 dark:hover:bg-yellow-700 dark:text-yellow-50 dark:border-yellow-600 dark:hover:border-yellow-700 shadow-xs" (click)="showArchiveConfirmation()">
+                  <z-icon zType="folder" zSize="sm" />
+                  Archive
+                </z-button>
+              }
             }
             <!-- Reset button -->
             @if (showResetButton()) {

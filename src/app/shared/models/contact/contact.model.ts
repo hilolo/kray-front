@@ -51,6 +51,7 @@ export interface Contact {
   attachments?: Attachment[];
   attachmentCount: number;
   companyId: string;
+  isArchived: boolean;
   createdAt: string;
   updatedAt: string;
   list?: ContactList; // Client-side only: list preferences

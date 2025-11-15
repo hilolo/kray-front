@@ -85,6 +85,19 @@ namespace ImmoGest.Api.Controllers
         [ProducesResponseType(typeof(PaginatedList<ContactDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<Result<PaginatedList<ContactDto>>>> GetContacts([FromBody] GetContactsFilter filter)
             => ActionResultFor(await _contactService.GetAsPagedResultAsync<ContactDto, GetContactsFilter>(filter));
+
+        /// <summary>
+        /// Update the archive status of a contact
+        /// </summary>
+        /// <param name="dto">Archive status update data</param>
+        /// <returns>Updated contact</returns>
+        [HttpPatch]
+        [Route("archive-status")]
+        [ProducesResponseType(typeof(ContactDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(Result), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<Result<ContactDto>>> UpdateArchiveStatus([FromBody] UpdateContactArchiveStatusDto dto)
+            => ActionResultFor(await _contactService.UpdateArchiveStatusAsync(dto));
     }
 }
 

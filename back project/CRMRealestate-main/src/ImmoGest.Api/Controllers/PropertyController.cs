@@ -110,5 +110,18 @@ namespace ImmoGest.Api.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<Result<PropertyDto>>> UpdatePropertyVisibility([FromBody] UpdatePropertyVisibilityDto dto)
             => ActionResultFor(await _propertyService.UpdatePropertyVisibilityAsync(dto));
+
+        /// <summary>
+        /// Update the archive status of a property
+        /// </summary>
+        /// <param name="dto">Archive status update data</param>
+        /// <returns>Updated property</returns>
+        [HttpPatch]
+        [Route("archive-status")]
+        [ProducesResponseType(typeof(PropertyDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(Result), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<Result<PropertyDto>>> UpdateArchiveStatus([FromBody] UpdatePropertyArchiveStatusDto dto)
+            => ActionResultFor(await _propertyService.UpdateArchiveStatusAsync(dto));
     }
 }

@@ -21,5 +21,6 @@ namespace ImmoGest.Application.Filters
         public PropertyCategory? Category { get; set; } // Filter by property category
         public string City { get; set; }
         public string Address { get; set; }
+        public bool? IsArchived { get; set; }
     }
 }

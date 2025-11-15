@@ -21,6 +21,7 @@ namespace ImmoGest.Application.DTOs
         public List<AttachmentDto> Attachments { get; set; }
         public int AttachmentCount { get; set; }
         public Guid CompanyId { get; set; }
+        public bool IsArchived { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         
@@ -28,6 +29,12 @@ namespace ImmoGest.Application.DTOs
         public List<PropertyDto> Properties { get; set; }
         public List<LeaseDto> Leases { get; set; }
         public List<BankDto> Banks { get; set; }
+    }
+
+    public class UpdateContactArchiveStatusDto
+    {
+        public Guid ContactId { get; set; }
+        public bool IsArchived { get; set; }
     }
 }
 

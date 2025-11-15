@@ -173,6 +173,17 @@ namespace ImmoGest.Infrastructure.Repositories
                 {
                     query = query.Where(c => c.IsACompany == filter.IsACompany.Value);
                 }
+
+                // Filter by IsArchived - default to false if not specified
+                if (filter.IsArchived.HasValue)
+                {
+                    query = query.Where(c => c.IsArchived == filter.IsArchived.Value);
+                }
+                else
+                {
+                    // Default: only show non-archived contacts
+                    query = query.Where(c => !c.IsArchived);
+                }
                 
                 // Note: Deleted contacts are automatically filtered by global query filter
             }

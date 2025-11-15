@@ -4,6 +4,7 @@ import {
   Component,
   computed,
   contentChild,
+  effect,
   input,
   output,
   signal,
@@ -145,6 +146,14 @@ export class ZardDatatableComponent<T = any> {
     this.currentPage.set(this.zCurrentPage());
     this.pageSize.set(this.zPageSize());
     this.selectedRows.set(this.zSelectedRows());
+    
+    // Effect to sync zSelectedRows input with internal selectedRows signal
+    // This ensures the datatable resets selection when parent clears it
+    effect(() => {
+      const inputSelection = this.zSelectedRows();
+      // Create a new Set to ensure proper reactivity
+      this.selectedRows.set(new Set(inputSelection));
+    });
   }
   
   // Pagination methods

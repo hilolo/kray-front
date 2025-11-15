@@ -63,6 +63,10 @@ namespace ImmoGest.Infrastructure.Configuration
                 .IsRequired()
                 .HasDefaultValue(false);
 
+            builder.Property(c => c.IsArchived)
+                .IsRequired()
+                .HasDefaultValue(false);
+
             // Configure relationship with Company
             builder.HasOne(c => c.Company)
                 .WithMany()

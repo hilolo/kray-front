@@ -28,5 +28,10 @@ namespace ImmoGest.Application.Interfaces
         /// Get a single public property by id
         /// </summary>
         Task<Result<PublicPropertyDto>> GetPublicPropertyByIdAsync(Guid propertyId);
+
+        /// <summary>
+        /// Update the archive status of a property
+        /// </summary>
+        Task<Result<PropertyDto>> UpdateArchiveStatusAsync(UpdatePropertyArchiveStatusDto dto);
     }
 }

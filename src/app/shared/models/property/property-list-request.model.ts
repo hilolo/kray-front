@@ -25,5 +25,6 @@ export interface PropertyListRequest {
   category?: PropertyCategory;
   city?: string;
   address?: string;
+  isArchived?: boolean;
 }
 

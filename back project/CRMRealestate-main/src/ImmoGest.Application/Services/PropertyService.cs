@@ -1468,5 +1468,46 @@ namespace ImmoGest.Application.Services
         }
 
         #endregion
+
+        /// <summary>
+        /// Update the archive status of a property
+        /// </summary>
+        public async Task<Result<PropertyDto>> UpdateArchiveStatusAsync(UpdatePropertyArchiveStatusDto dto)
+        {
+            try
+            {
+                var propertyResult = await _propertyRepository.GetByIdAsync(dto.PropertyId);
+                if (!propertyResult.IsSuccess() || propertyResult.Data == null)
+                {
+                    return Result.Failure<PropertyDto>();
+                }
+
+                var property = propertyResult.Data;
+
+                // Ensure the property belongs to the current company
+                if (property.CompanyId != _session.CompanyId)
+                {
+                    return Result.Failure<PropertyDto>();
+                }
+
+                // Update archive status
+                property.IsArchived = dto.IsArchived;
+                property.LastModifiedOn = DateTimeOffset.UtcNow;
+                property.BuildSearchTerms();
+
+                var updateResult = await _propertyRepository.Update(property);
+                if (!updateResult.IsSuccess())
+                {
+                    return Result.Failure<PropertyDto>();
+                }
+
+                // Return updated property as DTO
+                return await GetByIdAsync<PropertyDto>(dto.PropertyId);
+            }
+            catch (Exception ex)
+            {
+                return Result.Failure<PropertyDto>();
+            }
+        }
     }
 }

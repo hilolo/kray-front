@@ -202,6 +202,17 @@ namespace ImmoGest.Infrastructure.Repositories
                 {
                     query = query.Where(p => p.Address.Contains(filter.Address));
                 }
+
+                // Filter by IsArchived - default to false if not specified
+                if (filter.IsArchived.HasValue)
+                {
+                    query = query.Where(p => p.IsArchived == filter.IsArchived.Value);
+                }
+                else
+                {
+                    // Default: only show non-archived properties
+                    query = query.Where(p => !p.IsArchived);
+                }
             }
 
             return base.SetPagedResultFilterOptions(query, filterOption);

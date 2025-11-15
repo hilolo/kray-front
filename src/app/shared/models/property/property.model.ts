@@ -104,6 +104,7 @@ export interface Property {
   features: string[];
   equipment: string[];
   category: PropertyCategory;
+  isArchived: boolean;
   isPublic: boolean;
   isPublicAdresse: boolean;
   isShared: boolean;

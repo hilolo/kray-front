@@ -73,6 +73,10 @@ namespace ImmoGest.Infrastructure.Configuration
                 .IsRequired()
                 .HasDefaultValue(false);
 
+            builder.Property(p => p.IsArchived)
+                .IsRequired()
+                .HasDefaultValue(false);
+
             builder.Property(p => p.IsPublic)
                 .IsRequired()
                 .HasDefaultValue(false);

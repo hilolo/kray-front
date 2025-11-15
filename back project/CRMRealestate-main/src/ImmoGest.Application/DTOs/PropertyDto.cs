@@ -28,6 +28,7 @@ namespace ImmoGest.Application.DTOs
         public List<string> Features { get; set; }
         public List<string> Equipment { get; set; }
         public PropertyCategory Category { get; set; }
+        public bool IsArchived { get; set; }
         public bool IsPublic { get; set; }
         public bool IsPublicAdresse { get; set; }
         public bool IsShared { get; set; }
@@ -162,6 +163,12 @@ namespace ImmoGest.Application.DTOs
         public Guid PropertyId { get; set; }
         public bool? IsPublic { get; set; }
         public bool? IsPublicAdresse { get; set; }
+    }
+
+    public class UpdatePropertyArchiveStatusDto
+    {
+        public Guid PropertyId { get; set; }
+        public bool IsArchived { get; set; }
     }
 
     public class PublicPropertyDto

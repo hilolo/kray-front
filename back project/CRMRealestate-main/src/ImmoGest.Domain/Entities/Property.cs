@@ -40,6 +40,7 @@ namespace ImmoGest.Domain.Entities
         // Property category
         public PropertyCategory Category { get; set; }
         public bool IsDeleted { get; set; }
+        public bool IsArchived { get; set; }
         public bool IsPublic { get; set; }
         public bool IsPublicAdresse { get; set; }
         public bool IsShared { get; set; }

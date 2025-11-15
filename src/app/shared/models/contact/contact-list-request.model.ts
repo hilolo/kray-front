@@ -10,5 +10,6 @@ export interface ContactListRequest {
   type: ContactType;
   searchQuery?: string;
   isACompany?: boolean;
+  isArchived?: boolean;
 }
 

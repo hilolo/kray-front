@@ -8,6 +8,7 @@ namespace ImmoGest.Application.Filters
     {
         public ContactType? Type { get; set; }
         public bool? IsACompany { get; set; }
+        public bool? IsArchived { get; set; }
     }
 }
 

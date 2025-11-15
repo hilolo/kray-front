@@ -153,7 +153,7 @@ export class PropertyListComponent implements OnInit, OnDestroy {
   ]);
 
   readonly filteredProperties = computed(() => {
-    return this.showArchived() ? this.archivedProperties() : this.properties();
+    return this.properties();
   });
 
   readonly emptyMessage = computed(() => {
@@ -233,12 +233,6 @@ export class PropertyListComponent implements OnInit, OnDestroy {
   }
 
   loadProperties(): void {
-    if (this.showArchived()) {
-      // For archived properties, we might need a different endpoint
-      // For now, just return empty
-      return;
-    }
-
     this.isLoading.set(true);
     const request: PropertyListRequest = {
       currentPage: this.currentPage(),
@@ -247,6 +241,8 @@ export class PropertyListComponent implements OnInit, OnDestroy {
       ...(this.searchQuery() && this.searchQuery().trim() ? { searchQuery: this.searchQuery().trim() } : {}),
       ...(this.selectedOwnerId() ? { contactId: this.selectedOwnerId()! } : {}),
       ...(this.selectedPropertyTypes().length > 0 ? { typeProperties: this.selectedPropertyTypes() } : {}),
+      // Only include isArchived when showing archived (true), otherwise omit it so backend defaults to false
+      ...(this.showArchived() ? { isArchived: true } : {}),
     };
     
     this.propertyService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
@@ -255,10 +251,14 @@ export class PropertyListComponent implements OnInit, OnDestroy {
         this.totalPages.set(response.totalPages);
         this.totalItems.set(response.totalItems);
         this.isLoading.set(false);
+        // Ensure selection is cleared after data loads (forces datatable to reset)
+        this.selectedRows.set(new Set());
       },
       error: (error) => {
         console.error('Error loading properties:', error);
         this.isLoading.set(false);
+        // Clear selection on error too
+        this.selectedRows.set(new Set());
       },
     });
   }
@@ -412,9 +412,23 @@ export class PropertyListComponent implements OnInit, OnDestroy {
 
   toggleShowArchived(value: boolean): void {
     this.showArchived.set(value);
-    // Clear selection and reset to first page when switching views
+    // Clear selection immediately
     this.selectedRows.set(new Set());
+    // Clear all filters
+    this.searchQuery.set('');
+    this.searchInput.set('');
+    this.selectedOwnerId.set(null);
+    this.selectedPropertyTypes.set([]);
+    // Clear combobox internal value
+    setTimeout(() => {
+      const combobox = this.ownerComboboxRef();
+      if (combobox) {
+        (combobox as any).writeValue(null);
+      }
+    }, 0);
+    // Reset to first page
     this.currentPage.set(1);
+    // Load properties - selection will be cleared again after data loads to ensure datatable resets
     this.loadProperties();
   }
 
@@ -436,27 +450,66 @@ export class PropertyListComponent implements OnInit, OnDestroy {
     });
   }
 
+  showUnarchiveConfirmation(): void {
+    const selectedCount = this.selectedCount();
+    const dialogRef = this.alertDialogService.confirm({
+      zTitle: 'Unarchive Properties',
+      zDescription: `Are you sure you want to unarchive ${selectedCount} propert${selectedCount > 1 ? 'ies' : 'y'}?`,
+      zOkText: 'Unarchive',
+      zCancelText: 'Cancel',
+      zOkDestructive: false,
+      zViewContainerRef: this.viewContainerRef,
+    });
+
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result) => {
+      if (result) {
+        this.unarchiveSelectedProperties();
+      }
+    });
+  }
+
   archiveSelectedProperties(): void {
-    // Get selected property IDs
     const selectedIds = Array.from(this.selectedRows());
+    if (selectedIds.length === 0) return;
+
+    this.isDeleting.set(true);
     
-    // Get properties to archive
-    const propertiesToArchive = this.properties().filter(
-      (property) => selectedIds.includes(property.id)
+    // Archive each selected property via API
+    const archivePromises = selectedIds.map(id => 
+      this.propertyService.updateArchiveStatus(id, true).pipe(takeUntil(this.destroy$)).toPromise()
     );
+
+    Promise.all(archivePromises).then(() => {
+      // Reload properties to get updated list from server
+      this.loadProperties();
+      this.selectedRows.set(new Set());
+      this.isDeleting.set(false);
+    }).catch((error) => {
+      console.error('Error archiving properties:', error);
+      this.isDeleting.set(false);
+    });
+  }
+
+  unarchiveSelectedProperties(): void {
+    const selectedIds = Array.from(this.selectedRows());
+    if (selectedIds.length === 0) return;
+
+    this.isDeleting.set(true);
     
-    // Remove archived properties from the active list
-    const updatedProperties = this.properties().filter(
-      (property) => !selectedIds.includes(property.id)
+    // Unarchive each selected property via API
+    const unarchivePromises = selectedIds.map(id => 
+      this.propertyService.updateArchiveStatus(id, false).pipe(takeUntil(this.destroy$)).toPromise()
     );
-    
-    // Add to archived list
-    const updatedArchived = [...this.archivedProperties(), ...propertiesToArchive];
-    
-    // Update properties and archived lists, clear selection
-    this.properties.set(updatedProperties);
-    this.archivedProperties.set(updatedArchived);
-    this.selectedRows.set(new Set());
+
+    Promise.all(unarchivePromises).then(() => {
+      // Reload properties to get updated list from server
+      this.loadProperties();
+      this.selectedRows.set(new Set());
+      this.isDeleting.set(false);
+    }).catch((error) => {
+      console.error('Error unarchiving properties:', error);
+      this.isDeleting.set(false);
+    });
   }
 
   onViewProperty(property: Property): void {

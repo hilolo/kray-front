@@ -67,5 +67,19 @@ export class PropertyService {
   delete(id: string): Observable<void> {
     return this.apiService.delete<void>(`Property/${id}`);
   }
+
+  /**
+   * Update the archive status of a property
+   * PATCH api/Property/archive-status
+   * @param propertyId Property ID
+   * @param isArchived Archive status
+   * @returns Observable of updated property
+   */
+  updateArchiveStatus(propertyId: string, isArchived: boolean): Observable<Property> {
+    return this.apiService.patch<Property>('Property/archive-status', {
+      propertyId,
+      isArchived,
+    });
+  }
 }
 
