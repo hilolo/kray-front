@@ -499,58 +499,211 @@
                       zValue="property"
                       class="!px-6 !py-5 border-b-0 !text-lg"
                     >
+                      @if (isLoadingPropertySettings()) {
+                        <div class="flex items-center justify-center p-8">
+                          <div class="text-muted-foreground">Loading property settings...</div>
+                        </div>
+                      } @else {
+                        <div class="space-y-8">
                       <!-- Default City -->
-                      <div class="mb-8">
+                          <div>
                         <h3 class="text-xl font-semibold mb-2">Ville par Défaut</h3>
                         <p class="text-sm text-muted-foreground mb-4">Définir la ville par défaut pour les nouvelles propriétés</p>
-                        <z-form-field>
-                          <z-form-label zRequired>Ville par Défaut*</z-form-label>
-                          <z-form-control>
-                            <z-select zPlaceholder="Select a city" [zValue]="propertySettings.defaultCity" (zSelectionChange)="propertySettings.defaultCity = $event">
-                              <z-select-item zValue="tanger">Tanger</z-select-item>
-                              <z-select-item zValue="casablanca">Casablanca</z-select-item>
-                              <z-select-item zValue="rabat">Rabat</z-select-item>
-                            </z-select>
-                          </z-form-control>
-                        </z-form-field>
-                      </div>
-
-                      <!-- Categories and References -->
-                      <div>
-                        <h3 class="text-xl font-semibold mb-2">Catégories et Références</h3>
-                        <p class="text-sm text-muted-foreground mb-4">Gérer les catégories de propriétés et leurs termes de référence</p>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <!-- Location Card -->
-                          <z-card zTitle="Location" zDescription="Location references" class="p-4">
                             <z-form-field>
-                              <z-form-label zRequired>Reference</z-form-label>
+                              <z-form-label zRequired>Ville par Défaut</z-form-label>
                               <z-form-control>
-                                <input z-input type="text" [(ngModel)]="propertySettings.locationRef" name="locationRef" class="w-full" />
+                                <z-select 
+                                  [zValue]="propertySettings.defaultCity()" 
+                                  [zLabel]="propertySettings.defaultCity() || 'Select a city'"
+                                  zPlaceholder="Select a city"
+                                  (zSelectionChange)="propertySettings.defaultCity.set($event)"
+                                  class="w-full"
+                                >
+                                  <z-select-item zValue="Tanger">Tanger</z-select-item>
+                                  <z-select-item zValue="Casablanca">Casablanca</z-select-item>
+                                  <z-select-item zValue="Rabat">Rabat</z-select-item>
+                                  <z-select-item zValue="Kenitra">Kenitra</z-select-item>
+                                  <z-select-item zValue="Agadir">Agadir</z-select-item>
+                                </z-select>
                               </z-form-control>
                             </z-form-field>
-                          </z-card>
+                          </div>
 
-                          <!-- Vente Card -->
-                          <z-card zTitle="Vente" zDescription="Sale references" class="p-4">
-                            <z-form-field>
-                              <z-form-label zRequired>Reference</z-form-label>
-                              <z-form-control>
-                                <input z-input type="text" [(ngModel)]="propertySettings.saleRef" name="saleRef" class="w-full" />
-                              </z-form-control>
-                            </z-form-field>
-                          </z-card>
+                          <!-- Property Types -->
+                          <div>
+                            <h3 class="text-xl font-semibold mb-2">Types de Propriété</h3>
+                            <p class="text-sm text-muted-foreground mb-4">Gérer les types de propriété disponibles</p>
+                            <div class="flex flex-wrap gap-2 mb-4">
+                              @for (type of propertySettings.propertyTypes(); track type) {
+                                <z-badge zType="outline" class="flex items-center gap-1.5 px-3 py-1">
+                                  <span>{{ type }}</span>
+                                  <button
+                                    type="button"
+                                    (click)="removePropertyType(type)"
+                                    class="hover:text-destructive transition-colors"
+                                    aria-label="Remove property type"
+                                  >
+                                    <z-icon zType="x" zSize="sm" />
+                                  </button>
+                                </z-badge>
+                              }
+                              @if (showAddPropertyTypeInput()) {
+                                <div class="flex items-center gap-2">
+                                  <input
+                                    z-input
+                                    type="text"
+                                    [ngModel]="newPropertyType()"
+                                    (ngModelChange)="newPropertyType.set($event)"
+                                    (keyup.enter)="addPropertyType()"
+                                    (keyup.escape)="showAddPropertyTypeInput.set(false); newPropertyType.set('')"
+                                    placeholder="Enter property type"
+                                    class="w-48"
+                                    autofocus
+                                  />
+                                  <z-button zType="default" zSize="sm" (click)="addPropertyType()">
+                                    <z-icon zType="check" zSize="sm" />
+                                  </z-button>
+                                  <z-button zType="outline" zSize="sm" (click)="showAddPropertyTypeInput.set(false); newPropertyType.set('')">
+                                    <z-icon zType="x" zSize="sm" />
+                                  </z-button>
+                                </div>
+                              } @else {
+                                <z-button 
+                                  zType="outline" 
+                                  zSize="sm"
+                                  (click)="showAddPropertyTypeInput.set(true)"
+                                  class="border-dashed border-primary/50 text-primary hover:bg-primary/5"
+                                >
+                                  <z-icon zType="plus" zSize="sm" />
+                                  Ajouter un Type de Propriété
+                                </z-button>
+                              }
+                            </div>
+                          </div>
 
-                          <!-- Vacance Card -->
-                          <z-card zTitle="Vacance" zDescription="Vacation references" class="p-4">
-                            <z-form-field>
-                              <z-form-label zRequired>Reference</z-form-label>
-                              <z-form-control>
-                                <input z-input type="text" [(ngModel)]="propertySettings.vacationRef" name="vacationRef" class="w-full" />
-                              </z-form-control>
-                            </z-form-field>
-                          </z-card>
+                          <!-- Property Characteristics (Features) -->
+                          <div>
+                            <h3 class="text-xl font-semibold mb-2">Caractéristiques de Propriété</h3>
+                            <p class="text-sm text-muted-foreground mb-4">Gérer les caractéristiques de propriété disponibles</p>
+                            <div class="flex flex-wrap gap-2 mb-4">
+                              @for (feature of propertySettings.features(); track feature) {
+                                <z-badge zType="outline" class="flex items-center gap-1.5 px-3 py-1">
+                                  <span>{{ feature }}</span>
+                                  <button
+                                    type="button"
+                                    (click)="removeFeature(feature)"
+                                    class="hover:text-destructive transition-colors"
+                                    aria-label="Remove feature"
+                                  >
+                                    <z-icon zType="x" zSize="sm" />
+                                  </button>
+                                </z-badge>
+                              }
+                              @if (showAddFeatureInput()) {
+                                <div class="flex items-center gap-2">
+                                  <input
+                                    z-input
+                                    type="text"
+                                    [ngModel]="newFeature()"
+                                    (ngModelChange)="newFeature.set($event)"
+                                    (keyup.enter)="addFeature()"
+                                    (keyup.escape)="showAddFeatureInput.set(false); newFeature.set('')"
+                                    placeholder="Enter feature"
+                                    class="w-48"
+                                    autofocus
+                                  />
+                                  <z-button zType="default" zSize="sm" (click)="addFeature()">
+                                    <z-icon zType="check" zSize="sm" />
+                                  </z-button>
+                                  <z-button zType="outline" zSize="sm" (click)="showAddFeatureInput.set(false); newFeature.set('')">
+                                    <z-icon zType="x" zSize="sm" />
+                                  </z-button>
+                                </div>
+                              } @else {
+                                <z-button 
+                                  zType="outline" 
+                                  zSize="sm"
+                                  (click)="showAddFeatureInput.set(true)"
+                                  class="border-dashed border-primary/50 text-primary hover:bg-primary/5"
+                                >
+                                  <z-icon zType="plus" zSize="sm" />
+                                  Ajouter une Caractéristique
+                                </z-button>
+                              }
+                            </div>
+                          </div>
+
+                          <!-- Property Amenities -->
+                          <div>
+                            <h3 class="text-xl font-semibold mb-2">Équipements de Propriété</h3>
+                            <p class="text-sm text-muted-foreground mb-4">Gérer les équipements de propriété disponibles</p>
+                            <div class="flex flex-wrap gap-2 mb-4">
+                              @for (amenity of propertySettings.amenities(); track amenity) {
+                                <z-badge zType="outline" class="flex items-center gap-1.5 px-3 py-1">
+                                  <span>{{ amenity }}</span>
+                                  <button
+                                    type="button"
+                                    (click)="removeAmenity(amenity)"
+                                    class="hover:text-destructive transition-colors"
+                                    aria-label="Remove amenity"
+                                  >
+                                    <z-icon zType="x" zSize="sm" />
+                                  </button>
+                                </z-badge>
+                              }
+                              @if (showAddAmenityInput()) {
+                                <div class="flex items-center gap-2">
+                                  <input
+                                    z-input
+                                    type="text"
+                                    [ngModel]="newAmenity()"
+                                    (ngModelChange)="newAmenity.set($event)"
+                                    (keyup.enter)="addAmenity()"
+                                    (keyup.escape)="showAddAmenityInput.set(false); newAmenity.set('')"
+                                    placeholder="Enter amenity"
+                                    class="w-48"
+                                    autofocus
+                                  />
+                                  <z-button zType="default" zSize="sm" (click)="addAmenity()">
+                                    <z-icon zType="check" zSize="sm" />
+                                  </z-button>
+                                  <z-button zType="outline" zSize="sm" (click)="showAddAmenityInput.set(false); newAmenity.set('')">
+                                    <z-icon zType="x" zSize="sm" />
+                                  </z-button>
+                                </div>
+                              } @else {
+                                <z-button 
+                                  zType="outline" 
+                                  zSize="sm"
+                                  (click)="showAddAmenityInput.set(true)"
+                                  class="border-dashed border-primary/50 text-primary hover:bg-primary/5"
+                                >
+                                  <z-icon zType="plus" zSize="sm" />
+                                  Ajouter un Équipement
+                                </z-button>
+                              }
+                            </div>
+                          </div>
+
+                          <!-- Save Button -->
+                          <div class="flex justify-end pt-4">
+                            <z-button 
+                              [zType]="isSavingPropertySettings() ? 'ghost' : 'default'" 
+                              [disabled]="isSavingPropertySettings()" 
+                              (click)="!isSavingPropertySettings() && onSavePropertySettings()"
+                            >
+                              @if (isSavingPropertySettings()) {
+                                <span class="flex items-center gap-2">
+                                  <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+                                  Saving...
+                                </span>
+                              } @else {
+                                Save Property Settings
+                              }
+                            </z-button>
+                          </div>
                         </div>
-                      </div>
+                      }
                     </z-accordion-item>
                   </z-accordion>
                 </div>

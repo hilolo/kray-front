@@ -36,7 +36,6 @@ namespace ImmoGest.Application.Services
                 throw new ArgumentException("Settings not found");
 
             existingSettings.DefaultCity = updateSettingsDto.DefaultCity;
-            existingSettings.Language = updateSettingsDto.Language;
             existingSettings.CategoriesJson = JsonSerializer.Serialize(updateSettingsDto.Categories);
             existingSettings.FeaturesJson = JsonSerializer.Serialize(updateSettingsDto.Features);
             existingSettings.AmenitiesJson = JsonSerializer.Serialize(updateSettingsDto.Amenities);
@@ -53,7 +52,6 @@ namespace ImmoGest.Application.Services
                 Id = settings.Id.ToString(),
                 CompanyId = settings.CompanyId,
                 DefaultCity = settings.DefaultCity,
-                Language = settings.Language,
                 Categories = JsonSerializer.Deserialize<List<CategoryReference>>(settings.CategoriesJson) ?? new(),
                 Features = JsonSerializer.Deserialize<List<string>>(settings.FeaturesJson) ?? new(),
                 Amenities = JsonSerializer.Deserialize<List<string>>(settings.AmenitiesJson) ?? new(),

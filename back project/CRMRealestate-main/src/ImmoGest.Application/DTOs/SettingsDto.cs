@@ -7,7 +7,6 @@ namespace ImmoGest.Application.DTOs
         public string Id { get; set; } = string.Empty;
         public string CompanyId { get; set; } = string.Empty;
         public string DefaultCity { get; set; } = string.Empty;
-        public string Language { get; set; } = "fr";
         public List<CategoryReference> Categories { get; set; } = new();
         public List<string> Features { get; set; } = new();
         public List<string> Amenities { get; set; } = new();
@@ -23,7 +22,6 @@ namespace ImmoGest.Application.DTOs
     public class UpdateSettingsDto
     {
         public string DefaultCity { get; set; } = string.Empty;
-        public string Language { get; set; } = "fr";
         public List<CategoryReference> Categories { get; set; } = new();
         public List<string> Features { get; set; } = new();
         public List<string> Amenities { get; set; } = new();

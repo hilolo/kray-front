@@ -8,7 +8,6 @@ namespace ImmoGest.Domain.Entities
     {
         public string CompanyId { get; set; } = string.Empty;
         public string DefaultCity { get; set; } = string.Empty;
-        public string Language { get; set; } = "fr"; // Default language
         public string CategoriesJson { get; set; } = string.Empty; // JSON string for categories and references
         public string FeaturesJson { get; set; } = string.Empty; // JSON string for features list
         public string AmenitiesJson { get; set; } = string.Empty; // JSON string for amenities list

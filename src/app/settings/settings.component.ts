@@ -22,6 +22,10 @@ import { Subject, takeUntil } from 'rxjs';
 import { ToastService } from '@shared/services/toast.service';
 import type { TeamMember } from '@shared/models/user/team-member.model';
 import { ThemeService, type ThemePreset } from '@shared/services/theme.service';
+import { SettingsService } from '@shared/services/settings.service';
+import type { Settings } from '@shared/models/settings/settings.model';
+import type { Category } from '@shared/models/settings/category.model';
+import { ZardBadgeComponent } from '@shared/components/badge/badge.component';
 
 type SettingsSection = 'account' | 'security' | 'plan-billing' | 'team' | 'application';
 
@@ -44,6 +48,7 @@ type SettingsSection = 'account' | 'security' | 'plan-billing' | 'team' | 'appli
     ZardAvatarComponent,
     ZardAccordionComponent,
     ZardAccordionItemComponent,
+    ZardBadgeComponent,
   ],
   templateUrl: './settings.component.html',
 })
@@ -55,6 +60,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
   private readonly viewContainerRef = inject(ViewContainerRef);
   private readonly toastService = inject(ToastService);
   private readonly themeService = inject(ThemeService);
+  private readonly settingsService = inject(SettingsService);
   private readonly destroy$ = new Subject<void>();
 
   activeSection = signal<SettingsSection>('account');
@@ -141,12 +147,32 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
   // Application Settings
   appSettings = {
-    language: 'fr',
   };
 
   // Theme settings
   readonly currentTheme = this.themeService.getCurrentThemeSignal();
   readonly themePresets = this.themeService.themePresets;
+
+  // Property Settings
+  propertySettings = {
+    defaultCity: signal(''),
+    categories: signal<Category[]>([]),
+    features: signal<string[]>([]),
+    amenities: signal<string[]>([]),
+    propertyTypes: signal<string[]>([]),
+  };
+
+  // Loading state for property settings
+  isLoadingPropertySettings = signal(false);
+  isSavingPropertySettings = signal(false);
+
+  // Input states for adding new items
+  showAddPropertyTypeInput = signal(false);
+  showAddFeatureInput = signal(false);
+  showAddAmenityInput = signal(false);
+  newPropertyType = signal('');
+  newFeature = signal('');
+  newAmenity = signal('');
 
   onThemeChange(theme: string): void {
     this.themeService.setTheme(theme as ThemePreset);
@@ -226,6 +252,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     // Load team members
     this.loadTeamMembers();
+
+    // Load property settings
+    this.loadPropertySettings();
   }
 
   /**
@@ -281,13 +310,6 @@ export class SettingsComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Property Settings
-  propertySettings = {
-    defaultCity: '',
-    locationRef: 'AL',
-    saleRef: 'AV',
-    vacationRef: 'VC',
-  };
 
   toggleCurrentPassword(): void {
     this.showCurrentPassword.update((value) => !value);
@@ -538,6 +560,157 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.authService.logout();
       }
     });
+  }
+
+  /**
+   * Load property settings from API
+   */
+  loadPropertySettings(): void {
+    this.isLoadingPropertySettings.set(true);
+    this.settingsService.getSettings()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (settings) => {
+          console.log('Settings received from API:', settings);
+          if (settings) {
+            console.log('Setting property settings with:', {
+              defaultCity: settings.defaultCity,
+              categories: settings.categories,
+              features: settings.features,
+              amenities: settings.amenities,
+              propertyTypes: settings.propertyTypes,
+            });
+            this.propertySettings.defaultCity.set(settings.defaultCity || '');
+            this.propertySettings.categories.set(settings.categories || []);
+            this.propertySettings.features.set(settings.features || []);
+            this.propertySettings.amenities.set(settings.amenities || []);
+            this.propertySettings.propertyTypes.set(settings.propertyTypes || []);
+            console.log('Property settings after update:', {
+              defaultCity: this.propertySettings.defaultCity(),
+              categories: this.propertySettings.categories(),
+              features: this.propertySettings.features(),
+              amenities: this.propertySettings.amenities(),
+              propertyTypes: this.propertySettings.propertyTypes(),
+            });
+          } else {
+            console.warn('Settings is null or undefined');
+            // Initialize with empty values if settings is null/undefined
+            this.propertySettings.defaultCity.set('');
+            this.propertySettings.categories.set([]);
+            this.propertySettings.features.set([]);
+            this.propertySettings.amenities.set([]);
+            this.propertySettings.propertyTypes.set([]);
+          }
+          this.isLoadingPropertySettings.set(false);
+        },
+        error: (error) => {
+          console.error('Error loading property settings:', error);
+          this.isLoadingPropertySettings.set(false);
+          this.toastService.error('Failed to load property settings');
+        }
+      });
+  }
+
+  /**
+   * Save property settings
+   */
+  onSavePropertySettings(): void {
+    this.isSavingPropertySettings.set(true);
+
+    const updateRequest = {
+      defaultCity: this.propertySettings.defaultCity(),
+      categories: this.propertySettings.categories(),
+      features: this.propertySettings.features(),
+      amenities: this.propertySettings.amenities(),
+      propertyTypes: this.propertySettings.propertyTypes(),
+    };
+
+    this.settingsService.updateSettings(updateRequest)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (settings) => {
+          if (settings) {
+            this.propertySettings.defaultCity.set(settings.defaultCity || '');
+            this.propertySettings.categories.set(settings.categories || []);
+            this.propertySettings.features.set(settings.features || []);
+            this.propertySettings.amenities.set(settings.amenities || []);
+            this.propertySettings.propertyTypes.set(settings.propertyTypes || []);
+          }
+          this.isSavingPropertySettings.set(false);
+          this.toastService.success('Property settings updated successfully');
+        },
+        error: (error) => {
+          console.error('Error updating property settings:', error);
+          this.isSavingPropertySettings.set(false);
+          // Toast error is handled automatically by the API interceptor/service
+        }
+      });
+  }
+
+  /**
+   * Add property type
+   */
+  addPropertyType(): void {
+    const value = this.newPropertyType().trim();
+    if (value && !this.propertySettings.propertyTypes().includes(value)) {
+      this.propertySettings.propertyTypes.update(types => [...types, value]);
+      this.newPropertyType.set('');
+      this.showAddPropertyTypeInput.set(false);
+    }
+  }
+
+  /**
+   * Remove property type
+   */
+  removePropertyType(type: string): void {
+    this.propertySettings.propertyTypes.update(types => types.filter(t => t !== type));
+  }
+
+  /**
+   * Add feature
+   */
+  addFeature(): void {
+    const value = this.newFeature().trim();
+    if (value && !this.propertySettings.features().includes(value)) {
+      this.propertySettings.features.update(features => [...features, value]);
+      this.newFeature.set('');
+      this.showAddFeatureInput.set(false);
+    }
+  }
+
+  /**
+   * Remove feature
+   */
+  removeFeature(feature: string): void {
+    this.propertySettings.features.update(features => features.filter(f => f !== feature));
+  }
+
+  /**
+   * Add amenity
+   */
+  addAmenity(): void {
+    const value = this.newAmenity().trim();
+    if (value && !this.propertySettings.amenities().includes(value)) {
+      this.propertySettings.amenities.update(amenities => [...amenities, value]);
+      this.newAmenity.set('');
+      this.showAddAmenityInput.set(false);
+    }
+  }
+
+  /**
+   * Remove amenity
+   */
+  removeAmenity(amenity: string): void {
+    this.propertySettings.amenities.update(amenities => amenities.filter(a => a !== amenity));
+  }
+
+  /**
+   * Update category reference
+   */
+  updateCategoryReference(key: string, reference: string): void {
+    this.propertySettings.categories.update(categories => 
+      categories.map(cat => cat.key === key ? { ...cat, reference } : cat)
+    );
   }
 
   ngOnDestroy(): void {

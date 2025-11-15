@@ -86,8 +86,7 @@ namespace ImmoGest.Infrastructure.Configuration
                 {
                     Id = Guid.NewGuid(),
                     CompanyId = "687d9fd5-2752-4a96-93d5-0f33a49913c1",
-                    DefaultCity = "New York",
-                    Language = "fr",
+                    DefaultCity = "Tanger",
                     CategoriesJson = JsonSerializer.Serialize(defaultCategories),
                     FeaturesJson = JsonSerializer.Serialize(defaultFeatures),
                     AmenitiesJson = JsonSerializer.Serialize(defaultAmenities),
