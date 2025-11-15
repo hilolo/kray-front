@@ -20,6 +20,27 @@
                 (keydown)="onSearchKeyDown($event)"
               />
             </div>
+            <!-- Owner select -->
+            <div class="w-full sm:w-[300px]">
+              <z-combobox
+                [options]="ownerOptions()"
+                [value]="selectedOwnerId()"
+                [placeholder]="'Select owner...'"
+                [searchPlaceholder]="'Search owners...'"
+                [emptyText]="'No owners found'"
+                [searchable]="true"
+                [disabled]="isLoadingOwners()"
+                (zValueChange)="onOwnerChange($event)"
+                class="w-full"
+              />
+            </div>
+            <!-- Reset button -->
+            @if (showResetButton()) {
+              <z-button zType="outline" zSize="default" class="gap-2" (click)="onResetFilters()">
+                <z-icon zType="x" zSize="sm" />
+                <span>Reset</span>
+              </z-button>
+            }
           </div>
           <!-- Buttons on right - Card View, then Add Property -->
           <div class="flex gap-2 items-center ml-auto">
@@ -65,6 +86,11 @@
                 [src]="row.defaultAttachmentUrl"
                 [alt]="getPropertyDisplayName(row)"
                 class="w-20 h-20 object-cover rounded-md border border-border"
+                [zImageHoverPreview]="row.defaultAttachmentUrl"
+                [zAlt]="getPropertyDisplayName(row)"
+                [zPosition]="'right'"
+                [zMaxWidth]="'400px'"
+                [zMaxHeight]="'400px'"
               />
             } @else {
               <div class="w-20 h-20 rounded-md border border-border bg-muted flex items-center justify-center">
@@ -171,13 +197,26 @@
             <div class="flex gap-4 flex-1">
               <!-- Left side: Avatar and Type badge -->
               <div class="flex flex-col items-center gap-2.5 flex-shrink-0">
-                <z-avatar
-                  [zImage]="row.defaultAttachmentUrl ? { url: row.defaultAttachmentUrl, fallback: getInitials(row) } : { fallback: getInitials(row) }"
-                  zType="default"
-                  zSize="lg"
-                  zShape="circle"
-                  class="w-16 h-16"
-                />
+                @if (row.defaultAttachmentUrl) {
+                  <img
+                    [src]="row.defaultAttachmentUrl"
+                    [alt]="getPropertyDisplayName(row)"
+                    class="w-16 h-16 object-cover rounded-full border border-border"
+                    [zImageHoverPreview]="row.defaultAttachmentUrl"
+                    [zAlt]="getPropertyDisplayName(row)"
+                    [zPosition]="'right'"
+                    [zMaxWidth]="'400px'"
+                    [zMaxHeight]="'400px'"
+                  />
+                } @else {
+                  <z-avatar
+                    [zImage]="{ fallback: getInitials(row) }"
+                    zType="default"
+                    zSize="lg"
+                    zShape="circle"
+                    class="w-16 h-16"
+                  />
+                }
                 <z-badge zType="secondary" zShape="default" class="w-fit text-xs">
                   {{ getPropertyTypeLabel(row) }}
                 </z-badge>

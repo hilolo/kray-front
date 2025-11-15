@@ -17,6 +17,8 @@ import { ZardDividerComponent } from '@shared/components/divider/divider.compone
 import { ZardPaginationComponent } from '@shared/components/pagination/pagination.component';
 import { ZardSelectComponent } from '@shared/components/select/select.component';
 import { ZardSelectItemComponent } from '@shared/components/select/select-item.component';
+import { ZardImageHoverPreviewDirective } from '@shared/components/image-hover-preview/image-hover-preview.component';
+import { ZardComboboxComponent, ZardComboboxOption } from '@shared/components/combobox/combobox.component';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import type { Property } from '@shared/models/property/property.model';
@@ -24,6 +26,9 @@ import type { PropertyListRequest } from '@shared/models/property/property-list-
 import { PropertyService } from '@shared/services/property.service';
 import { RoutePreferencesService } from '@shared/services/route-preferences.service';
 import { PropertyPricePipe } from '@shared/pipes/property-price.pipe';
+import { ContactService } from '@shared/services/contact.service';
+import type { Contact } from '@shared/models/contact/contact.model';
+import { ContactType } from '@shared/models/contact/contact.model';
 
 @Component({
   selector: 'app-property-list',
@@ -45,6 +50,8 @@ import { PropertyPricePipe } from '@shared/pipes/property-price.pipe';
     ZardPaginationComponent,
     ZardSelectComponent,
     ZardSelectItemComponent,
+    ZardComboboxComponent,
+    ZardImageHoverPreviewDirective,
     TranslateModule,
     FormsModule,
     PropertyPricePipe,
@@ -58,6 +65,7 @@ export class PropertyListComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly propertyService = inject(PropertyService);
+  private readonly contactService = inject(ContactService);
   private readonly preferencesService = inject(RoutePreferencesService);
   private readonly destroy$ = new Subject<void>();
   private readonly searchInputSubject = new Subject<string>();
@@ -73,6 +81,10 @@ export class PropertyListComponent implements OnInit, OnDestroy {
   readonly isLoading = signal(false);
   readonly totalPages = signal(1);
   readonly totalItems = signal(0);
+  readonly owners = signal<Contact[]>([]);
+  readonly ownerOptions = signal<ZardComboboxOption[]>([]);
+  readonly selectedOwnerId = signal<string | null>(null);
+  readonly isLoadingOwners = signal(false);
 
   // Template references for custom cells
   readonly propertyIdCell = viewChild<TemplateRef<any>>('propertyIdCell');
@@ -144,6 +156,10 @@ export class PropertyListComponent implements OnInit, OnDestroy {
     return this.selectedCount() > 0;
   });
 
+  readonly showResetButton = computed(() => {
+    return (this.searchQuery() && this.searchQuery().trim() !== '') || this.selectedOwnerId() !== null;
+  });
+
   ngOnInit(): void {
     // Get route key for preferences (e.g., 'property/list')
     const routeKey = this.getRouteKey();
@@ -182,6 +198,7 @@ export class PropertyListComponent implements OnInit, OnDestroy {
       });
     
     this.loadProperties();
+    this.loadOwners();
 
     // Listen to query parameter changes (for search term)
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe((params) => {
@@ -226,6 +243,76 @@ export class PropertyListComponent implements OnInit, OnDestroy {
         this.isLoading.set(false);
       },
     });
+  }
+
+  loadOwners(): void {
+    this.isLoadingOwners.set(true);
+    const request = {
+      currentPage: 1,
+      pageSize: 1000, // Large page size to get all owners
+      ignore: false,
+      type: ContactType.Owner,
+    };
+    
+    this.contactService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (response) => {
+        this.owners.set(response.result);
+        // Convert contacts to combobox options
+        const options: ZardComboboxOption[] = response.result.map(contact => ({
+          value: contact.id,
+          label: this.getOwnerDisplayName(contact),
+        }));
+        this.ownerOptions.set(options);
+        this.isLoadingOwners.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading owners:', error);
+        this.isLoadingOwners.set(false);
+      },
+    });
+  }
+
+  getOwnerDisplayName(contact: Contact): string {
+    let name = '';
+    if (contact.isACompany) {
+      name = contact.companyName || '';
+    } else {
+      const firstName = contact.firstName || '';
+      const lastName = contact.lastName || '';
+      name = `${firstName} ${lastName}`.trim();
+    }
+    
+    // Add reference if available
+    if (contact.identifier) {
+      return name ? `${name} (${contact.identifier})` : contact.identifier;
+    }
+    return name || 'Unnamed Owner';
+  }
+
+  onOwnerChange(ownerId: string | null): void {
+    this.selectedOwnerId.set(ownerId);
+    // TODO: Filter properties by owner if needed
+    // For now, just store the selected owner ID
+  }
+
+  onResetFilters(): void {
+    // Clear search
+    this.searchInput.set('');
+    this.searchQuery.set('');
+    this.currentPage.set(1);
+    
+    // Clear owner selection
+    this.selectedOwnerId.set(null);
+    
+    // Update query parameters
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { searchTerm: null },
+      queryParamsHandling: 'merge',
+    });
+    
+    // Reload properties
+    this.loadProperties();
   }
 
   onSearchInputChange(value: string): void {
