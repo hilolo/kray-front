@@ -172,13 +172,6 @@ export class PropertyListComponent implements OnInit, OnDestroy {
     const savedPageSize = this.preferencesService.getPageSize(routeKey);
     this.pageSize.set(savedPageSize);
     
-    // Load search term from query parameters
-    const searchTerm = this.route.snapshot.queryParams['searchTerm'] || '';
-    if (searchTerm) {
-      this.searchQuery.set(searchTerm); 
-      this.searchInput.set(searchTerm);
-    }
-    
     // Set up debounced search subscription
     this.searchInputSubject
       .pipe(
@@ -188,31 +181,23 @@ export class PropertyListComponent implements OnInit, OnDestroy {
       )
       .subscribe((value) => {
         const trimmedValue = value.trim();
+        
         // Only search if 3+ characters, otherwise clear search
         if (trimmedValue.length >= 3) {
           this.performSearch(trimmedValue);
         } else if (trimmedValue.length === 0 && this.searchQuery()) {
           // Clear search if input is empty
           this.performSearch('');
+        } else if (trimmedValue.length > 0 && trimmedValue.length < 3) {
+          // If search term is less than 3 characters, clear the search query
+          this.searchQuery.set('');
+          this.currentPage.set(1);
+          this.loadProperties();
         }
       });
     
     this.loadProperties();
     this.loadOwners();
-
-    // Listen to query parameter changes (for search term)
-    this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe((params) => {
-      const searchTerm = params['searchTerm'] || '';
-      const currentSearchQuery = this.searchQuery();
-      
-      // Only update if search term actually changed (and not from our own navigation)
-      if (searchTerm !== currentSearchQuery) {
-        this.searchQuery.set(searchTerm);
-        this.searchInput.set(searchTerm);
-        this.currentPage.set(1);
-        this.loadProperties();
-      }
-    });
   }
 
   /**
@@ -304,13 +289,6 @@ export class PropertyListComponent implements OnInit, OnDestroy {
     // Clear owner selection
     this.selectedOwnerId.set(null);
     
-    // Update query parameters
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { searchTerm: null },
-      queryParamsHandling: 'merge',
-    });
-    
     // Reload properties
     this.loadProperties();
   }
@@ -324,7 +302,7 @@ export class PropertyListComponent implements OnInit, OnDestroy {
 
   /**
    * Perform search with the given search term
-   * Updates query parameters and triggers API call
+   * Triggers API call
    */
   private performSearch(searchTerm: string): void {
     const currentSearchQuery = this.searchQuery();
@@ -333,13 +311,6 @@ export class PropertyListComponent implements OnInit, OnDestroy {
     if (searchTerm !== currentSearchQuery) {
       this.searchQuery.set(searchTerm);
       this.currentPage.set(1);
-      
-      // Update query parameters to persist search term
-      this.router.navigate([], {
-        relativeTo: this.route,
-        queryParams: { searchTerm: searchTerm || null },
-        queryParamsHandling: 'merge',
-      });
       
       // Load properties immediately
       this.loadProperties();
