@@ -1,6 +1,468 @@
-<z-page zTitle="Property">
-  <z-content>
-    <!-- Empty component - to be implemented later -->
-  </z-content>
-</z-page>
+<z-page [zTitle]="isEditMode() ? 'Edit Property' : 'Add Property'">
+      <div class="flex flex-col h-full">
+        <!-- Header Section -->
+        <div class="space-y-4 pb-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-3xl font-bold mb-2">
+                @if (isEditMode()) {
+                  Edit Property
+                } @else {
+                  Add New Property
+                }
+              </h2>
+              <p class="text-muted-foreground">
+                @if (isEditMode()) {
+                  Update the property information below
+                } @else {
+                  Create a new property by filling in the information below
+                }
+              </p>
+            </div>
+            <div class="flex gap-2">
+              <z-button zType="outline" zSize="default" [disabled]="isSaving()" (click)="!isSaving() && onCancel()">
+                Cancel
+              </z-button>
+              <z-button [zType]="isSaving() || !isFormValid() ? 'ghost' : 'default'" [disabled]="isSaving()" (click)="!isSaving() && onSave()">
+                @if (isSaving()) {
+                  <span class="flex items-center gap-2">
+                    <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+                    Saving...
+                  </span>
+                } @else {
+                  <z-icon zType="check" zSize="sm" class="mr-2" />
+                  Save Property
+                }
+              </z-button>
+            </div>
+          </div>
+        </div>
 
+        <!-- Main Form -->
+        <div class="flex-1 overflow-auto">
+          @if (isLoading()) {
+            <div class="flex items-center justify-center h-full">
+              <div class="flex flex-col items-center gap-4">
+                <z-icon zType="loader-circle" zSize="lg" class="animate-spin text-primary" />
+                <p class="text-muted-foreground">Loading property data...</p>
+              </div>
+            </div>
+          } @else {
+            <z-card class="max-w-7xl mx-auto">
+              <div class="p-8 space-y-8">
+                <!-- Basic Information Section -->
+                <div class="space-y-6 pb-6 border-b">
+                  <div>
+                    <h3 class="text-lg font-semibold mb-1">Basic Information</h3>
+                    <p class="text-sm text-muted-foreground">
+                      Enter the basic details of the property
+                    </p>
+                  </div>
+
+                  <!-- First Row: Category, Identifier, Name, Type Property -->
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <z-form-field>
+                      <z-form-label>Category</z-form-label>
+                      <z-form-control>
+                        <z-select
+                          [zValue]="formData().category.toString()"
+                          [zLabel]="getCategoryLabel()"
+                          (zSelectionChange)="onCategoryChange(+$event)"
+                        >
+                          @for (option of categoryOptions; track option.value) {
+                            <z-select-item [zValue]="option.value.toString()">
+                              {{ option.label }}
+                            </z-select-item>
+                          }
+                        </z-select>
+                      </z-form-control>
+                    </z-form-field>
+
+                    <z-form-field>
+                      <z-form-label zRequired>Identifier</z-form-label>
+                      <z-form-control [errorMessage]="identifierError()">
+                        <div class="flex gap-2">
+                          <z-input-group [zPrefix]="homeIconTemplate" class="flex-1">
+                            <input
+                              z-input
+                              type="text"
+                              [ngModel]="formData().identifier"
+                              (ngModelChange)="updateField('identifier', $event)"
+                              placeholder="Enter property identifier"
+                              [zStatus]="identifierHasError() ? 'error' : undefined"
+                              class="w-full"
+                            />
+                          </z-input-group>
+                          <z-button
+                            zType="outline"
+                            zSize="default"
+                            (click)="generateIdentifier()"
+                            title="Generate identifier"
+                            class="flex-shrink-0"
+                          >
+                            <z-icon zType="refresh-cw" zSize="sm" />
+                          </z-button>
+                        </div>
+                      </z-form-control>
+                    </z-form-field>
+
+                    <z-form-field>
+                      <z-form-label zRequired>Name</z-form-label>
+                      <z-form-control [errorMessage]="nameError()">
+                        <z-input-group [zPrefix]="homeIconTemplate">
+                          <input
+                            z-input
+                            type="text"
+                            [ngModel]="formData().name"
+                            (ngModelChange)="updateField('name', $event)"
+                            placeholder="Enter property name"
+                            [zStatus]="nameHasError() ? 'error' : undefined"
+                            class="w-full"
+                          />
+                        </z-input-group>
+                      </z-form-control>
+                    </z-form-field>
+
+                    <z-form-field>
+                      <z-form-label zRequired>Type Property</z-form-label>
+                      <z-form-control [errorMessage]="typePropertyError()">
+                        <z-select
+                          [zValue]="formData().typeProperty || ''"
+                          [zLabel]="formData().typeProperty || 'Select type'"
+                          (zSelectionChange)="updateField('typeProperty', $event)"
+                        >
+                          @for (type of propertyTypes(); track type) {
+                            <z-select-item [zValue]="type">
+                              {{ type }}
+                            </z-select-item>
+                          }
+                        </z-select>
+                      </z-form-control>
+                    </z-form-field>
+                  </div>
+
+                  <!-- Second Row: Description (full width, resizable) -->
+                  <z-form-field>
+                    <z-form-label>Description</z-form-label>
+                    <z-form-control>
+                      <textarea
+                        z-input
+                        [ngModel]="formData().description"
+                        (ngModelChange)="updateField('description', $event)"
+                        placeholder="Enter property description"
+                        rows="4"
+                        class="w-full resize-y"
+                      ></textarea>
+                    </z-form-control>
+                  </z-form-field>
+                </div>
+
+                <!-- Location Section -->
+                <div class="space-y-6 pb-6 border-b">
+                  <div>
+                    <h3 class="text-lg font-semibold mb-1">Location</h3>
+                    <p class="text-sm text-muted-foreground">
+                      Enter the property address
+                    </p>
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <z-form-field>
+                      <z-form-label>Address</z-form-label>
+                      <z-form-control>
+                        <z-input-group [zPrefix]="mapPinIconTemplate">
+                          <input
+                            z-input
+                            type="text"
+                            [ngModel]="formData().address"
+                            (ngModelChange)="updateField('address', $event)"
+                            placeholder="Enter address"
+                            class="w-full"
+                          />
+                        </z-input-group>
+                      </z-form-control>
+                    </z-form-field>
+
+                    <z-form-field>
+                      <z-form-label>City</z-form-label>
+                      <z-form-control>
+                        <z-select
+                          [zValue]="formData().city || ''"
+                          [zLabel]="formData().city || 'Select city'"
+                          (zSelectionChange)="updateField('city', $event)"
+                        >
+                          @for (city of cityOptions; track city) {
+                            <z-select-item [zValue]="city">
+                              {{ city }}
+                            </z-select-item>
+                          }
+                        </z-select>
+                      </z-form-control>
+                    </z-form-field>
+                  </div>
+                </div>
+
+                <!-- Property Details Section -->
+                <div class="space-y-6 pb-6 border-b">
+                  <div>
+                    <h3 class="text-lg font-semibold mb-1">Property Details</h3>
+                    <p class="text-sm text-muted-foreground">
+                      Enter the property specifications
+                    </p>
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <z-form-field>
+                      <z-form-label zRequired>Area (m²)</z-form-label>
+                      <z-form-control [errorMessage]="areaError()">
+                        <z-input-group [zPrefix]="squareIconTemplate">
+                          <input
+                            z-input
+                            type="number"
+                            [ngModel]="formData().area"
+                            (ngModelChange)="updateField('area', +$event)"
+                            placeholder="0"
+                            min="0"
+                            step="0.01"
+                            [zStatus]="areaHasError() ? 'error' : undefined"
+                            class="w-full"
+                          />
+                        </z-input-group>
+                      </z-form-control>
+                    </z-form-field>
+
+                    <z-form-field>
+                      <z-form-label zRequired>Pieces</z-form-label>
+                      <z-form-control [errorMessage]="piecesError()">
+                        <z-input-group [zPrefix]="homeIconTemplate">
+                          <input
+                            z-input
+                            type="number"
+                            [ngModel]="formData().pieces"
+                            (ngModelChange)="updateField('pieces', +$event)"
+                            placeholder="0"
+                            min="0"
+                            step="0.1"
+                            [zStatus]="piecesHasError() ? 'error' : undefined"
+                            class="w-full"
+                          />
+                        </z-input-group>
+                      </z-form-control>
+                    </z-form-field>
+
+                    <z-form-field>
+                      <z-form-label>Bathrooms</z-form-label>
+                      <z-form-control>
+                        <z-input-group [zPrefix]="homeIconTemplate">
+                          <input
+                            z-input
+                            type="number"
+                            [ngModel]="formData().bathrooms"
+                            (ngModelChange)="updateField('bathrooms', +$event)"
+                            placeholder="0"
+                            min="0"
+                            step="0.1"
+                            class="w-full"
+                          />
+                        </z-input-group>
+                      </z-form-control>
+                    </z-form-field>
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <z-form-field class="md:col-span-1 lg:col-span-2">
+                      <z-form-label zRequired>Price</z-form-label>
+                      <z-form-control [errorMessage]="priceError()">
+                        <z-input-group [zPrefix]="banknoteIconTemplate">
+                          <input
+                            z-input
+                            type="number"
+                            [ngModel]="formData().price"
+                            (ngModelChange)="updateField('price', +$event)"
+                            placeholder="0"
+                            min="0"
+                            step="0.01"
+                            [zStatus]="priceHasError() ? 'error' : undefined"
+                            class="w-full"
+                          />
+                        </z-input-group>
+                      </z-form-control>
+                    </z-form-field>
+
+                    <z-form-field>
+                      <z-form-label>Payment Type</z-form-label>
+                      <z-form-control>
+                        <z-select
+                          [zValue]="formData().typePaiment.toString()"
+                          [zLabel]="getTypePaimentLabel()"
+                          (zSelectionChange)="updateField('typePaiment', +$event)"
+                        >
+                          @for (option of typePaimentOptions; track option.value) {
+                            <z-select-item [zValue]="option.value.toString()">
+                              {{ option.label }}
+                            </z-select-item>
+                          }
+                        </z-select>
+                      </z-form-control>
+                    </z-form-field>
+
+                    <z-form-field>
+                      <z-form-label>Furnished</z-form-label>
+                      <z-form-control>
+                        <div class="flex items-center gap-2 h-10">
+                          <z-checkbox
+                            [ngModel]="formData().furnished"
+                            (checkChange)="updateField('furnished', $event)"
+                          />
+                          <span class="text-sm">Furnished</span>
+                        </div>
+                      </z-form-control>
+                    </z-form-field>
+                  </div>
+                </div>
+
+                <!-- Owner Section -->
+                <div class="space-y-6 pb-6 border-b">
+                  <div>
+                    <h3 class="text-lg font-semibold mb-1">Owner</h3>
+                    <p class="text-sm text-muted-foreground">
+                      Select the property owner
+                    </p>
+                  </div>
+
+                  <z-form-field>
+                    <z-form-label zRequired>Owner</z-form-label>
+                    <z-form-control [errorMessage]="contactIdError()">
+                      <z-select
+                        [zValue]="formData().contactId || ''"
+                        [zLabel]="getOwnerLabel()"
+                        (zSelectionChange)="updateField('contactId', $event)"
+                      >
+                        @for (owner of owners(); track owner.id) {
+                          <z-select-item [zValue]="owner.id">
+                            {{ getOwnerDisplayName(owner) }}
+                          </z-select-item>
+                        }
+                      </z-select>
+                    </z-form-control>
+                  </z-form-field>
+                </div>
+
+                <!-- Property Images Section -->
+                <div class="space-y-6">
+                  <div>
+                    <h3 class="text-lg font-semibold mb-1">Property Images</h3>
+                    <p class="text-sm text-muted-foreground">
+                      Upload images of the property. Select one as the default image.
+                    </p>
+                  </div>
+
+                  <!-- Image Gallery -->
+                  @if (hasImages()) {
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                      @for (image of allImages(); track image.id) {
+                        <div class="relative group">
+                          <div class="aspect-square rounded-lg overflow-hidden border-2" [class.border-primary]="image.isDefault" [class.border-border]="!image.isDefault">
+                            <img
+                              [src]="image.url"
+                              [alt]="'Property image'"
+                              class="w-full h-full object-cover"
+                              [zImageHoverPreview]="image.url"
+                              [zAlt]="'Property image'"
+                              [zPosition]="'right'"
+                              [zMaxWidth]="'600px'"
+                              [zMaxHeight]="'600px'"
+                            />
+                            <!-- Default Badge -->
+                            @if (image.isDefault) {
+                              <div class="absolute top-2 left-2 bg-primary text-primary-foreground px-2 py-1 rounded text-xs font-medium">
+                                Default
+                              </div>
+                            }
+                            <!-- Actions Overlay -->
+                            <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                              @if (!image.isDefault) {
+                                <z-button
+                                  zType="ghost"
+                                  zSize="sm"
+                                  class="text-white hover:text-white hover:bg-white/20"
+                                  (click)="onSetDefaultImage(image.id, !image.isUploaded)"
+                                  title="Set as default"
+                                >
+                                  <z-icon zType="star" zSize="sm" class="mr-1" />
+                                  Set Default
+                                </z-button>
+                              }
+                              <z-button
+                                zType="ghost"
+                                zSize="sm"
+                                class="text-destructive hover:text-destructive hover:bg-destructive/20"
+                                (click)="onRemoveImage(image.id, !image.isUploaded)"
+                                title="Remove image"
+                              >
+                                <z-icon zType="x" zSize="sm" />
+                              </z-button>
+                            </div>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+
+                  <!-- Upload Area -->
+                  <div
+                    class="relative border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 hover:bg-accent/5 transition-all cursor-pointer group"
+                    (click)="onImageClick()"
+                  >
+                    <div class="flex flex-col items-center gap-3">
+                      <div class="w-12 h-12 rounded-full bg-primary/10 group-hover:bg-primary/20 flex items-center justify-center transition-colors">
+                        <z-icon zType="upload" class="text-primary" />
+                      </div>
+                      <div>
+                        <p class="font-medium">Click to upload images or drag and drop</p>
+                        <p class="text-sm text-muted-foreground mt-1">
+                          Images only (Max 10MB per file)
+                        </p>
+                      </div>
+                    </div>
+                    <input
+                      #imageInput
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      (change)="onImagesSelected($event)"
+                      class="hidden"
+                    />
+                  </div>
+                </div>
+              </div>
+            </z-card>
+          }
+        </div>
+      </div>
+    </z-page>
+
+<!-- Icon Templates -->
+<ng-template #homeIconTemplate>
+  <z-icon zType="building-2" zSize="sm" />
+</ng-template>
+
+<ng-template #mapPinIconTemplate>
+  <z-icon zType="map-pin" zSize="sm" />
+</ng-template>
+
+<ng-template #buildingIconTemplate>
+  <z-icon zType="building" zSize="sm" />
+</ng-template>
+
+<ng-template #squareIconTemplate>
+  <z-icon zType="square-library" zSize="sm" />
+</ng-template>
+
+<ng-template #banknoteIconTemplate>
+  <z-icon zType="banknote" zSize="sm" />
+</ng-template>
+
+<ng-template #userIconTemplate>
+  <z-icon zType="user" zSize="sm" />
+</ng-template>

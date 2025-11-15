@@ -31,7 +31,7 @@ interface BreadcrumbItem {
   encapsulation: ViewEncapsulation.None,
   template: `
     <main class="flex flex-col min-h-0 flex-1">
-      @if (breadcrumbs().length > 0) {
+      @if (zShowBreadcrumb() && breadcrumbs().length > 0) {
         <div class="mb-6 flex items-center gap-2">
           @if (zSidebarToggle()) {
             <div
@@ -82,6 +82,7 @@ export class ContentComponent {
   readonly class = input<ClassValue>('');
   readonly zSidebarToggle = input<(() => void) | null>(null);
   readonly zSidebarCollapsed = input<boolean>(false);
+  readonly zShowBreadcrumb = input<boolean>(true);
 
   protected readonly classes = computed(() => mergeClasses(contentVariants(), this.class()));
 
