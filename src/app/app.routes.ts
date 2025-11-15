@@ -35,6 +35,11 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: 'property',
+    loadChildren: () => import('./property/property.module').then((m) => m.PropertyModule),
+    canActivate: [authGuard],
+  },
+  {
     path: 'ai-chat',
     component: AiChatComponent,
     canActivate: [authGuard],

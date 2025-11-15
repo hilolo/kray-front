@@ -46,6 +46,10 @@
     "inventaires": "Inventories",
     "etatDesLieux": "Condition Report",
     "tasks": "Tasks",
+    "tenants": "Tenants",
+    "owners": "Owners",
+    "services": "Services",
+    "properties": "Properties",
     "aiChat": "AI Chat",
     "fileManager": "File Manager"
   },
@@ -67,6 +71,13 @@
   },
   "breadcrumb": {
     "home": "Home"
+  },
+  "property": {
+    "price": {
+      "month": "month",
+      "week": "week",
+      "day": "day"
+    }
   }
 }
 

@@ -49,7 +49,6 @@ export class AppSidebarComponent implements OnDestroy {
     }>
   >([
     { route: '/', label: 'Bureau', labelKey: 'menu.bureau', icon: 'monitor' },
-    { route: '/biens', label: 'Biens', labelKey: 'menu.biens', icon: 'house' },
     { route: '/lots', label: 'Lots', labelKey: 'menu.lots', icon: 'layers' },
     { route: '/immeubles', label: 'Immeubles', labelKey: 'menu.immeubles', icon: 'building' },
     { route: '/locataires', label: 'Locataires', labelKey: 'menu.locataires', icon: 'users' },
@@ -61,6 +60,7 @@ export class AppSidebarComponent implements OnDestroy {
     { route: '/contact/tenants', label: 'Tenants', labelKey: 'menu.tenants', icon: 'user' },
     { route: '/contact/owners', label: 'Owners', labelKey: 'menu.owners', icon: 'users' },
     { route: '/contact/services', label: 'Services', labelKey: 'menu.services', icon: 'building' },
+    { route: '/property', label: 'Properties', labelKey: 'menu.properties', icon: 'house' },
     { route: '/ai-chat', label: 'AI Chat', labelKey: 'menu.aiChat', icon: 'sparkles' },
     { route: '/file-manager', label: 'File Manager', labelKey: 'menu.fileManager', icon: 'folder' },
     { route: '/settings', label: 'Settings', labelKey: 'menu.settings', icon: 'settings' },

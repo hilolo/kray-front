@@ -93,6 +93,7 @@ import {
   Image,
   FileSpreadsheet,
   IdCard,
+  Banknote,
 } from 'lucide-angular';
 
 export const ZARD_ICONS = {
@@ -178,6 +179,7 @@ export const ZARD_ICONS = {
   image: Image,
   'file-spreadsheet': FileSpreadsheet,
   'id-card': IdCard,
+  banknote: Banknote,
   plus: Plus,
   send: Send,
   paperclip: Paperclip,

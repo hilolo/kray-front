@@ -1,0 +1,372 @@
+import { AfterViewInit, ChangeDetectionStrategy, Component, computed, inject, OnDestroy, OnInit, signal, TemplateRef, ViewContainerRef, viewChild } from '@angular/core';
+import { RouterLink, Router, ActivatedRoute } from '@angular/router';
+import { ZardPageComponent } from '../../page/page.component';
+import { ZardButtonComponent } from '@shared/components/button/button.component';
+import { ZardInputDirective } from '@shared/components/input/input.directive';
+import { ZardBadgeComponent } from '@shared/components/badge/badge.component';
+import { ZardCheckboxComponent } from '@shared/components/checkbox/checkbox.component';
+import { ZardIconComponent } from '@shared/components/icon/icon.component';
+import { ZardAvatarComponent } from '@shared/components/avatar/avatar.component';
+import { TranslateModule } from '@ngx-translate/core';
+import { FormsModule } from '@angular/forms';
+import { ZardAlertDialogService } from '@shared/components/alert-dialog/alert-dialog.service';
+import { ZardDatatableComponent, DatatableColumn } from '@shared/components/datatable/datatable.component';
+import { ZardDropdownMenuComponent } from '@shared/components/dropdown/dropdown.component';
+import { ZardDropdownMenuItemComponent } from '@shared/components/dropdown/dropdown-item.component';
+import { ZardDividerComponent } from '@shared/components/divider/divider.component';
+import { ZardPaginationComponent } from '@shared/components/pagination/pagination.component';
+import { ZardSelectComponent } from '@shared/components/select/select.component';
+import { ZardSelectItemComponent } from '@shared/components/select/select-item.component';
+import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
+import { CommonModule } from '@angular/common';
+import type { Property } from '@shared/models/property/property.model';
+import type { PropertyListRequest } from '@shared/models/property/property-list-request.model';
+import { PropertyService } from '@shared/services/property.service';
+import { RoutePreferencesService } from '@shared/services/route-preferences.service';
+import { PropertyPricePipe } from '@shared/pipes/property-price.pipe';
+
+@Component({
+  selector: 'app-property-list',
+  standalone: true,
+  imports: [
+    CommonModule,
+    RouterLink,
+    ZardPageComponent,
+    ZardButtonComponent,
+    ZardInputDirective,
+    ZardBadgeComponent,
+    ZardCheckboxComponent,
+    ZardIconComponent,
+    ZardAvatarComponent,
+    ZardDatatableComponent,
+    ZardDropdownMenuComponent,
+    ZardDropdownMenuItemComponent,
+    ZardDividerComponent,
+    ZardPaginationComponent,
+    ZardSelectComponent,
+    ZardSelectItemComponent,
+    TranslateModule,
+    FormsModule,
+    PropertyPricePipe,
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  templateUrl: './property-list.component.html',
+})
+export class PropertyListComponent implements OnInit, OnDestroy {
+  private readonly alertDialogService = inject(ZardAlertDialogService);
+  private readonly viewContainerRef = inject(ViewContainerRef);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly propertyService = inject(PropertyService);
+  private readonly preferencesService = inject(RoutePreferencesService);
+  private readonly destroy$ = new Subject<void>();
+  private readonly searchInputSubject = new Subject<string>();
+
+  readonly searchQuery = signal(''); // Actual search term sent to server
+  readonly searchInput = signal(''); // Input field value (for two-way binding)
+  readonly selectedRows = signal<Set<string>>(new Set());
+  readonly currentPage = signal(1);
+  readonly pageSizeOptions = signal([10, 20, 50, 100]);
+  readonly pageSize = signal(10); // Will be initialized from preferences in ngOnInit
+  readonly viewMode = signal<'list' | 'card'>('list');
+  readonly properties = signal<Property[]>([]);
+  readonly isLoading = signal(false);
+  readonly totalPages = signal(1);
+  readonly totalItems = signal(0);
+
+  // Template references for custom cells
+  readonly propertyIdCell = viewChild<TemplateRef<any>>('propertyIdCell');
+  readonly referenceCell = viewChild<TemplateRef<any>>('referenceCell');
+  readonly addressCell = viewChild<TemplateRef<any>>('addressCell');
+  readonly priceCell = viewChild<TemplateRef<any>>('priceCell');
+  readonly typeCell = viewChild<TemplateRef<any>>('typeCell');
+  readonly actionsCell = viewChild<TemplateRef<any>>('actionsCell');
+
+  // Define columns for datatable
+  readonly columns = computed<DatatableColumn<Property>[]>(() => [
+    {
+      key: 'id',
+      label: 'Image',
+      cellTemplate: this.propertyIdCell(),
+    },
+    {
+      key: 'reference',
+      label: 'Reference',
+      sortable: true,
+      cellTemplate: this.referenceCell(),
+    },
+    {
+      key: 'address',
+      label: 'Address',
+      sortable: true,
+      cellTemplate: this.addressCell(),
+    },
+    {
+      key: 'price',
+      label: 'Price',
+      sortable: true,
+      cellTemplate: this.priceCell(),
+    },
+    {
+      key: 'type',
+      label: 'Type',
+      sortable: true,
+      cellTemplate: this.typeCell(),
+    },
+    {
+      key: 'actions',
+      label: '',
+      width: '50px',
+      cellTemplate: this.actionsCell(),
+    },
+  ]);
+
+  readonly filteredProperties = computed(() => {
+    return this.properties();
+  });
+
+  readonly emptyMessage = computed(() => {
+    if (this.searchQuery()) {
+      return 'No properties match your search';
+    }
+    return 'No properties available';
+  });
+
+  readonly hasData = computed(() => {
+    return this.filteredProperties().length > 0;
+  });
+
+  readonly selectedCount = computed(() => {
+    return this.selectedRows().size;
+  });
+
+  readonly hasSelectedProperties = computed(() => {
+    return this.selectedCount() > 0;
+  });
+
+  ngOnInit(): void {
+    // Get route key for preferences (e.g., 'property/list')
+    const routeKey = this.getRouteKey();
+    
+    // Load view type preference for this route
+    const savedViewType = this.preferencesService.getViewType(routeKey);
+    this.viewMode.set(savedViewType);
+    
+    // Load page size preference for this route
+    const savedPageSize = this.preferencesService.getPageSize(routeKey);
+    this.pageSize.set(savedPageSize);
+    
+    // Load search term from query parameters
+    const searchTerm = this.route.snapshot.queryParams['searchTerm'] || '';
+    if (searchTerm) {
+      this.searchQuery.set(searchTerm); 
+      this.searchInput.set(searchTerm);
+    }
+    
+    // Set up debounced search subscription
+    this.searchInputSubject
+      .pipe(
+        debounceTime(300), // Wait 300ms after user stops typing
+        distinctUntilChanged(), // Only trigger if value actually changed
+        takeUntil(this.destroy$)
+      )
+      .subscribe((value) => {
+        const trimmedValue = value.trim();
+        // Only search if 3+ characters, otherwise clear search
+        if (trimmedValue.length >= 3) {
+          this.performSearch(trimmedValue);
+        } else if (trimmedValue.length === 0 && this.searchQuery()) {
+          // Clear search if input is empty
+          this.performSearch('');
+        }
+      });
+    
+    this.loadProperties();
+
+    // Listen to query parameter changes (for search term)
+    this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe((params) => {
+      const searchTerm = params['searchTerm'] || '';
+      const currentSearchQuery = this.searchQuery();
+      
+      // Only update if search term actually changed (and not from our own navigation)
+      if (searchTerm !== currentSearchQuery) {
+        this.searchQuery.set(searchTerm);
+        this.searchInput.set(searchTerm);
+        this.currentPage.set(1);
+        this.loadProperties();
+      }
+    });
+  }
+
+  /**
+   * Get the route key for preferences storage
+   */
+  private getRouteKey(): string {
+    return 'property/list';
+  }
+
+  loadProperties(): void {
+    this.isLoading.set(true);
+    const request: PropertyListRequest = {
+      currentPage: this.currentPage(),
+      pageSize: this.pageSize(),
+      ignore: false,
+      ...(this.searchQuery() && this.searchQuery().trim() ? { searchQuery: this.searchQuery().trim() } : {}),
+    };
+    
+    this.propertyService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (response) => {
+        this.properties.set(response.result);
+        this.totalPages.set(response.totalPages);
+        this.totalItems.set(response.totalItems);
+        this.isLoading.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading properties:', error);
+        this.isLoading.set(false);
+      },
+    });
+  }
+
+  onSearchInputChange(value: string): void {
+    // Update the input value
+    this.searchInput.set(value);
+    // Emit to subject for debounced search
+    this.searchInputSubject.next(value);
+  }
+
+  /**
+   * Perform search with the given search term
+   * Updates query parameters and triggers API call
+   */
+  private performSearch(searchTerm: string): void {
+    const currentSearchQuery = this.searchQuery();
+    
+    // Only update if search term actually changed
+    if (searchTerm !== currentSearchQuery) {
+      this.searchQuery.set(searchTerm);
+      this.currentPage.set(1);
+      
+      // Update query parameters to persist search term
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { searchTerm: searchTerm || null },
+        queryParamsHandling: 'merge',
+      });
+      
+      // Load properties immediately
+      this.loadProperties();
+    }
+  }
+
+  onSearchSubmit(): void {
+    // Optional: Trigger search immediately when Enter is pressed (bypasses debounce)
+    const searchTerm = this.searchInput().trim();
+    if (searchTerm.length >= 3 || searchTerm.length === 0) {
+      this.performSearch(searchTerm);
+    }
+  }
+
+  onSearchKeyDown(event: KeyboardEvent): void {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      this.onSearchSubmit();
+    }
+  }
+
+  toggleViewMode(): void {
+    const newViewMode = this.viewMode() === 'list' ? 'card' : 'list';
+    this.viewMode.set(newViewMode);
+    // Save view type preference for current route
+    const routeKey = this.getRouteKey();
+    this.preferencesService.setViewType(routeKey, newViewMode);
+  }
+
+  onViewProperty(property: Property): void {
+    console.log('View property:', property);
+    // TODO: Implement view functionality
+  }
+
+  onEditProperty(property: Property): void {
+    this.router.navigate(['/property', property.id]);
+  }
+
+  onDeleteProperty(property: Property): void {
+    const propertyName = property.name || property.identifier;
+    const dialogRef = this.alertDialogService.confirm({
+      zTitle: 'Delete Property',
+      zDescription: `Are you sure you want to delete ${propertyName}? This action cannot be undone.`,
+      zOkText: 'Delete',
+      zCancelText: 'Cancel',
+      zOkDestructive: true,
+      zViewContainerRef: this.viewContainerRef,
+    });
+
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result) => {
+      if (result) {
+        // Remove property from the list
+        const updatedProperties = this.properties().filter((p) => p.id !== property.id);
+        this.properties.set(updatedProperties);
+        
+        // Remove from selection if selected
+        const newSet = new Set(this.selectedRows());
+        newSet.delete(property.id);
+        this.selectedRows.set(newSet);
+      }
+    });
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage.set(page);
+    this.loadProperties();
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.currentPage.set(1); // Reset to first page when page size changes
+    // Save page size preference for current route
+    const routeKey = this.getRouteKey();
+    this.preferencesService.setPageSize(routeKey, size);
+    this.loadProperties();
+  }
+
+  onSelectionChange(selection: Set<string>): void {
+    this.selectedRows.set(selection);
+  }
+
+  toggleSelect(propertyId: string): void {
+    const newSet = new Set(this.selectedRows());
+    if (newSet.has(propertyId)) {
+      newSet.delete(propertyId);
+    } else {
+      newSet.add(propertyId);
+    }
+    this.selectedRows.set(newSet);
+  }
+
+  isSelected(propertyId: string): boolean {
+    return this.selectedRows().has(propertyId);
+  }
+
+  getPropertyDisplayName(property: Property): string {
+    return property.name || property.identifier || 'Unnamed Property';
+  }
+
+  getPropertyTypeLabel(property: Property): string {
+    return property.typeProperty || 'N/A';
+  }
+
+  getInitials(property: Property): string {
+    const name = this.getPropertyDisplayName(property);
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 0) return '?';
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+}
+
