@@ -12,18 +12,54 @@
           <z-switch [ngModel]="showArchived()" (checkChange)="toggleShowArchived($event)" />
         </div>
         <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-          <!-- Filter on left -->
-          <div class="relative flex-1 sm:flex-initial w-full sm:w-[300px]">
-            <z-icon zType="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" zSize="sm" />
-            <input
-              z-input
-              type="text"
-              placeholder="Search contacts..."
-              class="pl-9 w-full"
-              [value]="searchInput()"
-              (input)="onSearchInputChange($any($event.target).value)"
-              (keydown)="onSearchKeyDown($event)"
-            />
+          <!-- Search and Filter on left -->
+          <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-1">
+            <!-- Search input -->
+            <div class="relative flex-1 sm:flex-initial w-full sm:w-[300px]">
+              <z-icon zType="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" zSize="sm" />
+              <input
+                z-input
+                type="text"
+                placeholder="Search contacts..."
+                class="pl-9 w-full"
+                [value]="searchInput()"
+                (input)="onSearchInputChange($any($event.target).value)"
+                (keydown)="onSearchKeyDown($event)"
+              />
+            </div>
+            <!-- Type Filter -->
+            <div class="flex items-center gap-3 px-4 py-2 rounded-lg border border-dashed border-border bg-background">
+              <!-- Label with icon -->
+              <div class="flex items-center gap-2">
+                <div class="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center">
+                  <z-icon zType="plus" zSize="sm" class="text-primary" />
+                </div>
+                <span class="text-sm font-medium text-foreground">Type</span>
+              </div>
+              <!-- Separator -->
+              <div class="w-px h-6 bg-border"></div>
+              <!-- Filter options -->
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  (click)="onContactTypeFilterChange('individual')"
+                  [class]="contactTypeFilter() === 'individual' 
+                    ? 'px-3 py-1.5 rounded-md text-sm font-medium bg-primary text-primary-foreground transition-colors' 
+                    : 'px-3 py-1.5 rounded-md text-sm font-medium bg-muted text-muted-foreground hover:bg-muted/80 transition-colors'"
+                >
+                  Individual
+                </button>
+                <button
+                  type="button"
+                  (click)="onContactTypeFilterChange('company')"
+                  [class]="contactTypeFilter() === 'company' 
+                    ? 'px-3 py-1.5 rounded-md text-sm font-medium bg-primary text-primary-foreground transition-colors' 
+                    : 'px-3 py-1.5 rounded-md text-sm font-medium bg-muted text-muted-foreground hover:bg-muted/80 transition-colors'"
+                >
+                  Company
+                </button>
+              </div>
+            </div>
           </div>
           <!-- Buttons on right - Archive first, then Card View, then Add Contact -->
           <div class="flex gap-2 items-center ml-auto">

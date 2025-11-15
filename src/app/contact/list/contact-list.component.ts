@@ -80,6 +80,7 @@ export class ContactListComponent implements OnInit, OnDestroy {
   readonly isLoading = signal(false);
   readonly totalPages = signal(1);
   readonly totalItems = signal(0);
+  readonly contactTypeFilter = signal<'all' | 'individual' | 'company'>('all'); // Filter for Individual/Company
 
   toggleShowArchived(value: boolean): void {
     this.showArchived.set(value);
@@ -211,6 +212,7 @@ export class ContactListComponent implements OnInit, OnDestroy {
       ignore: false,
       type: this.contactType(),
       ...(this.searchQuery() && this.searchQuery().trim() ? { searchQuery: this.searchQuery().trim() } : {}),
+      ...(this.contactTypeFilter() !== 'all' ? { isACompany: this.contactTypeFilter() === 'company' } : {}),
     };
     
     this.contactService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
@@ -225,6 +227,14 @@ export class ContactListComponent implements OnInit, OnDestroy {
         this.isLoading.set(false);
       },
     });
+  }
+
+  onContactTypeFilterChange(filter: 'individual' | 'company'): void {
+    // Toggle off if already selected, otherwise set to new filter
+    const newFilter = this.contactTypeFilter() === filter ? 'all' : filter;
+    this.contactTypeFilter.set(newFilter);
+    this.currentPage.set(1);
+    this.loadContacts();
   }
 
   readonly selectedCount = computed(() => {

@@ -9,5 +9,6 @@ export interface ContactListRequest {
   ignore: boolean;
   type: ContactType;
   searchQuery?: string;
+  isACompany?: boolean;
 }
 
