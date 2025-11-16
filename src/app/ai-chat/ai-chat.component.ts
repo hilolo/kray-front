@@ -1,11 +1,13 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { ZardPageComponent } from '../page/page.component';
 import { ZardAiChatComponent, ChatMessage, RecentChat } from '@shared/components/ai-chat/ai-chat.component';
+import { ZardAlertComponent } from '@shared/components/alert/alert.component';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-ai-chat',
   standalone: true,
-  imports: [ZardPageComponent, ZardAiChatComponent],
+  imports: [ZardPageComponent, ZardAiChatComponent, ZardAlertComponent, TranslateModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './ai-chat.component.html',
 })

@@ -1,18 +1,27 @@
 <z-page zTitle="AI Chat">
-  <div class="h-[calc(100vh-200px)] w-full">
-    <z-ai-chat
-      [zMessages]="messages()"
-      [zRecentChats]="recentChats()"
-      [zLoading]="isLoading()"
-      [zPlaceholder]="'Ask me anything...'"
-      [zRemainingQuestions]="remainingQuestions()"
-      [zMaxQuestionsPerDay]="maxQuestionsPerDay"
-      (messageSent)="onMessageSent($event)"
-      (chatSelected)="onChatSelected($event)"
-      (newChatClicked)="onNewChat()"
-      zSize="full"
+  <div class="flex flex-col gap-4 w-full">
+    <z-alert
+      zType="warning"
+      zAppearance="soft"
+      [zTitle]="'aiChat.alert.title' | translate"
+      [zDescription]="'aiChat.alert.description' | translate"
       class="w-full"
     />
+    <div class="h-[calc(100vh-300px)] w-full">
+      <z-ai-chat
+        [zMessages]="messages()"
+        [zRecentChats]="recentChats()"
+        [zLoading]="isLoading()"
+        [zPlaceholder]="'Ask me anything...'"
+        [zRemainingQuestions]="remainingQuestions()"
+        [zMaxQuestionsPerDay]="maxQuestionsPerDay"
+        (messageSent)="onMessageSent($event)"
+        (chatSelected)="onChatSelected($event)"
+        (newChatClicked)="onNewChat()"
+        zSize="full"
+        class="w-full"
+      />
+    </div>
   </div>
 </z-page>
 
