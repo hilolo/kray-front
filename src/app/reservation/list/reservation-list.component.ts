@@ -676,6 +676,19 @@ export class ReservationListComponent implements OnInit, OnDestroy {
     }
   }
 
+  getStatusIcon(status: ReservationStatus): 'clock' | 'circle-check' | 'x' {
+    switch (status) {
+      case ReservationStatus.Pending:
+        return 'clock';
+      case ReservationStatus.Approved:
+        return 'circle-check';
+      case ReservationStatus.Cancelled:
+        return 'x';
+      default:
+        return 'clock';
+    }
+  }
+
   formatDate(dateString: string): string {
     if (!dateString) return '';
     const date = new Date(dateString);

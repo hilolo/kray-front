@@ -265,6 +265,28 @@
                     </z-input-group>
                   </z-form-control>
                 </z-form-field>
+
+                <z-form-field>
+                  <z-form-label>Status</z-form-label>
+                  <z-form-control>
+                    <z-select
+                      [zValue]="formData().status.toString()"
+                      [zLabel]="getStatusLabel(formData().status)"
+                      class="w-full"
+                      (zSelectionChange)="updateStatus($any($event))"
+                    >
+                      <z-icon slot="selected-icon" [zType]="getStatusIcon(formData().status)" zSize="sm" />
+                      @for (option of statusOptions; track option.value) {
+                        <z-select-item [zValue]="option.value.toString()">
+                          <span class="flex items-center gap-2">
+                            <z-icon [zType]="getStatusIcon(option.value)" zSize="sm" />
+                            <span>{{ option.label }}</span>
+                          </span>
+                        </z-select-item>
+                      }
+                    </z-select>
+                  </z-form-control>
+                </z-form-field>
               </div>
 
               <z-form-field>
