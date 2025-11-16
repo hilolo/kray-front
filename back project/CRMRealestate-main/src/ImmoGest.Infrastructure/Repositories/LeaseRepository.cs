@@ -98,6 +98,9 @@ namespace ImmoGest.Infrastructure.Repositories
                 {
                     query = query.Where(l => l.ContactId == rentalesFilter.ClientId.Value);
                 }
+
+                // Default: only show non-archived leases (GetRentalesFilter doesn't have IsArchived property)
+                query = query.Where(l => !l.IsArchived);
             }
 
             return base.SetPagedResultFilterOptions(query, filterOption);

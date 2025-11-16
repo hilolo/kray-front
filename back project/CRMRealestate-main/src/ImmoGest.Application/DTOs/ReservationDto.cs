@@ -45,9 +45,6 @@ namespace ImmoGest.Application.DTOs
         public List<AttachmentDto> Attachments { get; set; }
         public int AttachmentCount { get; set; }
         
-        // Archive status
-        public bool IsArchived { get; set; }
-        
         // System fields
         public Guid CompanyId { get; set; }
         public DateTime CreatedAt { get; set; }
