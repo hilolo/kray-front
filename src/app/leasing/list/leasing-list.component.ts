@@ -34,6 +34,7 @@ import { PropertyService } from '@shared/services/property.service';
 import type { Contact } from '@shared/models/contact/contact.model';
 import { ContactType } from '@shared/models/contact/contact.model';
 import type { Property } from '@shared/models/property/property.model';
+import { PropertyPricePipe } from '@shared/pipes/property-price.pipe';
 
 @Component({
   selector: 'app-leasing-list',
@@ -60,6 +61,7 @@ import type { Property } from '@shared/models/property/property.model';
     ZardSwitchComponent,
     TranslateModule,
     FormsModule,
+    PropertyPricePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './leasing-list.component.html',
@@ -438,6 +440,10 @@ export class LeasingListComponent implements OnInit, OnDestroy {
     });
   }
 
+  onSelectionChange(selection: Set<string>): void {
+    this.selectedRows.set(selection);
+  }
+
   toggleSelect(id: string): void {
     const selected = new Set(this.selectedRows());
     if (selected.has(id)) {
@@ -492,39 +498,62 @@ export class LeasingListComponent implements OnInit, OnDestroy {
     this.selectedRows.set(selected);
   }
 
+  showArchiveConfirmation(): void {
+    const selectedCount = this.selectedRows().size;
+    const dialogRef = this.alertDialogService.confirm({
+      zTitle: 'Archive Leases',
+      zDescription: `Are you sure you want to archive ${selectedCount} lease${selectedCount > 1 ? 's' : ''}?`,
+      zOkText: 'Archive',
+      zCancelText: 'Cancel',
+      zOkDestructive: true,
+      zViewContainerRef: this.viewContainerRef,
+    });
+
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result) => {
+      if (result) {
+        this.onBulkArchive();
+      }
+    });
+  }
+
+  showUnarchiveConfirmation(): void {
+    const selectedCount = this.selectedRows().size;
+    const dialogRef = this.alertDialogService.confirm({
+      zTitle: 'Unarchive Leases',
+      zDescription: `Are you sure you want to unarchive ${selectedCount} lease${selectedCount > 1 ? 's' : ''}?`,
+      zOkText: 'Unarchive',
+      zCancelText: 'Cancel',
+      zOkDestructive: false,
+      zViewContainerRef: this.viewContainerRef,
+    });
+
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result) => {
+      if (result) {
+        this.onBulkUnarchive();
+      }
+    });
+  }
+
   onBulkArchive(): void {
     const selectedLeases = this.selectedLeases().filter(lease => !lease.isArchived);
     if (selectedLeases.length === 0) {
       return;
     }
 
-    const dialogRef = this.alertDialogService.confirm({
-      zTitle: 'Archive Leases',
-      zDescription: `Are you sure you want to archive ${selectedLeases.length} lease(s)?`,
-      zOkText: 'Archive',
-      zCancelText: 'Cancel',
-      zOkDestructive: false,
-      zViewContainerRef: this.viewContainerRef,
-    });
+    this.isArchiving.set(true);
+    const archivePromises = selectedLeases.map(lease =>
+      this.leaseService.toggleArchive(lease.id, true).toPromise()
+    );
 
-    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((confirmed) => {
-      if (confirmed) {
-        this.isArchiving.set(true);
-        const archivePromises = selectedLeases.map(lease =>
-          this.leaseService.toggleArchive(lease.id, true).toPromise()
-        );
-
-        Promise.all(archivePromises).then(() => {
-          this.toastService.success(`${selectedLeases.length} lease(s) archived successfully`);
-          this.selectedRows.set(new Set());
-          this.loadLeases();
-          this.isArchiving.set(false);
-        }).catch((error) => {
-          console.error('Error archiving leases:', error);
-          this.toastService.error('Failed to archive some leases');
-          this.isArchiving.set(false);
-        });
-      }
+    Promise.all(archivePromises).then(() => {
+      this.toastService.success(`${selectedLeases.length} lease(s) archived successfully`);
+      this.selectedRows.set(new Set());
+      this.loadLeases();
+      this.isArchiving.set(false);
+    }).catch((error) => {
+      console.error('Error archiving leases:', error);
+      this.toastService.error('Failed to archive some leases');
+      this.isArchiving.set(false);
     });
   }
 
@@ -534,33 +563,20 @@ export class LeasingListComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const dialogRef = this.alertDialogService.confirm({
-      zTitle: 'Activate Leases',
-      zDescription: `Are you sure you want to activate ${selectedLeases.length} lease(s)?`,
-      zOkText: 'Activate',
-      zCancelText: 'Cancel',
-      zOkDestructive: false,
-      zViewContainerRef: this.viewContainerRef,
-    });
+    this.isArchiving.set(true);
+    const unarchivePromises = selectedLeases.map(lease =>
+      this.leaseService.toggleArchive(lease.id, false).toPromise()
+    );
 
-    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((confirmed) => {
-      if (confirmed) {
-        this.isArchiving.set(true);
-        const unarchivePromises = selectedLeases.map(lease =>
-          this.leaseService.toggleArchive(lease.id, false).toPromise()
-        );
-
-        Promise.all(unarchivePromises).then(() => {
-          this.toastService.success(`${selectedLeases.length} lease(s) activated successfully`);
-          this.selectedRows.set(new Set());
-          this.loadLeases();
-          this.isArchiving.set(false);
-        }).catch((error) => {
-          console.error('Error activating leases:', error);
-          this.toastService.error('Failed to activate some leases');
-          this.isArchiving.set(false);
-        });
-      }
+    Promise.all(unarchivePromises).then(() => {
+      this.toastService.success(`${selectedLeases.length} lease(s) activated successfully`);
+      this.selectedRows.set(new Set());
+      this.loadLeases();
+      this.isArchiving.set(false);
+    }).catch((error) => {
+      console.error('Error activating leases:', error);
+      this.toastService.error('Failed to activate some leases');
+      this.isArchiving.set(false);
     });
   }
 

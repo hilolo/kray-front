@@ -57,6 +57,19 @@
           </div>
           <!-- Buttons on right -->
           <div class="flex gap-2 items-center ml-auto">
+            @if (hasSelectedItems()) {
+              @if (showArchived()) {
+                <z-button zType="outline" zSize="default" class="gap-2 bg-green-400 hover:bg-green-500 text-green-950 border-green-400 hover:border-green-500 dark:bg-green-600 dark:hover:bg-green-700 dark:text-green-50 dark:border-green-600 dark:hover:border-green-700 shadow-xs" (click)="showUnarchiveConfirmation()">
+                  <z-icon zType="folder-open" zSize="sm" />
+                  Unarchive
+                </z-button>
+              } @else {
+                <z-button zType="outline" zSize="default" class="gap-2 bg-yellow-400 hover:bg-yellow-500 text-yellow-950 border-yellow-400 hover:border-yellow-500 dark:bg-yellow-600 dark:hover:bg-yellow-700 dark:text-yellow-50 dark:border-yellow-600 dark:hover:border-yellow-700 shadow-xs" (click)="showArchiveConfirmation()">
+                  <z-icon zType="folder" zSize="sm" />
+                  Archive
+                </z-button>
+              }
+            }
             @if (hasActiveFilters()) {
               <z-button 
                 zType="outline" 
@@ -66,28 +79,6 @@
               >
                 <z-icon zType="x" zSize="sm" />
                 <span>Reset</span>
-              </z-button>
-            }
-            @if (hasSelectedItems()) {
-              <z-button 
-                zType="outline" 
-                zSize="default" 
-                class="gap-2" 
-                [disabled]="isArchiving() || !canArchiveSelected()"
-                (click)="onBulkArchive()"
-              >
-                <z-icon zType="folder" zSize="sm" />
-                <span>Archive ({{ archiveableCount() }})</span>
-              </z-button>
-              <z-button 
-                zType="outline" 
-                zSize="default" 
-                class="gap-2" 
-                [disabled]="isArchiving() || !canUnarchiveSelected()"
-                (click)="onBulkUnarchive()"
-              >
-                <z-icon zType="folder-open" zSize="sm" />
-                <span>Activate ({{ unarchiveableCount() }})</span>
               </z-button>
             }
             <z-button zType="outline" zSize="default" class="gap-2" (click)="onViewModeChange(viewMode() === 'list' ? 'card' : 'list')">
@@ -115,12 +106,14 @@
         [zColumns]="columns()"
         [zViewMode]="viewMode()"
         [zSelectable]="true"
+          [zSelectedRows]="selectedRows()"
         [zCurrentPage]="currentPage()"
         [zPageSize]="pageSize()"
         [zShowPagination]="false"
         [zEmptyMessage]="emptyMessage()"
         (zPageChange)="onPageChange($event)"
         (zPageSizeChange)="onPageSizeChange($event)"
+        (zSelectionChange)="onSelectionChange($event)"
       >
         <!-- Property Column Template -->
         <ng-template #propertyCell let-value let-row="row">
@@ -205,8 +198,7 @@
         <!-- Payment Column Template -->
         <ng-template #paymentCell let-value let-row="row">
           <div class="flex flex-col gap-1">
-            <span class="font-semibold text-base">{{ formatCurrency(row.rentPrice) }}</span>
-            <span class="text-sm text-muted-foreground">{{ getPaymentTypeLabel(row.paymentType) }}</span>
+            <span class="font-semibold text-base">{{ row.rentPrice | propertyPrice:row.paymentType }}</span>
             <span class="text-sm text-muted-foreground">{{ getPaymentMethodLabel(row.paymentMethod) }}</span>
             @if (row.paymentDate) {
               <span class="text-xs text-muted-foreground">Day {{ row.paymentDate }} of month</span>
@@ -231,10 +223,6 @@
               <z-icon zType="pencil" zSize="sm" class="mr-2" />
               <span>Edit</span>
             </z-dropdown-menu-item>
-            <z-dropdown-menu-item (click)="onToggleArchive(row)">
-              <z-icon zType="folder" zSize="sm" class="mr-2" />
-              <span>{{ row.isArchived ? 'Activate' : 'Archive' }}</span>
-            </z-dropdown-menu-item>
             <z-divider class="my-1" />
             <z-dropdown-menu-item (click)="onDeleteLease(row)" class="text-destructive focus:text-destructive">
               <z-icon zType="x" zSize="sm" class="mr-2" />
@@ -257,10 +245,6 @@
                   <z-icon zType="pencil" zSize="sm" class="mr-2" />
                   <span>Edit</span>
                 </z-dropdown-menu-item>
-                <z-dropdown-menu-item (click)="onToggleArchive(row)">
-                  <z-icon zType="folder" zSize="sm" class="mr-2" />
-                  <span>{{ row.isArchived ? 'Activate' : 'Archive' }}</span>
-                </z-dropdown-menu-item>
                 <z-divider class="my-1" />
                 <z-dropdown-menu-item (click)="onDeleteLease(row)" class="text-destructive focus:text-destructive">
                   <z-icon zType="x" zSize="sm" class="mr-2" />
@@ -269,15 +253,15 @@
               </z-dropdown-menu>
             </div>
             
-            <!-- Main content: Property and Tenant images side by side -->
-            <div class="flex gap-4 mb-4">
-              <!-- Property Image -->
-              <div class="flex flex-col items-center gap-2 flex-shrink-0">
+            <!-- Property and Tenant Section -->
+            <div class="flex gap-4 mb-5">
+              <!-- Property -->
+              <div class="flex flex-col items-center gap-2.5 flex-1">
                 @if (row.propertyImageUrl) {
                   <img
                     [src]="row.propertyImageUrl"
                     [alt]="row.propertyName"
-                    class="w-24 h-24 object-cover rounded-md border border-border"
+                    class="w-20 h-20 object-cover rounded-lg border-2 border-border shadow-sm"
                     [zImageHoverPreview]="row.propertyImageUrl"
                     [zAlt]="row.propertyName"
                     [zPosition]="'right'"
@@ -285,23 +269,23 @@
                     [zMaxHeight]="'400px'"
                   />
                 } @else {
-                  <div class="w-24 h-24 rounded-md border border-border bg-muted flex items-center justify-center">
+                  <div class="w-20 h-20 rounded-lg border-2 border-border bg-muted flex items-center justify-center shadow-sm">
                     <z-icon zType="house" zSize="lg" class="text-muted-foreground" />
                   </div>
                 }
-                <div class="text-center">
-                  <p class="text-xs font-medium text-muted-foreground">Property</p>
-                  <p class="text-sm font-semibold">{{ row.propertyName || 'N/A' }}</p>
+                <div class="text-center w-full">
+                  <p class="text-xs font-medium text-muted-foreground mb-0.5">Property</p>
+                  <p class="text-sm font-semibold truncate">{{ row.propertyName || 'N/A' }}</p>
                 </div>
               </div>
               
-              <!-- Tenant Image -->
-              <div class="flex flex-col items-center gap-2 flex-shrink-0">
+              <!-- Tenant -->
+              <div class="flex flex-col items-center gap-2.5 flex-1">
                 @if (row.tenantAvatarUrl) {
                   <img
                     [src]="row.tenantAvatarUrl"
                     [alt]="row.tenantName"
-                    class="w-24 h-24 rounded-full object-cover border border-border"
+                    class="w-20 h-20 rounded-full object-cover border-2 border-border shadow-sm"
                     [zImageHoverPreview]="row.tenantAvatarUrl"
                     [zAlt]="row.tenantName"
                     [zPosition]="'right'"
@@ -314,66 +298,78 @@
                     zType="default"
                     zSize="lg"
                     zShape="circle"
-                    class="w-24 h-24"
+                    class="w-20 h-20 border-2 border-border shadow-sm"
                   />
                 }
-                <div class="text-center">
-                  <p class="text-xs font-medium text-muted-foreground">Tenant</p>
-                  <p class="text-sm font-semibold">{{ row.tenantName || 'N/A' }}</p>
+                <div class="text-center w-full">
+                  <p class="text-xs font-medium text-muted-foreground mb-0.5">Tenant</p>
+                  <p class="text-sm font-semibold truncate">{{ row.tenantName || 'N/A' }}</p>
                 </div>
               </div>
             </div>
             
             <!-- Lease Details -->
             <div class="space-y-3 flex-1">
+              <!-- Property Address -->
               @if (row.propertyAddress) {
-                <div class="flex items-center gap-2 text-sm">
+                <div class="flex items-center gap-2 text-sm pb-2 border-b border-border/50">
                   <z-icon zType="map-pin" zSize="sm" class="text-muted-foreground flex-shrink-0" />
-                  <span class="text-muted-foreground truncate">{{ row.propertyAddress }}</span>
+                  <span class="text-muted-foreground truncate text-xs">{{ row.propertyAddress }}</span>
                 </div>
               }
               
-              <div class="flex items-center gap-2 text-sm">
-                <z-icon zType="calendar" zSize="sm" class="text-muted-foreground flex-shrink-0" />
-                <span class="text-muted-foreground">
-                  {{ formatDate(row.tenancyStart) }} - {{ formatDate(row.tenancyEnd) }}
-                </span>
+              <!-- Tenancy Period -->
+              <div class="space-y-1.5">
+                <div class="flex items-center gap-2 text-sm">
+                  <z-icon zType="calendar" zSize="sm" class="text-muted-foreground flex-shrink-0" />
+                  <span class="text-muted-foreground text-xs">
+                    {{ formatDate(row.tenancyStart) }} - {{ formatDate(row.tenancyEnd) }}
+                  </span>
+                </div>
+                @if (row.tenancyDuration) {
+                  <div class="flex items-center gap-2 text-xs ml-6">
+                    <z-icon zType="clock" zSize="sm" class="text-muted-foreground/70 flex-shrink-0 w-3 h-3" />
+                    <span class="text-muted-foreground/70">{{ row.tenancyDuration }} months</span>
+                  </div>
+                }
               </div>
               
-              @if (row.tenancyDuration) {
-                <div class="flex items-center gap-2 text-sm">
-                  <z-icon zType="clock" zSize="sm" class="text-muted-foreground flex-shrink-0" />
-                  <span class="text-muted-foreground">{{ row.tenancyDuration }} months</span>
+              <!-- Payment Information - Highlighted -->
+              <div class="bg-primary/5 dark:bg-primary/10 rounded-lg p-3 space-y-2 border border-primary/10">
+                <div class="flex items-center gap-2">
+                  <z-icon zType="banknote" zSize="sm" class="text-primary flex-shrink-0" />
+                  <span class="font-semibold text-base text-primary">{{ row.rentPrice | propertyPrice:row.paymentType }}</span>
                 </div>
-              }
-              
-              <div class="flex items-center gap-2 text-sm">
-                <z-icon zType="banknote" zSize="sm" class="text-muted-foreground flex-shrink-0" />
-                <span class="font-semibold">{{ formatCurrency(row.rentPrice) }}</span>
-                <span class="text-muted-foreground">/ {{ getPaymentTypeLabel(row.paymentType) }}</span>
+                <div class="flex items-center gap-2">
+                  <z-icon zType="credit-card" zSize="sm" class="text-muted-foreground flex-shrink-0" />
+                  <span class="text-sm text-muted-foreground">{{ getPaymentMethodLabel(row.paymentMethod) }}</span>
+                  @if (row.paymentDate) {
+                    <span class="text-xs text-muted-foreground/70 ml-1">• Day {{ row.paymentDate }}</span>
+                  }
+                </div>
               </div>
               
-              <div class="flex items-center gap-2 text-sm">
-                <z-icon zType="credit-card" zSize="sm" class="text-muted-foreground flex-shrink-0" />
-                <span class="text-muted-foreground">{{ getPaymentMethodLabel(row.paymentMethod) }}</span>
-              </div>
-              
-              @if (row.tenantEmail) {
-                <div class="flex items-center gap-2 text-sm">
-                  <z-icon zType="mail" zSize="sm" class="text-muted-foreground flex-shrink-0" />
-                  <span class="text-muted-foreground truncate">{{ row.tenantEmail }}</span>
+              <!-- Tenant Contact Info -->
+              @if (row.tenantEmail || row.tenantPhone) {
+                <div class="space-y-1.5 pt-1">
+                  @if (row.tenantEmail) {
+                    <div class="flex items-center gap-2 text-xs">
+                      <z-icon zType="mail" zSize="sm" class="text-muted-foreground/70 flex-shrink-0 w-3 h-3" />
+                      <span class="text-muted-foreground/70 truncate">{{ row.tenantEmail }}</span>
+                    </div>
+                  }
+                  @if (row.tenantPhone) {
+                    <div class="flex items-center gap-2 text-xs">
+                      <z-icon zType="smartphone" zSize="sm" class="text-muted-foreground/70 flex-shrink-0 w-3 h-3" />
+                      <span class="text-muted-foreground/70">{{ row.tenantPhone }}</span>
+                    </div>
+                  }
                 </div>
               }
               
-              @if (row.tenantPhone) {
-                <div class="flex items-center gap-2 text-sm">
-                  <z-icon zType="smartphone" zSize="sm" class="text-muted-foreground flex-shrink-0" />
-                  <span class="text-muted-foreground">{{ row.tenantPhone }}</span>
-                </div>
-              }
-              
-              <div class="flex items-center gap-2">
-                <z-badge [zType]="getStatusColor(row.status)" zShape="default">
+              <!-- Status Badge -->
+              <div class="flex items-center justify-end pt-2">
+                <z-badge [zType]="getStatusColor(row.status)" zShape="default" class="text-xs">
                   {{ getStatusLabel(row.status) }}
                 </z-badge>
               </div>
