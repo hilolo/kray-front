@@ -413,92 +413,100 @@
                 </div>
 
                 <!-- Property Images Section -->
-                <div class="space-y-6">
-                  <div>
-                    <h3 class="text-lg font-semibold mb-1">Property Images</h3>
-                    <p class="text-sm text-muted-foreground">
-                      Upload images of the property. Select one as the default image.
-                    </p>
-                  </div>
+                <z-form-field>
+                  <z-form-label zRequired>Property Images</z-form-label>
+                  <z-form-control [errorMessage]="imagesError()">
+                    <div class="space-y-6">
+                      <p class="text-sm text-muted-foreground">
+                        Upload images of the property. Select one as the default image.
+                      </p>
 
-                  <!-- Image Gallery -->
-                  @if (hasImages()) {
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                      @for (image of allImages(); track image.id) {
-                        <div class="relative group">
-                          <div class="aspect-square rounded-lg overflow-hidden border-2" [class.border-primary]="image.isDefault" [class.border-border]="!image.isDefault">
-                            <img
-                              [src]="image.url"
-                              [alt]="'Property image'"
-                              class="w-full h-full object-cover"
-                              [zImageHoverPreview]="image.url"
-                              [zAlt]="'Property image'"
-                              [zPosition]="'right'"
-                              [zMaxWidth]="'600px'"
-                              [zMaxHeight]="'600px'"
-                            />
-                            <!-- Default Badge -->
-                            @if (image.isDefault) {
-                              <div class="absolute top-2 left-2 bg-primary text-primary-foreground px-2 py-1 rounded text-xs font-medium">
-                                Default
-                              </div>
-                            }
-                            <!-- Actions Overlay -->
-                            <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                              @if (!image.isDefault) {
+                      <!-- Image Gallery -->
+                      @if (hasImages()) {
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                          @for (image of allImages(); track image.id) {
+                            <div class="relative group">
+                              <div class="aspect-square rounded-lg overflow-hidden border-2 relative" [class.border-primary]="image.isDefault" [class.border-border]="!image.isDefault">
+                                <img
+                                  [src]="image.url"
+                                  [alt]="'Property image'"
+                                  class="w-full h-full object-cover"
+                                  [zImageHoverPreview]="image.url"
+                                  [zAlt]="'Property image'"
+                                  [zPosition]="'right'"
+                                  [zMaxWidth]="'600px'"
+                                  [zMaxHeight]="'600px'"
+                                />
+                                
+                                <!-- X Button - Top Right -->
                                 <z-button
                                   zType="ghost"
                                   zSize="sm"
-                                  class="text-white hover:text-white hover:bg-white/20"
-                                  (click)="onSetDefaultImage(image.id, !image.isUploaded)"
-                                  title="Set as default"
+                                  class="absolute top-2 right-2 bg-background/90 dark:bg-background/90 hover:bg-background border border-border rounded-full p-1.5 h-auto w-auto opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                                  (click)="onRemoveImage(image.id, !image.isUploaded)"
+                                  title="Remove image"
                                 >
-                                  <z-icon zType="star" zSize="sm" class="mr-1" />
-                                  Set Default
+                                  <z-icon zType="x" zSize="sm" class="text-foreground" />
                                 </z-button>
-                              }
-                              <z-button
-                                zType="ghost"
-                                zSize="sm"
-                                class="text-destructive hover:text-destructive hover:bg-destructive/20"
-                                (click)="onRemoveImage(image.id, !image.isUploaded)"
-                                title="Remove image"
-                              >
-                                <z-icon zType="x" zSize="sm" />
-                              </z-button>
+
+                                <!-- Default Badge -->
+                                @if (image.isDefault) {
+                                  <div class="absolute top-2 left-2 bg-primary text-primary-foreground px-2 py-1 rounded text-xs font-medium z-10">
+                                    Default
+                                  </div>
+                                }
+                                
+                                <!-- Set Default Button - Bottom Center -->
+                                @if (!image.isDefault) {
+                                  <div class="absolute bottom-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                    <z-button
+                                      zType="default"
+                                      zSize="sm"
+                                      class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 shadow-md hover:bg-gray-50 dark:hover:bg-gray-800"
+                                      (click)="onSetDefaultImage(image.id, !image.isUploaded)"
+                                      title="Set as default"
+                                    >
+                                      <z-icon zType="star" zSize="sm" class="mr-1" />
+                                      Set Default
+                                    </z-button>
+                                  </div>
+                                }
+                              </div>
                             </div>
-                          </div>
+                          }
                         </div>
                       }
-                    </div>
-                  }
 
-                  <!-- Upload Area -->
-                  <div
-                    class="relative border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 hover:bg-accent/5 transition-all cursor-pointer group"
-                    (click)="onImageClick()"
-                  >
-                    <div class="flex flex-col items-center gap-3">
-                      <div class="w-12 h-12 rounded-full bg-primary/10 group-hover:bg-primary/20 flex items-center justify-center transition-colors">
-                        <z-icon zType="upload" class="text-primary" />
-                      </div>
-                      <div>
-                        <p class="font-medium">Click to upload images or drag and drop</p>
-                        <p class="text-sm text-muted-foreground mt-1">
-                          Images only (Max 10MB per file)
-                        </p>
+                      <!-- Upload Area -->
+                      <div
+                        class="relative border-2 border-dashed rounded-lg p-8 text-center hover:border-primary/50 hover:bg-accent/5 transition-all cursor-pointer group"
+                        [class.border-red-500]="imagesHasError()"
+                        [class.border-border]="!imagesHasError()"
+                        (click)="onImageClick()"
+                      >
+                        <div class="flex flex-col items-center gap-3">
+                          <div class="w-12 h-12 rounded-full bg-primary/10 group-hover:bg-primary/20 flex items-center justify-center transition-colors">
+                            <z-icon zType="upload" class="text-primary" />
+                          </div>
+                          <div>
+                            <p class="font-medium">Click to upload images or drag and drop</p>
+                            <p class="text-sm text-muted-foreground mt-1">
+                              Images only (Max 10MB per file)
+                            </p>
+                          </div>
+                        </div>
+                        <input
+                          #imageInput
+                          type="file"
+                          multiple
+                          accept="image/*"
+                          (change)="onImagesSelected($event)"
+                          class="hidden"
+                        />
                       </div>
                     </div>
-                    <input
-                      #imageInput
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      (change)="onImagesSelected($event)"
-                      class="hidden"
-                    />
-                  </div>
-                </div>
+                  </z-form-control>
+                </z-form-field>
               </div>
             </z-card>
           }

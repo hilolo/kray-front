@@ -19,6 +19,7 @@ import { ZardDialogService } from '@shared/components/dialog/dialog.service';
 import { PropertyService } from '@shared/services/property.service';
 import { UserService } from '@shared/services/user.service';
 import { ContactService } from '@shared/services/contact.service';
+import { ToastService } from '@shared/services/toast.service';
 import { EditContactComponent } from '../../contact/edit/edit-contact.component';
 import type { Property } from '@shared/models/property/property.model';
 import { PropertyCategory, TypePaiment, AttachmentDetails } from '@shared/models/property/property.model';
@@ -98,6 +99,7 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
   private readonly userService = inject(UserService);
   private readonly contactService = inject(ContactService);
   private readonly dialogService = inject(ZardDialogService);
+  private readonly toastService = inject(ToastService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroy$ = new Subject<void>();
 
@@ -244,7 +246,8 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
       data.area > 0 &&
       data.pieces > 0 &&
       data.price > 0 &&
-      data.contactId !== ''
+      data.contactId !== '' &&
+      this.hasImages()
     );
   });
 
@@ -312,6 +315,14 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
     return '';
   });
 
+  readonly imagesError = computed(() => {
+    if (!this.formSubmitted()) return '';
+    if (!this.hasImages()) {
+      return 'At least add an image for this property';
+    }
+    return '';
+  });
+
   // Error states
   readonly identifierHasError = computed(() => {
     return this.formSubmitted() && (!this.formData().identifier || this.formData().identifier.trim() === '');
@@ -339,6 +350,10 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
 
   readonly typePropertyHasError = computed(() => {
     return this.formSubmitted() && (!this.formData().typeProperty || this.formData().typeProperty.trim() === '');
+  });
+
+  readonly imagesHasError = computed(() => {
+    return this.formSubmitted() && !this.hasImages();
   });
 
   // Enums for template
@@ -895,45 +910,69 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
       // Update existing property
       this.prepareUpdateRequest(data, propertyId, currentUser.companyId)
         .then((request) => {
+          console.log('Updating property with request:', request);
           this.propertyService.update(propertyId, request)
             .pipe(takeUntil(this.destroy$))
             .subscribe({
-              next: () => {
+              next: (property) => {
+                console.log('Property updated successfully:', property);
                 this.formSubmitted.set(false);
                 this.isSaving.set(false);
+                this.toastService.success('Property updated successfully');
+                this.cdr.markForCheck();
                 this.router.navigate(['/property']);
               },
               error: (error) => {
                 console.error('Error updating property:', error);
                 this.isSaving.set(false);
+                this.cdr.markForCheck();
+                // Error message is already shown by API interceptor, but we can add a more specific one if needed
+                const errorMessage = error?.message || error?.error?.message || 'Failed to update property. Please try again.';
+                if (!error?.error?.message) {
+                  this.toastService.error(errorMessage);
+                }
               },
             });
         })
         .catch((error) => {
           console.error('Error preparing update request:', error);
           this.isSaving.set(false);
+          this.cdr.markForCheck();
+          this.toastService.error('Failed to prepare property data. Please check your input and try again.');
         });
     } else {
       // Create new property
       this.prepareCreateRequest(data, currentUser.companyId)
         .then((request) => {
+          console.log('Creating property with request:', request);
           this.propertyService.create(request)
             .pipe(takeUntil(this.destroy$))
             .subscribe({
-              next: () => {
+              next: (property) => {
+                console.log('Property created successfully:', property);
                 this.formSubmitted.set(false);
                 this.isSaving.set(false);
+                this.toastService.success('Property created successfully');
+                this.cdr.markForCheck();
                 this.router.navigate(['/property']);
               },
               error: (error) => {
                 console.error('Error creating property:', error);
                 this.isSaving.set(false);
+                this.cdr.markForCheck();
+                // Error message is already shown by API interceptor, but we can add a more specific one if needed
+                const errorMessage = error?.message || error?.error?.message || 'Failed to create property. Please try again.';
+                if (!error?.error?.message) {
+                  this.toastService.error(errorMessage);
+                }
               },
             });
         })
         .catch((error) => {
           console.error('Error preparing create request:', error);
           this.isSaving.set(false);
+          this.cdr.markForCheck();
+          this.toastService.error('Failed to prepare property data. Please check your input and try again.');
         });
     }
   }
