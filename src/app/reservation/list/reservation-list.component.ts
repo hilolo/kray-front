@@ -194,16 +194,24 @@ export class ReservationListComponent implements OnInit, OnDestroy {
       next: (response) => {
         const calendarReservations: CalendarYearViewReservation[] = response.result
           .filter(res => res.status === ReservationStatus.Pending || res.status === ReservationStatus.Approved)
-          .map(res => ({
-            id: res.id,
-            startDate: new Date(res.startDate),
-            endDate: new Date(res.endDate),
-            status: res.status === ReservationStatus.Pending ? 'pending' as const : 'active' as const,
-            title: `${res.contactName} - ${res.propertyName}`,
-            propertyId: res.propertyId,
-            propertyIdentifier: res.propertyIdentifier,
-            contactName: res.contactName,
-          }));
+          .map(res => {
+            // Normalize dates to midnight (00:00:00) for consistency
+            const startDate = new Date(res.startDate);
+            startDate.setHours(0, 0, 0, 0);
+            const endDate = new Date(res.endDate);
+            endDate.setHours(0, 0, 0, 0);
+            
+            return {
+              id: res.id,
+              startDate: startDate,
+              endDate: endDate,
+              status: res.status === ReservationStatus.Pending ? 'pending' as const : 'active' as const,
+              title: `${res.contactName} - ${res.propertyName}`,
+              propertyId: res.propertyId,
+              propertyIdentifier: res.propertyIdentifier,
+              contactName: res.contactName,
+            };
+          });
         this.calendarReservations.set(calendarReservations);
       },
       error: (error) => {

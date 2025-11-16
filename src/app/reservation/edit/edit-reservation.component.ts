@@ -338,11 +338,26 @@ export class EditReservationComponent implements OnInit, OnDestroy {
     this.reservationService.getById(id).pipe(takeUntil(this.destroy$)).subscribe({
       next: (reservation) => {
         this.reservation.set(reservation);
+        
+        // Normalize dates to midnight (00:00:00) when loading
+        let startDate: Date | null = null;
+        let endDate: Date | null = null;
+        
+        if (reservation.startDate) {
+          startDate = new Date(reservation.startDate);
+          startDate.setHours(0, 0, 0, 0);
+        }
+        
+        if (reservation.endDate) {
+          endDate = new Date(reservation.endDate);
+          endDate.setHours(0, 0, 0, 0);
+        }
+        
         this.formData.set({
           propertyId: reservation.propertyId,
           contactId: reservation.contactId,
-          startDate: reservation.startDate ? new Date(reservation.startDate) : null,
-          endDate: reservation.endDate ? new Date(reservation.endDate) : null,
+          startDate: startDate,
+          endDate: endDate,
           totalAmount: reservation.totalAmount,
           description: reservation.description || '',
           privateNote: reservation.privateNote || '',
@@ -752,13 +767,49 @@ export class EditReservationComponent implements OnInit, OnDestroy {
 
     const attachments = await Promise.all(filePromises);
 
+    // Validate dates before normalizing
+    const startDate = this.formData().startDate;
+    const endDate = this.formData().endDate;
+
+    if (!startDate || !endDate) {
+      this.toastService.error('Start date and end date are required');
+      this.isSaving.set(false);
+      this.cdr.markForCheck();
+      return;
+    }
+
+    // Normalize dates to midnight (00:00:00) in UTC to avoid timezone shifts
+    // Helper function to format date as ISO string at midnight UTC
+    const formatDateAsUTCMidnight = (date: Date): string => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}T00:00:00.000Z`;
+    };
+
+    const normalizedStartDate = new Date(startDate);
+    if (isNaN(normalizedStartDate.getTime())) {
+      this.toastService.error('Invalid start date');
+      this.isSaving.set(false);
+      this.cdr.markForCheck();
+      return;
+    }
+    
+    const normalizedEndDate = new Date(endDate);
+    if (isNaN(normalizedEndDate.getTime())) {
+      this.toastService.error('Invalid end date');
+      this.isSaving.set(false);
+      this.cdr.markForCheck();
+      return;
+    }
+
     if (this.isEditMode()) {
       const reservationId = this.reservationId()!;
       const request: UpdateReservationRequest = {
         contactId: this.formData().contactId,
         propertyId: this.formData().propertyId,
-        startDate: this.formData().startDate!.toISOString(),
-        endDate: this.formData().endDate!.toISOString(),
+        startDate: formatDateAsUTCMidnight(normalizedStartDate),
+        endDate: formatDateAsUTCMidnight(normalizedEndDate),
         totalAmount: this.formData().totalAmount,
         description: this.formData().description,
         privateNote: this.formData().privateNote,
@@ -783,8 +834,8 @@ export class EditReservationComponent implements OnInit, OnDestroy {
       const request: CreateReservationRequest = {
         contactId: this.formData().contactId,
         propertyId: this.formData().propertyId,
-        startDate: this.formData().startDate!.toISOString(),
-        endDate: this.formData().endDate!.toISOString(),
+        startDate: formatDateAsUTCMidnight(normalizedStartDate),
+        endDate: formatDateAsUTCMidnight(normalizedEndDate),
         totalAmount: this.formData().totalAmount,
         description: this.formData().description,
         privateNote: this.formData().privateNote,
@@ -877,8 +928,24 @@ export class EditReservationComponent implements OnInit, OnDestroy {
     this.checkingOverlaps.set(true);
     const excludeId = this.isEditMode() ? this.reservationId() : undefined;
 
+    // Normalize dates to midnight (00:00:00) in UTC for overlap checking
+    // Create Date objects representing UTC midnight to avoid timezone shifts
+    const normalizedStartDate = new Date(Date.UTC(
+      startDate.getFullYear(),
+      startDate.getMonth(),
+      startDate.getDate(),
+      0, 0, 0, 0
+    ));
+    
+    const normalizedEndDate = new Date(Date.UTC(
+      endDate.getFullYear(),
+      endDate.getMonth(),
+      endDate.getDate(),
+      0, 0, 0, 0
+    ));
+
     this.reservationService
-      .getOverlappingReservations(propertyId, startDate, endDate, excludeId || undefined)
+      .getOverlappingReservations(propertyId, normalizedStartDate, normalizedEndDate, excludeId || undefined)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (overlapping) => {

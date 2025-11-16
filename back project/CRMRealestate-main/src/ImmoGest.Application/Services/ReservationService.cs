@@ -67,14 +67,21 @@ namespace ImmoGest.Application.Services
         {
             if (createModel is CreateReservationDto dto)
             {
+                // Normalize dates to midnight (00:00:00) for consistency
+                var normalizedStartDate = dto.StartDate.Date; // Gets date at 00:00:00
+                var normalizedEndDate = dto.EndDate.Date; // Gets date at 00:00:00
+                
+                entity.StartDate = normalizedStartDate;
+                entity.EndDate = normalizedEndDate;
+
                 // Set CompanyId
                 entity.CompanyId = _session.CompanyId;
 
                 // Set request date
                 entity.RequestDate = DateTime.UtcNow;
 
-                // Calculate duration
-                entity.DurationDays = (dto.EndDate - dto.StartDate).Days + 1;
+                // Calculate duration using normalized dates
+                entity.DurationDays = (normalizedEndDate - normalizedStartDate).Days + 1;
                 entity.NumberOfNights = entity.DurationDays; // Same as duration days
 
                 // Set initial status
@@ -111,8 +118,15 @@ namespace ImmoGest.Application.Services
         {
             if (updateModel is UpdateReservationDto dto)
             {
-                // Recalculate duration
-                entity.DurationDays = (dto.EndDate - dto.StartDate).Days + 1;
+                // Normalize dates to midnight (00:00:00) for consistency
+                var normalizedStartDate = dto.StartDate.Date; // Gets date at 00:00:00
+                var normalizedEndDate = dto.EndDate.Date; // Gets date at 00:00:00
+                
+                entity.StartDate = normalizedStartDate;
+                entity.EndDate = normalizedEndDate;
+
+                // Recalculate duration using normalized dates
+                entity.DurationDays = (normalizedEndDate - normalizedStartDate).Days + 1;
                 entity.NumberOfNights = entity.DurationDays; // Same as duration days
 
                 // Update approval information if status changed to Approved

@@ -102,18 +102,27 @@ namespace ImmoGest.Infrastructure.Repositories
 
         public async Task<List<Reservation>> GetOverlappingReservationsAsync(Guid propertyId, DateTime startDate, DateTime endDate, Guid? excludeReservationId = null)
         {
+            // Normalize input dates to midnight (00:00:00) for consistent comparison
+            var normalizedStartDate = startDate.Date;
+            var normalizedEndDate = endDate.Date;
+            
             // Two reservations overlap if they share actual days (not just touching on boundaries)
-            // Allow same-day checkout/checkin: if reservation A ends on day X, reservation B can start on day X
-            // We compare dates only (using .Date) to ignore time components
-            // Overlap condition: existing.StartDate.Date < new.EndDate.Date AND existing.EndDate.Date > new.StartDate.Date
+            // Use exclusive end date logic: a reservation that ends exactly when another starts does NOT overlap
+            // This allows same-day checkout/checkin: if reservation A ends on day X at time T, 
+            // reservation B can start on day X at the same time T
+            // Overlap logic: existing reservation overlaps with new reservation if:
+            // 1. Existing starts before new ends (r.StartDate < endDate) - strictly less than
+            // 2. Existing ends after new starts (r.EndDate > startDate) - strictly greater than
+            // Example: Existing ends 2025-11-16T00:00:00, New starts 2025-11-16T00:00:00 → NO overlap ✓
+            
             var query = DbSet
                 .AsNoTracking()
                 .Include(r => r.Contact)
                 .Include(r => r.Property)
                 .Where(r => r.PropertyId == propertyId
                     && !r.IsDeleted
-                    && r.StartDate.Date < endDate.Date
-                    && r.EndDate.Date > startDate.Date);
+                    && r.StartDate < normalizedEndDate
+                    && r.EndDate > normalizedStartDate);
 
             // Exclude the current reservation if updating
             if (excludeReservationId.HasValue)
