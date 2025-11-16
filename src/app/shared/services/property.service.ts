@@ -7,6 +7,7 @@ import type { CreatePropertyRequest } from '../models/property/create-property-r
 import type { UpdatePropertyRequest } from '../models/property/update-property-request.model';
 import type { UpdatePropertySharingRequest, UpdatePropertySharingAdresseRequest, UpdatePropertyVisibilityRequest } from '../models/property/update-property-visibility-request.model';
 import type { Property } from '../models/property/property.model';
+import type { PublicProperty } from '../models/property/public-property.model';
 
 /**
  * Service for property-related API calls
@@ -137,6 +138,16 @@ export class PropertyService {
    */
   updatePropertyVisibility(request: UpdatePropertyVisibilityRequest): Observable<Property> {
     return this.apiService.patch<Property>('Property/visibility', request);
+  }
+
+  /**
+   * Get a public property by ID (no authentication required)
+   * GET api/public/properties/{id}
+   * @param id Property ID
+   * @returns Observable of public property
+   */
+  getPublicPropertyById(id: string): Observable<PublicProperty> {
+    return this.apiService.get<PublicProperty>(`public/properties/${id}`);
   }
 }
 

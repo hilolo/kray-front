@@ -1,0 +1,249 @@
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ZardCardComponent } from '@shared/components/card/card.component';
+import { ZardButtonComponent } from '@shared/components/button/button.component';
+import { ZardIconComponent } from '@shared/components/icon/icon.component';
+import { ZardBadgeComponent } from '@shared/components/badge/badge.component';
+import { ZardImageViewerComponent, type ImageItem } from '@shared/image-viewer/image-viewer.component';
+import { PropertyService } from '@shared/services/property.service';
+import type { PublicProperty } from '@shared/models/property/public-property.model';
+import { PropertyCategory, TypePaiment } from '@shared/models/property/property.model';
+import { PropertyPricePipe } from '@shared/pipes/property-price.pipe';
+import { catchError, of } from 'rxjs';
+import { LayoutComponent } from '@shared/components/layout/layout.component';
+import { ContentComponent } from '@shared/components/layout/content.component';
+import { ZardAvatarComponent } from '@shared/components/avatar/avatar.component';
+import { DarkModeService } from '@shared/services/darkmode.service';
+
+@Component({
+  selector: 'app-public-property',
+  standalone: true,
+  imports: [
+    CommonModule,
+    LayoutComponent,
+    ContentComponent,
+    ZardCardComponent,
+    ZardButtonComponent,
+    ZardIconComponent,
+    ZardBadgeComponent,
+    ZardImageViewerComponent,
+    PropertyPricePipe,
+    ZardAvatarComponent,
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  templateUrl: './public-property.component.html',
+})
+export class PublicPropertyComponent implements OnInit {
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly propertyService = inject(PropertyService);
+  private readonly darkModeService = inject(DarkModeService);
+
+  // Property data
+  readonly property = signal<PublicProperty | null>(null);
+  readonly isLoading = signal(false);
+  readonly error = signal<string | null>(null);
+  readonly currentImageIndex = signal(0);
+  readonly isImageViewerOpen = signal(false);
+  readonly imageViewerIndex = signal(0);
+
+  // Computed values
+  readonly propertyName = computed(() => this.property()?.name || '');
+  readonly propertyType = computed(() => this.property()?.typeProperty || '');
+  readonly propertyLocation = computed(() => {
+    const prop = this.property();
+    if (!prop) return '';
+    if (prop.isAddressPublic && prop.address) {
+      return `${prop.address}${prop.city ? ', ' + prop.city : ''}`;
+    }
+    return prop.city || '';
+  });
+  readonly price = computed(() => this.property()?.price || 0);
+  readonly typePaiment = computed(() => this.property()?.typePaiment ?? TypePaiment.Monthly);
+  readonly description = computed(() => this.property()?.description || '');
+  readonly features = computed(() => this.property()?.features || []);
+  readonly equipment = computed(() => this.property()?.equipment || []);
+  readonly attachments = computed(() => {
+    const prop = this.property();
+    if (!prop || !prop.attachments || prop.attachments.length === 0) {
+      return [];
+    }
+    
+    // Sort attachments: default image first
+    const defaultUrl = prop.defaultAttachmentUrl;
+    if (!defaultUrl) {
+      return prop.attachments;
+    }
+    
+    const sorted = [...prop.attachments];
+    const defaultIndex = sorted.findIndex(att => att.url === defaultUrl);
+    
+    if (defaultIndex > 0) {
+      const defaultAttachment = sorted.splice(defaultIndex, 1)[0];
+      sorted.unshift(defaultAttachment);
+    }
+    
+    return sorted;
+  });
+  readonly currentImage = computed(() => {
+    const atts = this.attachments();
+    const index = this.currentImageIndex();
+    return atts[index]?.url || this.property()?.defaultAttachmentUrl || null;
+  });
+  readonly imageItems = computed<ImageItem[]>(() => {
+    const atts = this.attachments();
+    return atts.map(att => ({
+      url: att.url,
+      name: att.fileName || 'Image',
+      size: 0,
+    }));
+  });
+  readonly hasCompanyInfo = computed(() => {
+    const prop = this.property();
+    return !!(prop?.companyName || prop?.companyEmail || prop?.companyPhone || prop?.companyWebsite || prop?.companyAddress);
+  });
+  readonly currentTheme = this.darkModeService.getCurrentThemeSignal();
+
+  ngOnInit(): void {
+    const propertyId = this.route.snapshot.paramMap.get('id');
+    if (!propertyId) {
+      this.error.set('Property ID is required');
+      return;
+    }
+
+    this.loadProperty(propertyId);
+  }
+
+  private loadProperty(id: string): void {
+    this.isLoading.set(true);
+    this.error.set(null);
+    this.propertyService
+      .getPublicPropertyById(id)
+      .pipe(
+        catchError((error) => {
+          console.error('Error loading public property:', error);
+          this.isLoading.set(false);
+          // Check if property is not shared
+          if (error.status === 404 || error.error?.status === 'Failed') {
+            this.error.set('This property is not publicly shared. Please contact the property owner for more information.');
+          } else {
+            this.error.set('Failed to load property details. Please try again later.');
+          }
+          return of(null);
+        }),
+      )
+      .subscribe((property) => {
+        this.isLoading.set(false);
+        if (property) {
+          this.property.set(property);
+          this.currentImageIndex.set(0);
+        }
+      });
+  }
+
+  nextImage(event?: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    if (window.getSelection) {
+      window.getSelection()?.removeAllRanges();
+    }
+    const atts = this.attachments();
+    if (atts.length === 0) return;
+    this.currentImageIndex.update((index) => (index + 1) % atts.length);
+  }
+
+  previousImage(event?: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    if (window.getSelection) {
+      window.getSelection()?.removeAllRanges();
+    }
+    const atts = this.attachments();
+    if (atts.length === 0) return;
+    this.currentImageIndex.update((index) => (index - 1 + atts.length) % atts.length);
+  }
+
+  openImageViewer(event?: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    if (this.imageItems().length > 0) {
+      this.imageViewerIndex.set(this.currentImageIndex());
+      this.isImageViewerOpen.set(true);
+    }
+  }
+
+  closeImageViewer(): void {
+    this.isImageViewerOpen.set(false);
+  }
+
+  onImageChanged(index: number): void {
+    this.imageViewerIndex.set(index);
+    this.currentImageIndex.set(index);
+  }
+
+  getPaymentTypeLabel(type: TypePaiment): string {
+    switch (type) {
+      case TypePaiment.Monthly:
+        return 'per month';
+      case TypePaiment.Daily:
+        return 'per day';
+      case TypePaiment.Weekly:
+        return 'per week';
+      case TypePaiment.Fixed:
+        return 'fixed price';
+      default:
+        return '';
+    }
+  }
+
+  getCategoryLabel(category: PropertyCategory): string {
+    switch (category) {
+      case PropertyCategory.Location:
+        return 'Rental';
+      case PropertyCategory.Vente:
+        return 'Sale';
+      case PropertyCategory.LocationVacances:
+        return 'Holiday Rental';
+      default:
+        return 'Property';
+    }
+  }
+
+  openCompanyWebsite(): void {
+    const prop = this.property();
+    if (prop?.companyWebsite) {
+      let url = prop.companyWebsite.trim();
+      // Add protocol if missing
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        url = 'https://' + url;
+      }
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  }
+
+  toggleTheme(): void {
+    this.darkModeService.toggleTheme();
+  }
+
+  callCompany(): void {
+    const prop = this.property();
+    if (prop?.companyPhone) {
+      window.location.href = `tel:${prop.companyPhone}`;
+    }
+  }
+
+  emailCompany(): void {
+    const prop = this.property();
+    if (prop?.companyEmail) {
+      window.location.href = `mailto:${prop.companyEmail}`;
+    }
+  }
+}
+

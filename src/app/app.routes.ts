@@ -35,6 +35,11 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: 'property/detail/:id/public',
+    loadComponent: () => import('./property/public/public-property.component').then((m) => m.PublicPropertyComponent),
+    // No auth guard - public route
+  },
+  {
     path: 'property',
     loadChildren: () => import('./property/property.module').then((m) => m.PropertyModule),
     canActivate: [authGuard],
