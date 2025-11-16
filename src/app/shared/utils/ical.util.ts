@@ -168,3 +168,14 @@ function fallbackShareMethod(blob: Blob, filename: string, message: string): voi
   }, 300);
 }
 
+/**
+ * Share text message via WhatsApp
+ * Opens WhatsApp with a pre-filled message
+ * @param message The message text to share
+ */
+export function shareTextViaWhatsApp(message: string): void {
+  const whatsappMessage = encodeURIComponent(message);
+  const whatsappUrl = `https://wa.me/?text=${whatsappMessage}`;
+  window.open(whatsappUrl, '_blank');
+}
+

@@ -470,17 +470,29 @@
                 />
               </z-input-group>
               <ng-template #publicProfileCopyButtonTemplate>
-                <z-button 
-                  zType="ghost" 
-                  zSize="sm"
-                  type="button"
-                  (click)="copyPublicProfileLink($event)"
-                  [disabled]="isPublicProfileDisabled()"
-                  [attr.aria-label]="'Copy link'"
-                  class="cursor-pointer"
-                >
-                  <z-icon zType="copy" zSize="sm" />
-                </z-button>
+                <span class="inline-flex items-center gap-1">
+                  <z-button 
+                    zType="ghost" 
+                    zSize="sm"
+                    type="button"
+                    (click)="copyPublicProfileLink($event)"
+                    [disabled]="isPublicProfileDisabled()"
+                    [attr.aria-label]="'Copy link'"
+                    class="cursor-pointer"
+                  >
+                    <z-icon zType="copy" zSize="sm" />
+                  </z-button>
+                  <z-button 
+                    zType="ghost" 
+                    zSize="sm"
+                    type="button"
+                    (click)="sharePublicProfileViaWhatsApp($event)"
+                    [attr.aria-label]="'Share via WhatsApp'"
+                    class="cursor-pointer"
+                  >
+                    <z-icon zType="message-circle" zSize="sm" />
+                  </z-button>
+                </span>
               </ng-template>
             </div>
           </div>

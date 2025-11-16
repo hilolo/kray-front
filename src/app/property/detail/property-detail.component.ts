@@ -21,7 +21,7 @@ import { catchError, of } from 'rxjs';
 import { ZardImageViewerComponent, type ImageItem } from '@shared/image-viewer/image-viewer.component';
 import { PropertyPricePipe } from '@shared/pipes/property-price.pipe';
 import { TranslateModule } from '@ngx-translate/core';
-import { generateICalFile, downloadICalFile, shareICalViaWhatsApp, type ICalEventData } from '@shared/utils/ical.util';
+import { generateICalFile, downloadICalFile, shareICalViaWhatsApp, shareTextViaWhatsApp, type ICalEventData } from '@shared/utils/ical.util';
 import { ToastService } from '@shared/services/toast.service';
 import { ZardSwitchComponent } from '@shared/components/switch/switch.component';
 import { ZardAvatarComponent } from '@shared/components/avatar/avatar.component';
@@ -148,12 +148,7 @@ export class PropertyDetailComponent implements OnInit {
   readonly publicProfileLink = computed(() => {
     const prop = this.property();
     if (!prop) return '';
-    // If address sharing is enabled, include address in the link, otherwise just the ID
-    if (this.enableAddressSharing() && prop.address) {
-      // You might want to encode the address for URL
-      return `https://www.rentila.co.uk/${prop.id}`;
-    }
-    return `https://www.rentila.co.uk/${prop.id}`;
+    return `http://localhost:4200/property/detail/${prop.id}/public`;
   });
 
   readonly isPublicProfileDisabled = computed(() => {
@@ -523,6 +518,33 @@ export class PropertyDetailComponent implements OnInit {
     }
 
     this.copyToClipboard(link);
+  }
+
+  // Share public profile link via WhatsApp
+  sharePublicProfileViaWhatsApp(event?: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    const property = this.property();
+    if (!property) {
+      this.toastService.error('Property information is required');
+      return;
+    }
+
+    const link = this.publicProfileLink();
+    if (!link) {
+      this.toastService.error('No link available to share');
+      return;
+    }
+
+    // Build message with property name, reference, and link
+    const propertyName = property.name || 'Property';
+    const propertyReference = property.identifier || 'N/A';
+    const message = `Property: ${propertyName}\nReference: ${propertyReference}\nLink: ${link}`;
+
+    shareTextViaWhatsApp(message);
+    this.toastService.success('Opening WhatsApp to share property link');
   }
 
   // Helper method to copy text to clipboard
