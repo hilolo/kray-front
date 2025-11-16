@@ -446,8 +446,12 @@ export class ZardReservationCalendarComponent {
       
       const splitStyle = hasSplit 
         ? day.status === 'checkin'
-          ? `background: linear-gradient(to bottom right, ${splitColor} 0%, ${splitColor} 50%, ${bgColor} 50%, ${bgColor} 100%);`
-          : `background: linear-gradient(to bottom left, ${splitColor} 0%, ${splitColor} 50%, ${bgColor} 50%, ${bgColor} 100%);`
+          // Check-in: red on top-right triangle (matches clip-path: polygon(0 0, 100% 0, 100% 100%))
+          // Gradient from top-right to bottom-left: red starts at top-right, green at bottom-left
+          ? `background: linear-gradient(to bottom left, ${splitColor} 0%, ${splitColor} 50%, ${bgColor} 50%, ${bgColor} 100%);`
+          // Check-out: red on top-left triangle (matches clip-path: polygon(0 0, 100% 0, 0 100%))
+          // Gradient from top-left to bottom-right: red starts at top-left, green at bottom-right
+          : `background: linear-gradient(to bottom right, ${splitColor} 0%, ${splitColor} 50%, ${bgColor} 50%, ${bgColor} 100%);`
         : `background-color: ${bgColor};`;
       
       return `
