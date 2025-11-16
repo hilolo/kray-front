@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, OnDestroy, OnInit, signal, TemplateRef, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, OnDestroy, OnInit, signal, TemplateRef, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -80,6 +80,7 @@ export class EditBankComponent implements OnInit, OnDestroy {
   readonly contacts = signal<Contact[]>([]);
   readonly contactOptions = signal<ZardComboboxOption[]>([]);
   readonly isLoadingContacts = signal(false);
+  readonly pendingContactId = signal<string | null>(null);
 
   // Icon templates for input groups
   readonly bankIconTemplate = viewChild.required<TemplateRef<void>>('bankIconTemplate');
@@ -122,6 +123,33 @@ export class EditBankComponent implements OnInit, OnDestroy {
 
   readonly contactIdHasError = computed(() => {
     return this.formSubmitted() && (!this.formData().contactId || this.formData().contactId.trim() === '');
+  });
+
+  // Effect to sync pending contactId once contacts are loaded
+  private readonly contactSyncEffect = effect(() => {
+    const pendingId = this.pendingContactId();
+    const contactOptions = this.contactOptions();
+    const currentContactId = this.formData().contactId;
+
+    // If we have a pending contactId and contacts are loaded, set it in the form
+    if (pendingId && contactOptions.length > 0) {
+      // Check if the pending contactId exists in the options
+      const contactExists = contactOptions.some(opt => opt.value === pendingId);
+      if (contactExists && currentContactId !== pendingId) {
+        // Use setTimeout to ensure this runs after the combobox is initialized
+        setTimeout(() => {
+          this.formData.update(data => ({
+            ...data,
+            contactId: pendingId,
+          }));
+          // Clear the pending contactId after setting it
+          this.pendingContactId.set(null);
+        }, 0);
+      } else if (!contactExists) {
+        // Contact doesn't exist in options, clear pending
+        this.pendingContactId.set(null);
+      }
+    }
   });
 
   ngOnInit(): void {
@@ -180,13 +208,36 @@ export class EditBankComponent implements OnInit, OnDestroy {
   }
 
   private populateFormFromBank(bank: Bank): void {
-    this.formData.set({
-      bankName: bank.bankName || '',
-      rib: bank.rib || '',
-      iban: bank.iban || '',
-      swift: bank.swift || '',
-      contactId: bank.contactId || '',
-    });
+    const contactId = bank.contactId || '';
+    const contactOptions = this.contactOptions();
+    
+    // Check if contacts are already loaded
+    const contactExists = contactOptions.length > 0 && contactOptions.some(opt => opt.value === contactId);
+    
+    if (contactExists) {
+      // Contacts are loaded, set directly
+      this.formData.set({
+        bankName: bank.bankName || '',
+        rib: bank.rib || '',
+        iban: bank.iban || '',
+        swift: bank.swift || '',
+        contactId: contactId,
+      });
+      this.pendingContactId.set(null);
+    } else {
+      // Contacts not loaded yet, store pending and set other fields
+      this.formData.set({
+        bankName: bank.bankName || '',
+        rib: bank.rib || '',
+        iban: bank.iban || '',
+        swift: bank.swift || '',
+        contactId: '', // Will be set by effect once contacts are loaded
+      });
+      // Store the contactId to be set later
+      if (contactId) {
+        this.pendingContactId.set(contactId);
+      }
+    }
   }
 
   private resetForm(): void {
@@ -197,6 +248,7 @@ export class EditBankComponent implements OnInit, OnDestroy {
       swift: '',
       contactId: '',
     });
+    this.pendingContactId.set(null);
     this.formSubmitted.set(false);
   }
 
