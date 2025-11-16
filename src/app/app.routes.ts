@@ -74,4 +74,9 @@ export const routes: Routes = [
     loadChildren: () => import('./building/building.routes').then((m) => m.buildingRoutes),
     canActivate: [authGuard],
   },
+  {
+    path: 'bank',
+    loadChildren: () => import('./bank/bank.routes').then((m) => m.bankRoutes),
+    canActivate: [authGuard],
+  },
 ];

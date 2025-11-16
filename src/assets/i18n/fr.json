@@ -52,6 +52,8 @@
     "properties": "Propriétés",
     "leasing": "Location",
     "keys": "Clés",
+    "banks": "Banques",
+    "buildings": "Bâtiments",
     "aiChat": "Chat IA",
     "fileManager": "Gestionnaire de fichiers"
   },

@@ -52,6 +52,8 @@
     "properties": "Properties",
     "leasing": "Leasing",
     "keys": "Keys",
+    "banks": "Banks",
+    "buildings": "Buildings",
     "aiChat": "AI Chat",
     "fileManager": "File Manager"
   },

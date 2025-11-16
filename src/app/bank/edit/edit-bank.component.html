@@ -1,0 +1,324 @@
+@if (!isDialogMode()) {
+  <z-page [zTitle]="(isEditMode() ? 'Edit Bank' : 'Add Bank')">
+    <div class="flex flex-col min-h-0 h-full overflow-hidden">
+      <!-- Header Section -->
+      <div class="space-y-4 pb-6 flex-shrink-0">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-3xl font-bold mb-2">
+              @if (isEditMode()) {
+                Edit Bank
+              } @else {
+                Add New Bank
+              }
+            </h2>
+            <p class="text-muted-foreground">
+              @if (isEditMode()) {
+                Update the bank information below
+              } @else {
+                Create a new bank account by filling in the information below
+              }
+            </p>
+          </div>
+          <div class="flex gap-2">
+            <z-button zType="outline" zSize="default" [disabled]="isSaving()" (click)="!isSaving() && onCancel()">
+              Cancel
+            </z-button>
+            <z-button [zType]="isSaving() || !isFormValid() ? 'ghost' : 'default'" [disabled]="isSaving()" (click)="!isSaving() && onSave()">
+              @if (isSaving()) {
+                <span class="flex items-center gap-2">
+                  <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+                  Saving...
+                </span>
+              } @else {
+                <z-icon zType="check" zSize="sm" class="mr-2" />
+                Save Bank
+              }
+            </z-button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Form -->
+      <div class="flex-1 min-h-0 overflow-y-auto">
+        @if (isLoading()) {
+          <div class="flex items-center justify-center h-full">
+            <div class="flex flex-col items-center gap-4">
+              <z-icon zType="loader-circle" zSize="lg" class="animate-spin text-primary" />
+              <p class="text-muted-foreground">Loading bank data...</p>
+            </div>
+          </div>
+        } @else {
+          <z-card class="max-w-7xl mx-auto">
+            <div class="p-8 space-y-8">
+              <!-- Basic Information Section -->
+              <div class="space-y-6 pb-6 border-b">
+                <div>
+                  <h3 class="text-lg font-semibold mb-1">Basic Information</h3>
+                  <p class="text-sm text-muted-foreground">
+                    Enter the basic details of the bank account
+                  </p>
+                </div>
+
+                <!-- Contact Field -->
+                <z-form-field>
+                  <z-form-label zRequired>Contact</z-form-label>
+                  <z-form-control [errorMessage]="contactIdError()">
+                    <z-combobox
+                      [options]="contactOptions()"
+                      [value]="formData().contactId || null"
+                      [placeholder]="'Select contact...'"
+                      [searchPlaceholder]="'Search contacts...'"
+                      [emptyText]="'No contacts found'"
+                      [searchable]="true"
+                      [disabled]="isLoadingContacts()"
+                      (zValueChange)="updateField('contactId', $event || '')"
+                      [zWidth]="'full'"
+                      class="[&_z-command-list]:max-h-[500px] [&_z-popover]:!w-[600px] [&_z-popover]:!min-w-[600px] [&_z-command]:!w-[600px] [&_z-command-list]:!w-[600px]"
+                    />
+                  </z-form-control>
+                </z-form-field>
+
+                <!-- Bank Name Field -->
+                <z-form-field>
+                  <z-form-label>Bank Name</z-form-label>
+                  <z-form-control>
+                    <z-input-group [zPrefix]="bankIconTemplate">
+                      <input
+                        z-input
+                        type="text"
+                        [ngModel]="formData().bankName"
+                        (ngModelChange)="updateField('bankName', $event)"
+                        placeholder="Enter bank name (optional)"
+                        class="w-full"
+                      />
+                    </z-input-group>
+                  </z-form-control>
+                </z-form-field>
+              </div>
+
+              <!-- Account Information Section -->
+              <div class="space-y-6 pb-6 border-b">
+                <div>
+                  <h3 class="text-lg font-semibold mb-1">Account Information</h3>
+                  <p class="text-sm text-muted-foreground">
+                    Enter the bank account details
+                  </p>
+                </div>
+
+                <!-- RIB Field -->
+                <z-form-field>
+                  <z-form-label zRequired>RIB</z-form-label>
+                  <z-form-control [errorMessage]="ribError()">
+                    <z-input-group [zPrefix]="creditCardIconTemplate">
+                      <input
+                        z-input
+                        type="text"
+                        [ngModel]="formData().rib"
+                        (ngModelChange)="updateField('rib', $event)"
+                        placeholder="Enter RIB"
+                        [zStatus]="ribHasError() ? 'error' : undefined"
+                        class="w-full font-mono"
+                      />
+                    </z-input-group>
+                  </z-form-control>
+                </z-form-field>
+
+                <!-- IBAN Field -->
+                <z-form-field>
+                  <z-form-label>IBAN</z-form-label>
+                  <z-form-control>
+                    <z-input-group [zPrefix]="creditCardIconTemplate">
+                      <input
+                        z-input
+                        type="text"
+                        [ngModel]="formData().iban"
+                        (ngModelChange)="updateField('iban', $event)"
+                        placeholder="Enter IBAN (optional)"
+                        class="w-full font-mono"
+                      />
+                    </z-input-group>
+                  </z-form-control>
+                </z-form-field>
+
+                <!-- Swift Field -->
+                <z-form-field>
+                  <z-form-label>SWIFT</z-form-label>
+                  <z-form-control>
+                    <z-input-group [zPrefix]="globeIconTemplate">
+                      <input
+                        z-input
+                        type="text"
+                        [ngModel]="formData().swift"
+                        (ngModelChange)="updateField('swift', $event)"
+                        placeholder="Enter SWIFT code (optional)"
+                        class="w-full font-mono"
+                      />
+                    </z-input-group>
+                  </z-form-control>
+                </z-form-field>
+              </div>
+            </div>
+          </z-card>
+        }
+      </div>
+    </div>
+  </z-page>
+} @else {
+  <!-- Dialog Mode -->
+  <div class="flex flex-col h-full max-h-[90vh] overflow-hidden">
+    <!-- Dialog Content -->
+    <div class="flex-1 overflow-y-auto p-6">
+      @if (isLoading()) {
+        <div class="flex items-center justify-center h-full">
+          <div class="flex flex-col items-center gap-4">
+            <z-icon zType="loader-circle" zSize="lg" class="animate-spin text-primary" />
+            <p class="text-muted-foreground">Loading bank data...</p>
+          </div>
+        </div>
+      } @else {
+        <form (ngSubmit)="onSave()" class="space-y-6">
+          <!-- Contact Field -->
+          <z-form-field>
+            <z-form-label zRequired>Contact</z-form-label>
+            <z-form-control [errorMessage]="contactIdError()">
+              <z-combobox
+                [options]="contactOptions()"
+                [value]="formData().contactId || null"
+                [placeholder]="'Select contact...'"
+                [searchPlaceholder]="'Search contacts...'"
+                [emptyText]="'No contacts found'"
+                [searchable]="true"
+                [disabled]="isLoadingContacts()"
+                (zValueChange)="updateField('contactId', $event || '')"
+                [zWidth]="'full'"
+                class="[&_z-command-list]:max-h-[500px] [&_z-popover]:!w-[600px] [&_z-popover]:!min-w-[600px]"
+              />
+            </z-form-control>
+          </z-form-field>
+
+          <!-- Bank Name Field -->
+          <z-form-field>
+            <z-form-label>Bank Name</z-form-label>
+            <z-form-control>
+              <z-input-group [zPrefix]="bankIconTemplate">
+                <input
+                  z-input
+                  type="text"
+                  [ngModel]="formData().bankName"
+                  (ngModelChange)="updateField('bankName', $event)"
+                  name="bankName"
+                  placeholder="Enter bank name (optional)"
+                  class="w-full"
+                />
+              </z-input-group>
+            </z-form-control>
+          </z-form-field>
+
+          <!-- RIB Field -->
+          <z-form-field>
+            <z-form-label zRequired>RIB</z-form-label>
+            <z-form-control [errorMessage]="ribError()">
+              <z-input-group [zPrefix]="creditCardIconTemplate">
+                <input
+                  z-input
+                  type="text"
+                  [ngModel]="formData().rib"
+                  (ngModelChange)="updateField('rib', $event)"
+                  name="rib"
+                  placeholder="Enter RIB"
+                  [zStatus]="ribHasError() ? 'error' : undefined"
+                  class="w-full font-mono"
+                />
+              </z-input-group>
+            </z-form-control>
+          </z-form-field>
+
+          <!-- IBAN Field -->
+          <z-form-field>
+            <z-form-label>IBAN</z-form-label>
+            <z-form-control>
+              <z-input-group [zPrefix]="creditCardIconTemplate">
+                <input
+                  z-input
+                  type="text"
+                  [ngModel]="formData().iban"
+                  (ngModelChange)="updateField('iban', $event)"
+                  name="iban"
+                  placeholder="Enter IBAN (optional)"
+                  class="w-full font-mono"
+                />
+              </z-input-group>
+            </z-form-control>
+          </z-form-field>
+
+          <!-- Swift Field -->
+          <z-form-field>
+            <z-form-label>SWIFT</z-form-label>
+            <z-form-control>
+              <z-input-group [zPrefix]="globeIconTemplate">
+                <input
+                  z-input
+                  type="text"
+                  [ngModel]="formData().swift"
+                  (ngModelChange)="updateField('swift', $event)"
+                  name="swift"
+                  placeholder="Enter SWIFT code (optional)"
+                  class="w-full font-mono"
+                />
+              </z-input-group>
+            </z-form-control>
+          </z-form-field>
+        </form>
+      }
+    </div>
+
+    <!-- Dialog Footer -->
+    <div class="border-t bg-background px-6 py-4 flex justify-end gap-3 flex-shrink-0">
+      <z-button
+        zType="outline"
+        zSize="default"
+        type="button"
+        (click)="onCancel()"
+        [disabled]="isSaving()"
+      >
+        Cancel
+      </z-button>
+      <z-button
+        [zType]="isSaving() || !isFormValid() ? 'ghost' : 'default'"
+        zSize="default"
+        type="button"
+        [disabled]="isSaving()"
+        (click)="!isSaving() && onSave()"
+      >
+        @if (isSaving()) {
+          <span class="flex items-center gap-2">
+            <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+            Saving...
+          </span>
+        } @else {
+          <z-icon zType="check" zSize="sm" class="mr-2" />
+          Save Bank
+        }
+      </z-button>
+    </div>
+  </div>
+}
+
+<!-- Icon Templates -->
+<ng-template #bankIconTemplate>
+  <z-icon zType="building-2" zSize="sm" />
+</ng-template>
+
+<ng-template #contactIconTemplate>
+  <z-icon zType="user" zSize="sm" />
+</ng-template>
+
+<ng-template #creditCardIconTemplate>
+  <z-icon zType="credit-card" zSize="sm" />
+</ng-template>
+
+<ng-template #globeIconTemplate>
+  <z-icon zType="globe" zSize="sm" />
+</ng-template>
+
