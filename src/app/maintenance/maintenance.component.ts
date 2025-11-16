@@ -88,10 +88,23 @@ export class MaintenanceComponent implements OnInit, OnDestroy {
   loadMaintenances(): void {
     this.isLoading.set(true);
     
+    // Calculate start and end dates for the selected month
+    const currentDate = this.currentDate();
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    
+    // Start date: first day of the month at 00:00:00
+    const startDate = new Date(year, month, 1, 0, 0, 0, 0);
+    
+    // End date: last day of the month at 23:59:59
+    const endDate = new Date(year, month + 1, 0, 23, 59, 59, 999);
+    
     const request = {
       currentPage: 1,
       pageSize: 1000,
       ignore: true, // Get all maintenances
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
     };
 
     this.maintenanceService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
