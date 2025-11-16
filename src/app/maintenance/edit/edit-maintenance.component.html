@@ -48,7 +48,7 @@
           <z-form-control>
             <z-select
               [zValue]="getPriorityString(formData().priority)"
-              (zValueChange)="onPriorityChange($event)"
+              (zSelectionChange)="onPriorityChange($event)"
             >
               <z-icon slot="selected-icon" [zType]="getSelectedPriorityIcon()" zSize="sm" />
               @for (option of priorityOptions; track option.value) {
@@ -69,7 +69,7 @@
           <z-form-control>
             <z-select
               [zValue]="getStatusString(formData().status)"
-              (zValueChange)="onStatusChange($event)"
+              (zSelectionChange)="onStatusChange($event)"
             >
               <z-icon slot="selected-icon" [zType]="getSelectedStatusIcon()" zSize="sm" />
               @for (option of statusOptions; track option.value) {
