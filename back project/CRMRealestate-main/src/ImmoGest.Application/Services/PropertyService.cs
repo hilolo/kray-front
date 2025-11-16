@@ -536,28 +536,18 @@ namespace ImmoGest.Application.Services
                     if (entity.Contact != null)
                     {
                         // Use the Contact from the entity if it's loaded
-                        if (entity.Contact.IsACompany && !string.IsNullOrEmpty(entity.Contact.CompanyName))
-                        {
-                            dto.OwnerName = SanitizeFolderName(entity.Contact.CompanyName);
-                        }
-                        else
-                        {
-                            var fullName = $"{entity.Contact.FirstName} {entity.Contact.LastName}".Trim();
-                            dto.OwnerName = !string.IsNullOrEmpty(fullName) 
-                                ? SanitizeFolderName(fullName) 
-                                : "UNKNOWN-OWNER";
-                        }
+                        dto.OwnerName = GetOwnerNameForDisplay(entity.Contact);
                     }
                     else
                     {
                         // Fallback to querying separately if Contact wasn't loaded
-                        var ownerName = await GetOwnerNameAsync(entity.ContactId);
+                        var ownerName = await GetOwnerNameForDisplayAsync(entity.ContactId);
                         dto.OwnerName = ownerName;
                     }
                 }
                 catch (Exception ex)
                 {
-                    dto.OwnerName = "Unknown";
+                    dto.OwnerName = "Unknown Owner";
                 }
 
                 // Generate avatar URL for contact if it exists
@@ -986,12 +976,12 @@ namespace ImmoGest.Application.Services
                         // Get owner name - always retrieve this as it's not expensive
                         try
                         {
-                            var ownerName = await GetOwnerNameAsync(dto.ContactId);
+                            var ownerName = await GetOwnerNameForDisplayAsync(dto.ContactId);
                             dto.OwnerName = ownerName;
                         }
                         catch (Exception ex)
                         {
-                            dto.OwnerName = "Unknown";
+                            dto.OwnerName = "Unknown Owner";
                         }
                     }
                 }
@@ -1034,6 +1024,44 @@ namespace ImmoGest.Application.Services
             catch
             {
                 return "UNKNOWN-OWNER";
+            }
+        }
+
+        private string GetOwnerNameForDisplay(Contact contact)
+        {
+            if (contact == null)
+                return "Unknown Owner";
+            
+            if (contact.IsACompany && !string.IsNullOrEmpty(contact.CompanyName))
+            {
+                return contact.CompanyName;
+            }
+            
+            var fullName = $"{contact.FirstName} {contact.LastName}".Trim();
+            if (!string.IsNullOrEmpty(fullName))
+            {
+                return fullName;
+            }
+            
+            return "Unknown Owner";
+        }
+
+        private async Task<string> GetOwnerNameForDisplayAsync(Guid contactId)
+        {
+            try
+            {
+                var contactResult = await _contactRepository.GetByIdAsync(contactId);
+                
+                if (contactResult.IsSuccess() && contactResult.Data != null)
+                {
+                    return GetOwnerNameForDisplay(contactResult.Data);
+                }
+                
+                return "Unknown Owner";
+            }
+            catch
+            {
+                return "Unknown Owner";
             }
         }
 

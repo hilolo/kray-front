@@ -262,15 +262,15 @@
               </z-dropdown-menu>
             </div>
             
-            <!-- Main content: Image/Type on left, Name/Details on right -->
-            <div class="flex gap-6 flex-1">
-              <!-- Left side: Avatar and Type badge -->
-              <div class="flex flex-col items-center gap-3 flex-shrink-0">
+            <!-- Main content: Large Image with Name/Reference below -->
+            <div class="flex flex-col gap-3">
+              <!-- Large Image -->
+              <div class="w-full aspect-[4/3] rounded-md overflow-hidden border border-border bg-muted">
                 @if (row.defaultAttachmentUrl) {
                   <img
                     [src]="row.defaultAttachmentUrl"
                     [alt]="getPropertyDisplayName(row)"
-                    class="w-28 h-28 object-cover rounded-md border border-border"
+                    class="w-full h-full object-cover"
                     [zImageHoverPreview]="row.defaultAttachmentUrl"
                     [zAlt]="getPropertyDisplayName(row)"
                     [zPosition]="'right'"
@@ -278,64 +278,46 @@
                     [zMaxHeight]="'400px'"
                   />
                 } @else {
-                  <z-avatar
-                    [zImage]="{ fallback: getInitials(row) }"
-                    zType="default"
-                    zSize="lg"
-                    zShape="square"
-                    class="w-28 h-28"
-                  />
+                  <div class="w-full h-full flex items-center justify-center">
+                    <span class="text-4xl font-semibold text-muted-foreground">{{ getInitials(row) }}</span>
+                  </div>
                 }
-                <z-badge zType="secondary" zShape="default" class="w-fit text-sm">
-                  {{ getPropertyTypeLabel(row) }}
-                </z-badge>
               </div>
               
-              <!-- Right side: Name and Property details -->
-              <div class="flex flex-col gap-3 flex-1 min-w-0">
-                <h3 class="font-semibold text-lg leading-tight">{{ getPropertyDisplayName(row) }}</h3>
-                
-                <!-- Property details -->
-                <div class="space-y-2.5">
+              <!-- Name/Reference, Address, and Owner below image -->
+              <div class="flex flex-col gap-2">
+                <!-- Name/Reference -->
+                <div class="text-center">
                   @if (row.identifier) {
-                    <div class="flex items-center gap-2 text-base">
-                      <z-icon zType="id-card" zSize="default" class="text-muted-foreground flex-shrink-0" />
-                      <span class="text-muted-foreground truncate">{{ row.identifier }}</span>
-                    </div>
-                  }
-                  @if (getOwnerName(row) || getOwnerReference(row)) {
-                    <div class="flex items-center gap-2 text-base">
-                      <z-icon zType="user" zSize="default" class="text-muted-foreground flex-shrink-0" />
-                      <span class="text-muted-foreground truncate">
-                        @if (getOwnerName(row) && getOwnerReference(row)) {
-                          {{ getOwnerName(row) }} ({{ getOwnerReference(row) }})
-                        } @else if (getOwnerName(row)) {
-                          {{ getOwnerName(row) }}
-                        } @else if (getOwnerReference(row)) {
-                          {{ getOwnerReference(row) }}
-                        }
-                      </span>
-                    </div>
-                  }
-                  @if (row.address) {
-                    <div class="flex items-center gap-2 text-base">
-                      <z-icon zType="map-pin" zSize="default" class="text-muted-foreground flex-shrink-0" />
-                      <span class="text-muted-foreground truncate">{{ row.address }}{{ row.city ? ', ' + row.city : '' }}</span>
-                    </div>
-                  }
-                  @if (row.price) {
-                    <div class="flex items-center gap-2 text-base">
-                      <z-icon zType="banknote" zSize="default" class="text-muted-foreground flex-shrink-0" />
-                      <span class="text-muted-foreground truncate">{{ row.price | propertyPrice:row.typePaiment }}</span>
-                    </div>
-                  }
-                  @if (row.area) {
-                    <div class="flex items-center gap-2 text-base">
-                      <z-icon zType="square-library" zSize="default" class="text-muted-foreground flex-shrink-0" />
-                      <span class="text-muted-foreground truncate">{{ row.area }} m²</span>
-                    </div>
+                    <span class="font-semibold text-base truncate">{{ row.identifier }}</span>
+                  } @else {
+                    <span class="font-semibold text-base truncate">{{ getPropertyDisplayName(row) }}</span>
                   }
                 </div>
+                
+                <!-- Address -->
+                @if (row.address || row.city) {
+                  <div class="flex items-center gap-1.5 text-sm text-muted-foreground justify-center">
+                    <z-icon zType="map-pin" zSize="sm" class="flex-shrink-0" />
+                    <span class="truncate">{{ row.address }}{{ row.address && row.city ? ', ' : '' }}{{ row.city || '' }}</span>
+                  </div>
+                }
+                
+                <!-- Owner -->
+                @if (getOwnerName(row) || getOwnerReference(row)) {
+                  <div class="flex items-center gap-1.5 text-sm text-muted-foreground justify-center">
+                    <z-icon zType="user" zSize="sm" class="flex-shrink-0" />
+                    <span class="truncate">
+                      @if (getOwnerName(row) && getOwnerReference(row)) {
+                        {{ getOwnerName(row) }} ({{ getOwnerReference(row) }})
+                      } @else if (getOwnerName(row)) {
+                        {{ getOwnerName(row) }}
+                      } @else if (getOwnerReference(row)) {
+                        {{ getOwnerReference(row) }}
+                      }
+                    </span>
+                  </div>
+                }
               </div>
             </div>
           </div>
