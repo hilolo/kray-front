@@ -183,12 +183,8 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
   readonly tenancyEndError = computed(() => {
     if (!this.formSubmitted()) return '';
     const value = this.formData().tenancyEnd;
-    const start = this.formData().tenancyStart;
     if (!value) {
       return 'Tenancy end date is required';
-    }
-    if (start && value && value <= start) {
-      return 'End date must be after start date';
     }
     return '';
   });
@@ -226,8 +222,7 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
 
   readonly tenancyEndHasError = computed(() => {
     const value = this.formData().tenancyEnd;
-    const start = this.formData().tenancyStart;
-    return this.formSubmitted() && (!value || (start && value && value <= start));
+    return this.formSubmitted() && !value;
   });
 
   readonly rentPriceHasError = computed(() => {

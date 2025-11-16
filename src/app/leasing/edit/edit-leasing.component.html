@@ -206,7 +206,6 @@
                     <z-date-picker
                       [value]="formData().tenancyEnd"
                       [placeholder]="formData().tenancyEnd ? '' : 'Pick a date'"
-                      [minDate]="formData().tenancyStart"
                       (dateChange)="updateTenancyEnd($event)"
                     />
                   </z-form-control>
