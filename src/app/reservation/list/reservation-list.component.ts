@@ -108,12 +108,18 @@ export class ReservationListComponent implements OnInit, OnDestroy {
   // Template references for comboboxes
   readonly tenantComboboxRef = viewChild<ZardComboboxComponent>('tenantCombobox');
   readonly propertyComboboxRef = viewChild<ZardComboboxComponent>('propertyCombobox');
+  readonly propertyComboboxCalendarRef = viewChild<ZardComboboxComponent>('propertyComboboxCalendar');
 
   // Check if any filters are active
   readonly hasActiveFilters = computed(() => {
     return (this.searchQuery() && this.searchQuery().trim() !== '') || 
            this.selectedTenant() !== null || 
            this.selectedProperty() !== null;
+  });
+
+  // Check if calendar has active filters (only property for calendar view)
+  readonly hasCalendarFilters = computed(() => {
+    return this.selectedProperty() !== null;
   });
 
   // Template references for custom cells
@@ -177,8 +183,14 @@ export class ReservationListComponent implements OnInit, OnDestroy {
   // Calendar reservations (only pending and active)
   readonly calendarReservations = signal<CalendarYearViewReservation[]>([]);
 
-  // Load all reservations for calendar view
+  // Load all reservations for calendar view (only when property is selected)
   loadCalendarReservations(): void {
+    // Only load if a property is selected
+    if (!this.selectedProperty()) {
+      this.calendarReservations.set([]);
+      return;
+    }
+
     const companyId = this.userService.getCurrentUser()?.companyId;
     
     const request: ReservationListRequest = {
@@ -187,7 +199,6 @@ export class ReservationListComponent implements OnInit, OnDestroy {
       ignore: true, // Ignore pagination
       companyId: companyId,
       propertyId: this.selectedProperty() || undefined,
-      contactId: this.selectedTenant() || undefined,
     };
 
     this.reservationService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
@@ -206,7 +217,7 @@ export class ReservationListComponent implements OnInit, OnDestroy {
               startDate: startDate,
               endDate: endDate,
               status: res.status === ReservationStatus.Pending ? 'pending' as const : 'active' as const,
-              title: `${res.contactName} - ${res.propertyName}`,
+              title: res.propertyIdentifier || res.propertyName || '',
               propertyId: res.propertyId,
               propertyIdentifier: res.propertyIdentifier,
               contactName: res.contactName,
@@ -216,6 +227,7 @@ export class ReservationListComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Error loading calendar reservations:', error);
+        this.calendarReservations.set([]);
       },
     });
   }
@@ -402,6 +414,7 @@ export class ReservationListComponent implements OnInit, OnDestroy {
     this.selectedProperty.set(propertyId);
     this.currentPage.set(1);
     if (this.showCalendarView()) {
+      // Only load calendar reservations when property is selected
       this.loadCalendarReservations();
     } else {
       this.loadReservations();
@@ -424,9 +437,14 @@ export class ReservationListComponent implements OnInit, OnDestroy {
       if (propertyCombobox) {
         (propertyCombobox as any).writeValue(null);
       }
+      const propertyComboboxCalendar = this.propertyComboboxCalendarRef();
+      if (propertyComboboxCalendar) {
+        (propertyComboboxCalendar as any).writeValue(null);
+      }
     }, 0);
     
     if (this.showCalendarView()) {
+      // Clear calendar when filters are reset
       this.loadCalendarReservations();
     } else {
       this.loadReservations();
@@ -436,7 +454,7 @@ export class ReservationListComponent implements OnInit, OnDestroy {
   onCalendarViewToggle(show: boolean): void {
     this.showCalendarView.set(show);
     if (show) {
-      // Load all reservations for calendar view
+      // Load all reservations for calendar view (only if property is selected)
       this.loadCalendarReservations();
     }
   }

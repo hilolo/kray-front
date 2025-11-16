@@ -121,7 +121,7 @@
             [style.right.%]="bar.isEndOfReservation ? ((6 - bar.endColumn + 0.5) / 7) * 100 : ((6 - bar.endColumn) / 7) * 100"
             [style.top.px]="(bar.weekIndex * 60) + 30 + (bar.row * 20)"
             [style.transform]="'translateY(-50%)'"
-            [title]="bar.reservation.contactName + (bar.reservation.propertyIdentifier ? ' - ' + bar.reservation.propertyIdentifier : '')"
+            [title]="bar.reservation.propertyIdentifier || ''"
             (click)="onReservationClick(bar.reservation.id, $event)"
           >
             @if (bar.isStartOfReservation) {
@@ -130,9 +130,8 @@
                 [class]="getReservationDotColor(bar.reservation.propertyId)"
               ></div>
               <span class="truncate text-xs font-medium ml-1.5">
-                {{ bar.reservation.contactName }}
                 @if (bar.reservation.propertyIdentifier) {
-                  <span class="text-muted-foreground/70"> - {{ bar.reservation.propertyIdentifier }}</span>
+                  {{ bar.reservation.propertyIdentifier }}
                 }
               </span>
             }

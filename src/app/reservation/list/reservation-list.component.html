@@ -96,20 +96,6 @@
       <div class="flex flex-col gap-4 flex-1 min-h-0">
         <!-- Filters for Calendar View -->
         <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-shrink-0">
-          <!-- Tenant filter -->
-          <div class="w-full sm:w-[250px]">
-            <z-combobox
-              #tenantComboboxCalendar
-              [options]="tenantOptions()"
-              [value]="selectedTenant()"
-              [disabled]="isLoadingTenants()"
-              [placeholder]="'All Tenants'"
-              [searchPlaceholder]="'Search tenants...'"
-              [emptyText]="'No tenants found'"
-              [zWidth]="'lg'"
-              (zValueChange)="onTenantChange($event)"
-            />
-          </div>
           <!-- Property filter -->
           <div class="w-full sm:w-[250px]">
             <z-combobox
@@ -117,14 +103,14 @@
               [options]="propertyOptions()"
               [value]="selectedProperty()"
               [disabled]="isLoadingProperties()"
-              [placeholder]="'All Properties'"
+              [placeholder]="'Select Property'"
               [searchPlaceholder]="'Search properties...'"
               [emptyText]="'No properties found'"
               [zWidth]="'lg'"
               (zValueChange)="onPropertyChange($event)"
             />
           </div>
-          @if (hasActiveFilters()) {
+          @if (selectedProperty()) {
             <z-button 
               zType="outline" 
               zSize="default" 
@@ -132,7 +118,7 @@
               (click)="onResetFilters()"
             >
               <z-icon zType="x" zSize="sm" />
-              <span>Reset</span>
+              <span>Clear</span>
             </z-button>
           }
         </div>
