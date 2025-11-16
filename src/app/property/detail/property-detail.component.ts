@@ -15,6 +15,7 @@ import { FormsModule } from '@angular/forms';
 import { PropertyService } from '@shared/services/property.service';
 import { LeaseService } from '@shared/services/lease.service';
 import type { Property } from '@shared/models/property/property.model';
+import { PropertyCategory } from '@shared/models/property/property.model';
 import type { Lease } from '@shared/models/lease/lease.model';
 import { catchError, of } from 'rxjs';
 import { ZardImageViewerComponent, type ImageItem } from '@shared/image-viewer/image-viewer.component';
@@ -134,6 +135,10 @@ export class PropertyDetailComponent implements OnInit {
 
   readonly isPublicProfileDisabled = computed(() => {
     return !this.enableSharing();
+  });
+  readonly isVacationLocation = computed(() => {
+    const prop = this.property();
+    return prop?.category === PropertyCategory.LocationVacances;
   });
   readonly validationErrors = computed(() => {
     // Validation errors removed as per requirements
