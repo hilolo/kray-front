@@ -23,6 +23,7 @@ import { ZardSwitchComponent } from '@shared/components/switch/switch.component'
 import { ZardComboboxComponent, ZardComboboxOption } from '@shared/components/combobox/combobox.component';
 import { ZardCalendarYearViewComponent, CalendarYearViewReservation } from '@shared/components/calendar-year-view/calendar-year-view.component';
 import { ZardCheckboxComponent } from '@shared/components/checkbox/checkbox.component';
+import { PropertyPricePipe } from '@shared/pipes/property-price.pipe';
 import type { Reservation } from '@shared/models/reservation/reservation.model';
 import { ReservationStatus } from '@shared/models/reservation/reservation.model';
 import type { ReservationListRequest } from '@shared/models/reservation/reservation-list-request.model';
@@ -60,6 +61,7 @@ import { PropertyCategory } from '@shared/models/property/property.model';
     ZardImageHoverPreviewDirective,
     ZardSwitchComponent,
     ZardCalendarYearViewComponent,
+    PropertyPricePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './reservation-list.component.html',

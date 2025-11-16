@@ -232,7 +232,7 @@
         <!-- Amount Column Template -->
         <ng-template #amountCell let-value let-row="row">
           <div class="flex flex-col gap-1">
-            <span class="font-semibold text-base">{{ formatCurrency(row.totalAmount) }}</span>
+            <span class="font-semibold text-base">{{ row.totalAmount | propertyPrice:null }}</span>
           </div>
         </ng-template>
 
@@ -385,7 +385,7 @@
               <div class="bg-primary/5 dark:bg-primary/10 rounded-lg p-3 border border-primary/10 min-h-[48px] flex items-center">
                 <div class="flex items-center gap-2">
                   <z-icon zType="banknote" zSize="sm" class="text-primary flex-shrink-0" />
-                  <span class="font-semibold text-base text-primary">{{ formatCurrency(row.totalAmount) }}</span>
+                  <span class="font-semibold text-base text-primary">{{ row.totalAmount | propertyPrice:null }}</span>
                 </div>
               </div>
               
