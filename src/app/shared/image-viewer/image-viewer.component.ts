@@ -93,7 +93,11 @@ export class ZardImageViewerComponent {
   /**
    * Go to previous image (with infinite navigation)
    */
-  goToPrevious(): void {
+  goToPrevious(event?: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
     if (this.hasMultipleImages()) {
       const images = this.images();
       let index = this.currentIndex();
@@ -112,7 +116,11 @@ export class ZardImageViewerComponent {
   /**
    * Go to next image (with infinite navigation)
    */
-  goToNext(): void {
+  goToNext(event?: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
     if (this.hasMultipleImages()) {
       const images = this.images();
       let index = this.currentIndex();

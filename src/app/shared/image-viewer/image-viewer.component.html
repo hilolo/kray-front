@@ -32,7 +32,7 @@
             zType="ghost"
             zSize="icon"
             class="nav-button prev-button"
-            (click)="goToPrevious()"
+            (click)="goToPrevious($event)"
             [attr.aria-label]="'Previous image'"
           >
             <z-icon zType="chevron-left" />
@@ -42,7 +42,7 @@
             zType="ghost"
             zSize="icon"
             class="nav-button next-button"
-            (click)="goToNext()"
+            (click)="goToNext($event)"
             [attr.aria-label]="'Next image'"
           >
             <z-icon zType="chevron-right" />

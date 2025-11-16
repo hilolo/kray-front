@@ -136,6 +136,10 @@
   backdrop-filter: blur(15px);
   border: 2px solid rgba(255, 255, 255, 0.2);
   transition: all 0.3s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
   
   &:hover {
     background-color: rgba(255, 255, 255, 0.25);
@@ -166,6 +170,10 @@
   border-radius: 12px;
   padding: 16px 20px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .image-name {
@@ -176,6 +184,10 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .file-size {
@@ -185,6 +197,10 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .image-counter {
@@ -197,6 +213,10 @@
   border-radius: 6px;
   text-align: center;
   display: inline-block;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 /* Image Content */
