@@ -20,9 +20,7 @@ import { PropertyService } from '@shared/services/property.service';
 import { UserService } from '@shared/services/user.service';
 import { ContactService } from '@shared/services/contact.service';
 import { ToastService } from '@shared/services/toast.service';
-import { BuildingService } from '@shared/services/building.service';
 import { EditContactComponent } from '../../contact/edit/edit-contact.component';
-import type { Building } from '@shared/models/building/building.model';
 import type { Property } from '@shared/models/property/property.model';
 import { PropertyCategory, TypePaiment, AttachmentDetails } from '@shared/models/property/property.model';
 import type { CreatePropertyRequest, PropertyImageInput } from '@shared/models/property/create-property-request.model';
@@ -60,7 +58,6 @@ type PropertyFormData = {
   furnished: boolean;
   price: number;
   typePaiment: TypePaiment;
-  buildingId: string;
   contactId: string;
   features: string[];
   equipment: string[];
@@ -100,7 +97,6 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
   private readonly propertyService = inject(PropertyService);
   private readonly userService = inject(UserService);
   private readonly contactService = inject(ContactService);
-  private readonly buildingService = inject(BuildingService);
   private readonly dialogService = inject(ZardDialogService);
   private readonly toastService = inject(ToastService);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -163,7 +159,6 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
     furnished: false,
     price: 0,
     typePaiment: TypePaiment.Monthly,
-    buildingId: '',
     contactId: '',
     features: [] as string[],
     equipment: [] as string[],
@@ -184,11 +179,6 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
   readonly ownerOptions = signal<ZardComboboxOption[]>([]);
   readonly isLoadingOwners = signal(false);
 
-  // Buildings
-  readonly buildings = signal<Building[]>([]);
-  readonly buildingOptions = signal<ZardComboboxOption[]>([]);
-  readonly isLoadingBuildings = signal(false);
-
   // Settings
   readonly propertyTypes = signal<string[]>([]);
   readonly categories = signal<Category[]>([]);
@@ -202,7 +192,6 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
   // Icon templates
   readonly homeIconTemplate = viewChild.required<TemplateRef<void>>('homeIconTemplate');
   readonly mapPinIconTemplate = viewChild.required<TemplateRef<void>>('mapPinIconTemplate');
-  readonly buildingIconTemplate = viewChild.required<TemplateRef<void>>('buildingIconTemplate');
   readonly squareIconTemplate = viewChild.required<TemplateRef<void>>('squareIconTemplate');
   readonly banknoteIconTemplate = viewChild.required<TemplateRef<void>>('banknoteIconTemplate');
   readonly userIconTemplate = viewChild.required<TemplateRef<void>>('userIconTemplate');
@@ -392,9 +381,6 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
     // Load owners
     this.loadOwners();
 
-    // Load buildings
-    this.loadBuildings();
-
     // Load settings (property types and categories)
     this.loadSettings();
 
@@ -455,7 +441,6 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
       furnished: property.furnished || false,
       price: property.price || 0,
       typePaiment: property.typePaiment || TypePaiment.Monthly,
-      buildingId: property.buildingId || '',
       contactId: property.contactId || '',
       features: property.features ? [...property.features] : [],
       equipment: property.equipment ? [...property.equipment] : [],
@@ -497,7 +482,6 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
       furnished: false,
       price: 0,
       typePaiment: TypePaiment.Monthly,
-      buildingId: '',
       contactId: '',
       features: [],
       equipment: [],
@@ -535,33 +519,6 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
       error: (error) => {
         console.error('Error loading owners:', error);
         this.isLoadingOwners.set(false);
-      },
-    });
-  }
-
-  loadBuildings(): void {
-    this.isLoadingBuildings.set(true);
-    const companyId = this.userService.getCurrentUser()?.companyId;
-    const request = {
-      currentPage: 1,
-      pageSize: 1000,
-      ignore: false,
-      companyId: companyId,
-    };
-    
-    this.buildingService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
-      next: (response) => {
-        this.buildings.set(response.result);
-        const options: ZardComboboxOption[] = response.result.map(building => ({
-          value: building.id,
-          label: building.name || 'Unnamed Building',
-        }));
-        this.buildingOptions.set(options);
-        this.isLoadingBuildings.set(false);
-      },
-      error: (error) => {
-        console.error('Error loading buildings:', error);
-        this.isLoadingBuildings.set(false);
       },
     });
   }
@@ -934,8 +891,10 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
     }
 
     const currentUser = this.userService.getCurrentUser();
-    if (!currentUser || !currentUser.companyId) {
-      console.error('User or company ID not found');
+    if (!currentUser) {
+      console.error('User not found');
+      this.toastService.error('Unable to save property. Please ensure you are logged in.');
+      this.isSaving.set(false);
       return;
     }
 
@@ -946,7 +905,7 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
 
     if (propertyId && this.isEditMode()) {
       // Update existing property
-      this.prepareUpdateRequest(data, propertyId, currentUser.companyId)
+      this.prepareUpdateRequest(data, propertyId)
         .then((request) => {
           console.log('Updating property with request:', request);
           this.propertyService.update(propertyId, request)
@@ -980,7 +939,7 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
         });
     } else {
       // Create new property
-      this.prepareCreateRequest(data, currentUser.companyId)
+      this.prepareCreateRequest(data)
         .then((request) => {
           console.log('Creating property with request:', request);
           this.propertyService.create(request)
@@ -1016,8 +975,7 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
   }
 
   private async prepareCreateRequest(
-    formData: PropertyFormData,
-    companyId: string
+    formData: PropertyFormData
   ): Promise<CreatePropertyRequest> {
     const request: CreatePropertyRequest = {
       identifier: formData.identifier.trim(),
@@ -1032,9 +990,7 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
       furnished: formData.furnished,
       price: formData.price,
       typePaiment: formData.typePaiment,
-      buildingId: formData.buildingId || undefined,
       contactId: formData.contactId,
-      companyId: companyId,
       features: formData.features.length > 0 ? formData.features : undefined,
       equipment: formData.equipment.length > 0 ? formData.equipment : undefined,
       category: formData.category,
@@ -1074,8 +1030,7 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
 
   private async prepareUpdateRequest(
     formData: PropertyFormData,
-    propertyId: string,
-    companyId: string
+    propertyId: string
   ): Promise<UpdatePropertyRequest> {
     const request: UpdatePropertyRequest = {
       id: propertyId,
@@ -1091,7 +1046,6 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
       furnished: formData.furnished,
       price: formData.price || undefined,
       typePaiment: formData.typePaiment,
-      buildingId: formData.buildingId || undefined,
       contactId: formData.contactId || undefined,
       features: formData.features.length > 0 ? formData.features : undefined,
       equipment: formData.equipment.length > 0 ? formData.equipment : undefined,
@@ -1181,13 +1135,6 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
     if (!contactId) return 'Select owner';
     const owner = this.owners().find(o => o.id === contactId);
     return owner ? this.getOwnerDisplayName(owner) : 'Select owner';
-  }
-
-  getBuildingLabel(): string {
-    const buildingId = this.formData().buildingId;
-    if (!buildingId) return 'Select building (optional)';
-    const building = this.buildings().find(b => b.id === buildingId);
-    return building ? building.name : 'Select building (optional)';
   }
 
   /**

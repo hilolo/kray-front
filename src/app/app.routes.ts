@@ -79,4 +79,9 @@ export const routes: Routes = [
     loadChildren: () => import('./bank/bank.routes').then((m) => m.bankRoutes),
     canActivate: [authGuard],
   },
+  {
+    path: 'reservation',
+    loadChildren: () => import('./reservation/reservation.routes').then((m) => m.reservationRoutes),
+    canActivate: [authGuard],
+  },
 ];

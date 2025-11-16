@@ -1,0 +1,139 @@
+<div [class]="classes()">
+  <!-- Navigation Header -->
+  <div class="flex items-center justify-between mb-4">
+    <div class="flex items-center gap-4">
+      <button
+        z-button
+        zType="ghost"
+        zSize="icon"
+        (click)="previousMonth()"
+        aria-label="Previous month"
+        class="h-8 w-8"
+      >
+        <z-icon zType="chevron-left" zSize="sm" />
+      </button>
+
+      <div class="flex items-center gap-2">
+        <!-- Month Select -->
+        <z-select
+          [zSize]="'default'"
+          class="min-w-[120px]"
+          [zValue]="currentMonth().toString()"
+          [zLabel]="currentMonthName()"
+          (zSelectionChange)="onMonthChange($event)"
+        >
+          @for (month of months; track $index) {
+            <z-select-item [zValue]="$index.toString()">{{ month }}</z-select-item>
+          }
+        </z-select>
+
+        <!-- Year Select -->
+        <z-select
+          [zSize]="'default'"
+          class="min-w-[100px]"
+          [zValue]="currentYear().toString()"
+          [zLabel]="currentYear().toString()"
+          (zSelectionChange)="onYearChange($event)"
+        >
+          @for (year of availableYears(); track year) {
+            <z-select-item [zValue]="year.toString()">{{ year }}</z-select-item>
+          }
+        </z-select>
+      </div>
+
+      <button
+        z-button
+        zType="ghost"
+        zSize="icon"
+        (click)="nextMonth()"
+        aria-label="Next month"
+        class="h-8 w-8"
+      >
+        <z-icon zType="chevron-right" zSize="sm" />
+      </button>
+    </div>
+
+    <button
+      z-button
+      zType="outline"
+      zSize="default"
+      (click)="goToToday()"
+      class="gap-2"
+    >
+      Today
+    </button>
+  </div>
+
+  <!-- Month View -->
+  <div class="flex flex-col gap-2">
+    <!-- Month Header -->
+    <div class="text-center font-semibold text-lg mb-2">
+      {{ currentMonthName() }} {{ currentYear() }}
+    </div>
+
+    <!-- Weekdays Header -->
+    <div class="grid grid-cols-7 gap-0 text-center text-sm text-muted-foreground mb-1">
+      @for (weekday of weekdays; track $index) {
+        <div class="p-2 font-medium">{{ weekday }}</div>
+      }
+    </div>
+
+    <!-- Calendar Days Grid -->
+    <div class="grid grid-cols-7 gap-0">
+      @for (day of monthDays(); track day.date.getTime()) {
+        <div
+          class="relative min-h-[80px] border border-border/50 p-2 cursor-pointer hover:bg-accent/50 transition-colors"
+          [class.bg-muted/30]="!day.isCurrentMonth"
+          [class.opacity-50]="!day.isCurrentMonth"
+          [class.bg-accent]="selectedDate() && isSameDay(day.date, selectedDate()!)"
+          (click)="selectDate(day.date)"
+        >
+          <!-- Date Number -->
+          <div
+            class="text-sm font-medium mb-1"
+            [class.text-foreground]="day.isCurrentMonth"
+            [class.text-muted-foreground]="!day.isCurrentMonth"
+            [class.font-bold]="day.isToday"
+            [class.ring-2]="day.isToday"
+            [class.ring-primary]="day.isToday"
+            [class.rounded-full]="day.isToday"
+            [class.w-7]="day.isToday"
+            [class.h-7]="day.isToday"
+            [class.flex]="day.isToday"
+            [class.items-center]="day.isToday"
+            [class.justify-center]="day.isToday"
+          >
+            {{ day.date.getDate() }}
+          </div>
+
+          <!-- Reservations -->
+          @if (day.reservations.length > 0) {
+            <div class="flex flex-col gap-1">
+              @for (reservation of day.reservations.slice(0, 3); track reservation.id) {
+                <div
+                  class="text-xs px-1.5 py-1 rounded border truncate"
+                  [class]="getReservationColor(reservation.status)"
+                  [title]="reservation.title || 'Reservation'"
+                >
+                  <div class="flex items-center gap-1.5">
+                    <div
+                      class="w-2 h-2 rounded-full flex-shrink-0"
+                      [class]="getReservationDotColor(reservation.status)"
+                    ></div>
+                    <span class="truncate text-xs">{{ reservation.title || 'Reservation' }}</span>
+                  </div>
+                </div>
+              }
+              @if (day.reservations.length > 3) {
+                <div class="text-xs text-muted-foreground px-1.5">
+                  +{{ day.reservations.length - 3 }} more
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+</div>
+

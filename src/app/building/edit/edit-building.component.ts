@@ -216,19 +216,12 @@ export class EditBuildingComponent implements OnInit, OnDestroy {
 
   private loadUnattachedProperties(): void {
     this.isLoadingProperties.set(true);
-    const companyId = this.userService.getCurrentUser()?.companyId;
-    
-    if (!companyId) {
-      this.isLoadingProperties.set(false);
-      return;
-    }
 
     this.propertyService.list({
       currentPage: 1,
       pageSize: 100, // Load a reasonable number of properties
       ignore: false,
       unattachedOnly: true,
-      companyId: companyId,
       isArchived: false,
     })
       .pipe(takeUntil(this.destroy$))
@@ -251,19 +244,12 @@ export class EditBuildingComponent implements OnInit, OnDestroy {
     }
 
     this.isLoadingAssociatedProperties.set(true);
-    const companyId = this.userService.getCurrentUser()?.companyId;
-    
-    if (!companyId) {
-      this.isLoadingAssociatedProperties.set(false);
-      return;
-    }
 
     this.propertyService.list({
       currentPage: 1,
       pageSize: 100, // Load a reasonable number of properties
       ignore: false,
       buildingId: buildingId,
-      companyId: companyId,
       isArchived: false,
     })
       .pipe(takeUntil(this.destroy$))
@@ -431,12 +417,6 @@ export class EditBuildingComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const currentUser = this.userService.getCurrentUser();
-    if (!currentUser || !currentUser.companyId) {
-      console.error('User or company ID not found');
-      return;
-    }
-
     this.isSaving.set(true);
 
     const data = this.formData();
@@ -465,7 +445,7 @@ export class EditBuildingComponent implements OnInit, OnDestroy {
           this.isSaving.set(false);
         });
     } else {
-      this.prepareCreateRequest(data, currentUser.companyId)
+      this.prepareCreateRequest(data)
         .then((request) => {
           this.buildingService.create(request)
             .pipe(takeUntil(this.destroy$))
@@ -490,8 +470,7 @@ export class EditBuildingComponent implements OnInit, OnDestroy {
   }
 
   private async prepareCreateRequest(
-    formData: BuildingFormData,
-    companyId: string
+    formData: BuildingFormData
   ): Promise<CreateBuildingRequest> {
     const request: CreateBuildingRequest = {
       name: formData.name.trim(),
@@ -501,7 +480,6 @@ export class EditBuildingComponent implements OnInit, OnDestroy {
       construction: formData.construction,
       year: formData.year,
       floor: formData.floor,
-      companyId: companyId,
     };
 
     const imageFile = this.imageFile();

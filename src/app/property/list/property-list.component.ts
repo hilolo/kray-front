@@ -23,6 +23,7 @@ import { ZardSwitchComponent } from '@shared/components/switch/switch.component'
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import type { Property } from '@shared/models/property/property.model';
+import { PropertyCategory } from '@shared/models/property/property.model';
 import type { PropertyListRequest } from '@shared/models/property/property-list-request.model';
 import { PropertyService } from '@shared/services/property.service';
 import { RoutePreferencesService } from '@shared/services/route-preferences.service';
@@ -105,6 +106,13 @@ export class PropertyListComponent implements OnInit, OnDestroy {
     return `${selected.length} types selected`;
   });
 
+  // Category
+  readonly selectedCategory = signal<PropertyCategory | null>(null);
+  readonly categoryOptions = signal<ZardComboboxOption[]>([]);
+  
+  // Reference to category combobox for clearing
+  readonly categoryComboboxRef = viewChild<ZardComboboxComponent>('categoryCombobox');
+
   // Template references for custom cells
   readonly propertyIdCell = viewChild<TemplateRef<any>>('propertyIdCell');
   readonly referenceCell = viewChild<TemplateRef<any>>('referenceCell');
@@ -181,7 +189,8 @@ export class PropertyListComponent implements OnInit, OnDestroy {
   readonly showResetButton = computed(() => {
     return (this.searchQuery() && this.searchQuery().trim() !== '') || 
            this.selectedOwnerId() !== null || 
-           this.selectedPropertyTypes().length > 0;
+           this.selectedPropertyTypes().length > 0 ||
+           this.selectedCategory() !== null;
   });
 
   ngOnInit(): void {
@@ -223,6 +232,7 @@ export class PropertyListComponent implements OnInit, OnDestroy {
     this.loadProperties();
     this.loadOwners();
     this.loadPropertyTypes();
+    this.loadCategories();
   }
 
   /**
@@ -241,6 +251,7 @@ export class PropertyListComponent implements OnInit, OnDestroy {
       ...(this.searchQuery() && this.searchQuery().trim() ? { searchQuery: this.searchQuery().trim() } : {}),
       ...(this.selectedOwnerId() ? { contactId: this.selectedOwnerId()! } : {}),
       ...(this.selectedPropertyTypes().length > 0 ? { typeProperties: this.selectedPropertyTypes() } : {}),
+      ...(this.selectedCategory() !== null ? { category: this.selectedCategory()! } : {}),
       // Only include isArchived when showing archived (true), otherwise omit it so backend defaults to false
       ...(this.showArchived() ? { isArchived: true } : {}),
     };
@@ -326,6 +337,15 @@ export class PropertyListComponent implements OnInit, OnDestroy {
       console.error('Error loading property types from localStorage:', error);
     }
   }
+
+  loadCategories(): void {
+    const options: ZardComboboxOption[] = [
+      { value: PropertyCategory.Location.toString(), label: 'Location' },
+      { value: PropertyCategory.Vente.toString(), label: 'Vente' },
+      { value: PropertyCategory.LocationVacances.toString(), label: 'Location Vacances' },
+    ];
+    this.categoryOptions.set(options);
+  }
   
   togglePropertyType(type: string): void {
     const current = this.selectedPropertyTypes();
@@ -334,6 +354,13 @@ export class PropertyListComponent implements OnInit, OnDestroy {
     } else {
       this.selectedPropertyTypes.set([...current, type]);
     }
+    this.currentPage.set(1);
+    this.loadProperties();
+  }
+
+  onCategoryChange(categoryId: string | null): void {
+    const category = categoryId !== null ? +categoryId as PropertyCategory : null;
+    this.selectedCategory.set(category);
     this.currentPage.set(1);
     this.loadProperties();
   }
@@ -347,17 +374,24 @@ export class PropertyListComponent implements OnInit, OnDestroy {
     // Clear owner selection
     this.selectedOwnerId.set(null);
     
-    // Clear combobox internal value using ControlValueAccessor
+    // Clear combobox internal values using ControlValueAccessor
     setTimeout(() => {
-      const combobox = this.ownerComboboxRef();
-      if (combobox) {
+      const ownerCombobox = this.ownerComboboxRef();
+      if (ownerCombobox) {
         // Clear internal value - writeValue is part of ControlValueAccessor interface
-        (combobox as any).writeValue(null);
+        (ownerCombobox as any).writeValue(null);
+      }
+      const categoryCombobox = this.categoryComboboxRef();
+      if (categoryCombobox) {
+        (categoryCombobox as any).writeValue(null);
       }
     }, 0);
     
     // Clear property types selection
     this.selectedPropertyTypes.set([]);
+    
+    // Clear category selection
+    this.selectedCategory.set(null);
     
     // Reload properties
     this.loadProperties();
@@ -419,11 +453,16 @@ export class PropertyListComponent implements OnInit, OnDestroy {
     this.searchInput.set('');
     this.selectedOwnerId.set(null);
     this.selectedPropertyTypes.set([]);
-    // Clear combobox internal value
+    this.selectedCategory.set(null);
+    // Clear combobox internal values
     setTimeout(() => {
-      const combobox = this.ownerComboboxRef();
-      if (combobox) {
-        (combobox as any).writeValue(null);
+      const ownerCombobox = this.ownerComboboxRef();
+      if (ownerCombobox) {
+        (ownerCombobox as any).writeValue(null);
+      }
+      const categoryCombobox = this.categoryComboboxRef();
+      if (categoryCombobox) {
+        (categoryCombobox as any).writeValue(null);
       }
     }, 0);
     // Reset to first page

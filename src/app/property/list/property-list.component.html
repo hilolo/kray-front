@@ -13,9 +13,9 @@
             <z-switch [ngModel]="showArchived()" (checkChange)="toggleShowArchived($event)" />
           </div>
         </div>
-        <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-          <!-- Search on left -->
-          <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-1">
+        <div class="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+          <!-- Left side: Search and Filters -->
+          <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-1 w-full">
             <!-- Search input -->
             <div class="relative flex-1 sm:flex-initial w-full sm:w-[300px]">
               <z-icon zType="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" zSize="sm" />
@@ -29,42 +29,59 @@
                 (keydown)="onSearchKeyDown($event)"
               />
             </div>
-            <!-- Owner select -->
-            <div class="w-full sm:w-[200px]">
-              <z-combobox
-                #ownerCombobox
-                [options]="ownerOptions()"
-                [value]="selectedOwnerId()"
-                [placeholder]="'Select owner...'"
-                [searchPlaceholder]="'Search owners...'"
-                [emptyText]="'No owners found'"
-                [searchable]="true"
-                [disabled]="isLoadingOwners()"
-                (zValueChange)="onOwnerChange($event)"
-                class="w-full"
-              />
-            </div>
-            <!-- Property Type multi-select -->
-            <div class="w-full sm:w-[200px]">
-              <z-dropdown-menu>
-                <z-button zType="outline" zSize="default" class="w-full justify-between" dropdown-trigger>
-                  <span>{{ selectedPropertyTypes().length > 0 ? selectedPropertyTypesDisplay() : 'Select types...' }}</span>
-                  <z-icon zType="chevron-down" zSize="sm" class="opacity-50" />
-                </z-button>
-                @for (type of propertyTypeOptions(); track type) {
-                  <z-dropdown-menu-item (click)="$event.preventDefault(); $event.stopPropagation(); togglePropertyType(type)">
-                    <div class="flex items-center gap-2 w-full pointer-events-none">
-                      <z-checkbox
-                        [ngModel]="selectedPropertyTypes().includes(type)"
-                        (checkChange)="togglePropertyType(type)"
-                        (click)="$event.stopPropagation()"
-                        class="pointer-events-auto"
-                      />
-                      <span>{{ type }}</span>
-                    </div>
-                  </z-dropdown-menu-item>
-                }
-              </z-dropdown-menu>
+            <!-- Filters group: Owner, Property Type, Category -->
+            <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-shrink-0 w-full sm:w-auto">
+              <!-- Owner select -->
+              <div class="w-full sm:w-[200px]">
+                <z-combobox
+                  #ownerCombobox
+                  [options]="ownerOptions()"
+                  [value]="selectedOwnerId()"
+                  [placeholder]="'Select owner...'"
+                  [searchPlaceholder]="'Search owners...'"
+                  [emptyText]="'No owners found'"
+                  [searchable]="true"
+                  [disabled]="isLoadingOwners()"
+                  (zValueChange)="onOwnerChange($event)"
+                  class="w-full"
+                />
+              </div>
+              <!-- Property Type multi-select -->
+              <div class="w-full sm:w-[200px]">
+                <z-dropdown-menu class="w-full">
+                  <z-button zType="outline" zSize="default" class="w-full justify-between" dropdown-trigger>
+                    <span class="truncate">{{ selectedPropertyTypes().length > 0 ? selectedPropertyTypesDisplay() : 'Select types...' }}</span>
+                    <z-icon zType="chevron-down" zSize="sm" class="opacity-50 flex-shrink-0" />
+                  </z-button>
+                  @for (type of propertyTypeOptions(); track type) {
+                    <z-dropdown-menu-item (click)="$event.preventDefault(); $event.stopPropagation(); togglePropertyType(type)">
+                      <div class="flex items-center gap-2 w-full pointer-events-none">
+                        <z-checkbox
+                          [ngModel]="selectedPropertyTypes().includes(type)"
+                          (checkChange)="togglePropertyType(type)"
+                          (click)="$event.stopPropagation()"
+                          class="pointer-events-auto"
+                        />
+                        <span>{{ type }}</span>
+                      </div>
+                    </z-dropdown-menu-item>
+                  }
+                </z-dropdown-menu>
+              </div>
+              <!-- Category select -->
+              <div class="w-full sm:w-[200px]">
+                <z-combobox
+                  #categoryCombobox
+                  [options]="categoryOptions()"
+                  [value]="selectedCategory() !== null ? selectedCategory()!.toString() : null"
+                  [placeholder]="'Select category...'"
+                  [searchPlaceholder]="'Search categories...'"
+                  [emptyText]="'No categories found'"
+                  [searchable]="true"
+                  (zValueChange)="onCategoryChange($event)"
+                  class="w-full"
+                />
+              </div>
             </div>
           </div>
           <!-- Buttons on right - Archive/Unarchive first, then Reset, Card View, then Add Property -->

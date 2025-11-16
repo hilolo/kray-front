@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, forkJoin } from 'rxjs';
 import { ZardPageComponent } from '../../page/page.component';
 import { ZardButtonComponent } from '@shared/components/button/button.component';
 import { ZardInputDirective } from '@shared/components/input/input.directive';
@@ -11,7 +11,6 @@ import { ZardFormFieldComponent, ZardFormControlComponent, ZardFormLabelComponen
 import { ZardInputGroupComponent } from '@shared/components/input-group/input-group.component';
 import { ZardSelectComponent } from '@shared/components/select/select.component';
 import { ZardSelectItemComponent } from '@shared/components/select/select-item.component';
-import { ZardCheckboxComponent } from '@shared/components/checkbox/checkbox.component';
 import { ZardCardComponent } from '@shared/components/card/card.component';
 import { ZardImageHoverPreviewDirective } from '@shared/components/image-hover-preview/image-hover-preview.component';
 import { ZardComboboxComponent, ZardComboboxOption } from '@shared/components/combobox/combobox.component';
@@ -19,13 +18,13 @@ import { ZardDatePickerComponent } from '@shared/components/date-picker/date-pic
 import { ZardFileViewerComponent } from '@shared/components/file-viewer/file-viewer.component';
 import { ImageItem } from '@shared/image-viewer/image-viewer.component';
 import { getFileViewerType } from '@shared/utils/file-type.util';
-import { LeaseService } from '@shared/services/lease.service';
+import { ReservationService } from '@shared/services/reservation.service';
 import { UserService } from '@shared/services/user.service';
 import { ToastService } from '@shared/services/toast.service';
-import type { Lease } from '@shared/models/lease/lease.model';
-import { LeasingStatus, TypePaimentLease, PaymentMethod } from '@shared/models/lease/lease.model';
-import type { CreateLeaseRequest } from '@shared/models/lease/create-lease-request.model';
-import type { UpdateLeaseRequest } from '@shared/models/lease/update-lease-request.model';
+import type { Reservation } from '@shared/models/reservation/reservation.model';
+import { ReservationStatus } from '@shared/models/reservation/reservation.model';
+import type { CreateReservationRequest } from '@shared/models/reservation/create-reservation-request.model';
+import type { UpdateReservationRequest } from '@shared/models/reservation/update-reservation-request.model';
 import type { AttachmentInput } from '@shared/models/contact/create-contact-request.model';
 import { PropertyService } from '@shared/services/property.service';
 import { ContactService } from '@shared/services/contact.service';
@@ -52,7 +51,7 @@ interface ExistingAttachment {
 }
 
 @Component({
-  selector: 'app-edit-leasing',
+  selector: 'app-edit-reservation',
   standalone: true,
   imports: [
     CommonModule,
@@ -67,7 +66,6 @@ interface ExistingAttachment {
     ZardInputGroupComponent,
     ZardSelectComponent,
     ZardSelectItemComponent,
-    ZardCheckboxComponent,
     ZardCardComponent,
     ZardImageHoverPreviewDirective,
     ZardComboboxComponent,
@@ -75,12 +73,12 @@ interface ExistingAttachment {
     ZardFileViewerComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  templateUrl: './edit-leasing.component.html',
+  templateUrl: './edit-reservation.component.html',
 })
-export class EditLeasingComponent implements OnInit, OnDestroy {
+export class EditReservationComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  private readonly leaseService = inject(LeaseService);
+  private readonly reservationService = inject(ReservationService);
   private readonly userService = inject(UserService);
   private readonly propertyService = inject(PropertyService);
   private readonly contactService = inject(ContactService);
@@ -88,36 +86,31 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroy$ = new Subject<void>();
 
-  readonly leaseId = signal<string | null>(null);
-  readonly isEditMode = computed(() => this.leaseId() !== null);
+  readonly reservationId = signal<string | null>(null);
+  readonly isEditMode = computed(() => this.reservationId() !== null);
   readonly isLoading = signal(false);
   readonly isSaving = signal(false);
   readonly formSubmitted = signal(false);
 
-  // Lease data
-  readonly lease = signal<Lease | null>(null);
+  // Reservation data
+  readonly reservation = signal<Reservation | null>(null);
   readonly property = signal<Property | null>(null);
-  readonly tenant = signal<Contact | null>(null);
+  readonly contact = signal<Contact | null>(null);
 
   // Form data
   readonly formData = signal({
     propertyId: '',
     contactId: '',
-    tenancyStart: (() => {
+    startDate: (() => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       return today;
     })() as Date | null,
-    tenancyEnd: null as Date | null,
-    paymentType: TypePaimentLease.Monthly,
-    paymentMethod: PaymentMethod.Cash,
-    paymentDate: 1,
-    rentPrice: 0,
-    enableReceipts: false,
-    notificationWhatsapp: false,
-    notificationEmail: false,
-    specialTerms: '',
+    endDate: null as Date | null,
+    totalAmount: 0,
+    description: '',
     privateNote: '',
+    status: ReservationStatus.Pending,
   });
 
   // Files
@@ -126,36 +119,32 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
   readonly filesToDelete = signal<Set<string>>(new Set());
   readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
 
-  // Properties and Tenants (for add mode only)
+  // Properties and Contacts (for add mode only)
   readonly properties = signal<Property[]>([]);
   readonly propertyOptions = signal<ZardComboboxOption[]>([]);
   readonly isLoadingProperties = signal(false);
 
-  readonly tenants = signal<Contact[]>([]);
-  readonly tenantOptions = signal<ZardComboboxOption[]>([]);
-  readonly isLoadingTenants = signal(false);
+  readonly contacts = signal<Contact[]>([]);
+  readonly contactOptions = signal<ZardComboboxOption[]>([]);
+  readonly isLoadingContacts = signal(false);
 
   // Icon templates
   readonly calendarIconTemplate = viewChild.required<TemplateRef<void>>('calendarIconTemplate');
   readonly banknoteIconTemplate = viewChild.required<TemplateRef<void>>('banknoteIconTemplate');
-  readonly creditCardIconTemplate = viewChild.required<TemplateRef<void>>('creditCardIconTemplate');
-  readonly fileTextIconTemplate = viewChild.required<TemplateRef<void>>('fileTextIconTemplate');
 
   // Form validation
   readonly isFormValid = computed(() => {
     const data = this.formData();
-    const hasValidDates = data.tenancyStart !== null && 
-      data.tenancyEnd !== null && 
-      data.tenancyEnd > data.tenancyStart;
+    const hasValidDates = data.startDate !== null && 
+      data.endDate !== null && 
+      data.endDate > data.startDate;
     return (
       data.propertyId !== '' &&
       data.contactId !== '' &&
-      data.tenancyStart !== null &&
-      data.tenancyEnd !== null &&
+      data.startDate !== null &&
+      data.endDate !== null &&
       hasValidDates &&
-      data.rentPrice > 0 &&
-      data.paymentDate >= 1 &&
-      data.paymentDate <= 31
+      data.totalAmount >= 0
     );
   });
 
@@ -175,47 +164,38 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
     if (this.isEditMode()) return ''; // Read-only in edit mode
     const value = this.formData().contactId;
     if (!value || value === '') {
-      return 'Tenant is required';
+      return 'Contact is required';
     }
     return '';
   });
 
-  readonly tenancyStartError = computed(() => {
+  readonly startDateError = computed(() => {
     if (!this.formSubmitted()) return '';
-    const value = this.formData().tenancyStart;
+    const value = this.formData().startDate;
     if (!value) {
-      return 'Tenancy start date is required';
+      return 'Start date is required';
     }
     return '';
   });
 
-  readonly tenancyEndError = computed(() => {
+  readonly endDateError = computed(() => {
     if (!this.formSubmitted()) return '';
-    const value = this.formData().tenancyEnd;
+    const value = this.formData().endDate;
     if (!value) {
-      return 'Tenancy end date is required';
+      return 'End date is required';
     }
-    const startDate = this.formData().tenancyStart;
+    const startDate = this.formData().startDate;
     if (startDate && value <= startDate) {
       return 'End date must be after start date';
     }
     return '';
   });
 
-  readonly rentPriceError = computed(() => {
+  readonly totalAmountError = computed(() => {
     if (!this.formSubmitted()) return '';
-    const value = this.formData().rentPrice;
-    if (value <= 0) {
-      return 'Rent price must be greater than 0';
-    }
-    return '';
-  });
-
-  readonly paymentDateError = computed(() => {
-    if (!this.formSubmitted()) return '';
-    const value = this.formData().paymentDate;
-    if (value < 1 || value > 31) {
-      return 'Payment date must be between 1 and 31';
+    const value = this.formData().totalAmount;
+    if (value < 0) {
+      return 'Total amount must be greater than or equal to 0';
     }
     return '';
   });
@@ -229,134 +209,86 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
     return !this.isEditMode() && this.formSubmitted() && (!this.formData().contactId || this.formData().contactId === '');
   });
 
-  readonly tenancyStartHasError = computed(() => {
-    return this.formSubmitted() && !this.formData().tenancyStart;
+  readonly startDateHasError = computed(() => {
+    return this.formSubmitted() && !this.formData().startDate;
   });
 
-  readonly tenancyEndHasError = computed(() => {
+  readonly endDateHasError = computed(() => {
     if (!this.formSubmitted()) return false;
-    const value = this.formData().tenancyEnd;
+    const value = this.formData().endDate;
     if (!value) return true;
-    const startDate = this.formData().tenancyStart;
+    const startDate = this.formData().startDate;
     if (startDate && value <= startDate) return true;
     return false;
   });
 
-  readonly rentPriceHasError = computed(() => {
-    return this.formSubmitted() && this.formData().rentPrice <= 0;
-  });
-
-  readonly paymentDateHasError = computed(() => {
-    const value = this.formData().paymentDate;
-    return this.formSubmitted() && (value < 1 || value > 31);
+  readonly totalAmountHasError = computed(() => {
+    return this.formSubmitted() && this.formData().totalAmount < 0;
   });
 
   // Minimum date for end date picker (start date + 1 day)
-  readonly tenancyEndMinDate = computed(() => {
-    const startDate = this.formData().tenancyStart;
+  readonly endDateMinDate = computed(() => {
+    const startDate = this.formData().startDate;
     if (!startDate) return null;
     const minDate = new Date(startDate);
     minDate.setDate(minDate.getDate() + 1);
     return minDate;
   });
 
-  // Tenancy duration calculation
-  readonly tenancyDuration = computed(() => {
-    const start = this.formData().tenancyStart;
-    const end = this.formData().tenancyEnd;
+  // Reservation duration calculation
+  readonly reservationDuration = computed(() => {
+    const start = this.formData().startDate;
+    const end = this.formData().endDate;
 
     if (!start || !end) {
       return null;
     }
 
-    // Ensure end date is after start date
     if (end <= start) {
       return null;
     }
 
-    // Calculate the difference
     const startDate = new Date(start);
     const endDate = new Date(end);
-
-    // Reset time to midnight for accurate day calculation
     startDate.setHours(0, 0, 0, 0);
     endDate.setHours(0, 0, 0, 0);
 
-    // Calculate years
-    let years = endDate.getFullYear() - startDate.getFullYear();
-    let months = endDate.getMonth() - startDate.getMonth();
-    let days = endDate.getDate() - startDate.getDate();
+    const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const nights = diffDays - 1;
 
-    // Adjust for negative days
-    if (days < 0) {
-      months--;
-      const lastDayOfPrevMonth = new Date(endDate.getFullYear(), endDate.getMonth(), 0);
-      days += lastDayOfPrevMonth.getDate();
-    }
-
-    // Adjust for negative months
-    if (months < 0) {
-      years--;
-      months += 12;
-    }
-
-    // Format the duration based on the requirements
-    const parts: string[] = [];
-
-    // If it surpasses years, show years, months, and days
-    if (years > 0) {
-      parts.push(`${years} ${years === 1 ? 'year' : 'years'}`);
-      if (months > 0) {
-        parts.push(`${months} ${months === 1 ? 'month' : 'months'}`);
+    if (diffDays === 1) {
+      return '1 day';
+    } else if (diffDays < 7) {
+      return `${diffDays} days (${nights} night${nights !== 1 ? 's' : ''})`;
+    } else {
+      const weeks = Math.floor(diffDays / 7);
+      const remainingDays = diffDays % 7;
+      if (remainingDays === 0) {
+        return `${weeks} week${weeks !== 1 ? 's' : ''}`;
       }
-      if (days > 0) {
-        parts.push(`${days} ${days === 1 ? 'day' : 'days'}`);
-      }
+      return `${weeks} week${weeks !== 1 ? 's' : ''}, ${remainingDays} day${remainingDays !== 1 ? 's' : ''}`;
     }
-    // If it surpasses months (but not years), show months and days
-    else if (months > 0) {
-      parts.push(`${months} ${months === 1 ? 'month' : 'months'}`);
-      if (days > 0) {
-        parts.push(`${days} ${days === 1 ? 'day' : 'days'}`);
-      }
-    }
-    // If just days, show days
-    else {
-      parts.push(`${days} ${days === 1 ? 'day' : 'days'}`);
-    }
-
-    return parts.join(', ');
   });
 
-  // Payment type options
-  readonly paymentTypeOptions = [
-    { value: TypePaimentLease.Monthly, label: 'Monthly' },
-    { value: TypePaimentLease.Quarterly, label: 'Quarterly' },
-    { value: TypePaimentLease.SemiAnnually, label: 'Semi-Annually' },
-    { value: TypePaimentLease.Fully, label: 'Full Payment' },
+  // Status options
+  readonly statusOptions = [
+    { value: ReservationStatus.Pending, label: 'Pending' },
+    { value: ReservationStatus.Approved, label: 'Approved' },
+    { value: ReservationStatus.Rejected, label: 'Rejected' },
+    { value: ReservationStatus.Cancelled, label: 'Cancelled' },
+    { value: ReservationStatus.Completed, label: 'Completed' },
   ];
-
-  // Payment method options
-  readonly paymentMethodOptions = [
-    { value: PaymentMethod.Cash, label: 'Cash' },
-    { value: PaymentMethod.BankTransfer, label: 'Bank Transfer' },
-    { value: PaymentMethod.Check, label: 'Check' },
-  ];
-
-  // Payment date options (1-31)
-  readonly paymentDateOptions = Array.from({ length: 31 }, (_, i) => i + 1);
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
-      this.leaseId.set(id);
-      this.loadLease(id);
+      this.reservationId.set(id);
+      this.loadReservation(id);
     } else {
-      // Load properties and tenants asynchronously to prevent blocking initial render
-      // Use requestAnimationFrame to ensure DOM is ready before loading data
       requestAnimationFrame(() => {
         this.loadProperties();
-        this.loadTenants();
+        this.loadContacts();
       });
     }
   }
@@ -366,35 +298,30 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  loadLease(id: string): void {
+  loadReservation(id: string): void {
     this.isLoading.set(true);
-    this.leaseService.getById(id).pipe(takeUntil(this.destroy$)).subscribe({
-      next: (lease) => {
-        this.lease.set(lease);
+    this.reservationService.getById(id).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (reservation) => {
+        this.reservation.set(reservation);
         this.formData.set({
-          propertyId: lease.propertyId,
-          contactId: lease.contactId,
-          tenancyStart: lease.tenancyStart ? new Date(lease.tenancyStart) : null,
-          tenancyEnd: lease.tenancyEnd ? new Date(lease.tenancyEnd) : null,
-          paymentType: lease.paymentType,
-          paymentMethod: lease.paymentMethod,
-          paymentDate: lease.paymentDate,
-          rentPrice: lease.rentPrice,
-          enableReceipts: lease.enableReceipts,
-          notificationWhatsapp: lease.notificationWhatsapp,
-          notificationEmail: lease.notificationEmail,
-          specialTerms: lease.specialTerms || '',
-          privateNote: lease.privateNote || '',
+          propertyId: reservation.propertyId,
+          contactId: reservation.contactId,
+          startDate: reservation.startDate ? new Date(reservation.startDate) : null,
+          endDate: reservation.endDate ? new Date(reservation.endDate) : null,
+          totalAmount: reservation.totalAmount,
+          description: reservation.description || '',
+          privateNote: reservation.privateNote || '',
+          status: reservation.status,
         });
 
-        // Load property and tenant details
-        this.loadProperty(lease.propertyId);
-        this.loadTenant(lease.contactId);
+        // Load property and contact details
+        this.loadProperty(reservation.propertyId);
+        this.loadContact(reservation.contactId);
 
         // Load attachments
-        if (lease.attachments && lease.attachments.length > 0) {
+        if (reservation.attachments && reservation.attachments.length > 0) {
           this.existingAttachments.set(
-            lease.attachments.map((att) => ({
+            reservation.attachments.map((att) => ({
               id: att.id,
               url: att.url,
               fileName: att.fileName || att.originalFileName || 'Unknown',
@@ -408,8 +335,8 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       },
       error: (error) => {
-        console.error('Error loading lease:', error);
-        this.toastService.error('Failed to load lease');
+        console.error('Error loading reservation:', error);
+        this.toastService.error('Failed to load reservation');
         this.isLoading.set(false);
         this.cdr.markForCheck();
       },
@@ -428,37 +355,55 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
     });
   }
 
-  loadTenant(id: string): void {
+  loadContact(id: string): void {
     this.contactService.getById(id, false).pipe(takeUntil(this.destroy$)).subscribe({
       next: (contact) => {
-        this.tenant.set(contact);
+        this.contact.set(contact);
         this.cdr.markForCheck();
       },
       error: (error) => {
-        console.error('Error loading tenant:', error);
+        console.error('Error loading contact:', error);
       },
     });
   }
 
   loadProperties(): void {
+    // Don't load properties in edit mode - property is read-only
+    if (this.isEditMode()) {
+      return;
+    }
+
     this.isLoadingProperties.set(true);
     const companyId = this.userService.getCurrentUser()?.companyId;
-    const request = {
+    
+    // Make two API calls: one for Location, one for LocationVacances
+    const locationRequest = {
       currentPage: 1,
-      pageSize: 500, // Reduced from 1000 to improve initial load performance
+      pageSize: 500,
       ignore: false,
       companyId: companyId,
-      category: PropertyCategory.Location, // Only show properties with category "location"
+      category: PropertyCategory.Location,
     };
 
-    // Use setTimeout to defer loading and allow initial render to complete
+    const vacanceRequest = {
+      currentPage: 1,
+      pageSize: 500,
+      ignore: false,
+      companyId: companyId,
+      category: PropertyCategory.LocationVacances,
+    };
+
     setTimeout(() => {
-      this.propertyService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
-        next: (response) => {
-          this.properties.set(response.result);
-          // Use requestAnimationFrame to batch DOM updates
+      forkJoin({
+        location: this.propertyService.list(locationRequest),
+        vacance: this.propertyService.list(vacanceRequest),
+      }).pipe(takeUntil(this.destroy$)).subscribe({
+        next: ({ location, vacance }) => {
+          // Combine results from both API calls
+          const allProperties = [...location.result, ...vacance.result];
+          this.properties.set(allProperties);
           requestAnimationFrame(() => {
-            const options: ZardComboboxOption[] = response.result.map((property) => {
+            const options: ZardComboboxOption[] = allProperties.map((property) => {
               const parts: string[] = [];
               if (property.identifier) parts.push(property.identifier);
               if (property.name) parts.push(property.name);
@@ -482,23 +427,21 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
     }, 0);
   }
 
-  loadTenants(): void {
-    this.isLoadingTenants.set(true);
+  loadContacts(): void {
+    this.isLoadingContacts.set(true);
     const companyId = this.userService.getCurrentUser()?.companyId;
     const request = {
       currentPage: 1,
-      pageSize: 500, // Reduced from 1000 to improve initial load performance
+      pageSize: 500,
       ignore: false,
-      type: ContactType.Tenant,
+      type: ContactType.Tenant, // Using Tenant as default, but will get all contacts
       companyId: companyId,
     };
 
-    // Use setTimeout to defer loading and allow initial render to complete
     setTimeout(() => {
       this.contactService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
         next: (response) => {
-          this.tenants.set(response.result);
-          // Use requestAnimationFrame to batch DOM updates
+          this.contacts.set(response.result);
           requestAnimationFrame(() => {
             const options: ZardComboboxOption[] = response.result.map((contact) => {
               let name = '';
@@ -515,20 +458,19 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
                 label: parts.join(' - '),
               };
             });
-            this.tenantOptions.set(options);
-            this.isLoadingTenants.set(false);
+            this.contactOptions.set(options);
+            this.isLoadingContacts.set(false);
             this.cdr.markForCheck();
           });
         },
         error: (error) => {
-          console.error('Error loading tenants:', error);
-          this.isLoadingTenants.set(false);
+          console.error('Error loading contacts:', error);
+          this.isLoadingContacts.set(false);
           this.cdr.markForCheck();
         },
       });
     }, 0);
   }
-
 
   onFilesSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -540,7 +482,6 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         
-        // Validate file size (max 10MB per file)
         if (file.size > 10 * 1024 * 1024) {
           this.toastService.error(`File "${file.name}" is too large. Maximum size is 10MB.`);
           continue;
@@ -563,7 +504,6 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
       }
     }
 
-    // Reset input
     input.value = '';
   }
 
@@ -615,11 +555,9 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
   }
 
   openFile(url: string, name: string, size: number): void {
-    // Check if this is an uploaded file (no URL yet)
     const uploadedFile = this.uploadedFiles().find(f => f.name === name);
     
     if (uploadedFile && uploadedFile.type.startsWith('image/')) {
-      // Create data URL for uploaded image
       const reader = new FileReader();
       reader.onload = () => {
         const dataUrl = reader.result as string;
@@ -627,7 +565,6 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
         this.fileViewerName.set(name);
         this.fileViewerSize.set(size);
         
-        // Set up image navigation
         const allImages = this.allImages();
         const uploadedImages = this.uploadedFiles()
           .filter(f => f.type.startsWith('image/'))
@@ -635,7 +572,6 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
             if (f.id === uploadedFile.id) {
               return { url: dataUrl, name: f.name, size: f.size };
             }
-            // For other uploaded images, we'd need to read them too, but for now just include this one
             return null;
           })
           .filter((img): img is ImageItem => img !== null);
@@ -650,12 +586,10 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
       return;
     }
     
-    // For existing files with URLs
     this.fileViewerUrl.set(url);
     this.fileViewerName.set(name);
     this.fileViewerSize.set(size);
     
-    // If it's an image, set up image navigation
     if (getFileViewerType(url) === 'image') {
       const allImages = this.allImages();
       const currentIndex = allImages.findIndex(img => img.url === url || img.name === name);
@@ -702,7 +636,6 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
   readonly allImages = computed(() => {
     const images: ImageItem[] = [];
     
-    // Add existing attachments (not marked for deletion) that are images
     const toDelete = this.filesToDelete();
     this.existingAttachments().forEach(att => {
       if (!toDelete.has(att.id) && getFileViewerType(att.url) === 'image') {
@@ -713,9 +646,6 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
         });
       }
     });
-    
-    // Note: Uploaded files that are images will be processed when opening the file viewer
-    // We can't use FileReader in a computed signal as it's async
     
     return images;
   });
@@ -766,7 +696,6 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
     this.isSaving.set(true);
     const companyId = this.userService.getCurrentUser()?.companyId;
 
-    // Convert uploaded files to AttachmentInput (async)
     const filePromises = this.uploadedFiles().map((file) => {
       return new Promise<AttachmentInput>((resolve) => {
         const reader = new FileReader();
@@ -791,66 +720,53 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
     const attachments = await Promise.all(filePromises);
 
     if (this.isEditMode()) {
-      const leaseId = this.leaseId()!;
-      const request: UpdateLeaseRequest = {
-        id: leaseId,
-        propertyId: this.formData().propertyId,
+      const reservationId = this.reservationId()!;
+      const request: UpdateReservationRequest = {
         contactId: this.formData().contactId,
-        tenancyStart: this.formData().tenancyStart!.toISOString(),
-        tenancyEnd: this.formData().tenancyEnd!.toISOString(),
-        paymentType: this.formData().paymentType,
-        paymentMethod: this.formData().paymentMethod,
-        paymentDate: this.formData().paymentDate,
-        rentPrice: this.formData().rentPrice,
-        enableReceipts: this.formData().enableReceipts,
-        notificationWhatsapp: this.formData().notificationWhatsapp,
-        notificationEmail: this.formData().notificationEmail,
-        specialTerms: this.formData().specialTerms,
+        propertyId: this.formData().propertyId,
+        startDate: this.formData().startDate!.toISOString(),
+        endDate: this.formData().endDate!.toISOString(),
+        totalAmount: this.formData().totalAmount,
+        description: this.formData().description,
         privateNote: this.formData().privateNote,
-        companyId: companyId,
+        status: this.formData().status,
         attachmentsToAdd: attachments,
         attachmentsToDelete: Array.from(this.filesToDelete()),
       };
 
-      this.leaseService.update(leaseId, request).pipe(takeUntil(this.destroy$)).subscribe({
+      this.reservationService.update(reservationId, request).pipe(takeUntil(this.destroy$)).subscribe({
         next: () => {
-          this.toastService.success('Lease updated successfully');
-          this.router.navigate(['/leasing']);
+          this.toastService.success('Reservation updated successfully');
+          this.router.navigate(['/reservation']);
         },
         error: (error) => {
-          console.error('Error updating lease:', error);
-          this.toastService.error('Failed to update lease');
+          console.error('Error updating reservation:', error);
+          this.toastService.error('Failed to update reservation');
           this.isSaving.set(false);
           this.cdr.markForCheck();
         },
       });
     } else {
-      const request: CreateLeaseRequest = {
-        propertyId: this.formData().propertyId,
+      const request: CreateReservationRequest = {
         contactId: this.formData().contactId,
-        tenancyStart: this.formData().tenancyStart!.toISOString(),
-        tenancyEnd: this.formData().tenancyEnd!.toISOString(),
-        paymentType: this.formData().paymentType,
-        paymentMethod: this.formData().paymentMethod,
-        paymentDate: this.formData().paymentDate,
-        rentPrice: this.formData().rentPrice,
-        enableReceipts: this.formData().enableReceipts,
-        notificationWhatsapp: this.formData().notificationWhatsapp,
-        notificationEmail: this.formData().notificationEmail,
-        specialTerms: this.formData().specialTerms,
+        propertyId: this.formData().propertyId,
+        startDate: this.formData().startDate!.toISOString(),
+        endDate: this.formData().endDate!.toISOString(),
+        totalAmount: this.formData().totalAmount,
+        description: this.formData().description,
         privateNote: this.formData().privateNote,
         companyId: companyId,
         attachments: attachments,
       };
 
-      this.leaseService.create(request).pipe(takeUntil(this.destroy$)).subscribe({
+      this.reservationService.create(request).pipe(takeUntil(this.destroy$)).subscribe({
         next: () => {
-          this.toastService.success('Lease created successfully');
-          this.router.navigate(['/leasing']);
+          this.toastService.success('Reservation created successfully');
+          this.router.navigate(['/reservation']);
         },
         error: (error) => {
-          console.error('Error creating lease:', error);
-          this.toastService.error('Failed to create lease');
+          console.error('Error creating reservation:', error);
+          this.toastService.error('Failed to create reservation');
           this.isSaving.set(false);
           this.cdr.markForCheck();
         },
@@ -859,7 +775,7 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
   }
 
   onCancel(): void {
-    this.router.navigate(['/leasing']);
+    this.router.navigate(['/reservation']);
   }
 
   formatDate(dateString: string): string {
@@ -875,7 +791,7 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
     }).format(amount);
   }
 
-  getTenantDisplayName(contact: Contact | null): string {
+  getContactDisplayName(contact: Contact | null): string {
     if (!contact) return 'N/A';
     if (contact.isACompany) {
       return contact.companyName || contact.identifier || 'N/A';
@@ -897,48 +813,28 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
     this.formData.update((data) => ({ ...data, contactId: value }));
   }
 
-  updateTenancyStart(value: Date | null): void {
-    this.formData.update((data) => ({ ...data, tenancyStart: value }));
+  updateStartDate(value: Date | null): void {
+    this.formData.update((data) => ({ ...data, startDate: value }));
   }
 
-  updateTenancyEnd(value: Date | null): void {
-    this.formData.update((data) => ({ ...data, tenancyEnd: value }));
+  updateEndDate(value: Date | null): void {
+    this.formData.update((data) => ({ ...data, endDate: value }));
   }
 
-  updateRentPrice(value: string): void {
-    this.formData.update((data) => ({ ...data, rentPrice: +value }));
+  updateTotalAmount(value: string): void {
+    this.formData.update((data) => ({ ...data, totalAmount: +value }));
   }
 
-  updatePaymentType(value: string): void {
-    this.formData.update((data) => ({ ...data, paymentType: +value }));
-  }
-
-  updatePaymentMethod(value: string): void {
-    this.formData.update((data) => ({ ...data, paymentMethod: +value }));
-  }
-
-  updatePaymentDate(value: string): void {
-    this.formData.update((data) => ({ ...data, paymentDate: +value }));
-  }
-
-  updateEnableReceipts(value: boolean): void {
-    this.formData.update((data) => ({ ...data, enableReceipts: value }));
-  }
-
-  updateNotificationEmail(value: boolean): void {
-    this.formData.update((data) => ({ ...data, notificationEmail: value }));
-  }
-
-  updateNotificationWhatsapp(value: boolean): void {
-    this.formData.update((data) => ({ ...data, notificationWhatsapp: value }));
-  }
-
-  updateSpecialTerms(value: string): void {
-    this.formData.update((data) => ({ ...data, specialTerms: value }));
+  updateDescription(value: string): void {
+    this.formData.update((data) => ({ ...data, description: value }));
   }
 
   updatePrivateNote(value: string): void {
     this.formData.update((data) => ({ ...data, privateNote: value }));
+  }
+
+  updateStatus(value: string): void {
+    this.formData.update((data) => ({ ...data, status: +value }));
   }
 }
 

@@ -12,7 +12,7 @@ export const buildingRoutes: Routes = [
     component: EditBuildingComponent,
   },
   {
-    path: ':id/edit',
+    path: ':id',
     component: EditBuildingComponent,
   },
 ];

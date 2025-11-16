@@ -9,7 +9,6 @@ export interface CreateBuildingRequest {
   construction: number;
   year: number;
   floor: number;
-  companyId: string;
   image?: {
     fileName: string;
     base64Content: string;

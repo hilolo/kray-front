@@ -22,7 +22,6 @@ export interface UpdatePropertyRequest {
   typePaiment?: TypePaiment;
   buildingId?: string;
   contactId?: string;
-  companyId?: string;
   defaultAttachmentId?: string;
   features?: string[];
   equipment?: string[];

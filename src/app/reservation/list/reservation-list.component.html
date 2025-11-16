@@ -1,0 +1,272 @@
+<z-page zTitle="Reservations">
+  <div class="flex flex-col h-full min-h-0">
+    <!-- Header Section -->
+    <div class="space-y-6 pb-6 flex-shrink-0">
+      <!-- Filter and Action Bar -->
+      <div class="flex flex-col gap-4">
+        <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+          <!-- Search and Filters on left -->
+          <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-1">
+            <!-- Calendar View Toggle -->
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-muted-foreground cursor-pointer" (click)="onCalendarViewToggle(!showCalendarView())">
+                Calendar View
+              </label>
+              <z-switch [ngModel]="showCalendarView()" (checkChange)="onCalendarViewToggle($event)" />
+            </div>
+            @if (!showCalendarView()) {
+              <!-- Search input -->
+              <div class="relative flex-1 sm:flex-initial w-full sm:w-[300px]">
+                <z-icon zType="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" zSize="sm" />
+                <input
+                  z-input
+                  type="text"
+                  placeholder="Search reservations..."
+                  class="pl-9 w-full"
+                  [value]="searchInput()"
+                  (input)="onSearchInputChange($any($event.target).value)"
+                />
+              </div>
+              <!-- Tenant filter -->
+              <div class="w-full sm:w-[250px]">
+                <z-combobox
+                  #tenantCombobox
+                  [options]="tenantOptions()"
+                  [value]="selectedTenant()"
+                  [disabled]="isLoadingTenants()"
+                  [placeholder]="'All Tenants'"
+                  [searchPlaceholder]="'Search tenants...'"
+                  [emptyText]="'No tenants found'"
+                  [zWidth]="'lg'"
+                  (zValueChange)="onTenantChange($event)"
+                />
+              </div>
+              <!-- Property filter -->
+              <div class="w-full sm:w-[250px]">
+                <z-combobox
+                  #propertyCombobox
+                  [options]="propertyOptions()"
+                  [value]="selectedProperty()"
+                  [disabled]="isLoadingProperties()"
+                  [placeholder]="'All Properties'"
+                  [searchPlaceholder]="'Search properties...'"
+                  [emptyText]="'No properties found'"
+                  [zWidth]="'lg'"
+                  (zValueChange)="onPropertyChange($event)"
+                />
+              </div>
+            }
+          </div>
+          <!-- Buttons on right -->
+          <div class="flex gap-2 items-center ml-auto">
+            @if (!showCalendarView() && hasActiveFilters()) {
+              <z-button 
+                zType="outline" 
+                zSize="default" 
+                class="gap-2 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground" 
+                (click)="onResetFilters()"
+              >
+                <z-icon zType="x" zSize="sm" />
+                <span>Reset</span>
+              </z-button>
+            }
+            @if (!showCalendarView()) {
+              <z-button zType="outline" zSize="default" class="gap-2" (click)="onViewModeChange(viewMode() === 'list' ? 'card' : 'list')">
+                @if (viewMode() === 'list') {
+                  <z-icon zType="layout-dashboard" zSize="sm" />
+                  <span>Card View</span>
+                } @else {
+                  <z-icon zType="layers" zSize="sm" />
+                  <span>List View</span>
+                }
+              </z-button>
+            }
+            <z-button zType="default" zSize="default" class="gap-2" routerLink="/reservation/add">
+              <z-icon zType="plus" zSize="sm" />
+              Add Reservation
+            </z-button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Calendar View -->
+    @if (showCalendarView()) {
+      <div class="flex-1 min-h-0 overflow-y-auto pb-4 -mx-6 px-6">
+        <z-calendar-year-view
+          [reservations]="calendarReservations()"
+          class="w-full"
+        />
+      </div>
+    }
+
+    <!-- Datatable -->
+    @if (!showCalendarView()) {
+      <div class="flex-1 min-h-0 overflow-y-auto pb-4 -mx-6 px-6">
+        <z-datatable
+          [zData]="filteredReservations()"
+          [zColumns]="columns()"
+          [zViewMode]="viewMode()"
+          [zSelectable]="true"
+          [zSelectedRows]="selectedRows()"
+          [zCurrentPage]="currentPage()"
+          [zPageSize]="pageSize()"
+          [zShowPagination]="false"
+          [zEmptyMessage]="emptyMessage()"
+          (zPageChange)="onPageChange($event)"
+          (zPageSizeChange)="onPageSizeChange($event)"
+          (zSelectionChange)="onSelectionChange($event)"
+        >
+        <!-- Property Column Template -->
+        <ng-template #propertyCell let-value let-row="row">
+          <div class="flex items-center gap-3">
+            @if (row.propertyImageUrl) {
+              <img
+                [src]="row.propertyImageUrl"
+                [alt]="row.propertyName"
+                class="w-20 h-20 object-cover rounded-md border border-border"
+                [zImageHoverPreview]="row.propertyImageUrl"
+                [zAlt]="row.propertyName"
+                [zPosition]="'right'"
+                [zMaxWidth]="'400px'"
+                [zMaxHeight]="'400px'"
+              />
+            } @else {
+              <div class="w-20 h-20 rounded-md border border-border bg-muted flex items-center justify-center">
+                <z-icon zType="house" zSize="lg" class="text-muted-foreground" />
+              </div>
+            }
+            <div class="flex flex-col gap-1">
+              <span class="font-semibold text-base">{{ row.propertyName || 'N/A' }}</span>
+              @if (row.propertyAddress) {
+                <span class="text-sm text-muted-foreground">{{ row.propertyAddress }}</span>
+              }
+            </div>
+          </div>
+        </ng-template>
+
+        <!-- Contact Column Template -->
+        <ng-template #contactCell let-value let-row="row">
+          <div class="flex items-center gap-3">
+            @if (row.contactAvatarUrl) {
+              <img
+                [src]="row.contactAvatarUrl"
+                [alt]="row.contactName"
+                class="w-12 h-12 rounded-full object-cover border border-border"
+                [zImageHoverPreview]="row.contactAvatarUrl"
+                [zAlt]="row.contactName"
+                [zPosition]="'right'"
+                [zMaxWidth]="'200px'"
+                [zMaxHeight]="'200px'"
+              />
+            } @else {
+              <z-avatar
+                [zImage]="{ fallback: getContactInitials(row) }"
+                zType="default"
+                zSize="default"
+                zShape="circle"
+                class="w-12 h-12"
+              />
+            }
+            <div class="flex flex-col gap-1">
+              <span class="font-medium text-base">{{ row.contactName || 'N/A' }}</span>
+              @if (row.contactEmail) {
+                <span class="text-sm text-muted-foreground">{{ row.contactEmail }}</span>
+              }
+              @if (row.contactPhone) {
+                <span class="text-sm text-muted-foreground">{{ row.contactPhone }}</span>
+              }
+            </div>
+          </div>
+        </ng-template>
+
+        <!-- Dates Column Template -->
+        <ng-template #datesCell let-value let-row="row">
+          <div class="flex flex-col gap-1">
+            <div class="flex items-center gap-2">
+              <z-icon zType="calendar" zSize="sm" class="text-muted-foreground" />
+              <span class="text-sm">{{ formatDate(row.startDate) }}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <z-icon zType="check" zSize="sm" class="text-muted-foreground" />
+              <span class="text-sm">{{ formatDate(row.endDate) }}</span>
+            </div>
+            @if (row.durationDays) {
+              <span class="text-xs text-muted-foreground mt-1">{{ row.durationDays }} day{{ row.durationDays !== 1 ? 's' : '' }}</span>
+            }
+          </div>
+        </ng-template>
+
+        <!-- Amount Column Template -->
+        <ng-template #amountCell let-value let-row="row">
+          <div class="flex flex-col gap-1">
+            <span class="font-semibold text-base">{{ formatCurrency(row.totalAmount) }}</span>
+          </div>
+        </ng-template>
+
+        <!-- Status Column Template -->
+        <ng-template #statusCell let-value let-row="row">
+          <z-badge [zType]="getStatusColor(row.status)" zShape="default">
+            {{ getStatusLabel(row.status) }}
+          </z-badge>
+        </ng-template>
+
+        <!-- Actions Column Template -->
+        <ng-template #actionsCell let-value let-row="row">
+          <z-dropdown-menu>
+            <z-button zType="ghost" zSize="icon" class="h-8 w-8" dropdown-trigger>
+              <z-icon zType="ellipsis" zSize="sm" />
+            </z-button>
+            <z-dropdown-menu-item (click)="onEditReservation(row)">
+              <z-icon zType="pencil" zSize="sm" class="mr-2" />
+              <span>Edit</span>
+            </z-dropdown-menu-item>
+            <z-divider class="my-1" />
+            <z-dropdown-menu-item (click)="onDeleteReservation(row)" class="text-destructive focus:text-destructive">
+              <z-icon zType="x" zSize="sm" class="mr-2" />
+              <span>Delete</span>
+            </z-dropdown-menu-item>
+          </z-dropdown-menu>
+        </ng-template>
+      </z-datatable>
+      </div>
+
+      <!-- Pagination Footer -->
+      @if (hasData()) {
+      <div class="border-t bg-background pt-4 pb-4 flex-shrink-0 -mx-6 px-6 mt-auto">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <!-- Left side: Rows per page selector -->
+          <div class="flex items-center gap-2 flex-shrink-0 whitespace-nowrap">
+            <z-select
+              [zValue]="pageSize().toString()"
+              [zLabel]="pageSize().toString()"
+              class="h-8 w-[70px]"
+              (zSelectionChange)="onPageSizeChange(+$event)"
+            >
+              @for (option of pageSizeOptions(); track option) {
+                <z-select-item [zValue]="option.toString()">
+                  {{ option }}
+                </z-select-item>
+              }
+            </z-select>
+            <span class="text-sm text-muted-foreground">Rows per page</span>
+          </div>
+
+          <!-- Right side: Page info and pagination -->
+          <div class="flex items-center gap-4 flex-shrink-0 whitespace-nowrap">
+            <div class="text-sm text-muted-foreground">
+              Page {{ currentPage() }} of {{ totalPages() }}
+            </div>
+            <z-pagination
+              [zPageIndex]="currentPage()"
+              [zTotal]="totalPages()"
+              (zPageIndexChange)="onPageChange($event)"
+            />
+          </div>
+        </div>
+      </div>
+      }
+    }
+  </div>
+</z-page>
+

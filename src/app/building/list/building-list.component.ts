@@ -29,6 +29,7 @@ import { ToastService } from '@shared/services/toast.service';
 import { UserService } from '@shared/services/user.service';
 import { PropertyService } from '@shared/services/property.service';
 import type { Property } from '@shared/models/property/property.model';
+import type { PropertyListRequest } from '@shared/models/property/property-list-request.model';
 
 @Component({
   selector: 'app-building-list',
@@ -183,14 +184,12 @@ export class BuildingListComponent implements OnInit, OnDestroy {
 
   loadBuildings(): void {
     this.isLoading.set(true);
-    const companyId = this.userService.getCurrentUser()?.companyId;
     
     const request: BuildingListRequest = {
       currentPage: this.currentPage(),
       pageSize: this.pageSize(),
       ignore: false,
       searchQuery: this.searchQuery() || undefined,
-      companyId: companyId,
       // Only include isArchived when showing archived (true), otherwise omit it so backend defaults to false
       ...(this.showArchived() ? { isArchived: true } : {}),
     };
@@ -255,7 +254,7 @@ export class BuildingListComponent implements OnInit, OnDestroy {
   }
 
   onEditBuilding(building: Building): void {
-    this.router.navigate(['/building', building.id, 'edit']);
+    this.router.navigate(['/building', building.id]);
   }
 
   onDeleteBuilding(building: Building): void {
@@ -398,21 +397,16 @@ export class BuildingListComponent implements OnInit, OnDestroy {
 
   private loadBuildingProperties(buildingId: string): void {
     this.isLoadingProperties.set(true);
-    const companyId = this.userService.getCurrentUser()?.companyId;
-    
-    if (!companyId) {
-      this.isLoadingProperties.set(false);
-      return;
-    }
 
-    this.propertyService.list({
+    const request: PropertyListRequest = {
       currentPage: 1,
       pageSize: 100,
       ignore: false,
       buildingId: buildingId,
-      companyId: companyId,
       isArchived: false,
-    })
+    };
+
+    this.propertyService.list(request)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {

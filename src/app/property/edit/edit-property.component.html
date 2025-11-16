@@ -412,34 +412,6 @@
                   </z-form-field>
                 </div>
 
-                <!-- Building Section -->
-                <div class="space-y-6 pb-6 border-b">
-                  <div>
-                    <h3 class="text-lg font-semibold mb-1">Building</h3>
-                    <p class="text-sm text-muted-foreground">
-                      Attach this property to a building (optional)
-                    </p>
-                  </div>
-
-                  <z-form-field>
-                    <z-form-label>Building</z-form-label>
-                    <z-form-control>
-                      <z-combobox
-                        [options]="buildingOptions()"
-                        [value]="formData().buildingId || null"
-                        [placeholder]="'Select building (optional)...'"
-                        [searchPlaceholder]="'Search buildings...'"
-                        [emptyText]="'No buildings found'"
-                        [searchable]="true"
-                        [disabled]="isLoadingBuildings()"
-                        (zValueChange)="updateField('buildingId', $event || '')"
-                        [zWidth]="'full'"
-                        class="[&_z-command-list]:max-h-[500px] [&_z-popover]:!w-[400px]"
-                      />
-                    </z-form-control>
-                  </z-form-field>
-                </div>
-
                 <!-- Property Images Section -->
                 <z-form-field>
                   <z-form-label zRequired>Property Images</z-form-label>
@@ -549,10 +521,6 @@
 
 <ng-template #mapPinIconTemplate>
   <z-icon zType="map-pin" zSize="sm" />
-</ng-template>
-
-<ng-template #buildingIconTemplate>
-  <z-icon zType="building" zSize="sm" />
 </ng-template>
 
 <ng-template #squareIconTemplate>
