@@ -1,0 +1,369 @@
+<z-page zTitle="Leasing">
+  <div class="flex flex-col h-full min-h-0">
+    <!-- Header Section -->
+    <div class="space-y-6 pb-6 flex-shrink-0">
+      <!-- Filter and Action Bar -->
+      <div class="flex flex-col gap-4">
+        <!-- Show Archived switch -->
+        <div class="flex items-center gap-2">
+          <label class="text-sm text-muted-foreground cursor-pointer" (click)="onShowArchivedChange(!showArchived())">
+            Show Archived
+          </label>
+          <z-switch [ngModel]="showArchived()" (checkChange)="onShowArchivedChange($event)" />
+        </div>
+        <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+          <!-- Search and Filters on left -->
+          <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-1">
+            <!-- Search input -->
+            <div class="relative flex-1 sm:flex-initial w-full sm:w-[300px]">
+              <z-icon zType="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" zSize="sm" />
+              <input
+                z-input
+                type="text"
+                placeholder="Search leases..."
+                class="pl-9 w-full"
+                [value]="searchInput()"
+                (input)="onSearchInputChange($any($event.target).value)"
+              />
+            </div>
+            <!-- Status select -->
+            <div class="w-full sm:w-[200px]">
+              <z-select [ngModel]="selectedStatus()" (ngModelChange)="onStatusChange($event)">
+                @for (option of statusOptions; track option.value) {
+                  <z-select-item [zValue]="option.value?.toString() || ''">{{ option.label }}</z-select-item>
+                }
+              </z-select>
+            </div>
+          </div>
+          <!-- Buttons on right -->
+          <div class="flex gap-2 items-center ml-auto">
+            <z-button zType="outline" zSize="default" class="gap-2" (click)="onViewModeChange(viewMode() === 'list' ? 'card' : 'list')">
+              @if (viewMode() === 'list') {
+                <z-icon zType="layout-dashboard" zSize="sm" />
+                <span>Card View</span>
+              } @else {
+                <z-icon zType="layers" zSize="sm" />
+                <span>List View</span>
+              }
+            </z-button>
+            <z-button zType="default" zSize="default" class="gap-2" routerLink="/leasing/add">
+              <z-icon zType="plus" zSize="sm" />
+              Add Lease
+            </z-button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Datatable -->
+    <div class="flex-1 min-h-0 overflow-y-auto pb-4 -mx-6 px-6">
+      <z-datatable
+        [zData]="filteredLeases()"
+        [zColumns]="columns()"
+        [zViewMode]="viewMode()"
+        [zSelectable]="true"
+        [zCurrentPage]="currentPage()"
+        [zPageSize]="pageSize()"
+        [zShowPagination]="false"
+        [zEmptyMessage]="emptyMessage()"
+        (zPageChange)="onPageChange($event)"
+        (zPageSizeChange)="onPageSizeChange($event)"
+      >
+        <!-- Property Column Template -->
+        <ng-template #propertyCell let-value let-row="row">
+          <div class="flex items-center gap-3">
+            @if (row.propertyImageUrl) {
+              <img
+                [src]="row.propertyImageUrl"
+                [alt]="row.propertyName"
+                class="w-20 h-20 object-cover rounded-md border border-border"
+                [zImageHoverPreview]="row.propertyImageUrl"
+                [zAlt]="row.propertyName"
+                [zPosition]="'right'"
+                [zMaxWidth]="'400px'"
+                [zMaxHeight]="'400px'"
+              />
+            } @else {
+              <div class="w-20 h-20 rounded-md border border-border bg-muted flex items-center justify-center">
+                <z-icon zType="house" zSize="lg" class="text-muted-foreground" />
+              </div>
+            }
+            <div class="flex flex-col gap-1">
+              <span class="font-semibold text-base">{{ row.propertyName || 'N/A' }}</span>
+              @if (row.propertyAddress) {
+                <span class="text-sm text-muted-foreground">{{ row.propertyAddress }}</span>
+              }
+            </div>
+          </div>
+        </ng-template>
+
+        <!-- Tenant Column Template -->
+        <ng-template #tenantCell let-value let-row="row">
+          <div class="flex items-center gap-3">
+            @if (row.tenantAvatarUrl) {
+              <img
+                [src]="row.tenantAvatarUrl"
+                [alt]="row.tenantName"
+                class="w-12 h-12 rounded-full object-cover border border-border"
+                [zImageHoverPreview]="row.tenantAvatarUrl"
+                [zAlt]="row.tenantName"
+                [zPosition]="'right'"
+                [zMaxWidth]="'200px'"
+                [zMaxHeight]="'200px'"
+              />
+            } @else {
+              <z-avatar
+                [zImage]="{ fallback: getTenantInitials(row) }"
+                zType="default"
+                zSize="default"
+                zShape="circle"
+                class="w-12 h-12"
+              />
+            }
+            <div class="flex flex-col gap-1">
+              <span class="font-medium text-base">{{ row.tenantName || 'N/A' }}</span>
+              @if (row.tenantEmail) {
+                <span class="text-sm text-muted-foreground">{{ row.tenantEmail }}</span>
+              }
+              @if (row.tenantPhone) {
+                <span class="text-sm text-muted-foreground">{{ row.tenantPhone }}</span>
+              }
+            </div>
+          </div>
+        </ng-template>
+
+        <!-- Dates Column Template -->
+        <ng-template #datesCell let-value let-row="row">
+          <div class="flex flex-col gap-1">
+            <div class="flex items-center gap-2">
+              <z-icon zType="calendar" zSize="sm" class="text-muted-foreground" />
+              <span class="text-sm">{{ formatDate(row.tenancyStart) }}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <z-icon zType="check" zSize="sm" class="text-muted-foreground" />
+              <span class="text-sm">{{ formatDate(row.tenancyEnd) }}</span>
+            </div>
+            @if (row.tenancyDuration) {
+              <span class="text-xs text-muted-foreground mt-1">{{ row.tenancyDuration }} months</span>
+            }
+          </div>
+        </ng-template>
+
+        <!-- Payment Column Template -->
+        <ng-template #paymentCell let-value let-row="row">
+          <div class="flex flex-col gap-1">
+            <span class="font-semibold text-base">{{ formatCurrency(row.rentPrice) }}</span>
+            <span class="text-sm text-muted-foreground">{{ getPaymentTypeLabel(row.paymentType) }}</span>
+            <span class="text-sm text-muted-foreground">{{ getPaymentMethodLabel(row.paymentMethod) }}</span>
+            @if (row.paymentDate) {
+              <span class="text-xs text-muted-foreground">Day {{ row.paymentDate }} of month</span>
+            }
+          </div>
+        </ng-template>
+
+        <!-- Status Column Template -->
+        <ng-template #statusCell let-value let-row="row">
+          <z-badge [zType]="getStatusColor(row.status)" zShape="default">
+            {{ getStatusLabel(row.status) }}
+          </z-badge>
+        </ng-template>
+
+        <!-- Actions Column Template -->
+        <ng-template #actionsCell let-value let-row="row">
+          <z-dropdown-menu>
+            <z-button zType="ghost" zSize="icon" class="h-8 w-8" dropdown-trigger>
+              <z-icon zType="ellipsis" zSize="sm" />
+            </z-button>
+            <z-dropdown-menu-item (click)="onEditLease(row)">
+              <z-icon zType="pencil" zSize="sm" class="mr-2" />
+              <span>Edit</span>
+            </z-dropdown-menu-item>
+            <z-dropdown-menu-item (click)="onToggleArchive(row)">
+              <z-icon zType="folder" zSize="sm" class="mr-2" />
+              <span>{{ row.isArchived ? 'Activate' : 'Archive' }}</span>
+            </z-dropdown-menu-item>
+            <z-divider class="my-1" />
+            <z-dropdown-menu-item (click)="onDeleteLease(row)" class="text-destructive focus:text-destructive">
+              <z-icon zType="x" zSize="sm" class="mr-2" />
+              <span>Delete</span>
+            </z-dropdown-menu-item>
+          </z-dropdown-menu>
+        </ng-template>
+
+        <!-- Card Template -->
+        <ng-template #cardTemplate let-row="row">
+          <div class="flex flex-col relative h-full">
+            <!-- Header: Checkbox and Actions -->
+            <div class="flex items-start justify-between mb-4 -mt-6">
+              <z-checkbox [ngModel]="isSelected(row.id)" (checkChange)="toggleSelect(row.id)" />
+              <z-dropdown-menu>
+                <z-button zType="ghost" zSize="icon" class="h-8 w-8 flex-shrink-0" dropdown-trigger>
+                  <z-icon zType="ellipsis" zSize="sm" />
+                </z-button>
+                <z-dropdown-menu-item (click)="onEditLease(row)">
+                  <z-icon zType="pencil" zSize="sm" class="mr-2" />
+                  <span>Edit</span>
+                </z-dropdown-menu-item>
+                <z-dropdown-menu-item (click)="onToggleArchive(row)">
+                  <z-icon zType="folder" zSize="sm" class="mr-2" />
+                  <span>{{ row.isArchived ? 'Activate' : 'Archive' }}</span>
+                </z-dropdown-menu-item>
+                <z-divider class="my-1" />
+                <z-dropdown-menu-item (click)="onDeleteLease(row)" class="text-destructive focus:text-destructive">
+                  <z-icon zType="x" zSize="sm" class="mr-2" />
+                  <span>Delete</span>
+                </z-dropdown-menu-item>
+              </z-dropdown-menu>
+            </div>
+            
+            <!-- Main content: Property and Tenant images side by side -->
+            <div class="flex gap-4 mb-4">
+              <!-- Property Image -->
+              <div class="flex flex-col items-center gap-2 flex-shrink-0">
+                @if (row.propertyImageUrl) {
+                  <img
+                    [src]="row.propertyImageUrl"
+                    [alt]="row.propertyName"
+                    class="w-24 h-24 object-cover rounded-md border border-border"
+                    [zImageHoverPreview]="row.propertyImageUrl"
+                    [zAlt]="row.propertyName"
+                    [zPosition]="'right'"
+                    [zMaxWidth]="'400px'"
+                    [zMaxHeight]="'400px'"
+                  />
+                } @else {
+                  <div class="w-24 h-24 rounded-md border border-border bg-muted flex items-center justify-center">
+                    <z-icon zType="house" zSize="lg" class="text-muted-foreground" />
+                  </div>
+                }
+                <div class="text-center">
+                  <p class="text-xs font-medium text-muted-foreground">Property</p>
+                  <p class="text-sm font-semibold">{{ row.propertyName || 'N/A' }}</p>
+                </div>
+              </div>
+              
+              <!-- Tenant Image -->
+              <div class="flex flex-col items-center gap-2 flex-shrink-0">
+                @if (row.tenantAvatarUrl) {
+                  <img
+                    [src]="row.tenantAvatarUrl"
+                    [alt]="row.tenantName"
+                    class="w-24 h-24 rounded-full object-cover border border-border"
+                    [zImageHoverPreview]="row.tenantAvatarUrl"
+                    [zAlt]="row.tenantName"
+                    [zPosition]="'right'"
+                    [zMaxWidth]="'200px'"
+                    [zMaxHeight]="'200px'"
+                  />
+                } @else {
+                  <z-avatar
+                    [zImage]="{ fallback: getTenantInitials(row) }"
+                    zType="default"
+                    zSize="lg"
+                    zShape="circle"
+                    class="w-24 h-24"
+                  />
+                }
+                <div class="text-center">
+                  <p class="text-xs font-medium text-muted-foreground">Tenant</p>
+                  <p class="text-sm font-semibold">{{ row.tenantName || 'N/A' }}</p>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Lease Details -->
+            <div class="space-y-3 flex-1">
+              @if (row.propertyAddress) {
+                <div class="flex items-center gap-2 text-sm">
+                  <z-icon zType="map-pin" zSize="sm" class="text-muted-foreground flex-shrink-0" />
+                  <span class="text-muted-foreground truncate">{{ row.propertyAddress }}</span>
+                </div>
+              }
+              
+              <div class="flex items-center gap-2 text-sm">
+                <z-icon zType="calendar" zSize="sm" class="text-muted-foreground flex-shrink-0" />
+                <span class="text-muted-foreground">
+                  {{ formatDate(row.tenancyStart) }} - {{ formatDate(row.tenancyEnd) }}
+                </span>
+              </div>
+              
+              @if (row.tenancyDuration) {
+                <div class="flex items-center gap-2 text-sm">
+                  <z-icon zType="clock" zSize="sm" class="text-muted-foreground flex-shrink-0" />
+                  <span class="text-muted-foreground">{{ row.tenancyDuration }} months</span>
+                </div>
+              }
+              
+              <div class="flex items-center gap-2 text-sm">
+                <z-icon zType="banknote" zSize="sm" class="text-muted-foreground flex-shrink-0" />
+                <span class="font-semibold">{{ formatCurrency(row.rentPrice) }}</span>
+                <span class="text-muted-foreground">/ {{ getPaymentTypeLabel(row.paymentType) }}</span>
+              </div>
+              
+              <div class="flex items-center gap-2 text-sm">
+                <z-icon zType="credit-card" zSize="sm" class="text-muted-foreground flex-shrink-0" />
+                <span class="text-muted-foreground">{{ getPaymentMethodLabel(row.paymentMethod) }}</span>
+              </div>
+              
+              @if (row.tenantEmail) {
+                <div class="flex items-center gap-2 text-sm">
+                  <z-icon zType="mail" zSize="sm" class="text-muted-foreground flex-shrink-0" />
+                  <span class="text-muted-foreground truncate">{{ row.tenantEmail }}</span>
+                </div>
+              }
+              
+              @if (row.tenantPhone) {
+                <div class="flex items-center gap-2 text-sm">
+                  <z-icon zType="smartphone" zSize="sm" class="text-muted-foreground flex-shrink-0" />
+                  <span class="text-muted-foreground">{{ row.tenantPhone }}</span>
+                </div>
+              }
+              
+              <div class="flex items-center gap-2">
+                <z-badge [zType]="getStatusColor(row.status)" zShape="default">
+                  {{ getStatusLabel(row.status) }}
+                </z-badge>
+              </div>
+            </div>
+          </div>
+        </ng-template>
+      </z-datatable>
+    </div>
+
+    <!-- Pagination Footer -->
+    @if (totalPages() > 1) {
+      <div class="flex-shrink-0 pt-4 border-t">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <!-- Left side: Rows per page selector -->
+          <div class="flex items-center gap-2 flex-shrink-0 whitespace-nowrap">
+            <z-select
+              [zValue]="pageSize().toString()"
+              [zLabel]="pageSize().toString()"
+              class="h-8 w-[70px]"
+              (zSelectionChange)="onPageSizeChange(+$event)"
+            >
+              @for (option of pageSizeOptions(); track option) {
+                <z-select-item [zValue]="option.toString()">
+                  {{ option }}
+                </z-select-item>
+              }
+            </z-select>
+            <span class="text-sm text-muted-foreground">per page</span>
+          </div>
+          <!-- Right side: Page info and pagination -->
+          <div class="flex items-center gap-4">
+            <div class="text-sm text-muted-foreground">
+              Page {{ currentPage() }} of {{ totalPages() }}
+            </div>
+            <z-pagination
+              [zPageIndex]="currentPage()"
+              [zTotal]="totalPages()"
+              (zPageIndexChange)="onPageChange($event)"
+            />
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</z-page>
+

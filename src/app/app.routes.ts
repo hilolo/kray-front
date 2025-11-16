@@ -64,4 +64,9 @@ export const routes: Routes = [
     loadChildren: () => import('./tasks/tasks.routes').then((m) => m.tasksRoutes),
     canActivate: [authGuard],
   },
+  {
+    path: 'leasing',
+    loadChildren: () => import('./leasing/leasing.routes').then((m) => m.leasingRoutes),
+    canActivate: [authGuard],
+  },
 ];

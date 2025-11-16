@@ -346,6 +346,20 @@ export class ZardPopoverDirective implements OnInit, OnDestroy {
           return;
         }
 
+        // Check if click is inside the popover content (e.g., calendar with select dropdowns)
+        const popoverElement = this.overlayRef?.overlayElement;
+        if (popoverElement && popoverElement.contains(clickTarget)) {
+          return;
+        }
+
+        // Check if click is inside any CDK overlay (e.g., select dropdowns inside the calendar)
+        const allOverlays = document.querySelectorAll('.cdk-overlay-container .cdk-overlay-pane');
+        for (const overlay of allOverlays) {
+          if (overlay.contains(clickTarget)) {
+            return;
+          }
+        }
+
         this.hide();
       });
   }

@@ -1,0 +1,573 @@
+<z-page [zTitle]="isEditMode() ? 'Edit Lease' : 'Add Lease'">
+  <div class="flex flex-col min-h-0 h-full overflow-hidden">
+    <!-- Header Section -->
+    <div class="space-y-4 pb-6 flex-shrink-0">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-3xl font-bold mb-2">
+            @if (isEditMode()) {
+              Edit Lease
+            } @else {
+              Add New Lease
+            }
+          </h2>
+          <p class="text-muted-foreground">
+            @if (isEditMode()) {
+              Update the lease information below. Property and tenant cannot be changed.
+            } @else {
+              Create a new lease by filling in the information below
+            }
+          </p>
+        </div>
+        <div class="flex gap-2">
+          <z-button zType="outline" zSize="default" [disabled]="isSaving()" (click)="!isSaving() && onCancel()">
+            Cancel
+          </z-button>
+          <z-button [zType]="isSaving() || !isFormValid() ? 'ghost' : 'default'" [disabled]="isSaving()" (click)="!isSaving() && onSubmit()">
+            @if (isSaving()) {
+              <span class="flex items-center gap-2">
+                <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+                Saving...
+              </span>
+            } @else {
+              <z-icon zType="check" zSize="sm" class="mr-2" />
+              @if (isEditMode()) {
+                Update Lease
+              } @else {
+                Create Lease
+              }
+            }
+          </z-button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Form -->
+    <div class="flex-1 min-h-0 overflow-y-auto">
+      @if (isLoading()) {
+        <div class="flex items-center justify-center h-full">
+          <div class="flex flex-col items-center gap-4">
+            <z-icon zType="loader-circle" zSize="lg" class="animate-spin text-primary" />
+            <p class="text-muted-foreground">Loading lease data...</p>
+          </div>
+        </div>
+      } @else {
+        <z-card class="max-w-7xl mx-auto">
+          <div class="p-8 space-y-8">
+            <!-- Property and Tenant Section (Read-only in edit mode) -->
+            <div class="space-y-6 pb-6 border-b">
+              <div>
+                <h3 class="text-lg font-semibold mb-1">Property & Tenant</h3>
+                <p class="text-sm text-muted-foreground">
+                  @if (isEditMode()) {
+                    Property and tenant information (cannot be changed)
+                  } @else {
+                    Select the property and tenant for this lease
+                  }
+                </p>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Property Field -->
+                @if (isEditMode()) {
+                  <!-- Read-only display in edit mode -->
+                  <z-form-field>
+                    <z-form-label>Property</z-form-label>
+                    <z-form-control>
+                      <div class="flex items-center gap-3 p-3 border rounded-md bg-muted/50">
+                        @if (property()?.defaultAttachmentUrl) {
+                          <img
+                            [src]="property()!.defaultAttachmentUrl"
+                            [alt]="getPropertyDisplayName(property())"
+                            class="w-16 h-16 object-cover rounded-md border border-border"
+                            [zImageHoverPreview]="property()!.defaultAttachmentUrl"
+                            [zAlt]="getPropertyDisplayName(property())"
+                            [zPosition]="'right'"
+                            [zMaxWidth]="'400px'"
+                            [zMaxHeight]="'400px'"
+                          />
+                        } @else {
+                          <div class="w-16 h-16 rounded-md border border-border bg-muted flex items-center justify-center">
+                            <z-icon zType="house" zSize="lg" class="text-muted-foreground" />
+                          </div>
+                        }
+                        <div class="flex flex-col">
+                          @if (property()?.identifier) {
+                            <span class="text-xs text-muted-foreground font-medium">{{ property()!.identifier }}</span>
+                          }
+                          <span class="font-semibold">{{ property()?.name || 'N/A' }}</span>
+                          @if (property()?.address) {
+                            <span class="text-sm text-muted-foreground">{{ property()!.address }}</span>
+                          }
+                        </div>
+                      </div>
+                    </z-form-control>
+                  </z-form-field>
+                } @else {
+                  <!-- Editable in add mode -->
+                  <z-form-field>
+                    <z-form-label zRequired>Property</z-form-label>
+                    <z-form-control [errorMessage]="propertyIdError()">
+                      <z-combobox
+                        [options]="propertyOptions()"
+                        [value]="formData().propertyId"
+                        [placeholder]="'Select property...'"
+                        [searchPlaceholder]="'Search properties...'"
+                        [emptyText]="'No properties found'"
+                        [searchable]="true"
+                        [disabled]="isLoadingProperties()"
+                        [zWidth]="'lg'"
+                        (zValueChange)="updatePropertyId($event || '')"
+                        class="w-full"
+                      />
+                    </z-form-control>
+                  </z-form-field>
+                }
+
+                <!-- Tenant Field -->
+                @if (isEditMode()) {
+                  <!-- Read-only display in edit mode -->
+                  <z-form-field>
+                    <z-form-label>Tenant</z-form-label>
+                    <z-form-control>
+                      <div class="flex items-center gap-3 p-3 border rounded-md bg-muted/50">
+                        @if (tenant()?.avatar) {
+                          <img
+                            [src]="tenant()!.avatar"
+                            [alt]="getTenantDisplayName(tenant())"
+                            class="w-16 h-16 rounded-full object-cover border border-border"
+                            [zImageHoverPreview]="tenant()!.avatar"
+                            [zAlt]="getTenantDisplayName(tenant())"
+                            [zPosition]="'right'"
+                            [zMaxWidth]="'200px'"
+                            [zMaxHeight]="'200px'"
+                          />
+                        } @else {
+                          <div class="w-16 h-16 rounded-full border border-border bg-muted flex items-center justify-center">
+                            <z-icon zType="user" zSize="lg" class="text-muted-foreground" />
+                          </div>
+                        }
+                        <div class="flex flex-col">
+                          <span class="font-semibold">{{ getTenantDisplayName(tenant()) }}</span>
+                          @if (tenant()?.identifier) {
+                            <span class="text-sm text-muted-foreground">{{ tenant()!.identifier }}</span>
+                          }
+                        </div>
+                      </div>
+                    </z-form-control>
+                  </z-form-field>
+                } @else {
+                  <!-- Editable in add mode -->
+                  <z-form-field>
+                    <z-form-label zRequired>Tenant</z-form-label>
+                    <z-form-control [errorMessage]="contactIdError()">
+                      <z-combobox
+                        [options]="tenantOptions()"
+                        [value]="formData().contactId"
+                        [placeholder]="'Select tenant...'"
+                        [searchPlaceholder]="'Search tenants...'"
+                        [emptyText]="'No tenants found'"
+                        [searchable]="true"
+                        [disabled]="isLoadingTenants()"
+                        [zWidth]="'lg'"
+                        (zValueChange)="updateContactId($event || '')"
+                        class="w-full"
+                      />
+                    </z-form-control>
+                  </z-form-field>
+                }
+              </div>
+            </div>
+
+            <!-- Tenancy Period Section -->
+            <div class="space-y-6 pb-6 border-b">
+              <div>
+                <h3 class="text-lg font-semibold mb-1">Tenancy Period</h3>
+                <p class="text-sm text-muted-foreground">
+                  Enter the start and end dates for the lease
+                </p>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <z-form-field>
+                  <z-form-label zRequired>Start Date</z-form-label>
+                  <z-form-control [errorMessage]="tenancyStartError()">
+                    <z-date-picker
+                      [value]="formData().tenancyStart"
+                      [placeholder]="formData().tenancyStart ? '' : 'Pick a date'"
+                      (dateChange)="updateTenancyStart($event)"
+                    />
+                  </z-form-control>
+                </z-form-field>
+
+                <z-form-field>
+                  <z-form-label zRequired>End Date</z-form-label>
+                  <z-form-control [errorMessage]="tenancyEndError()">
+                    <z-date-picker
+                      [value]="formData().tenancyEnd"
+                      [placeholder]="formData().tenancyEnd ? '' : 'Pick a date'"
+                      [minDate]="formData().tenancyStart"
+                      (dateChange)="updateTenancyEnd($event)"
+                    />
+                  </z-form-control>
+                </z-form-field>
+              </div>
+            </div>
+
+            <!-- Payment Information Section -->
+            <div class="space-y-6 pb-6 border-b">
+              <div>
+                <h3 class="text-lg font-semibold mb-1">Payment Information</h3>
+                <p class="text-sm text-muted-foreground">
+                  Configure payment details for the lease
+                </p>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <z-form-field>
+                  <z-form-label zRequired>Rent Price</z-form-label>
+                  <z-form-control [errorMessage]="rentPriceError()">
+                    <z-input-group [zPrefix]="banknoteIconTemplate">
+                      <input
+                        z-input
+                        type="number"
+                        step="1000"
+                        min="0"
+                        [ngModel]="formData().rentPrice"
+                        (ngModelChange)="updateRentPrice($event)"
+                        placeholder="0.00"
+                        [zStatus]="rentPriceHasError() ? 'error' : undefined"
+                        class="w-full"
+                      />
+                    </z-input-group>
+                  </z-form-control>
+                </z-form-field>
+
+                <z-form-field>
+                  <z-form-label zRequired>Payment Type</z-form-label>
+                  <z-form-control>
+                    <z-select
+                      [zValue]="formData().paymentType.toString()"
+                      (zSelectionChange)="updatePaymentType($event)"
+                    >
+                      @for (option of paymentTypeOptions; track option.value) {
+                        <z-select-item [zValue]="option.value.toString()">
+                          {{ option.label }}
+                        </z-select-item>
+                      }
+                    </z-select>
+                  </z-form-control>
+                </z-form-field>
+
+                <z-form-field>
+                  <z-form-label zRequired>Payment Method</z-form-label>
+                  <z-form-control>
+                    <z-select
+                      [zValue]="formData().paymentMethod.toString()"
+                      (zSelectionChange)="updatePaymentMethod($event)"
+                    >
+                      @for (option of paymentMethodOptions; track option.value) {
+                        <z-select-item [zValue]="option.value.toString()">
+                          {{ option.label }}
+                        </z-select-item>
+                      }
+                    </z-select>
+                  </z-form-control>
+                </z-form-field>
+
+                <z-form-field>
+                  <z-form-label zRequired>Payment Date</z-form-label>
+                  <z-form-control [errorMessage]="paymentDateError()">
+                    <z-select
+                      [zValue]="formData().paymentDate.toString()"
+                      (zSelectionChange)="updatePaymentDate($event)"
+                    >
+                      @for (day of paymentDateOptions; track day) {
+                        <z-select-item [zValue]="day.toString()">
+                          Day {{ day }}
+                        </z-select-item>
+                      }
+                    </z-select>
+                  </z-form-control>
+                </z-form-field>
+              </div>
+            </div>
+
+            <!-- Receipt & Notification Section -->
+            <div class="space-y-6 pb-6 border-b">
+              <div>
+                <h3 class="text-lg font-semibold mb-1">Receipt & Notifications</h3>
+                <p class="text-sm text-muted-foreground">
+                  Configure receipt generation and notification preferences
+                </p>
+              </div>
+
+              <div class="space-y-4">
+                <div class="flex items-center justify-between p-4 border rounded-md">
+                  <div>
+                    <p class="font-medium">Enable Receipts</p>
+                    <p class="text-sm text-muted-foreground">Generate receipts for payments</p>
+                  </div>
+                  <z-checkbox
+                    [ngModel]="formData().enableReceipts"
+                    (checkChange)="updateEnableReceipts($event)"
+                  />
+                </div>
+
+                <div class="flex items-center justify-between p-4 border rounded-md">
+                  <div>
+                    <p class="font-medium">Email Notification</p>
+                    <p class="text-sm text-muted-foreground">Send receipts via email</p>
+                  </div>
+                  <z-checkbox
+                    [ngModel]="formData().notificationEmail"
+                    (checkChange)="updateNotificationEmail($event)"
+                  />
+                </div>
+
+                <div class="flex items-center justify-between p-4 border rounded-md">
+                  <div>
+                    <p class="font-medium">WhatsApp Notification</p>
+                    <p class="text-sm text-muted-foreground">Send receipts via WhatsApp</p>
+                  </div>
+                  <z-checkbox
+                    [ngModel]="formData().notificationWhatsapp"
+                    (checkChange)="updateNotificationWhatsapp($event)"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Additional Information Section -->
+            <div class="space-y-6 pb-6 border-b">
+              <div>
+                <h3 class="text-lg font-semibold mb-1">Additional Information</h3>
+                <p class="text-sm text-muted-foreground">
+                  Add any special terms or private notes
+                </p>
+              </div>
+
+              <div class="space-y-6">
+                <z-form-field>
+                  <z-form-label>Special Terms</z-form-label>
+                  <z-form-control>
+                    <textarea
+                      z-input
+                      rows="4"
+                      [ngModel]="formData().specialTerms"
+                      (ngModelChange)="updateSpecialTerms($event)"
+                      placeholder="Enter any special terms or conditions..."
+                      class="w-full resize-none"
+                    ></textarea>
+                  </z-form-control>
+                </z-form-field>
+
+                <z-form-field>
+                  <z-form-label>Private Note</z-form-label>
+                  <z-form-control>
+                    <textarea
+                      z-input
+                      rows="4"
+                      [ngModel]="formData().privateNote"
+                      (ngModelChange)="updatePrivateNote($event)"
+                      placeholder="Enter any private notes (not visible to tenant)..."
+                      class="w-full resize-none"
+                    ></textarea>
+                  </z-form-control>
+                </z-form-field>
+              </div>
+            </div>
+
+            <!-- Attachments Section -->
+            <div class="space-y-4 pt-4 border-t">
+              <div>
+                <h3 class="text-lg font-semibold mb-1">Documents</h3>
+                <p class="text-sm text-muted-foreground">
+                  Attach relevant documents (optional)
+                </p>
+              </div>
+
+              <!-- Upload Area -->
+              <div
+                class="relative border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 hover:bg-accent/5 transition-all cursor-pointer group"
+                (click)="onUploadClick()"
+              >
+                <div class="flex flex-col items-center gap-3">
+                  <div class="w-12 h-12 rounded-full bg-primary/10 group-hover:bg-primary/20 flex items-center justify-center transition-colors">
+                    <z-icon zType="upload" class="text-primary" />
+                  </div>
+                  <div>
+                    <p class="font-medium">Click to upload or drag and drop</p>
+                    <p class="text-sm text-muted-foreground mt-1">
+                      PDF, DOC, DOCX, XLS, XLSX, or images (Max 10MB per file)
+                    </p>
+                  </div>
+                </div>
+                <input
+                  #fileInput
+                  type="file"
+                  multiple
+                  (change)="onFilesSelected($event)"
+                  class="hidden"
+                />
+              </div>
+
+              <!-- Uploaded Files List -->
+              @if (hasUploadedFiles()) {
+                <div class="space-y-3">
+                  <div class="flex items-center justify-between">
+                    <h4 class="text-sm font-medium">New Files to Upload</h4>
+                    <span class="text-xs text-muted-foreground">
+                      {{ uploadedFiles().length }} file{{ uploadedFiles().length > 1 ? 's' : '' }} · {{ formatFileSize(uploadedFilesSize()) }}
+                    </span>
+                  </div>
+                  <div class="space-y-2">
+                    @for (file of uploadedFiles(); track file.id) {
+                      <div class="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/30 transition-colors group">
+                        <div class="flex-shrink-0 w-10 h-10 rounded bg-primary/10 flex items-center justify-center">
+                          <z-icon [zType]="getFileIcon(file.type)" class="text-primary" zSize="sm" />
+                        </div>
+                        <div class="flex-1 min-w-0">
+                          <p class="font-medium text-sm truncate">{{ file.name }}</p>
+                          <p class="text-xs text-muted-foreground">{{ formatFileSize(file.size) }}</p>
+                        </div>
+                        <z-button
+                          zType="ghost"
+                          zSize="icon"
+                          class="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                          (click)="onRemoveFile(file.id)"
+                        >
+                          <z-icon zType="x" zSize="sm" />
+                        </z-button>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+
+              <!-- Existing Attachments List -->
+              @if (hasExistingAttachments()) {
+                <div class="space-y-3">
+                  <div class="flex items-center justify-between">
+                    <h4 class="text-sm font-medium">Existing Attachments</h4>
+                    <span class="text-xs text-muted-foreground">
+                      {{ existingAttachmentsCount() }} file{{ existingAttachmentsCount() > 1 ? 's' : '' }}
+                    </span>
+                  </div>
+                  <div class="space-y-2">
+                    @for (attachment of existingAttachments(); track attachment.id) {
+                      @if (!isAttachmentMarkedForDeletion(attachment.id)) {
+                        <div 
+                          class="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/30 transition-colors group" 
+                          [class.cursor-pointer]="isFileFormatSupported(attachment.url)" 
+                          (click)="isFileFormatSupported(attachment.url) && openFile(attachment.url, attachment.fileName, attachment.size || 0)"
+                          [zImageHoverPreview]="getFileViewerType(attachment.url) === 'image' ? attachment.url : null"
+                          [zAlt]="attachment.fileName"
+                          [zPosition]="'right'"
+                          [zMaxWidth]="'400px'"
+                          [zMaxHeight]="'400px'"
+                        >
+                          <div class="flex-shrink-0 w-10 h-10 rounded bg-primary/10 flex items-center justify-center">
+                            <z-icon [zType]="getFileViewerType(attachment.url) === 'image' ? 'image' : 'file'" class="text-primary" zSize="sm" />
+                          </div>
+                          <div class="flex-1 min-w-0">
+                            <p class="font-medium text-sm truncate">{{ attachment.fileName }}</p>
+                            <p class="text-xs text-muted-foreground">{{ formatFileSize(attachment.size || 0) }}</p>
+                          </div>
+                          <div class="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                            @if (isFileFormatSupported(attachment.url)) {
+                              <z-button
+                                zType="ghost"
+                                zSize="icon"
+                                class="text-muted-foreground hover:text-primary"
+                                (click)="$event.stopPropagation(); openFile(attachment.url, attachment.fileName, attachment.size || 0)"
+                                [attr.aria-label]="'Open file'"
+                              >
+                                <z-icon zType="arrow-right" zSize="sm" />
+                              </z-button>
+                            } @else {
+                              <z-button
+                                zType="ghost"
+                                zSize="icon"
+                                class="text-muted-foreground hover:text-primary"
+                                (click)="$event.stopPropagation(); downloadFile(attachment.url, attachment.fileName)"
+                                [attr.aria-label]="'Download file'"
+                              >
+                                <z-icon zType="download" zSize="sm" />
+                              </z-button>
+                            }
+                            <z-button
+                              zType="ghost"
+                              zSize="icon"
+                              class="text-muted-foreground hover:text-destructive"
+                              (click)="$event.stopPropagation(); onDeleteAttachment(attachment.id)"
+                              [attr.aria-label]="'Delete file'"
+                            >
+                              <z-icon zType="x" zSize="sm" />
+                            </z-button>
+                          </div>
+                        </div>
+                      } @else {
+                        <div class="flex items-center gap-3 p-3 rounded-lg border border-destructive/50 bg-destructive/5 opacity-60 group">
+                          <div class="flex-shrink-0 w-10 h-10 rounded bg-destructive/10 flex items-center justify-center">
+                            <z-icon zType="file" class="text-destructive" zSize="sm" />
+                          </div>
+                          <div class="flex-1 min-w-0">
+                            <p class="font-medium text-sm truncate line-through">{{ attachment.fileName }}</p>
+                            <p class="text-xs text-muted-foreground">{{ formatFileSize(attachment.size || 0) }}</p>
+                          </div>
+                          <div class="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <z-button
+                              zType="ghost"
+                              zSize="icon"
+                              class="text-muted-foreground hover:text-primary"
+                              (click)="onRestoreAttachment(attachment.id)"
+                              [attr.aria-label]="'Restore file'"
+                            >
+                              <z-icon zType="refresh-cw" zSize="sm" />
+                            </z-button>
+                          </div>
+                        </div>
+                      }
+                    }
+                  </div>
+                </div>
+              }
+
+              <!-- Total Files Summary -->
+              @if (hasAnyAttachments()) {
+                <div class="pt-2 border-t">
+                  <p class="text-xs text-muted-foreground text-center">
+                    Total: {{ (existingAttachmentsCount() + uploadedFiles().length) }} file{{ (existingAttachmentsCount() + uploadedFiles().length) > 1 ? 's' : '' }} · {{ formatFileSize(totalFileSize()) }}
+                  </p>
+                </div>
+              }
+            </div>
+          </div>
+        </z-card>
+      }
+    </div>
+  </div>
+</z-page>
+
+<!-- Icon Templates -->
+<ng-template #banknoteIconTemplate>
+  <z-icon zType="banknote" zSize="sm" class="text-muted-foreground" />
+</ng-template>
+
+<ng-template #creditCardIconTemplate>
+  <z-icon zType="credit-card" zSize="sm" class="text-muted-foreground" />
+</ng-template>
+
+<!-- File Viewer -->
+<z-file-viewer
+  [isOpen]="fileViewerOpen()"
+  [fileUrl]="fileViewerUrl()"
+  [fileName]="fileViewerName()"
+  [fileSize]="fileViewerSize()"
+  [images]="fileViewerImages()"
+  [currentIndex]="fileViewerCurrentIndex()"
+  (close)="fileViewerOpen.set(false)"
+  (imageChanged)="onImageChanged($event)"
+/>
+

@@ -207,7 +207,17 @@ export class ZardComboboxComponent implements ControlValueAccessor {
   protected readonly buttonClasses = computed(() => 'w-full justify-between');
 
   protected readonly popoverClasses = computed(() => {
-    const widthClass = this.zWidth() === 'full' ? 'w-full' : 'w-[200px]';
+    const width = this.zWidth();
+    let widthClass = 'w-[200px]'; // default
+    if (width === 'full') {
+      widthClass = 'w-full';
+    } else if (width === 'sm') {
+      widthClass = 'w-[150px]';
+    } else if (width === 'md') {
+      widthClass = 'w-[250px]';
+    } else if (width === 'lg') {
+      widthClass = 'w-[350px]';
+    }
     return `${widthClass} p-0`;
   });
 
