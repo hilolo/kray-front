@@ -9,8 +9,16 @@
       </div>
     } @else if (property()) {
       <!-- Header with Edit Button -->
-      <div class="flex items-center justify-between mb-4">
-        <div></div>
+      <div class="flex items-center justify-between mb-4 gap-4">
+        <div class="flex items-center gap-2">
+          @if (property()?.identifier) {
+            <z-badge zType="outline" class="flex items-center gap-2 px-4 py-2">
+              <z-icon zType="id-card" zSize="default" class="text-muted-foreground" />
+              <span class="text-sm font-medium text-muted-foreground">Reference:</span>
+              <span class="text-sm font-semibold text-foreground">{{ property()?.identifier }}</span>
+            </z-badge>
+          }
+        </div>
         <z-button zType="default" [routerLink]="['/property', property()?.id]">
           <z-icon zType="pencil" zSize="sm" />
           Edit Property
@@ -76,9 +84,12 @@
               <div class="text-sm font-bold">
                 {{ property()?.price | propertyPrice: property()?.typePaiment }}
               </div>
-              @if (property()?.identifier) {
-                <div class="text-sm text-muted-foreground mt-1">
-                  {{ property()?.identifier }}
+              @if (property()?.furnished) {
+                <div class="mt-1">
+                  <z-badge zType="secondary" class="flex items-center gap-1 w-fit">
+                    <z-icon zType="house" zSize="sm" />
+                    <span>Furnished</span>
+                  </z-badge>
                 </div>
               }
             </div>
@@ -86,7 +97,7 @@
         </z-card>
 
         <!-- Information Sections -->
-        <z-accordion zType="multiple" [zDefaultValue]="['equipments', 'features', 'description', 'additional-info']">
+        <z-accordion zType="multiple" [zDefaultValue]="['equipments', 'features', 'description']">
           <z-accordion-item zValue="equipments" zTitle="Equipments">
             @if (equipment().length > 0) {
               <div class="flex flex-wrap gap-2">
@@ -117,23 +128,6 @@
             </div>
           </z-accordion-item>
 
-          <z-accordion-item zValue="additional-info" zTitle="Additional info">
-            <div class="flex flex-wrap gap-2">
-              @for (item of additionalInfo(); track item) {
-                <z-badge zType="secondary" class="flex items-center gap-1">
-                  {{ item }}
-                  <button
-                    type="button"
-                    (click)="removeAdditionalInfo(item)"
-                    class="ml-1 hover:text-destructive"
-                  >
-                    <z-icon zType="x" zSize="sm" />
-                  </button>
-                </z-badge>
-              }
-            </div>
-          </z-accordion-item>
-
         </z-accordion>
 
       </div>
@@ -149,13 +143,7 @@
             </z-tab>
             <z-tab label="TENANCIES">
               <div class="pt-2 space-y-2">
-                <div class="flex items-center justify-between">
-                  <h3 class="text-sm font-semibold">Tenancies</h3>
-                  <z-button zType="default" zSize="sm">
-                    <z-icon zType="plus" zSize="sm" />
-                    Add new tenancy
-                  </z-button>
-                </div>
+                <h3 class="text-sm font-semibold">Tenancies</h3>
 
                 @if (isLoadingLeases()) {
                   <div class="flex items-center justify-center py-8">

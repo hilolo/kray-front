@@ -94,13 +94,6 @@ export class PropertyDetailComponent implements OnInit {
     return `${prop.address}${prop.city ? ', ' + prop.city : ''}`;
   });
   readonly description = computed(() => this.property()?.description || '');
-  readonly additionalInfo = computed(() => {
-    const prop = this.property();
-    if (!prop) return [];
-    const info: string[] = [];
-    if (prop.furnished) info.push('furnished');
-    return info;
-  });
   readonly features = computed(() => this.property()?.features || []);
   readonly equipment = computed(() => this.property()?.equipment || []);
   readonly attachments = computed(() => this.property()?.attachments || []);
@@ -198,22 +191,6 @@ export class PropertyDetailComponent implements OnInit {
   }
 
   // Methods
-  removeAdditionalInfo(item: string): void {
-    // This would need to update the property via API
-    // For now, just update the local signal
-    const prop = this.property();
-    if (!prop) return;
-    
-    if (item === 'furnished') {
-      // Would need API call to update furnished status
-      return;
-    }
-    
-    // Remove from features
-    const updatedFeatures = prop.features.filter(f => f !== item);
-    // Would need API call to update features
-  }
-
   formatDate(date: Date | string): string {
     const dateObj = typeof date === 'string' ? new Date(date) : date;
     return new Intl.DateTimeFormat('en-GB', {
