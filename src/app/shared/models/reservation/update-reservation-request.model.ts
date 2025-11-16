@@ -12,7 +12,7 @@ export interface UpdateReservationRequest {
   totalAmount: number;
   description: string;
   privateNote: string;
-  status: ReservationStatus;
+  status?: ReservationStatus; // Optional - backend keeps existing status if not provided
   approvedBy?: string | null;
   approvalNotes?: string | null;
   attachmentsToAdd: AttachmentInput[];

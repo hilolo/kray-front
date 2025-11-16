@@ -97,8 +97,9 @@ export class ZardCalendarYearViewComponent {
         isStart: boolean;
         isEnd: boolean;
         isFullDay: boolean;
-        isFirstHalf: boolean;
-        isSecondHalf: boolean;
+        dayIndex: number; // Index in allDays array
+        weekIndex: number; // Which week (0-based)
+        columnInWeek: number; // Column in week (0-6)
       }>;
     }> = [];
 
@@ -106,20 +107,31 @@ export class ZardCalendarYearViewComponent {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    // Build array of all days first
+    const allDays: Date[] = [];
     while (currentDate <= endDate) {
       const dayDate = new Date(currentDate);
       dayDate.setHours(0, 0, 0, 0);
+      allDays.push(dayDate);
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    // Process each day
+    allDays.forEach((dayDate, dayIndex) => {
       const isCurrentMonth = dayDate.getMonth() === month;
       const isToday = this.isSameDay(dayDate, today);
+      const weekIndex = Math.floor(dayIndex / 7);
+      const columnInWeek = dayIndex % 7;
 
-      // Find reservations for this date with half-day logic
+      // Find reservations for this date
       const dateReservations: Array<{
         reservation: CalendarYearViewReservation;
         isStart: boolean;
         isEnd: boolean;
         isFullDay: boolean;
-        isFirstHalf: boolean;
-        isSecondHalf: boolean;
+        dayIndex: number;
+        weekIndex: number;
+        columnInWeek: number;
       }> = [];
 
       this.reservations().forEach(res => {
@@ -133,20 +145,14 @@ export class ZardCalendarYearViewComponent {
         const isBetween = dayDate > start && dayDate < end;
         
         if (isStartDay || isEndDay || isBetween) {
-          // Start on second half, end on first half
-          const isStart = isStartDay;
-          const isEnd = isEndDay;
-          const isFullDay = isBetween;
-          const isFirstHalf = isEnd && !isStart; // End date shows in first half
-          const isSecondHalf = isStart && !isEnd; // Start date shows in second half
-          
           dateReservations.push({
             reservation: res,
-            isStart,
-            isEnd,
-            isFullDay,
-            isFirstHalf,
-            isSecondHalf,
+            isStart: isStartDay,
+            isEnd: isEndDay,
+            isFullDay: isBetween,
+            dayIndex,
+            weekIndex,
+            columnInWeek,
           });
         }
       });
@@ -157,11 +163,116 @@ export class ZardCalendarYearViewComponent {
         isToday,
         reservations: dateReservations,
       });
+    });
 
+    return days;
+  });
+
+  // Compute spanning bars for each week
+  readonly spanningBars = computed(() => {
+    const bars: Array<{
+      reservation: CalendarYearViewReservation;
+      weekIndex: number;
+      startColumn: number; // 0-6
+      endColumn: number; // 0-6
+      startDayIndex: number;
+      endDayIndex: number;
+      isStartOfReservation: boolean; // True if this bar segment is the start of the reservation
+      isEndOfReservation: boolean; // True if this bar segment is the end of the reservation
+      row: number; // Vertical row position for stacking (0-based)
+    }> = [];
+
+    const date = this.currentDate();
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDate = new Date(firstDay);
+    startDate.setDate(startDate.getDate() - startDate.getDay());
+    const endDate = new Date(lastDay);
+    endDate.setDate(endDate.getDate() + (6 - endDate.getDay()));
+
+    // Build array of all days
+    const allDays: Date[] = [];
+    const currentDate = new Date(startDate);
+    while (currentDate <= endDate) {
+      const dayDate = new Date(currentDate);
+      dayDate.setHours(0, 0, 0, 0);
+      allDays.push(dayDate);
       currentDate.setDate(currentDate.getDate() + 1);
     }
 
-    return days;
+    // Process each reservation
+    this.reservations().forEach(res => {
+      const start = new Date(res.startDate);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(res.endDate);
+      end.setHours(0, 0, 0, 0);
+
+      const startDayIndex = allDays.findIndex(d => {
+        const dDate = new Date(d);
+        dDate.setHours(0, 0, 0, 0);
+        return this.isSameDay(dDate, start);
+      });
+
+      const endDayIndex = allDays.findIndex(d => {
+        const dDate = new Date(d);
+        dDate.setHours(0, 0, 0, 0);
+        return this.isSameDay(dDate, end);
+      });
+
+      if (startDayIndex >= 0 && endDayIndex >= 0) {
+        // Group by weeks and create bars for each week the reservation spans
+        const startWeek = Math.floor(startDayIndex / 7);
+        const endWeek = Math.floor(endDayIndex / 7);
+
+        for (let week = startWeek; week <= endWeek; week++) {
+          const weekStartDayIndex = week * 7;
+          const weekEndDayIndex = weekStartDayIndex + 6;
+          
+          const barStartDayIndex = Math.max(startDayIndex, weekStartDayIndex);
+          const barEndDayIndex = Math.min(endDayIndex, weekEndDayIndex);
+          
+          const startColumn = barStartDayIndex % 7;
+          const endColumn = barEndDayIndex % 7;
+
+          bars.push({
+            reservation: res,
+            weekIndex: week,
+            startColumn,
+            endColumn,
+            startDayIndex: barStartDayIndex,
+            endDayIndex: barEndDayIndex,
+            isStartOfReservation: barStartDayIndex === startDayIndex,
+            isEndOfReservation: barEndDayIndex === endDayIndex,
+            row: 0, // Will be assigned later
+          });
+        }
+      }
+    });
+
+    // Assign a unique row to each reservation (property) so they're always on the same horizontal line
+    const reservationRowMap = new Map<string, number>();
+    let currentRow = 0;
+    
+    // Get all unique reservations and assign them rows
+    const uniqueReservations = new Set(this.reservations().map(r => r.id));
+    uniqueReservations.forEach(reservationId => {
+      reservationRowMap.set(reservationId, currentRow);
+      currentRow++;
+    });
+
+    // Assign rows to bars based on their reservation ID
+    const barsWithRows = bars.map(bar => {
+      const row = reservationRowMap.get(bar.reservation.id) ?? 0;
+      return {
+        ...bar,
+        row,
+      };
+    });
+
+    return barsWithRows;
   });
 
   previousMonth(): void {

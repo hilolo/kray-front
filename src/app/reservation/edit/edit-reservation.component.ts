@@ -64,8 +64,6 @@ interface ExistingAttachment {
     ZardFormControlComponent,
     ZardFormLabelComponent,
     ZardInputGroupComponent,
-    ZardSelectComponent,
-    ZardSelectItemComponent,
     ZardCardComponent,
     ZardImageHoverPreviewDirective,
     ZardComboboxComponent,
@@ -112,7 +110,7 @@ export class EditReservationComponent implements OnInit, OnDestroy {
     totalAmount: 0,
     description: '',
     privateNote: '',
-    status: ReservationStatus.Pending,
+    status: ReservationStatus.Approved,
   });
 
   // Files
@@ -308,9 +306,8 @@ export class EditReservationComponent implements OnInit, OnDestroy {
     }
   });
 
-  // Status options
+  // Status options (Pending removed - cannot be set from frontend)
   readonly statusOptions = [
-    { value: ReservationStatus.Pending, label: 'Pending' },
     { value: ReservationStatus.Approved, label: 'Approved' },
     { value: ReservationStatus.Cancelled, label: 'Cancelled' },
   ];
@@ -805,6 +802,7 @@ export class EditReservationComponent implements OnInit, OnDestroy {
 
     if (this.isEditMode()) {
       const reservationId = this.reservationId()!;
+      // Status is not sent - backend keeps existing status
       const request: UpdateReservationRequest = {
         contactId: this.formData().contactId,
         propertyId: this.formData().propertyId,
@@ -813,7 +811,6 @@ export class EditReservationComponent implements OnInit, OnDestroy {
         totalAmount: this.formData().totalAmount,
         description: this.formData().description,
         privateNote: this.formData().privateNote,
-        status: this.formData().status,
         attachmentsToAdd: attachments,
         attachmentsToDelete: Array.from(this.filesToDelete()),
       };

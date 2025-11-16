@@ -79,129 +79,66 @@
     </div>
 
     <!-- Calendar Days Grid -->
-    <div class="grid grid-cols-7 gap-0">
-      @for (day of monthDays(); track day.date.getTime()) {
-        <div
-          class="relative min-h-[60px] border border-border/50 p-1.5 cursor-pointer hover:bg-accent/50 transition-colors flex flex-col"
-          [class.bg-muted/30]="!day.isCurrentMonth"
-          [class.opacity-50]="!day.isCurrentMonth"
-          [class.bg-accent]="selectedDate() && isSameDay(day.date, selectedDate()!)"
-          (click)="selectDate(day.date)"
-        >
-          <!-- Date Number -->
+    <div class="relative">
+      <div class="grid grid-cols-7 gap-0">
+        @for (day of monthDays(); track day.date.getTime(); let dayIndex = $index) {
           <div
-            class="text-sm font-medium mb-1 flex-shrink-0"
-            [class.text-foreground]="day.isCurrentMonth"
-            [class.text-muted-foreground]="!day.isCurrentMonth"
-            [class.font-bold]="day.isToday"
-            [class.ring-2]="day.isToday"
-            [class.ring-primary]="day.isToday"
-            [class.rounded-full]="day.isToday"
-            [class.w-7]="day.isToday"
-            [class.h-7]="day.isToday"
-            [class.flex]="day.isToday"
-            [class.items-center]="day.isToday"
-            [class.justify-center]="day.isToday"
+            class="relative min-h-[60px] border border-border/50 p-1.5 cursor-pointer hover:bg-accent/50 transition-colors flex flex-col"
+            [class.bg-muted/30]="!day.isCurrentMonth"
+            [class.opacity-50]="!day.isCurrentMonth"
+            [class.bg-accent]="selectedDate() && isSameDay(day.date, selectedDate()!)"
+            (click)="selectDate(day.date)"
           >
-            {{ day.date.getDate() }}
+            <!-- Date Number -->
+            <div
+              class="text-sm font-medium mb-1 flex-shrink-0 z-20 relative"
+              [class.text-foreground]="day.isCurrentMonth"
+              [class.text-muted-foreground]="!day.isCurrentMonth"
+              [class.font-bold]="day.isToday"
+              [class.bg-primary/20]="day.isToday"
+              [class.text-primary]="day.isToday"
+              [class.rounded]="day.isToday"
+              [class.px-1.5]="day.isToday"
+              [class.py-0.5]="day.isToday"
+              [class.inline-block]="day.isToday"
+              [class.self-start]="day.isToday"
+            >
+              {{ day.date.getDate() }}
+            </div>
+            <!-- Empty space for bars -->
+            <div class="flex-1 min-h-0"></div>
           </div>
+        }
+      </div>
 
-          <!-- Reservations Container -->
-          <div class="flex-1 flex flex-col gap-1 min-h-0 relative">
-            <!-- First Half Section (for end dates) - Top -->
-            <div class="flex-1 flex flex-col gap-1 min-h-0">
-              @if (day.reservations.length > 0) {
-                @for (resInfo of day.reservations.slice(0, 3); track resInfo.reservation.id) {
-                  @if (resInfo.isFirstHalf) {
-                    <div
-                      class="text-xs px-1.5 py-0.5 rounded border truncate flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
-                      [class]="getReservationColor(resInfo.reservation.propertyId)"
-                      [title]="resInfo.reservation.contactName + (resInfo.reservation.propertyIdentifier ? ' - ' + resInfo.reservation.propertyIdentifier : '')"
-                      (click)="onReservationClick(resInfo.reservation.id, $event)"
-                    >
-                      <div class="flex items-center gap-1.5">
-                        <div
-                          class="w-2 h-2 rounded-full flex-shrink-0"
-                          [class]="getReservationDotColor(resInfo.reservation.propertyId)"
-                        ></div>
-                        <span class="truncate text-xs font-medium">
-                          {{ resInfo.reservation.contactName }}
-                          @if (resInfo.reservation.propertyIdentifier) {
-                            <span class="text-muted-foreground/70"> - {{ resInfo.reservation.propertyIdentifier }}</span>
-                          }
-                        </span>
-                      </div>
-                    </div>
-                  }
+      <!-- Spanning Bars Overlay - positioned absolutely over the grid -->
+      <div class="absolute inset-0 pointer-events-none">
+        @for (bar of spanningBars(); track bar.reservation.id + '-' + bar.weekIndex) {
+          <div
+            class="absolute text-xs px-1.5 py-0.5 rounded border truncate cursor-pointer hover:opacity-80 transition-opacity pointer-events-auto z-10 flex items-center"
+            [class]="getReservationColor(bar.reservation.propertyId)"
+            [style.left.%]="bar.isStartOfReservation ? ((bar.startColumn + 0.5) / 7) * 100 : (bar.startColumn / 7) * 100"
+            [style.right.%]="bar.isEndOfReservation ? ((6 - bar.endColumn + 0.5) / 7) * 100 : ((6 - bar.endColumn) / 7) * 100"
+            [style.top.px]="(bar.weekIndex * 60) + 30 + (bar.row * 20)"
+            [style.transform]="'translateY(-50%)'"
+            [title]="bar.reservation.contactName + (bar.reservation.propertyIdentifier ? ' - ' + bar.reservation.propertyIdentifier : '')"
+            (click)="onReservationClick(bar.reservation.id, $event)"
+          >
+            @if (bar.isStartOfReservation) {
+              <div
+                class="w-2 h-2 rounded-full flex-shrink-0"
+                [class]="getReservationDotColor(bar.reservation.propertyId)"
+              ></div>
+              <span class="truncate text-xs font-medium ml-1.5">
+                {{ bar.reservation.contactName }}
+                @if (bar.reservation.propertyIdentifier) {
+                  <span class="text-muted-foreground/70"> - {{ bar.reservation.propertyIdentifier }}</span>
                 }
-              }
-            </div>
-
-            <!-- Full Day Section (middle) -->
-            <div class="flex-1 flex flex-col gap-1 justify-center min-h-0">
-              @if (day.reservations.length > 0) {
-                @for (resInfo of day.reservations.slice(0, 3); track resInfo.reservation.id) {
-                  @if (resInfo.isFullDay) {
-                    <div
-                      class="text-xs px-1.5 py-0.5 rounded border truncate flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
-                      [class]="getReservationColor(resInfo.reservation.propertyId)"
-                      [title]="resInfo.reservation.contactName + (resInfo.reservation.propertyIdentifier ? ' - ' + resInfo.reservation.propertyIdentifier : '')"
-                      (click)="onReservationClick(resInfo.reservation.id, $event)"
-                    >
-                      <div class="flex items-center gap-1.5">
-                        <div
-                          class="w-2 h-2 rounded-full flex-shrink-0"
-                          [class]="getReservationDotColor(resInfo.reservation.propertyId)"
-                        ></div>
-                        <span class="truncate text-xs font-medium">
-                          {{ resInfo.reservation.contactName }}
-                          @if (resInfo.reservation.propertyIdentifier) {
-                            <span class="text-muted-foreground/70"> - {{ resInfo.reservation.propertyIdentifier }}</span>
-                          }
-                        </span>
-                      </div>
-                    </div>
-                  }
-                }
-              }
-            </div>
-
-            <!-- Second Half Section (for start dates) - Bottom -->
-            <div class="flex-1 flex flex-col gap-1 justify-end min-h-0">
-              @if (day.reservations.length > 0) {
-                @for (resInfo of day.reservations.slice(0, 3); track resInfo.reservation.id) {
-                  @if (resInfo.isSecondHalf) {
-                    <div
-                      class="text-xs px-1.5 py-0.5 rounded border truncate flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
-                      [class]="getReservationColor(resInfo.reservation.propertyId)"
-                      [title]="resInfo.reservation.contactName + (resInfo.reservation.propertyIdentifier ? ' - ' + resInfo.reservation.propertyIdentifier : '')"
-                      (click)="onReservationClick(resInfo.reservation.id, $event)"
-                    >
-                      <div class="flex items-center gap-1.5">
-                        <div
-                          class="w-2 h-2 rounded-full flex-shrink-0"
-                          [class]="getReservationDotColor(resInfo.reservation.propertyId)"
-                        ></div>
-                        <span class="truncate text-xs font-medium">
-                          {{ resInfo.reservation.contactName }}
-                          @if (resInfo.reservation.propertyIdentifier) {
-                            <span class="text-muted-foreground/70"> - {{ resInfo.reservation.propertyIdentifier }}</span>
-                          }
-                        </span>
-                      </div>
-                    </div>
-                  }
-                }
-                @if (day.reservations.length > 3) {
-                  <div class="text-xs text-muted-foreground px-1.5 flex-shrink-0">
-                    +{{ day.reservations.length - 3 }} more
-                  </div>
-                }
-              }
-            </div>
+              </span>
+            }
           </div>
-        </div>
-      }
+        }
+      </div>
     </div>
   </div>
 </div>

@@ -265,24 +265,6 @@
                     </z-input-group>
                   </z-form-control>
                 </z-form-field>
-
-                @if (isEditMode()) {
-                  <z-form-field>
-                    <z-form-label zRequired>Status</z-form-label>
-                    <z-form-control>
-                      <z-select
-                        [zValue]="formData().status.toString()"
-                        (zSelectionChange)="updateStatus($event)"
-                      >
-                        @for (option of statusOptions; track option.value) {
-                          <z-select-item [zValue]="option.value.toString()">
-                            {{ option.label }}
-                          </z-select-item>
-                        }
-                      </z-select>
-                    </z-form-control>
-                  </z-form-field>
-                }
               </div>
 
               <z-form-field>
