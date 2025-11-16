@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, OnDestroy
 import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject, takeUntil, debounceTime, distinctUntilChanged, forkJoin } from 'rxjs';
+import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { ZardPageComponent } from '../../page/page.component';
 import { ZardButtonComponent } from '@shared/components/button/button.component';
 import { ZardInputDirective } from '@shared/components/input/input.directive';
@@ -10,6 +10,7 @@ import { ZardBadgeComponent } from '@shared/components/badge/badge.component';
 import { ZardIconComponent } from '@shared/components/icon/icon.component';
 import { ZardAvatarComponent } from '@shared/components/avatar/avatar.component';
 import { ZardAlertDialogService } from '@shared/components/alert-dialog/alert-dialog.service';
+import { ZardDialogService } from '@shared/components/dialog/dialog.service';
 import { ZardDatatableComponent, DatatableColumn } from '@shared/components/datatable/datatable.component';
 import { ZardDropdownMenuComponent } from '@shared/components/dropdown/dropdown.component';
 import { ZardDropdownMenuItemComponent } from '@shared/components/dropdown/dropdown-item.component';
@@ -21,6 +22,7 @@ import { ZardImageHoverPreviewDirective } from '@shared/components/image-hover-p
 import { ZardSwitchComponent } from '@shared/components/switch/switch.component';
 import { ZardComboboxComponent, ZardComboboxOption } from '@shared/components/combobox/combobox.component';
 import { ZardCalendarYearViewComponent, CalendarYearViewReservation } from '@shared/components/calendar-year-view/calendar-year-view.component';
+import { ZardCheckboxComponent } from '@shared/components/checkbox/checkbox.component';
 import type { Reservation } from '@shared/models/reservation/reservation.model';
 import { ReservationStatus } from '@shared/models/reservation/reservation.model';
 import type { ReservationListRequest } from '@shared/models/reservation/reservation-list-request.model';
@@ -45,7 +47,6 @@ import { PropertyCategory } from '@shared/models/property/property.model';
     ZardPageComponent,
     ZardButtonComponent,
     ZardInputDirective,
-    ZardBadgeComponent,
     ZardIconComponent,
     ZardAvatarComponent,
     ZardDatatableComponent,
@@ -65,6 +66,7 @@ import { PropertyCategory } from '@shared/models/property/property.model';
 })
 export class ReservationListComponent implements OnInit, OnDestroy {
   private readonly alertDialogService = inject(ZardAlertDialogService);
+  private readonly dialogService = inject(ZardDialogService);
   private readonly viewContainerRef = inject(ViewContainerRef);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -88,6 +90,7 @@ export class ReservationListComponent implements OnInit, OnDestroy {
   readonly reservations = signal<Reservation[]>([]);
   readonly isLoading = signal(false);
   readonly isDeleting = signal(false);
+  readonly updatingStatus = signal<Set<string>>(new Set());
   readonly totalPages = signal(1);
   readonly totalItems = signal(0);
   readonly selectedTenant = signal<string | null>(null);
@@ -197,6 +200,9 @@ export class ReservationListComponent implements OnInit, OnDestroy {
             endDate: new Date(res.endDate),
             status: res.status === ReservationStatus.Pending ? 'pending' as const : 'active' as const,
             title: `${res.contactName} - ${res.propertyName}`,
+            propertyId: res.propertyId,
+            propertyIdentifier: res.propertyIdentifier,
+            contactName: res.contactName,
           }));
         this.calendarReservations.set(calendarReservations);
       },
@@ -326,32 +332,19 @@ export class ReservationListComponent implements OnInit, OnDestroy {
     this.isLoadingProperties.set(true);
     const companyId = this.userService.getCurrentUser()?.companyId;
     
-    // Make two API calls: one for Location, one for LocationVacances
-    const locationRequest = {
-      currentPage: 1,
-      pageSize: 1000,
-      ignore: false,
-      companyId: companyId,
-      category: PropertyCategory.Location,
-    };
-
-    const vacanceRequest = {
+    // Only fetch properties with category "location vacances"
+    const request = {
       currentPage: 1,
       pageSize: 1000,
       ignore: false,
       companyId: companyId,
       category: PropertyCategory.LocationVacances,
     };
-    
-    forkJoin({
-      location: this.propertyService.list(locationRequest),
-      vacance: this.propertyService.list(vacanceRequest),
-    }).pipe(takeUntil(this.destroy$)).subscribe({
-      next: ({ location, vacance }) => {
-        // Combine results from both API calls
-        const allProperties = [...location.result, ...vacance.result];
-        this.properties.set(allProperties);
-        const options: ZardComboboxOption[] = allProperties.map(property => {
+
+    this.propertyService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (response) => {
+        this.properties.set(response.result);
+        const options: ZardComboboxOption[] = response.result.map(property => {
           const parts: string[] = [];
           if (property.identifier) parts.push(property.identifier);
           if (property.name) parts.push(property.name);
@@ -438,6 +431,111 @@ export class ReservationListComponent implements OnInit, OnDestroy {
       // Load all reservations for calendar view
       this.loadCalendarReservations();
     }
+  }
+
+  onCalendarReservationClick(reservationId: string): void {
+    // Find the reservation in the loaded reservations
+    const reservation = this.reservations().find(r => r.id === reservationId);
+    if (!reservation) {
+      // If not found, fetch it
+      this.reservationService.getById(reservationId).pipe(takeUntil(this.destroy$)).subscribe({
+        next: (res) => {
+          this.showReservationDialog(res);
+        },
+        error: (error) => {
+          console.error('Error loading reservation:', error);
+          this.toastService.error('Failed to load reservation details');
+        },
+      });
+    } else {
+      this.showReservationDialog(reservation);
+    }
+  }
+
+  showReservationDialog(reservation: Reservation): void {
+    const statusLabel = this.getStatusLabel(reservation.status);
+    const statusColorClass = reservation.status === ReservationStatus.Pending 
+      ? 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-300 border-yellow-500/50'
+      : reservation.status === ReservationStatus.Approved
+      ? 'bg-green-500/20 text-green-700 dark:text-green-300 border-green-500/50'
+      : 'bg-gray-500/20 text-gray-700 dark:text-gray-300 border-gray-500/50';
+    
+    const dialogRef = this.dialogService.create({
+      zTitle: 'Reservation Details',
+      zContent: `
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <p class="text-sm font-medium text-muted-foreground mb-1">Property</p>
+              <p class="text-sm font-semibold">${this.escapeHtml(reservation.propertyIdentifier || reservation.propertyName || 'N/A')}</p>
+              ${reservation.propertyAddress ? `<p class="text-xs text-muted-foreground mt-1">${this.escapeHtml(reservation.propertyAddress)}</p>` : ''}
+            </div>
+            <div>
+              <p class="text-sm font-medium text-muted-foreground mb-1">Tenant</p>
+              <p class="text-sm font-semibold">${this.escapeHtml(reservation.contactName || 'N/A')}</p>
+              ${reservation.contactEmail ? `<p class="text-xs text-muted-foreground mt-1">${this.escapeHtml(reservation.contactEmail)}</p>` : ''}
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <p class="text-sm font-medium text-muted-foreground mb-1">Start Date</p>
+              <p class="text-sm">${this.formatDate(reservation.startDate)}</p>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-muted-foreground mb-1">End Date</p>
+              <p class="text-sm">${this.formatDate(reservation.endDate)}</p>
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <p class="text-sm font-medium text-muted-foreground mb-1">Duration</p>
+              <p class="text-sm">${this.getDurationDays(reservation)} day${this.getDurationDays(reservation) !== 1 ? 's' : ''}</p>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-muted-foreground mb-1">Total Amount</p>
+              <p class="text-sm font-semibold">${this.formatCurrencyMAD(reservation.totalAmount)}</p>
+            </div>
+          </div>
+          
+          <div>
+            <p class="text-sm font-medium text-muted-foreground mb-1">Status</p>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusColorClass}">
+              ${statusLabel}
+            </span>
+          </div>
+          
+          ${reservation.description ? `
+            <div>
+              <p class="text-sm font-medium text-muted-foreground mb-1">Description</p>
+              <p class="text-sm">${this.escapeHtml(reservation.description)}</p>
+            </div>
+          ` : ''}
+        </div>
+      `,
+      zViewContainerRef: this.viewContainerRef,
+      zWidth: '500px',
+      zOkText: 'Edit',
+      zCancelText: 'Close',
+      zOkIcon: 'pencil',
+      zOnOk: () => {
+        // Return an object to indicate OK was clicked
+        return { edit: true };
+      },
+    });
+
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result) => {
+      if (result) {
+        this.router.navigate(['/reservation', reservation.id, 'edit']);
+      }
+    });
+  }
+
+  private escapeHtml(text: string): string {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
   }
 
   onEditReservation(reservation: Reservation): void {
@@ -532,12 +630,8 @@ export class ReservationListComponent implements OnInit, OnDestroy {
         return 'Pending';
       case ReservationStatus.Approved:
         return 'Approved';
-      case ReservationStatus.Rejected:
-        return 'Rejected';
       case ReservationStatus.Cancelled:
         return 'Cancelled';
-      case ReservationStatus.Completed:
-        return 'Completed';
       default:
         return 'Unknown';
     }
@@ -549,12 +643,8 @@ export class ReservationListComponent implements OnInit, OnDestroy {
         return 'outline';
       case ReservationStatus.Approved:
         return 'default';
-      case ReservationStatus.Rejected:
-        return 'destructive';
       case ReservationStatus.Cancelled:
         return 'secondary';
-      case ReservationStatus.Completed:
-        return 'default';
       default:
         return 'secondary';
     }
@@ -573,6 +663,14 @@ export class ReservationListComponent implements OnInit, OnDestroy {
     }).format(amount);
   }
 
+  formatCurrencyMAD(amount: number): string {
+    const formattedPrice = amount.toLocaleString('en-US', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    });
+    return `${formattedPrice} MAD`;
+  }
+
   getContactInitials(reservation: Reservation): string {
     if (!reservation.contactName) return '??';
     const parts = reservation.contactName.trim().split(' ');
@@ -582,9 +680,79 @@ export class ReservationListComponent implements OnInit, OnDestroy {
     return reservation.contactName.substring(0, 2).toUpperCase();
   }
 
+  // Calculate duration correctly (matching edit component logic)
+  // Backend sends DurationDays = (EndDate - StartDate).Days + 1, which is incorrect
+  // We recalculate here to show the correct duration
+  getDurationDays(reservation: Reservation): number {
+    if (!reservation.startDate || !reservation.endDate) {
+      return reservation.durationDays || 0;
+    }
+
+    const startDate = new Date(reservation.startDate);
+    const endDate = new Date(reservation.endDate);
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(0, 0, 0, 0);
+
+    const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    return diffDays;
+  }
 
   trackByIndex(index: number): number {
     return index;
   }
+
+  // Status update handler
+  onStatusChange(reservation: Reservation, newStatus: ReservationStatus): void {
+    if (reservation.status === newStatus) {
+      return; // No change
+    }
+
+    // Add to updating set
+    const updating = new Set(this.updatingStatus());
+    updating.add(reservation.id);
+    this.updatingStatus.set(updating);
+
+    this.reservationService.updateStatus(reservation.id, newStatus).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: () => {
+        // Update local reservation status
+        const reservations = this.reservations();
+        const updatedReservations = reservations.map(r => 
+          r.id === reservation.id ? { ...r, status: newStatus } : r
+        );
+        this.reservations.set(updatedReservations);
+        
+        // Remove from updating set
+        const stillUpdating = new Set(this.updatingStatus());
+        stillUpdating.delete(reservation.id);
+        this.updatingStatus.set(stillUpdating);
+        
+        this.toastService.success(`Reservation status updated to ${this.getStatusLabel(newStatus)}`);
+      },
+      error: (error) => {
+        console.error('Error updating reservation status:', error);
+        this.toastService.error('Failed to update reservation status');
+        
+        // Remove from updating set
+        const stillUpdating = new Set(this.updatingStatus());
+        stillUpdating.delete(reservation.id);
+        this.updatingStatus.set(stillUpdating);
+      },
+    });
+  }
+
+  isUpdatingStatus(reservationId: string): boolean {
+    return this.updatingStatus().has(reservationId);
+  }
+
+  // Status options for select dropdown
+  readonly statusOptions = [
+    { value: ReservationStatus.Pending, label: 'Pending' },
+    { value: ReservationStatus.Approved, label: 'Approved' },
+    { value: ReservationStatus.Cancelled, label: 'Cancelled' },
+  ];
 }
 

@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { Subject, takeUntil, forkJoin } from 'rxjs';
+import { Subject, takeUntil } from 'rxjs';
 import { ZardPageComponent } from '../../page/page.component';
 import { ZardButtonComponent } from '@shared/components/button/button.component';
 import { ZardInputDirective } from '@shared/components/input/input.directive';
@@ -91,6 +91,8 @@ export class EditReservationComponent implements OnInit, OnDestroy {
   readonly isLoading = signal(false);
   readonly isSaving = signal(false);
   readonly formSubmitted = signal(false);
+  readonly checkingOverlaps = signal(false);
+  readonly overlappingReservations = signal<Reservation[]>([]);
 
   // Reservation data
   readonly reservation = signal<Reservation | null>(null);
@@ -144,7 +146,8 @@ export class EditReservationComponent implements OnInit, OnDestroy {
       data.startDate !== null &&
       data.endDate !== null &&
       hasValidDates &&
-      data.totalAmount >= 0
+      data.totalAmount >= 0 &&
+      !this.hasDateConflict()
     );
   });
 
@@ -175,6 +178,10 @@ export class EditReservationComponent implements OnInit, OnDestroy {
     if (!value) {
       return 'Start date is required';
     }
+    // Check for date conflicts
+    if (this.hasDateConflict()) {
+      return 'These dates conflict with an existing reservation';
+    }
     return '';
   });
 
@@ -188,7 +195,34 @@ export class EditReservationComponent implements OnInit, OnDestroy {
     if (startDate && value <= startDate) {
       return 'End date must be after start date';
     }
+    // Check for date conflicts
+    if (this.hasDateConflict()) {
+      return 'These dates conflict with an existing reservation';
+    }
     return '';
+  });
+
+  // Check if there are overlapping reservations
+  readonly hasDateConflict = computed(() => {
+    return this.overlappingReservations().length > 0;
+  });
+
+  // Conflict error message with details
+  readonly dateConflictError = computed(() => {
+    const overlapping = this.overlappingReservations();
+    if (overlapping.length === 0) {
+      return '';
+    }
+    
+    if (overlapping.length === 1) {
+      const res = overlapping[0];
+      return `These dates conflict with an existing reservation: ${res.contactName} (${this.formatDate(res.startDate)} - ${this.formatDate(res.endDate)})`;
+    }
+    
+    const conflicts = overlapping.map(r => 
+      `${r.contactName} (${this.formatDate(r.startDate)} - ${this.formatDate(r.endDate)})`
+    ).join(', ');
+    return `These dates conflict with ${overlapping.length} existing reservations: ${conflicts}`;
   });
 
   readonly totalAmountError = computed(() => {
@@ -210,7 +244,10 @@ export class EditReservationComponent implements OnInit, OnDestroy {
   });
 
   readonly startDateHasError = computed(() => {
-    return this.formSubmitted() && !this.formData().startDate;
+    if (!this.formSubmitted()) return false;
+    const value = this.formData().startDate;
+    if (!value) return true;
+    return this.hasDateConflict();
   });
 
   readonly endDateHasError = computed(() => {
@@ -219,7 +256,7 @@ export class EditReservationComponent implements OnInit, OnDestroy {
     if (!value) return true;
     const startDate = this.formData().startDate;
     if (startDate && value <= startDate) return true;
-    return false;
+    return this.hasDateConflict();
   });
 
   readonly totalAmountHasError = computed(() => {
@@ -275,9 +312,7 @@ export class EditReservationComponent implements OnInit, OnDestroy {
   readonly statusOptions = [
     { value: ReservationStatus.Pending, label: 'Pending' },
     { value: ReservationStatus.Approved, label: 'Approved' },
-    { value: ReservationStatus.Rejected, label: 'Rejected' },
     { value: ReservationStatus.Cancelled, label: 'Cancelled' },
-    { value: ReservationStatus.Completed, label: 'Completed' },
   ];
 
   ngOnInit(): void {
@@ -331,6 +366,11 @@ export class EditReservationComponent implements OnInit, OnDestroy {
           );
         }
 
+        // Check for overlaps after loading reservation data
+        setTimeout(() => {
+          this.checkForOverlaps();
+        }, 100);
+
         this.isLoading.set(false);
         this.cdr.markForCheck();
       },
@@ -376,16 +416,8 @@ export class EditReservationComponent implements OnInit, OnDestroy {
     this.isLoadingProperties.set(true);
     const companyId = this.userService.getCurrentUser()?.companyId;
     
-    // Make two API calls: one for Location, one for LocationVacances
-    const locationRequest = {
-      currentPage: 1,
-      pageSize: 500,
-      ignore: false,
-      companyId: companyId,
-      category: PropertyCategory.Location,
-    };
-
-    const vacanceRequest = {
+    // Only fetch properties with category "location vacances"
+    const request = {
       currentPage: 1,
       pageSize: 500,
       ignore: false,
@@ -394,16 +426,11 @@ export class EditReservationComponent implements OnInit, OnDestroy {
     };
 
     setTimeout(() => {
-      forkJoin({
-        location: this.propertyService.list(locationRequest),
-        vacance: this.propertyService.list(vacanceRequest),
-      }).pipe(takeUntil(this.destroy$)).subscribe({
-        next: ({ location, vacance }) => {
-          // Combine results from both API calls
-          const allProperties = [...location.result, ...vacance.result];
-          this.properties.set(allProperties);
+      this.propertyService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
+        next: (response) => {
+          this.properties.set(response.result);
           requestAnimationFrame(() => {
-            const options: ZardComboboxOption[] = allProperties.map((property) => {
+            const options: ZardComboboxOption[] = response.result.map((property) => {
               const parts: string[] = [];
               if (property.identifier) parts.push(property.identifier);
               if (property.name) parts.push(property.name);
@@ -689,6 +716,12 @@ export class EditReservationComponent implements OnInit, OnDestroy {
   async onSubmit(): Promise<void> {
     this.formSubmitted.set(true);
 
+    // Final check for overlaps before submission
+    if (this.hasDateConflict()) {
+      this.toastService.error('Cannot save: The selected dates conflict with an existing reservation');
+      return;
+    }
+
     if (!this.isFormValid()) {
       return;
     }
@@ -807,6 +840,8 @@ export class EditReservationComponent implements OnInit, OnDestroy {
   // Helper methods for form field updates
   updatePropertyId(value: string): void {
     this.formData.update((data) => ({ ...data, propertyId: value }));
+    // Check for overlaps when property changes
+    this.checkForOverlaps();
   }
 
   updateContactId(value: string): void {
@@ -815,10 +850,55 @@ export class EditReservationComponent implements OnInit, OnDestroy {
 
   updateStartDate(value: Date | null): void {
     this.formData.update((data) => ({ ...data, startDate: value }));
+    // Check for overlaps when start date changes
+    this.checkForOverlaps();
   }
 
   updateEndDate(value: Date | null): void {
     this.formData.update((data) => ({ ...data, endDate: value }));
+    // Check for overlaps when end date changes
+    this.checkForOverlaps();
+  }
+
+  checkForOverlaps(): void {
+    const data = this.formData();
+    const propertyId = data.propertyId;
+    const startDate = data.startDate;
+    const endDate = data.endDate;
+
+    // Clear existing overlaps
+    this.overlappingReservations.set([]);
+
+    // Only check if we have all required data
+    if (!propertyId || !startDate || !endDate || endDate <= startDate) {
+      return;
+    }
+
+    this.checkingOverlaps.set(true);
+    const excludeId = this.isEditMode() ? this.reservationId() : undefined;
+
+    this.reservationService
+      .getOverlappingReservations(propertyId, startDate, endDate, excludeId || undefined)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (overlapping) => {
+          this.overlappingReservations.set(overlapping);
+          this.checkingOverlaps.set(false);
+          this.cdr.markForCheck();
+          
+          if (overlapping.length > 0) {
+            const conflictInfo = overlapping.map(r => 
+              `${r.contactName} (${this.formatDate(r.startDate)} - ${this.formatDate(r.endDate)})`
+            ).join(', ');
+            this.toastService.warning(`Date conflict detected: ${conflictInfo}`);
+          }
+        },
+        error: (error) => {
+          console.error('Error checking for overlapping reservations:', error);
+          this.checkingOverlaps.set(false);
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   updateTotalAmount(value: string): void {

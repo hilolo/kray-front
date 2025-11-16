@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input, signal, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output, signal, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import type { ClassValue } from 'clsx';
 import { ZardButtonComponent } from '../button/button.component';
@@ -18,6 +18,9 @@ export interface CalendarYearViewReservation {
   endDate: Date;
   status: 'pending' | 'active';
   title?: string;
+  propertyId: string;
+  propertyIdentifier?: string;
+  contactName: string;
 }
 
 @Component({
@@ -34,6 +37,7 @@ export class ZardCalendarYearViewComponent {
   readonly currentDate = signal(new Date());
   readonly selectedDate = signal<Date | null>(null);
   readonly class = input<ClassValue>('');
+  readonly reservationClick = output<string>();
 
   readonly months = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -53,7 +57,7 @@ export class ZardCalendarYearViewComponent {
 
   readonly classes = computed(() =>
     mergeClasses(
-      'flex flex-col gap-6 p-6 bg-background text-foreground',
+      'flex flex-col gap-4 p-4 bg-background text-foreground',
       this.class(),
     ),
   );
@@ -88,7 +92,14 @@ export class ZardCalendarYearViewComponent {
       date: Date;
       isCurrentMonth: boolean;
       isToday: boolean;
-      reservations: CalendarYearViewReservation[];
+      reservations: Array<{
+        reservation: CalendarYearViewReservation;
+        isStart: boolean;
+        isEnd: boolean;
+        isFullDay: boolean;
+        isFirstHalf: boolean;
+        isSecondHalf: boolean;
+      }>;
     }> = [];
 
     const currentDate = new Date(startDate);
@@ -101,13 +112,43 @@ export class ZardCalendarYearViewComponent {
       const isCurrentMonth = dayDate.getMonth() === month;
       const isToday = this.isSameDay(dayDate, today);
 
-      // Find reservations for this date
-      const dateReservations = this.reservations().filter(res => {
+      // Find reservations for this date with half-day logic
+      const dateReservations: Array<{
+        reservation: CalendarYearViewReservation;
+        isStart: boolean;
+        isEnd: boolean;
+        isFullDay: boolean;
+        isFirstHalf: boolean;
+        isSecondHalf: boolean;
+      }> = [];
+
+      this.reservations().forEach(res => {
         const start = new Date(res.startDate);
         start.setHours(0, 0, 0, 0);
         const end = new Date(res.endDate);
         end.setHours(0, 0, 0, 0);
-        return dayDate >= start && dayDate <= end;
+        
+        const isStartDay = this.isSameDay(dayDate, start);
+        const isEndDay = this.isSameDay(dayDate, end);
+        const isBetween = dayDate > start && dayDate < end;
+        
+        if (isStartDay || isEndDay || isBetween) {
+          // Start on second half, end on first half
+          const isStart = isStartDay;
+          const isEnd = isEndDay;
+          const isFullDay = isBetween;
+          const isFirstHalf = isEnd && !isStart; // End date shows in first half
+          const isSecondHalf = isStart && !isEnd; // Start date shows in second half
+          
+          dateReservations.push({
+            reservation: res,
+            isStart,
+            isEnd,
+            isFullDay,
+            isFirstHalf,
+            isSecondHalf,
+          });
+        }
       });
 
       days.push({
@@ -165,14 +206,46 @@ export class ZardCalendarYearViewComponent {
     );
   }
 
-  getReservationColor(status: 'pending' | 'active'): string {
-    return status === 'pending' 
-      ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-600 dark:text-yellow-400' 
-      : 'bg-green-500/20 border-green-500/50 text-green-600 dark:text-green-400';
+  // Generate unique color for each property
+  private readonly propertyColors = new Map<string, string>();
+  
+  private readonly colorPalette = [
+    { bg: 'bg-blue-500/20', border: 'border-blue-500/50', text: 'text-blue-700 dark:text-blue-300', dot: 'bg-blue-500' },
+    { bg: 'bg-purple-500/20', border: 'border-purple-500/50', text: 'text-purple-700 dark:text-purple-300', dot: 'bg-purple-500' },
+    { bg: 'bg-pink-500/20', border: 'border-pink-500/50', text: 'text-pink-700 dark:text-pink-300', dot: 'bg-pink-500' },
+    { bg: 'bg-indigo-500/20', border: 'border-indigo-500/50', text: 'text-indigo-700 dark:text-indigo-300', dot: 'bg-indigo-500' },
+    { bg: 'bg-cyan-500/20', border: 'border-cyan-500/50', text: 'text-cyan-700 dark:text-cyan-300', dot: 'bg-cyan-500' },
+    { bg: 'bg-teal-500/20', border: 'border-teal-500/50', text: 'text-teal-700 dark:text-teal-300', dot: 'bg-teal-500' },
+    { bg: 'bg-orange-500/20', border: 'border-orange-500/50', text: 'text-orange-700 dark:text-orange-300', dot: 'bg-orange-500' },
+    { bg: 'bg-amber-500/20', border: 'border-amber-500/50', text: 'text-amber-700 dark:text-amber-300', dot: 'bg-amber-500' },
+    { bg: 'bg-emerald-500/20', border: 'border-emerald-500/50', text: 'text-emerald-700 dark:text-emerald-300', dot: 'bg-emerald-500' },
+    { bg: 'bg-rose-500/20', border: 'border-rose-500/50', text: 'text-rose-700 dark:text-rose-300', dot: 'bg-rose-500' },
+    { bg: 'bg-violet-500/20', border: 'border-violet-500/50', text: 'text-violet-700 dark:text-violet-300', dot: 'bg-violet-500' },
+    { bg: 'bg-fuchsia-500/20', border: 'border-fuchsia-500/50', text: 'text-fuchsia-700 dark:text-fuchsia-300', dot: 'bg-fuchsia-500' },
+  ];
+
+  getPropertyColor(propertyId: string): { bg: string; border: string; text: string; dot: string } {
+    if (!this.propertyColors.has(propertyId)) {
+      const index = this.propertyColors.size % this.colorPalette.length;
+      this.propertyColors.set(propertyId, index.toString());
+    }
+    const index = parseInt(this.propertyColors.get(propertyId) || '0', 10);
+    return this.colorPalette[index];
   }
 
-  getReservationDotColor(status: 'pending' | 'active'): string {
-    return status === 'pending' ? 'bg-yellow-500' : 'bg-green-500';
+  getReservationColor(propertyId: string): string {
+    const color = this.getPropertyColor(propertyId);
+    return `${color.bg} ${color.border} ${color.text}`;
+  }
+
+  getReservationDotColor(propertyId: string): string {
+    const color = this.getPropertyColor(propertyId);
+    return color.dot;
+  }
+
+  onReservationClick(reservationId: string, event: Event): void {
+    event.stopPropagation();
+    this.reservationClick.emit(reservationId);
   }
 }
 

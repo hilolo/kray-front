@@ -4,16 +4,17 @@
     <div class="space-y-6 pb-6 flex-shrink-0">
       <!-- Filter and Action Bar -->
       <div class="flex flex-col gap-4">
+        <!-- Calendar View Toggle - On top -->
+        <div class="flex items-center gap-2">
+          <label class="text-sm text-muted-foreground cursor-pointer" (click)="onCalendarViewToggle(!showCalendarView())">
+            Calendar View
+          </label>
+          <z-switch [ngModel]="showCalendarView()" (checkChange)="onCalendarViewToggle($event)" />
+        </div>
+        
         <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
           <!-- Search and Filters on left -->
           <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-1">
-            <!-- Calendar View Toggle -->
-            <div class="flex items-center gap-2">
-              <label class="text-sm text-muted-foreground cursor-pointer" (click)="onCalendarViewToggle(!showCalendarView())">
-                Calendar View
-              </label>
-              <z-switch [ngModel]="showCalendarView()" (checkChange)="onCalendarViewToggle($event)" />
-            </div>
             @if (!showCalendarView()) {
               <!-- Search input -->
               <div class="relative flex-1 sm:flex-initial w-full sm:w-[300px]">
@@ -92,11 +93,58 @@
 
     <!-- Calendar View -->
     @if (showCalendarView()) {
-      <div class="flex-1 min-h-0 overflow-y-auto pb-4 -mx-6 px-6">
-        <z-calendar-year-view
-          [reservations]="calendarReservations()"
-          class="w-full"
-        />
+      <div class="flex flex-col gap-4 flex-1 min-h-0">
+        <!-- Filters for Calendar View -->
+        <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-shrink-0">
+          <!-- Tenant filter -->
+          <div class="w-full sm:w-[250px]">
+            <z-combobox
+              #tenantComboboxCalendar
+              [options]="tenantOptions()"
+              [value]="selectedTenant()"
+              [disabled]="isLoadingTenants()"
+              [placeholder]="'All Tenants'"
+              [searchPlaceholder]="'Search tenants...'"
+              [emptyText]="'No tenants found'"
+              [zWidth]="'lg'"
+              (zValueChange)="onTenantChange($event)"
+            />
+          </div>
+          <!-- Property filter -->
+          <div class="w-full sm:w-[250px]">
+            <z-combobox
+              #propertyComboboxCalendar
+              [options]="propertyOptions()"
+              [value]="selectedProperty()"
+              [disabled]="isLoadingProperties()"
+              [placeholder]="'All Properties'"
+              [searchPlaceholder]="'Search properties...'"
+              [emptyText]="'No properties found'"
+              [zWidth]="'lg'"
+              (zValueChange)="onPropertyChange($event)"
+            />
+          </div>
+          @if (hasActiveFilters()) {
+            <z-button 
+              zType="outline" 
+              zSize="default" 
+              class="gap-2 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground" 
+              (click)="onResetFilters()"
+            >
+              <z-icon zType="x" zSize="sm" />
+              <span>Reset</span>
+            </z-button>
+          }
+        </div>
+        
+        <!-- Calendar -->
+        <div class="flex-1 min-h-0 overflow-y-auto pb-4 -mx-6 px-6">
+          <z-calendar-year-view
+            [reservations]="calendarReservations()"
+            class="w-full"
+            (reservationClick)="onCalendarReservationClick($event)"
+          />
+        </div>
       </div>
     }
 
@@ -107,15 +155,13 @@
           [zData]="filteredReservations()"
           [zColumns]="columns()"
           [zViewMode]="viewMode()"
-          [zSelectable]="true"
-          [zSelectedRows]="selectedRows()"
+          [zSelectable]="false"
           [zCurrentPage]="currentPage()"
           [zPageSize]="pageSize()"
           [zShowPagination]="false"
           [zEmptyMessage]="emptyMessage()"
           (zPageChange)="onPageChange($event)"
           (zPageSizeChange)="onPageSizeChange($event)"
-          (zSelectionChange)="onSelectionChange($event)"
         >
         <!-- Property Column Template -->
         <ng-template #propertyCell let-value let-row="row">
@@ -137,9 +183,14 @@
               </div>
             }
             <div class="flex flex-col gap-1">
-              <span class="font-semibold text-base">{{ row.propertyName || 'N/A' }}</span>
+              @if (row.propertyIdentifier) {
+                <span class="font-semibold text-base">{{ row.propertyIdentifier }}</span>
+              }
+              @if (row.propertyName) {
+                <span class="text-sm text-muted-foreground">{{ row.propertyName }}</span>
+              }
               @if (row.propertyAddress) {
-                <span class="text-sm text-muted-foreground">{{ row.propertyAddress }}</span>
+                <span class="text-xs text-muted-foreground">{{ row.propertyAddress }}</span>
               }
             </div>
           </div>
@@ -191,8 +242,8 @@
               <z-icon zType="check" zSize="sm" class="text-muted-foreground" />
               <span class="text-sm">{{ formatDate(row.endDate) }}</span>
             </div>
-            @if (row.durationDays) {
-              <span class="text-xs text-muted-foreground mt-1">{{ row.durationDays }} day{{ row.durationDays !== 1 ? 's' : '' }}</span>
+            @if (getDurationDays(row) > 0) {
+              <span class="text-xs text-muted-foreground mt-1">{{ getDurationDays(row) }} day{{ getDurationDays(row) !== 1 ? 's' : '' }}</span>
             }
           </div>
         </ng-template>
@@ -206,9 +257,19 @@
 
         <!-- Status Column Template -->
         <ng-template #statusCell let-value let-row="row">
-          <z-badge [zType]="getStatusColor(row.status)" zShape="default">
-            {{ getStatusLabel(row.status) }}
-          </z-badge>
+          <z-select
+            [zValue]="row.status.toString()"
+            [zLabel]="getStatusLabel(row.status)"
+            [zDisabled]="isUpdatingStatus(row.id)"
+            class="w-[140px]"
+            (zSelectionChange)="onStatusChange(row, +$event)"
+          >
+            @for (option of statusOptions; track option.value) {
+              <z-select-item [zValue]="option.value.toString()">
+                {{ option.label }}
+              </z-select-item>
+            }
+          </z-select>
         </ng-template>
 
         <!-- Actions Column Template -->
@@ -227,6 +288,158 @@
               <span>Delete</span>
             </z-dropdown-menu-item>
           </z-dropdown-menu>
+        </ng-template>
+
+        <!-- Card Template -->
+        <ng-template #cardTemplate let-row="row">
+          <div class="flex flex-col relative h-full">
+            <!-- Header: Actions -->
+            <div class="flex items-start justify-end mb-4 -mt-6">
+              <z-dropdown-menu>
+                <z-button zType="ghost" zSize="icon" class="h-8 w-8 flex-shrink-0" dropdown-trigger>
+                  <z-icon zType="ellipsis" zSize="sm" />
+                </z-button>
+                <z-dropdown-menu-item (click)="onEditReservation(row)">
+                  <z-icon zType="pencil" zSize="sm" class="mr-2" />
+                  <span>Edit</span>
+                </z-dropdown-menu-item>
+                <z-divider class="my-1" />
+                <z-dropdown-menu-item (click)="onDeleteReservation(row)" class="text-destructive focus:text-destructive">
+                  <z-icon zType="x" zSize="sm" class="mr-2" />
+                  <span>Delete</span>
+                </z-dropdown-menu-item>
+              </z-dropdown-menu>
+            </div>
+            
+            <!-- Property and Contact Section -->
+            <div class="flex gap-4 mb-5">
+              <!-- Property -->
+              <div class="flex flex-col items-center gap-2.5 flex-1">
+                @if (row.propertyImageUrl) {
+                  <img
+                    [src]="row.propertyImageUrl"
+                    [alt]="row.propertyName"
+                    class="w-20 h-20 object-cover rounded-lg border-2 border-border shadow-sm"
+                    [zImageHoverPreview]="row.propertyImageUrl"
+                    [zAlt]="row.propertyName"
+                    [zPosition]="'right'"
+                    [zMaxWidth]="'400px'"
+                    [zMaxHeight]="'400px'"
+                  />
+                } @else {
+                  <div class="w-20 h-20 rounded-lg border-2 border-border bg-muted flex items-center justify-center shadow-sm">
+                    <z-icon zType="house" zSize="lg" class="text-muted-foreground" />
+                  </div>
+                }
+                <div class="text-center w-full">
+                  <p class="text-xs font-medium text-muted-foreground mb-0.5">Property</p>
+                  @if (row.propertyIdentifier) {
+                    <p class="text-sm font-semibold truncate">{{ row.propertyIdentifier }}</p>
+                  } @else {
+                    <p class="text-sm font-semibold truncate">{{ row.propertyName || 'N/A' }}</p>
+                  }
+                </div>
+              </div>
+              
+              <!-- Contact -->
+              <div class="flex flex-col items-center gap-2.5 flex-1">
+                @if (row.contactAvatarUrl) {
+                  <img
+                    [src]="row.contactAvatarUrl"
+                    [alt]="row.contactName"
+                    class="w-20 h-20 rounded-full object-cover border-2 border-border shadow-sm"
+                    [zImageHoverPreview]="row.contactAvatarUrl"
+                    [zAlt]="row.contactName"
+                    [zPosition]="'right'"
+                    [zMaxWidth]="'200px'"
+                    [zMaxHeight]="'200px'"
+                  />
+                } @else {
+                  <z-avatar
+                    [zImage]="{ fallback: getContactInitials(row) }"
+                    zType="default"
+                    zSize="lg"
+                    zShape="circle"
+                    class="w-20 h-20 border-2 border-border shadow-sm"
+                  />
+                }
+                <div class="text-center w-full">
+                  <p class="text-xs font-medium text-muted-foreground mb-0.5">Contact</p>
+                  <p class="text-sm font-semibold truncate">{{ row.contactName || 'N/A' }}</p>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Reservation Details -->
+            <div class="space-y-3 flex-1">
+              <!-- Property Address -->
+              @if (row.propertyAddress) {
+                <div class="flex items-center gap-2 text-sm pb-2 border-b border-border/50">
+                  <z-icon zType="map-pin" zSize="sm" class="text-muted-foreground flex-shrink-0" />
+                  <span class="text-muted-foreground truncate text-xs">{{ row.propertyAddress }}</span>
+                </div>
+              }
+              
+              <!-- Reservation Period -->
+              <div class="space-y-1.5">
+                <div class="flex items-center gap-2 text-sm">
+                  <z-icon zType="calendar" zSize="sm" class="text-muted-foreground flex-shrink-0" />
+                  <span class="text-muted-foreground text-xs">
+                    {{ formatDate(row.startDate) }} - {{ formatDate(row.endDate) }}
+                  </span>
+                </div>
+                @if (getDurationDays(row) > 0) {
+                  <div class="flex items-center gap-2 text-xs ml-6">
+                    <z-icon zType="clock" zSize="sm" class="text-muted-foreground/70 flex-shrink-0 w-3 h-3" />
+                    <span class="text-muted-foreground/70">{{ getDurationDays(row) }} day{{ getDurationDays(row) !== 1 ? 's' : '' }}</span>
+                  </div>
+                }
+              </div>
+              
+              <!-- Amount Information - Highlighted -->
+              <div class="bg-primary/5 dark:bg-primary/10 rounded-lg p-3 space-y-2 border border-primary/10">
+                <div class="flex items-center gap-2">
+                  <z-icon zType="banknote" zSize="sm" class="text-primary flex-shrink-0" />
+                  <span class="font-semibold text-base text-primary">{{ formatCurrency(row.totalAmount) }}</span>
+                </div>
+              </div>
+              
+              <!-- Contact Contact Info -->
+              @if (row.contactEmail || row.contactPhone) {
+                <div class="space-y-1.5 pt-1">
+                  @if (row.contactEmail) {
+                    <div class="flex items-center gap-2 text-xs">
+                      <z-icon zType="mail" zSize="sm" class="text-muted-foreground/70 flex-shrink-0 w-3 h-3" />
+                      <span class="text-muted-foreground/70 truncate">{{ row.contactEmail }}</span>
+                    </div>
+                  }
+                  @if (row.contactPhone) {
+                    <div class="flex items-center gap-2 text-xs">
+                      <z-icon zType="smartphone" zSize="sm" class="text-muted-foreground/70 flex-shrink-0 w-3 h-3" />
+                      <span class="text-muted-foreground/70">{{ row.contactPhone }}</span>
+                    </div>
+                  }
+                </div>
+              }
+              
+              <!-- Status Select -->
+              <div class="flex items-center justify-end pt-2">
+                <z-select
+                  [zValue]="row.status.toString()"
+                  [zLabel]="getStatusLabel(row.status)"
+                  [zDisabled]="isUpdatingStatus(row.id)"
+                  class="w-[140px]"
+                  (zSelectionChange)="onStatusChange(row, +$event)"
+                >
+                  @for (option of statusOptions; track option.value) {
+                    <z-select-item [zValue]="option.value.toString()">
+                      {{ option.label }}
+                    </z-select-item>
+                  }
+                </z-select>
+              </div>
+            </div>
+          </div>
         </ng-template>
       </z-datatable>
       </div>

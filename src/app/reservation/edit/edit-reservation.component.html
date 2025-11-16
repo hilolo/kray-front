@@ -224,6 +224,17 @@
                   </span>
                 </div>
               }
+
+              <!-- Date Conflict Error -->
+              @if (hasDateConflict()) {
+                <div class="flex items-start gap-2 p-3 rounded-md bg-destructive/10 border border-destructive/50">
+                  <z-icon zType="triangle-alert" zSize="sm" class="text-destructive flex-shrink-0 mt-0.5" />
+                  <div class="flex-1">
+                    <p class="text-sm font-medium text-destructive mb-1">Date Conflict Detected</p>
+                    <p class="text-sm text-destructive/90">{{ dateConflictError() }}</p>
+                  </div>
+                </div>
+              }
             </div>
 
             <!-- Reservation Details Section -->

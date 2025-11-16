@@ -328,22 +328,38 @@ namespace ImmoGest.Application.Services
                             {
                                 try
                                 {
-                                    // Generate contact folder name using helper
-                                    var contactFolder = _fileHelper.GetContactFolderNameFromProperties(
-                                        entity.Contact.FirstName,
-                                        entity.Contact.LastName,
-                                        entity.Contact.CompanyName,
-                                        entity.Contact.IsACompany,
-                                        entity.Contact.Id
-                                    );
+                                    var bucketName = _fileHelper.GetBucketName();
+                                    string key;
 
-                                    // Use helper to generate avatar URL
-                                    dto.ContactAvatarUrl = await _fileHelper.GenerateAvatarUrlAsync(
-                                        entity.CompanyId,
-                                        contactFolder,
-                                        entity.Contact.Avatar,
-                                        24
-                                    );
+                                    // Use hash-based key if available (new avatars), otherwise fallback to folder-based (old avatars)
+                                    if (!string.IsNullOrEmpty(entity.Contact.AvatarStorageHash))
+                                    {
+                                        // Use hash-based key (immutable, never changes even when name changes)
+                                        key = S3PathConstants.BuildContactAvatarKey(
+                                            entity.Contact.CompanyId.ToString(),
+                                            entity.Contact.AvatarStorageHash,
+                                            entity.Contact.Avatar
+                                        );
+                                    }
+                                    else
+                                    {
+                                        // Fallback for old avatars without hash (backward compatibility)
+                                        var contactFolder = _fileHelper.GetContactFolderNameFromProperties(
+                                            entity.Contact.FirstName,
+                                            entity.Contact.LastName,
+                                            entity.Contact.CompanyName,
+                                            entity.Contact.IsACompany,
+                                            entity.Contact.Id
+                                        );
+                                        key = S3PathConstants.BuildContactAvatarKeyWithFolder(
+                                            entity.Contact.CompanyId.ToString(),
+                                            contactFolder,
+                                            entity.Contact.Avatar
+                                        );
+                                    }
+
+                                    // Use cached URL (for avatars, we don't have an attachment entity, so pass null)
+                                    dto.ContactAvatarUrl = await _s3StorageService.GetOrGenerateCachedUrlAsync(bucketName, key, null, null, 24);
                                 }
                                 catch (Exception ex)
                                 {
