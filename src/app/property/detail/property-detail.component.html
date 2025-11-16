@@ -1,5 +1,312 @@
 <z-page zTitle="Property Details">
-  <div class="flex flex-col h-full min-h-0 overflow-auto">
-    <!-- Content will be added here -->
-  </div>
+  @if (isLoading()) {
+    <div class="flex items-center justify-center min-h-[400px]">
+      <div class="text-center space-y-4">
+        <z-icon zType="loader-circle" class="w-8 h-8 animate-spin mx-auto" />
+        <p class="text-sm text-muted-foreground">Loading property details...</p>
+      </div>
+    </div>
+  } @else if (property()) {
+    <!-- Header with Edit Button -->
+    <div class="flex items-center justify-between mb-6">
+      <div></div>
+      <z-button zType="default" [routerLink]="['/property', property()?.id]">
+        <z-icon zType="pencil" zSize="sm" />
+        Edit Property
+      </z-button>
+    </div>
+
+    <div class="flex flex-col lg:flex-row gap-6 h-full">
+      <!-- Left Section: Property Details -->
+      <div class="w-full lg:w-1/2 space-y-6 min-w-0">
+        <!-- Property Media -->
+        <z-card class="p-0 overflow-hidden" zBodySpacing="none">
+          <div class="relative w-full aspect-[4/3] bg-muted flex items-center justify-center overflow-hidden">
+            @if (currentImage()) {
+              <img [src]="currentImage()!" [alt]="propertyName()" class="w-full h-full object-cover" />
+            } @else {
+              <z-icon zType="image" class="w-12 h-12 text-muted-foreground" />
+            }
+            @if (attachments().length > 0) {
+              <div class="absolute top-2 left-2">
+                <z-button zType="ghost" zSize="sm" class="rounded-full bg-background/80" (click)="openImageViewer()">
+                  <z-icon zType="image" />
+                </z-button>
+              </div>
+              <div class="absolute top-2 right-2">
+                <z-button zType="ghost" zSize="sm" class="text-xs bg-background/80">
+                  {{ currentImageIndex() + 1 }} / {{ attachments().length }}
+                </z-button>
+              </div>
+              @if (attachments().length > 1) {
+                <div class="absolute left-2 top-1/2 -translate-y-1/2">
+                  <z-button zType="ghost" zSize="sm" class="rounded-full bg-background/80" (click)="previousImage()">
+                    <z-icon zType="chevron-left" />
+                  </z-button>
+                </div>
+                <div class="absolute right-2 top-1/2 -translate-y-1/2">
+                  <z-button zType="ghost" zSize="sm" class="rounded-full bg-background/80" (click)="nextImage()">
+                    <z-icon zType="chevron-right" />
+                  </z-button>
+                </div>
+              }
+            } @else {
+              <div class="absolute top-2 right-2">
+                <z-button zType="ghost" zSize="sm" class="text-xs bg-background/80">
+                  Add image
+                </z-button>
+              </div>
+            }
+          </div>
+        </z-card>
+
+        <!-- Property Identification -->
+        <z-card zBodySpacing="none">
+          <div class="flex items-start justify-between gap-4">
+            <div class="space-y-2 flex-1">
+              <h1 class="text-2xl font-semibold">{{ propertyName() }}</h1>
+              <p class="text-muted-foreground">{{ propertyType() }}</p>
+              <div class="flex items-center gap-2 text-sm text-muted-foreground">
+                <z-icon zType="map-pin" zSize="sm" />
+                <span>{{ propertyLocation() }}</span>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-2xl font-bold">
+                {{ property()?.price | propertyPrice: property()?.typePaiment }}
+              </div>
+            </div>
+          </div>
+        </z-card>
+
+        <!-- Information Sections -->
+        <z-accordion zType="multiple" [zDefaultValue]="['equipments', 'features', 'description', 'additional-info', 'financial-info']">
+          <z-accordion-item zValue="equipments" zTitle="Equipments">
+            @if (equipment().length > 0) {
+              <div class="flex flex-wrap gap-2">
+                @for (item of equipment(); track item) {
+                  <z-badge zType="secondary">{{ item }}</z-badge>
+                }
+              </div>
+            } @else {
+              <div class="text-sm text-muted-foreground">No equipments listed</div>
+            }
+          </z-accordion-item>
+
+          <z-accordion-item zValue="features" zTitle="Features">
+            @if (features().length > 0) {
+              <div class="flex flex-wrap gap-2">
+                @for (item of features(); track item) {
+                  <z-badge zType="secondary">{{ item }}</z-badge>
+                }
+              </div>
+            } @else {
+              <div class="text-sm text-muted-foreground">No features listed</div>
+            }
+          </z-accordion-item>
+
+          <z-accordion-item zValue="description" zTitle="Description">
+            <div class="text-sm text-muted-foreground">
+              {{ description() || 'No description available' }}
+            </div>
+          </z-accordion-item>
+
+          <z-accordion-item zValue="additional-info" zTitle="Additional info">
+            <div class="flex flex-wrap gap-2">
+              @for (item of additionalInfo(); track item) {
+                <z-badge zType="secondary" class="flex items-center gap-1">
+                  {{ item }}
+                  <button
+                    type="button"
+                    (click)="removeAdditionalInfo(item)"
+                    class="ml-1 hover:text-destructive"
+                  >
+                    <z-icon zType="x" zSize="sm" />
+                  </button>
+                </z-badge>
+              }
+            </div>
+          </z-accordion-item>
+
+          <z-accordion-item zValue="financial-info" zTitle="Financial info">
+            <div class="text-sm text-muted-foreground">No financial information available</div>
+          </z-accordion-item>
+        </z-accordion>
+
+      </div>
+
+      <!-- Right Section: Tenancy Management -->
+      <div class="w-full lg:w-1/2 space-y-6 min-w-0">
+        <z-card zBodySpacing="none">
+          <z-tab-group zTabsPosition="top" zActivePosition="bottom">
+            <z-tab label="FINANCE">
+              <div class="pt-4">
+                <p class="text-sm text-muted-foreground">Finance content coming soon</p>
+              </div>
+            </z-tab>
+            <z-tab label="TENANCIES">
+              <div class="pt-4 space-y-4">
+                <div class="flex items-center justify-between">
+                  <h3 class="text-lg font-semibold">Tenancies</h3>
+                  <z-button zType="default" zSize="sm">
+                    <z-icon zType="plus" zSize="sm" />
+                    Add new tenancy
+                  </z-button>
+                </div>
+
+                @if (isLoadingLeases()) {
+                  <div class="flex items-center justify-center py-8">
+                    <z-icon zType="loader-circle" class="w-6 h-6 animate-spin text-muted-foreground" />
+                  </div>
+                } @else {
+                  <div class="space-y-3">
+                    @for (lease of leases(); track lease.id) {
+                      <z-card class="p-4" zBodySpacing="none">
+                        <div class="space-y-2">
+                          <div class="flex items-center gap-2">
+                            <z-icon zType="user" zSize="sm" class="text-muted-foreground" />
+                            <span class="font-medium">{{ lease.tenantName || 'Unnamed tenancy' }}</span>
+                          </div>
+                          <p class="text-sm text-muted-foreground">{{ getLeaseType(lease) }}</p>
+                          <p class="text-sm text-muted-foreground">
+                            {{ formatDate(lease.tenancyStart) }} - {{ formatDate(lease.tenancyEnd) }}
+                          </p>
+                          <p class="text-sm font-medium">
+                            Rent: £{{ lease.rentPrice.toFixed(2) }} / M
+                          </p>
+                        </div>
+                      </z-card>
+                    }
+                    @if (leases().length === 0) {
+                      <div class="text-center py-8 text-sm text-muted-foreground">
+                        No tenancies found
+                      </div>
+                    }
+                  </div>
+                }
+
+                @if (leases().length > 0) {
+                  <z-button zType="ghost" zSize="sm" class="w-full">
+                    Show all
+                  </z-button>
+                }
+              </div>
+            </z-tab>
+            <z-tab label="CERTIFICATES & CONTRACTS">
+              <div class="pt-4">
+                <p class="text-sm text-muted-foreground">Certificates & Contracts content coming soon</p>
+              </div>
+            </z-tab>
+            <z-tab label="DOCUMENTS">
+              <div class="pt-4">
+                <p class="text-sm text-muted-foreground">Documents content coming soon</p>
+              </div>
+            </z-tab>
+          </z-tab-group>
+        </z-card>
+
+        <!-- Calendar and Public Profile -->
+        <z-card zBodySpacing="none">
+          <div class="space-y-6">
+            <!-- Calendar Link -->
+            <div class="space-y-2">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-medium">Link to calendar with availability</span>
+                <z-icon zType="info" zSize="sm" class="text-muted-foreground" />
+              </div>
+              <z-input-group>
+                <input
+                  z-input
+                  type="text"
+                  [ngModel]="calendarLink()"
+                  readonly
+                  class="flex-1"
+                />
+                <ng-container zSuffix>
+                  <z-button zType="ghost" zSize="sm">
+                    <z-icon zType="ellipsis" />
+                  </z-button>
+                </ng-container>
+              </z-input-group>
+              <p class="text-xs text-muted-foreground">
+                Use this iCal link to synchronize with external services such as Airbnb and Google Calendar.
+              </p>
+              <div class="flex flex-wrap gap-2 pt-2">
+                <z-button 
+                  zType="outline" 
+                  zSize="sm"
+                  (click)="generateICalFile()"
+                >
+                  <z-icon zType="calendar" zSize="sm" class="mr-2" />
+                  Generate iCal File
+                </z-button>
+                <z-button 
+                  zType="outline" 
+                  zSize="sm"
+                  (click)="shareICalViaWhatsApp()"
+                >
+                  <z-icon zType="message-circle" zSize="sm" class="mr-2" />
+                  Share via WhatsApp
+                </z-button>
+              </div>
+            </div>
+
+            <!-- Calendar Sync -->
+            <div class="space-y-2">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-medium">Calendar sync</span>
+                <z-icon zType="info" zSize="sm" class="text-muted-foreground" />
+              </div>
+              <p class="text-xs text-muted-foreground">
+                Import this other calendars you use. Rentila will automatically update the availability of this accommodation.
+                <z-button zType="link" zSize="sm" class="p-0 h-auto text-xs">
+                  Click here.
+                </z-button>
+              </p>
+            </div>
+
+            <!-- Public Profile -->
+            <div class="space-y-2">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-medium">Public property profile</span>
+                <z-icon zType="info" zSize="sm" class="text-muted-foreground" />
+              </div>
+              <z-input-group>
+                <input
+                  z-input
+                  type="text"
+                  [ngModel]="publicProfileLink()"
+                  readonly
+                  class="flex-1"
+                />
+                <ng-container zSuffix>
+                  <z-button zType="ghost" zSize="sm">
+                    <z-icon zType="ellipsis" />
+                  </z-button>
+                </ng-container>
+              </z-input-group>
+            </div>
+          </div>
+        </z-card>
+      </div>
+    </div>
+  } @else {
+    <div class="flex items-center justify-center min-h-[400px]">
+      <div class="text-center space-y-4">
+        <p class="text-sm text-muted-foreground">Property not found</p>
+        <z-button zType="default" (click)="router.navigate(['/property'])">
+          Back to Properties
+        </z-button>
+      </div>
+    </div>
+  }
+
+  <!-- Image Viewer -->
+  <z-image-viewer
+    [isOpen]="isImageViewerOpen()"
+    [images]="imageItems()"
+    [currentIndex]="imageViewerIndex()"
+    (close)="closeImageViewer()"
+    (imageChanged)="onImageChanged($event)"
+  />
 </z-page>

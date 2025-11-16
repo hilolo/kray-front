@@ -10,7 +10,15 @@ export const cardHeaderVariants = cva('flex flex-col space-y-1.5 pb-0 gap-1.5', 
 });
 export type ZardCardHeaderVariants = VariantProps<typeof cardHeaderVariants>;
 
-export const cardBodyVariants = cva('block mt-6', {
-  variants: {},
+export const cardBodyVariants = cva('block', {
+  variants: {
+    zSpacing: {
+      default: 'mt-6',
+      none: 'mt-0',
+    },
+  },
+  defaultVariants: {
+    zSpacing: 'default',
+  },
 });
 export type ZardCardBodyVariants = VariantProps<typeof cardBodyVariants>;
