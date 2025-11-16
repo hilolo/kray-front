@@ -1,23 +1,31 @@
-<z-layout class="h-screen" zDirection="vertical">
-  <app-header [zOnMobileMenuClick]="onMobileMenuClick" />
+<z-layout class="h-screen" zDirection="horizontal">
+  <app-sidebar
+    #sidebarRef
+    [zSidebarWidth]="zSidebarWidth()"
+    [zSidebarItems]="zSidebarItems()"
+    [zUserName]="zUserName()"
+    [zUserEmail]="zUserEmail()"
+    [zUserAvatar]="zUserAvatar()"
+  />
   
-  <z-layout class="flex-1 min-h-0" zDirection="horizontal">
-    <app-sidebar
-      #sidebarRef
-      [zSidebarWidth]="zSidebarWidth()"
-      [zSidebarItems]="zSidebarItems()"
-      [zUserName]="zUserName()"
-      [zUserEmail]="zUserEmail()"
-      [zUserAvatar]="zUserAvatar()"
+  <z-layout class="flex-1 min-h-0 flex flex-col" zDirection="vertical">
+    <app-header 
+      [zOnMobileMenuClick]="onMobileMenuClick"
+      [zOnSidebarToggle]="sidebarToggle"
+      [zSidebarCollapsed]="sidebarCollapsed()"
     />
     
     <z-content 
-      class="!min-h-0"
+      class="!min-h-0 flex-1"
       [zSidebarToggle]="sidebarToggle"
       [zSidebarCollapsed]="sidebarCollapsed()"
     >
       <ng-content></ng-content>
     </z-content>
+    
+    <z-footer>
+      <!-- Footer content can be added here -->
+    </z-footer>
   </z-layout>
 </z-layout>
 

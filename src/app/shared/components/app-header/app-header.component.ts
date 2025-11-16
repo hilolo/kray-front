@@ -33,11 +33,12 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
 
   readonly zOnMobileMenuClick = input<() => void>();
+  readonly zOnSidebarToggle = input<(() => void) | null>(null);
+  readonly zSidebarCollapsed = input<boolean>(false);
   readonly class = input<ClassValue>('');
 
   readonly currentLanguage = this.languageService.getCurrentLanguageSignal();
   readonly currentTheme = this.darkmodeService.getCurrentThemeSignal();
-  readonly logoError = signal(false);
   readonly isFullscreen = signal(false);
 
   ngOnInit(): void {
@@ -55,6 +56,13 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
 
   onMobileMenuClick(): void {
     const handler = this.zOnMobileMenuClick();
+    if (handler) {
+      handler();
+    }
+  }
+
+  onSidebarToggle(): void {
+    const handler = this.zOnSidebarToggle();
     if (handler) {
       handler();
     }

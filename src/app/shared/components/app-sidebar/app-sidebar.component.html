@@ -8,6 +8,23 @@
   class="hidden md:flex h-full"
 >
   <div class="flex flex-col h-full p-2">
+    <!-- Logo Section -->
+    <div class="flex items-center gap-3 px-2 py-4 mb-2 flex-shrink-0" [class.justify-center]="sidebarCollapsed()" [class.justify-start]="!sidebarCollapsed()">
+      @if (!logoError()) {
+        <img 
+          [src]="currentTheme() === 'dark' ? '/assets/logo-white.svg' : '/assets/logo.svg'" 
+          alt="Logo" 
+          [class]="sidebarCollapsed() ? 'h-8 w-8' : 'h-8 w-auto'"
+          (error)="logoError.set(true)"
+        />
+      } @else {
+        <span [class]="sidebarCollapsed() ? 'text-sm font-semibold' : 'text-lg font-semibold'">Logo</span>
+      }
+      @if (!sidebarCollapsed()) {
+        <span class="text-sidebar-foreground/60 text-lg font-medium">Kray</span>
+      }
+    </div>
+    
     <z-sidebar-group class="flex-1 min-h-0">
       <nav class="flex flex-col gap-0.5">
         @for (item of zSidebarItems(); track item.route) {
@@ -87,6 +104,21 @@
 <!-- Mobile Sidebar Template (for Sheet) -->
 <ng-template #mobileSidebarTemplate>
   <div class="flex flex-col h-full">
+    <!-- Logo Section (Mobile) -->
+    <div class="flex items-center gap-3 px-2 py-4 mb-2 flex-shrink-0">
+      @if (!logoError()) {
+        <img 
+          [src]="currentTheme() === 'dark' ? '/assets/logo-white.svg' : '/assets/logo.svg'" 
+          alt="Logo" 
+          class="h-8 w-auto"
+          (error)="logoError.set(true)"
+        />
+      } @else {
+        <span class="text-lg font-semibold">Logo</span>
+      }
+      <span class="text-sidebar-foreground/60 text-lg font-medium">Kray</span>
+    </div>
+    
     <z-sidebar-group class="flex-1">
       <nav class="flex flex-col gap-0.5 p-3">
         @for (item of zSidebarItems(); track item.route) {

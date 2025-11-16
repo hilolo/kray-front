@@ -1,6 +1,6 @@
 <z-header>
   <div class="grid grid-cols-2 md:grid-cols-3 items-center h-full w-full gap-4">
-    <!-- Left Section: Burger Menu (Mobile) + Logo -->
+    <!-- Left Section: Burger Menu (Mobile) + Collapse Sidebar (Desktop) -->
     <div class="flex items-center gap-4 flex-shrink-0">
       <!-- Burger Menu Button (Mobile Only) -->
       <z-button
@@ -13,19 +13,22 @@
         <z-icon zType="panel-left" />
       </z-button>
       
-      @if (!logoError()) {
-        <img 
-          [src]="currentTheme() === 'dark' ? '/assets/logo-white.svg' : '/assets/logo.svg'" 
-          alt="Logo" 
-          class="h-8 w-auto"
-          (error)="logoError.set(true)"
-        />
-      } @else {
-        <span class="text-lg font-semibold">Logo</span>
+      <!-- Collapse Sidebar Button (Desktop Only) -->
+      @if (zOnSidebarToggle()) {
+        <z-button
+          zType="ghost"
+          zSize="icon"
+          class="hidden md:flex"
+          (click)="onSidebarToggle()"
+          [attr.aria-label]="zSidebarCollapsed() ? ('Expand sidebar' | translate) : ('Collapse sidebar' | translate)"
+          [attr.aria-expanded]="!zSidebarCollapsed()"
+        >
+          <z-icon zType="panel-left" />
+        </z-button>
       }
     </div>
     
-    <!-- Center Section: Search Input (Hidden on Mobile) -->
+    <!-- Center Section: Search Input -->
     <div class="hidden md:flex items-center justify-center">
       <button
         type="button"

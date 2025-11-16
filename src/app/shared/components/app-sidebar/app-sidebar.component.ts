@@ -15,6 +15,7 @@ import { UserService } from '@shared/services/user.service';
 import { AuthService } from '@shared/services/auth.service';
 import { ZardAlertDialogService } from '@shared/components/alert-dialog/alert-dialog.service';
 import { ZardTooltipModule } from '@shared/components/tooltip/tooltip';
+import { DarkModeService } from '@shared/services/darkmode.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -36,6 +37,7 @@ export class AppSidebarComponent implements OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly alertDialogService = inject(ZardAlertDialogService);
   private readonly translateService = inject(TranslateService);
+  private readonly darkmodeService = inject(DarkModeService);
   private readonly destroy$ = new Subject<void>();
   private readonly storageKey = 'sidebarCollapsed';
 
@@ -93,6 +95,8 @@ export class AppSidebarComponent implements OnDestroy {
   });
 
   readonly sidebarCollapsed = signal(this.loadCollapsedState());
+  readonly currentTheme = this.darkmodeService.getCurrentThemeSignal();
+  readonly logoError = signal(false);
   private mobileSidebarRef: ZardSheetRef | null = null;
 
   constructor() {
