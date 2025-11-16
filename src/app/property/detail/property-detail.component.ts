@@ -24,6 +24,8 @@ import { TranslateModule } from '@ngx-translate/core';
 import { generateICalFile, downloadICalFile, shareICalViaWhatsApp, type ICalEventData } from '@shared/utils/ical.util';
 import { ToastService } from '@shared/services/toast.service';
 import { ZardSwitchComponent } from '@shared/components/switch/switch.component';
+import { ZardAvatarComponent } from '@shared/components/avatar/avatar.component';
+import { PaymentMethod, TypePaimentLease } from '@shared/models/lease/lease.model';
 
 @Component({
   selector: 'app-property-detail',
@@ -47,6 +49,7 @@ import { ZardSwitchComponent } from '@shared/components/switch/switch.component'
     PropertyPricePipe,
     TranslateModule,
     ZardSwitchComponent,
+    ZardAvatarComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './property-detail.component.html',
@@ -216,6 +219,122 @@ export class PropertyDetailComponent implements OnInit {
     // Map payment type to lease type description
     // This is a simplified mapping - adjust based on your business logic
     return 'Assured shorthold tenancy';
+  }
+
+  getPaymentMethodLabel(method: PaymentMethod): string {
+    switch (method) {
+      case PaymentMethod.Cash:
+        return 'Cash';
+      case PaymentMethod.BankTransfer:
+        return 'Bank Transfer';
+      case PaymentMethod.Check:
+        return 'Check';
+      default:
+        return 'Unknown';
+    }
+  }
+
+  // Owner information helpers
+  getOwnerName(): string {
+    const prop = this.property();
+    if (!prop) return '';
+    
+    // First try ownerName from property
+    if (prop.ownerName) {
+      return prop.ownerName;
+    }
+    
+    // Then try contact object
+    if (prop.contact) {
+      // If companyName exists and is not empty, it's a company
+      if (prop.contact.companyName && prop.contact.companyName.trim() !== '') {
+        return prop.contact.companyName;
+      } else {
+        // Otherwise, it's a person - use firstName and lastName
+        const firstName = prop.contact.firstName || '';
+        const lastName = prop.contact.lastName || '';
+        return `${firstName} ${lastName}`.trim();
+      }
+    }
+    
+    return 'Unknown Owner';
+  }
+
+  getOwnerInitials(): string {
+    const prop = this.property();
+    if (!prop || !prop.contact) return 'UO';
+    
+    if (prop.contact.companyName && prop.contact.companyName.trim() !== '') {
+      // Company: use first 2 letters of company name
+      return prop.contact.companyName.substring(0, 2).toUpperCase();
+    } else {
+      // Person: use first letter of first and last name
+      const firstName = prop.contact.firstName || '';
+      const lastName = prop.contact.lastName || '';
+      const firstInitial = firstName.charAt(0).toUpperCase();
+      const lastInitial = lastName.charAt(0).toUpperCase();
+      return (firstInitial + lastInitial) || 'UO';
+    }
+  }
+
+  getOwnerEmail(): string {
+    const prop = this.property();
+    return prop?.contact?.email || '';
+  }
+
+  getOwnerPhones(): string[] {
+    const prop = this.property();
+    return prop?.contact?.phones || [];
+  }
+
+  getOwnerIdentifier(): string {
+    const prop = this.property();
+    return prop?.contact?.identifier || '';
+  }
+
+  getOwnerAvatarUrl(): string | null {
+    const prop = this.property();
+    return prop?.contact?.avatar || null;
+  }
+
+  viewOwnerProfile(): void {
+    const prop = this.property();
+    if (!prop || !prop.contactId) return;
+    this.router.navigate(['/contact/owners', prop.contactId]);
+  }
+
+  getTenantInitials(lease: Lease): string {
+    const name = lease.tenantName || '';
+    if (!name) return 'TN';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  }
+
+  formatLeasePrice(price: number, paymentType: TypePaimentLease): string {
+    if (!price || price === 0) {
+      return '-';
+    }
+
+    const formattedPrice = price.toLocaleString('en-US', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    });
+
+    switch (paymentType) {
+      case TypePaimentLease.Monthly:
+        return `${formattedPrice} MAD/month`;
+      case TypePaimentLease.Quarterly:
+        return `${formattedPrice} MAD/quarter`;
+      case TypePaimentLease.SemiAnnually:
+        return `${formattedPrice} MAD/6 months`;
+      case TypePaimentLease.Fully:
+        return `${formattedPrice} MAD (full payment)`;
+      default:
+        return `${formattedPrice} MAD`;
+    }
   }
 
   openImageViewer(): void {

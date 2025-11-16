@@ -76,6 +76,7 @@ export interface Contact {
   identifier: string;
   email: string;
   phones: string[];
+  avatar: string | null;
   // Add other contact properties as needed
 }
 
