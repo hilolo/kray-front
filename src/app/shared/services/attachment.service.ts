@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
 import type { FileManagerResponse } from '../models/attachment/file-manager-item.model';
+import type { StorageUsage } from '../models/attachment/storage-usage.model';
 
 /**
  * Service for attachment-related API calls
@@ -65,6 +66,15 @@ export class AttachmentService {
 
     // Don't set Content-Type header - let HttpClient set it automatically with boundary for FormData
     return this.apiService.post<void>('Attachment/upload-multipart', formData);
+  }
+
+  /**
+   * Get storage usage information
+   * GET api/Attachment/storage-usage
+   * @returns Observable of storage usage information
+   */
+  getStorageUsage(): Observable<StorageUsage> {
+    return this.apiService.get<StorageUsage>('Attachment/storage-usage');
   }
 }
 

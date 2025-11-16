@@ -1,0 +1,52 @@
+<svg
+  class="transform -rotate-90"
+  [attr.width]="radius() * 2 + 8"
+  [attr.height]="radius() * 2 + 8"
+  [attr.viewBox]="'0 0 ' + (radius() * 2 + 8) + ' ' + (radius() * 2 + 8)"
+>
+  <!-- Background circle -->
+  <circle
+    [attr.cx]="radius() + 4"
+    [attr.cy]="radius() + 4"
+    [attr.r]="radius()"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="4"
+    class="text-muted-foreground/30 dark:text-muted-foreground/20"
+  />
+  <!-- Progress circle -->
+  <circle
+    [attr.cx]="radius() + 4"
+    [attr.cy]="radius() + 4"
+    [attr.r]="radius()"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="4"
+    stroke-linecap="round"
+    [attr.stroke-dasharray]="circumference()"
+    [attr.stroke-dashoffset]="strokeDashoffset()"
+    class="transition-all duration-300 ease-in-out"
+    [class.text-primary]="zType() === 'default'"
+    [class.text-destructive]="zType() === 'destructive'"
+    [class.text-green-500]="zType() === 'success'"
+    [class.text-yellow-500]="zType() === 'warning'"
+    [class.dark:text-primary]="zType() === 'default'"
+    [class.dark:text-destructive]="zType() === 'destructive'"
+    [class.dark:text-green-500]="zType() === 'success'"
+    [class.dark:text-yellow-500]="zType() === 'warning'"
+  />
+</svg>
+@if (showLabel()) {
+  <div class="absolute inset-0 flex items-center justify-center">
+    <span
+      class="text-[10px] font-bold leading-none"
+      [class.text-primary]="zType() === 'default'"
+      [class.text-destructive]="zType() === 'destructive'"
+      [class.text-green-500]="zType() === 'success'"
+      [class.text-yellow-500]="zType() === 'warning'"
+    >
+      {{ displayLabel() }}
+    </span>
+  </div>
+}
+

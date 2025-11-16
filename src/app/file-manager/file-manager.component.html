@@ -2,27 +2,53 @@
   <div class="space-y-6">
       <!-- Header with Search and Actions -->
       <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <!-- Search Input -->
-        <div class="relative flex-1 max-w-md">
-          <z-icon zType="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" zSize="sm" />
-          <input
-            z-input
-            type="text"
-            placeholder="Search files and folders..."
-            [value]="searchTerm()"
-            (input)="onSearchChange($event)"
-            class="pl-9 w-full"
-          />
+        <!-- Search Input with Storage Indicator -->
+        <div class="flex items-center gap-3 flex-1 max-w-2xl">
+          <div class="relative flex-1 max-w-md">
+            <z-icon zType="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" zSize="sm" />
+            <input
+              z-input
+              type="text"
+              placeholder="Search files and folders..."
+              [value]="searchTerm()"
+              (input)="onSearchChange($event)"
+              class="pl-9 w-full"
+            />
+          </div>
+          <!-- Storage Usage Indicator and Reset Button -->
+          <div class="flex items-center gap-2">
+            @if (storageUsage()) {
+              <div class="flex items-center gap-1.5 px-2 py-1.5 rounded-md border bg-background dark:bg-muted/50 border-border">
+                <z-circular-progress
+                  [progress]="storageUsagePercentage()"
+                  [zType]="storageUsageType()"
+                  zSize="sm"
+                  [showLabel]="false"
+                  class="flex-shrink-0 !w-8 !h-8"
+                />
+                <div class="flex flex-col">
+                  <span class="text-[11px] font-medium leading-none text-foreground">{{ storageUsageText() }}</span>
+                  <span class="text-[9px] text-muted-foreground leading-none mt-0.5">{{ storageUsagePercentage() }}% used</span>
+                </div>
+              </div>
+            }
+            <!-- Reset button -->
+            @if (hasSearchTerm()) {
+              <z-button 
+                zType="outline" 
+                zSize="sm" 
+                class="gap-1.5 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
+                (click)="clearSearch()"
+              >
+                <z-icon zType="x" zSize="sm" />
+                <span>Reset</span>
+              </z-button>
+            }
+          </div>
         </div>
         
         <!-- Action Buttons -->
-        <div class="flex items-center gap-2">
-          @if (canNavigateBack()) {
-            <z-button zType="ghost" zSize="default" (click)="navigateBack()" [disabled]="isLoading()">
-              <z-icon zType="chevron-left" class="mr-2" />
-              Back
-            </z-button>
-          }
+        <div class="flex items-center gap-2" style="overflow: visible;">
           <z-button zType="ghost" zSize="default" (click)="refresh()" [disabled]="isLoading()">
             <z-icon zType="refresh-cw" class="mr-2" [class.animate-spin]="isLoading()" />
             Refresh
@@ -62,6 +88,12 @@
 
       <!-- Current Path Breadcrumb -->
       <div class="flex items-center gap-2">
+        @if (canNavigateBack()) {
+          <z-button zType="ghost" zSize="sm" (click)="navigateBack()" [disabled]="isLoading()">
+            <z-icon zType="chevron-left" class="mr-1" />
+            Back
+          </z-button>
+        }
         <z-breadcrumb>
           <z-breadcrumb-list>
             @for (segment of pathSegments(); track segment.root ?? 'root'; let i = $index) {

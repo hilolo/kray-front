@@ -15,10 +15,12 @@ import { fileManagerVariants } from './file-manager.variants';
 import { ZardFileViewerComponent } from '@shared/components/file-viewer/file-viewer.component';
 import { AttachmentService } from '@shared/services/attachment.service';
 import type { FileManagerItem as ApiFileManagerItem } from '@shared/models/attachment/file-manager-item.model';
+import type { StorageUsage } from '@shared/models/attachment/storage-usage.model';
 import { catchError, finalize } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { ImageItem } from '@shared/image-viewer/image-viewer.component';
 import { getFileViewerType } from '@shared/utils/file-type.util';
+import { ZardCircularProgressComponent } from '@shared/components/circular-progress/circular-progress.component';
 
 export interface FileItem {
   id: string;
@@ -52,6 +54,7 @@ export type FileManagerItem = FileItem | FolderItem;
     ZardInputDirective,
     ZardBreadcrumbModule,
     ZardFileViewerComponent,
+    ZardCircularProgressComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
@@ -90,11 +93,21 @@ export class FileManagerComponent implements OnInit {
   readonly fileViewerImages = signal<ImageItem[]>([]); // All images for navigation
   readonly fileViewerCurrentIndex = signal<number>(0); // Current image index
 
+  // Storage usage
+  readonly storageUsage = signal<StorageUsage | null>(null);
+  readonly isLoadingStorageUsage = signal(false);
+  readonly storageLimitBytes = 1073741824; // 1 GB in bytes
+
   protected readonly classes = computed(() => mergeClasses(fileManagerVariants(), this.class()));
 
   // Check if any files are selected
   readonly hasSelectedFiles = computed(() => {
     return this.selectedFileIds().size > 0;
+  });
+
+  // Check if search has active value
+  readonly hasSearchTerm = computed(() => {
+    return this.searchTerm().trim().length > 0;
   });
 
   // Check if all files are selected
@@ -453,6 +466,13 @@ export class FileManagerComponent implements OnInit {
     this.loadFileManagerData(this.currentRoot());
   }
 
+  // Clear search term
+  clearSearch(): void {
+    this.searchTerm.set('');
+    // Reload data without search term
+    this.loadFileManagerData(this.currentRoot());
+  }
+
   // Upload new file(s)
   uploadFile(): void {
     // Create a file input element
@@ -504,6 +524,8 @@ export class FileManagerComponent implements OnInit {
           
           // Refresh file list to show newly uploaded files
           this.refresh();
+          // Reload storage usage after upload
+          this.loadStorageUsage();
         },
         error: () => {
           // Error already handled in catchError and by ApiService
@@ -603,6 +625,8 @@ export class FileManagerComponent implements OnInit {
                 // Success - clear selections and refresh
                 this.selectedFileIds.set(new Set());
                 this.refresh();
+                // Reload storage usage after deletion
+                this.loadStorageUsage();
               },
               error: () => {
                 // Error already handled in catchError and by ApiService
@@ -647,10 +671,85 @@ export class FileManagerComponent implements OnInit {
     this.loadFileManagerData(root);
   }
 
+  /**
+   * Format bytes to human-readable string
+   */
+  formatBytes(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+  }
+
+  /**
+   * Get storage usage percentage
+   */
+  readonly storageUsagePercentage = computed(() => {
+    const usage = this.storageUsage();
+    if (!usage) return 0;
+    return usage.usedPercentage;
+  });
+
+  /**
+   * Get storage usage type based on percentage
+   */
+  readonly storageUsageType = computed(() => {
+    const percentage = this.storageUsagePercentage();
+    if (percentage >= 90) return 'destructive';
+    if (percentage >= 75) return 'warning';
+    return 'default';
+  });
+
+  /**
+   * Get formatted storage usage text
+   */
+  readonly storageUsageText = computed(() => {
+    const usage = this.storageUsage();
+    if (!usage) return '0 / 1 GB';
+    const used = this.formatBytes(usage.usedBytes);
+    const limit = this.formatBytes(this.storageLimitBytes);
+    return `${used} / ${limit}`;
+  });
+
+  /**
+   * Get storage usage percentage label for circular progress
+   */
+  readonly storageUsageLabel = computed(() => {
+    return `${Math.round(this.storageUsagePercentage())}%`;
+  });
+
+  /**
+   * Load storage usage from API
+   */
+  loadStorageUsage(): void {
+    this.isLoadingStorageUsage.set(true);
+    this.attachmentService.getStorageUsage()
+      .pipe(
+        catchError((error) => {
+          console.error('Error loading storage usage:', error);
+          return of(null);
+        }),
+        finalize(() => this.isLoadingStorageUsage.set(false))
+      )
+      .subscribe((usage) => {
+        if (usage) {
+          // Ensure limit is set to 1GB
+          this.storageUsage.set({
+            ...usage,
+            limitBytes: this.storageLimitBytes,
+            usedPercentage: Math.min(100, Math.round((usage.usedBytes / this.storageLimitBytes) * 100)),
+          });
+        }
+      });
+  }
+
   // Initialize component
   ngOnInit(): void {
     // Load initial data
     this.loadFileManagerData();
+    // Load storage usage
+    this.loadStorageUsage();
   }
 }
 
