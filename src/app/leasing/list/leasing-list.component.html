@@ -26,17 +26,70 @@
                 (input)="onSearchInputChange($any($event.target).value)"
               />
             </div>
-            <!-- Status select -->
-            <div class="w-full sm:w-[200px]">
-              <z-select [ngModel]="selectedStatus()" (ngModelChange)="onStatusChange($event)">
-                @for (option of statusOptions; track option.value) {
-                  <z-select-item [zValue]="option.value?.toString() || ''">{{ option.label }}</z-select-item>
-                }
-              </z-select>
+            <!-- Owner filter -->
+            <div class="w-full sm:w-[250px]">
+              <z-combobox
+                #ownerCombobox
+                [options]="ownerOptions()"
+                [value]="selectedOwner()"
+                [disabled]="isLoadingOwners()"
+                [placeholder]="'All Owners'"
+                [searchPlaceholder]="'Search owners...'"
+                [emptyText]="'No owners found'"
+                [zWidth]="'lg'"
+                (zValueChange)="onOwnerChange($event)"
+              />
+            </div>
+            <!-- Property filter -->
+            <div class="w-full sm:w-[250px]">
+              <z-combobox
+                #propertyCombobox
+                [options]="propertyOptions()"
+                [value]="selectedProperty()"
+                [disabled]="isLoadingProperties()"
+                [placeholder]="'All Properties'"
+                [searchPlaceholder]="'Search properties...'"
+                [emptyText]="'No properties found'"
+                [zWidth]="'lg'"
+                (zValueChange)="onPropertyChange($event)"
+              />
             </div>
           </div>
           <!-- Buttons on right -->
           <div class="flex gap-2 items-center ml-auto">
+            @if (hasActiveFilters()) {
+              <z-button 
+                zType="outline" 
+                zSize="default" 
+                class="gap-2 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground" 
+                (click)="onResetFilters()"
+              >
+                <z-icon zType="x" zSize="sm" />
+                <span>Reset</span>
+              </z-button>
+            }
+            @if (hasSelectedItems()) {
+              <z-button 
+                zType="outline" 
+                zSize="default" 
+                class="gap-2" 
+                [disabled]="isArchiving() || !canArchiveSelected()"
+                (click)="onBulkArchive()"
+              >
+                <z-icon zType="folder" zSize="sm" />
+                <span>Archive ({{ archiveableCount() }})</span>
+              </z-button>
+              <z-button 
+                zType="outline" 
+                zSize="default" 
+                class="gap-2" 
+                [disabled]="isArchiving() || !canUnarchiveSelected()"
+                (click)="onBulkUnarchive()"
+              >
+                <z-icon zType="folder-open" zSize="sm" />
+                <span>Activate ({{ unarchiveableCount() }})</span>
+              </z-button>
+            }
             <z-button zType="outline" zSize="default" class="gap-2" (click)="onViewModeChange(viewMode() === 'list' ? 'card' : 'list')">
               @if (viewMode() === 'list') {
                 <z-icon zType="layout-dashboard" zSize="sm" />

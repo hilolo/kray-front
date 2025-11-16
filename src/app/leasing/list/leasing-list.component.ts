@@ -19,6 +19,7 @@ import { ZardSelectComponent } from '@shared/components/select/select.component'
 import { ZardSelectItemComponent } from '@shared/components/select/select-item.component';
 import { ZardImageHoverPreviewDirective } from '@shared/components/image-hover-preview/image-hover-preview.component';
 import { ZardSwitchComponent } from '@shared/components/switch/switch.component';
+import { ZardComboboxComponent, ZardComboboxOption } from '@shared/components/combobox/combobox.component';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import type { Lease } from '@shared/models/lease/lease.model';
@@ -28,6 +29,11 @@ import { LeaseService } from '@shared/services/lease.service';
 import { RoutePreferencesService } from '@shared/services/route-preferences.service';
 import { ToastService } from '@shared/services/toast.service';
 import { UserService } from '@shared/services/user.service';
+import { ContactService } from '@shared/services/contact.service';
+import { PropertyService } from '@shared/services/property.service';
+import type { Contact } from '@shared/models/contact/contact.model';
+import { ContactType } from '@shared/models/contact/contact.model';
+import type { Property } from '@shared/models/property/property.model';
 
 @Component({
   selector: 'app-leasing-list',
@@ -49,6 +55,7 @@ import { UserService } from '@shared/services/user.service';
     ZardPaginationComponent,
     ZardSelectComponent,
     ZardSelectItemComponent,
+    ZardComboboxComponent,
     ZardImageHoverPreviewDirective,
     ZardSwitchComponent,
     TranslateModule,
@@ -66,6 +73,8 @@ export class LeasingListComponent implements OnInit, OnDestroy {
   private readonly preferencesService = inject(RoutePreferencesService);
   private readonly toastService = inject(ToastService);
   private readonly userService = inject(UserService);
+  private readonly contactService = inject(ContactService);
+  private readonly propertyService = inject(PropertyService);
   private readonly destroy$ = new Subject<void>();
   private readonly searchInputSubject = new Subject<string>();
 
@@ -81,9 +90,31 @@ export class LeasingListComponent implements OnInit, OnDestroy {
   readonly leases = signal<Lease[]>([]);
   readonly isLoading = signal(false);
   readonly isDeleting = signal(false);
+  readonly isArchiving = signal(false);
   readonly totalPages = signal(1);
   readonly totalItems = signal(0);
-  readonly selectedStatus = signal<LeasingStatus | null>(null);
+  readonly selectedOwner = signal<string | null>(null);
+  readonly selectedProperty = signal<string | null>(null);
+  
+  // Owners and Properties for filtering
+  readonly owners = signal<Contact[]>([]);
+  readonly ownerOptions = signal<ZardComboboxOption[]>([]);
+  readonly isLoadingOwners = signal(false);
+  
+  readonly properties = signal<Property[]>([]);
+  readonly propertyOptions = signal<ZardComboboxOption[]>([]);
+  readonly isLoadingProperties = signal(false);
+
+  // Template references for comboboxes (to reset internal values)
+  readonly ownerComboboxRef = viewChild<ZardComboboxComponent>('ownerCombobox');
+  readonly propertyComboboxRef = viewChild<ZardComboboxComponent>('propertyCombobox');
+
+  // Check if any filters are active
+  readonly hasActiveFilters = computed(() => {
+    return (this.searchQuery() && this.searchQuery().trim() !== '') || 
+           this.selectedOwner() !== null || 
+           this.selectedProperty() !== null;
+  });
 
   // Template references for custom cells
   readonly propertyCell = viewChild<TemplateRef<any>>('propertyCell');
@@ -131,13 +162,6 @@ export class LeasingListComponent implements OnInit, OnDestroy {
     },
   ]);
 
-  readonly statusOptions = [
-    { value: null, label: 'All Statuses' },
-    { value: LeasingStatus.Active, label: 'Active' },
-    { value: LeasingStatus.Expired, label: 'Expired' },
-    { value: LeasingStatus.Terminated, label: 'Terminated' },
-    { value: LeasingStatus.Pending, label: 'Pending' },
-  ];
 
   readonly emptyMessage = computed(() => {
     if (this.showArchived()) {
@@ -177,6 +201,8 @@ export class LeasingListComponent implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
+    this.loadOwners();
+    this.loadProperties();
     this.loadLeases();
   }
 
@@ -196,7 +222,8 @@ export class LeasingListComponent implements OnInit, OnDestroy {
       ignore: false,
       searchQuery: this.searchQuery() || undefined,
       companyId: companyId,
-      status: this.selectedStatus() || undefined,
+      propertyId: this.selectedProperty() || undefined,
+      contactId: this.selectedOwner() || undefined,
       isArchived: this.showArchived() || undefined,
     };
 
@@ -241,9 +268,120 @@ export class LeasingListComponent implements OnInit, OnDestroy {
     this.savePreferences();
   }
 
-  onStatusChange(status: LeasingStatus | null): void {
-    this.selectedStatus.set(status);
+  loadOwners(): void {
+    this.isLoadingOwners.set(true);
+    const companyId = this.userService.getCurrentUser()?.companyId;
+    const request = {
+      currentPage: 1,
+      pageSize: 1000,
+      ignore: false,
+      type: ContactType.Owner,
+      companyId: companyId,
+    };
+    
+    this.contactService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (response) => {
+        this.owners.set(response.result);
+        const options: ZardComboboxOption[] = response.result.map(contact => ({
+          value: contact.id,
+          label: this.getOwnerDisplayName(contact),
+        }));
+        this.ownerOptions.set(options);
+        this.isLoadingOwners.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading owners:', error);
+        this.isLoadingOwners.set(false);
+      },
+    });
+  }
+
+  loadProperties(): void {
+    this.isLoadingProperties.set(true);
+    const companyId = this.userService.getCurrentUser()?.companyId;
+    const request = {
+      currentPage: 1,
+      pageSize: 1000,
+      ignore: false,
+      companyId: companyId,
+    };
+    
+    this.propertyService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (response) => {
+        this.properties.set(response.result);
+        const options: ZardComboboxOption[] = response.result.map(property => {
+          const parts: string[] = [];
+          if (property.identifier) parts.push(property.identifier);
+          if (property.name) parts.push(property.name);
+          if (property.address) parts.push(property.address);
+          return {
+            value: property.id,
+            label: parts.join(' - ') || 'Unnamed Property',
+          };
+        });
+        this.propertyOptions.set(options);
+        this.isLoadingProperties.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading properties:', error);
+        this.isLoadingProperties.set(false);
+      },
+    });
+  }
+
+  getOwnerDisplayName(contact: Contact): string {
+    let name = '';
+    if (contact.isACompany) {
+      name = contact.companyName || '';
+    } else {
+      const firstName = contact.firstName || '';
+      const lastName = contact.lastName || '';
+      name = `${firstName} ${lastName}`.trim();
+    }
+    
+    if (contact.identifier) {
+      return name ? `${name} (${contact.identifier})` : contact.identifier;
+    }
+    return name || 'Unnamed Owner';
+  }
+
+  onOwnerChange(ownerId: string | null): void {
+    this.selectedOwner.set(ownerId);
     this.currentPage.set(1);
+    this.loadLeases();
+  }
+
+  onPropertyChange(propertyId: string | null): void {
+    this.selectedProperty.set(propertyId);
+    this.currentPage.set(1);
+    this.loadLeases();
+  }
+
+  onResetFilters(): void {
+    // Clear search
+    this.searchInput.set('');
+    this.searchQuery.set('');
+    this.currentPage.set(1);
+    
+    // Clear owner selection
+    this.selectedOwner.set(null);
+    
+    // Clear property selection
+    this.selectedProperty.set(null);
+    
+    // Clear combobox internal values using ControlValueAccessor
+    setTimeout(() => {
+      const ownerCombobox = this.ownerComboboxRef();
+      if (ownerCombobox) {
+        (ownerCombobox as any).writeValue(null);
+      }
+      const propertyCombobox = this.propertyComboboxRef();
+      if (propertyCombobox) {
+        (propertyCombobox as any).writeValue(null);
+      }
+    }, 0);
+    
+    // Reload leases
     this.loadLeases();
   }
 
@@ -319,6 +457,31 @@ export class LeasingListComponent implements OnInit, OnDestroy {
     return leases.length > 0 && leases.every((lease) => this.isSelected(lease.id));
   });
 
+  readonly hasSelectedItems = computed(() => {
+    return this.selectedRows().size > 0;
+  });
+
+  readonly selectedLeases = computed(() => {
+    const selectedIds = this.selectedRows();
+    return this.filteredLeases().filter(lease => selectedIds.has(lease.id));
+  });
+
+  readonly canArchiveSelected = computed(() => {
+    return this.selectedLeases().some(lease => !lease.isArchived);
+  });
+
+  readonly canUnarchiveSelected = computed(() => {
+    return this.selectedLeases().some(lease => lease.isArchived);
+  });
+
+  readonly archiveableCount = computed(() => {
+    return this.selectedLeases().filter(lease => !lease.isArchived).length;
+  });
+
+  readonly unarchiveableCount = computed(() => {
+    return this.selectedLeases().filter(lease => lease.isArchived).length;
+  });
+
   toggleSelectAll(): void {
     const leases = this.filteredLeases();
     const allSelected = this.allSelected();
@@ -327,6 +490,78 @@ export class LeasingListComponent implements OnInit, OnDestroy {
       leases.forEach((lease) => selected.add(lease.id));
     }
     this.selectedRows.set(selected);
+  }
+
+  onBulkArchive(): void {
+    const selectedLeases = this.selectedLeases().filter(lease => !lease.isArchived);
+    if (selectedLeases.length === 0) {
+      return;
+    }
+
+    const dialogRef = this.alertDialogService.confirm({
+      zTitle: 'Archive Leases',
+      zDescription: `Are you sure you want to archive ${selectedLeases.length} lease(s)?`,
+      zOkText: 'Archive',
+      zCancelText: 'Cancel',
+      zOkDestructive: false,
+      zViewContainerRef: this.viewContainerRef,
+    });
+
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((confirmed) => {
+      if (confirmed) {
+        this.isArchiving.set(true);
+        const archivePromises = selectedLeases.map(lease =>
+          this.leaseService.toggleArchive(lease.id, true).toPromise()
+        );
+
+        Promise.all(archivePromises).then(() => {
+          this.toastService.success(`${selectedLeases.length} lease(s) archived successfully`);
+          this.selectedRows.set(new Set());
+          this.loadLeases();
+          this.isArchiving.set(false);
+        }).catch((error) => {
+          console.error('Error archiving leases:', error);
+          this.toastService.error('Failed to archive some leases');
+          this.isArchiving.set(false);
+        });
+      }
+    });
+  }
+
+  onBulkUnarchive(): void {
+    const selectedLeases = this.selectedLeases().filter(lease => lease.isArchived);
+    if (selectedLeases.length === 0) {
+      return;
+    }
+
+    const dialogRef = this.alertDialogService.confirm({
+      zTitle: 'Activate Leases',
+      zDescription: `Are you sure you want to activate ${selectedLeases.length} lease(s)?`,
+      zOkText: 'Activate',
+      zCancelText: 'Cancel',
+      zOkDestructive: false,
+      zViewContainerRef: this.viewContainerRef,
+    });
+
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((confirmed) => {
+      if (confirmed) {
+        this.isArchiving.set(true);
+        const unarchivePromises = selectedLeases.map(lease =>
+          this.leaseService.toggleArchive(lease.id, false).toPromise()
+        );
+
+        Promise.all(unarchivePromises).then(() => {
+          this.toastService.success(`${selectedLeases.length} lease(s) activated successfully`);
+          this.selectedRows.set(new Set());
+          this.loadLeases();
+          this.isArchiving.set(false);
+        }).catch((error) => {
+          console.error('Error activating leases:', error);
+          this.toastService.error('Failed to activate some leases');
+          this.isArchiving.set(false);
+        });
+      }
+    });
   }
 
   savePreferences(): void {
