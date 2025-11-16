@@ -99,11 +99,42 @@ export class PropertyDetailComponent implements OnInit {
   readonly description = computed(() => this.property()?.description || '');
   readonly features = computed(() => this.property()?.features || []);
   readonly equipment = computed(() => this.property()?.equipment || []);
-  readonly attachments = computed(() => this.property()?.attachments || []);
+  readonly attachments = computed(() => {
+    const prop = this.property();
+    if (!prop || !prop.attachments || prop.attachments.length === 0) {
+      return [];
+    }
+    
+    // Sort attachments: default image first, then others
+    const defaultId = prop.defaultAttachmentId;
+    if (!defaultId) {
+      return prop.attachments;
+    }
+    
+    const sorted = [...prop.attachments];
+    const defaultIndex = sorted.findIndex(att => att.id === defaultId);
+    
+    if (defaultIndex > 0) {
+      // Move default image to first position
+      const defaultAttachment = sorted.splice(defaultIndex, 1)[0];
+      sorted.unshift(defaultAttachment);
+    }
+    
+    return sorted;
+  });
   readonly currentImage = computed(() => {
     const atts = this.attachments();
     const index = this.currentImageIndex();
     return atts[index]?.url || null;
+  });
+  readonly isCurrentImageDefault = computed(() => {
+    const prop = this.property();
+    const atts = this.attachments();
+    const index = this.currentImageIndex();
+    if (!prop || !prop.defaultAttachmentId || atts.length === 0 || index >= atts.length) {
+      return false;
+    }
+    return atts[index]?.id === prop.defaultAttachmentId;
   });
   readonly imageItems = computed<ImageItem[]>(() => {
     const atts = this.attachments();
@@ -167,6 +198,8 @@ export class PropertyDetailComponent implements OnInit {
         this.isLoading.set(false);
         if (property) {
           this.property.set(property);
+          // Reset image index to 0 when property loads (default image will be first after sorting)
+          this.currentImageIndex.set(0);
         }
       });
   }
@@ -203,13 +236,29 @@ export class PropertyDetailComponent implements OnInit {
     }).format(dateObj);
   }
 
-  nextImage(): void {
+  nextImage(event?: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    // Prevent text selection
+    if (window.getSelection) {
+      window.getSelection()?.removeAllRanges();
+    }
     const atts = this.attachments();
     if (atts.length === 0) return;
     this.currentImageIndex.update((index) => (index + 1) % atts.length);
   }
 
-  previousImage(): void {
+  previousImage(event?: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    // Prevent text selection
+    if (window.getSelection) {
+      window.getSelection()?.removeAllRanges();
+    }
     const atts = this.attachments();
     if (atts.length === 0) return;
     this.currentImageIndex.update((index) => (index - 1 + atts.length) % atts.length);
@@ -337,7 +386,11 @@ export class PropertyDetailComponent implements OnInit {
     }
   }
 
-  openImageViewer(): void {
+  openImageViewer(event?: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
     if (this.imageItems().length > 0) {
       this.imageViewerIndex.set(this.currentImageIndex());
       this.isImageViewerOpen.set(true);

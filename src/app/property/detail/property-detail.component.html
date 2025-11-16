@@ -37,10 +37,21 @@
               <z-icon zType="image" class="w-12 h-12 text-muted-foreground" />
             }
             @if (attachments().length > 0) {
-              <div class="absolute top-2 left-2">
-                <z-button zType="ghost" zSize="sm" class="rounded-full bg-background/80" (click)="openImageViewer()">
+              <div class="absolute top-2 left-2 flex items-center gap-2">
+                <z-button 
+                  zType="ghost" 
+                  zSize="sm" 
+                  type="button"
+                  class="rounded-full bg-background/80" 
+                  (click)="openImageViewer($event)"
+                >
                   <z-icon zType="image" />
                 </z-button>
+                @if (isCurrentImageDefault()) {
+                  <z-badge zType="default" class="bg-primary text-primary-foreground">
+                    Default
+                  </z-badge>
+                }
               </div>
               <div class="absolute top-2 right-2">
                 <z-button zType="ghost" zSize="sm" class="text-xs bg-background/80">
@@ -49,12 +60,26 @@
               </div>
               @if (attachments().length > 1) {
                 <div class="absolute left-2 top-1/2 -translate-y-1/2">
-                  <z-button zType="ghost" zSize="sm" class="rounded-full bg-background/80" (click)="previousImage()">
+                  <z-button 
+                    zType="ghost" 
+                    zSize="sm" 
+                    type="button"
+                    class="rounded-full bg-background/80 select-none" 
+                    (click)="previousImage($event)"
+                    (mousedown)="$event.preventDefault(); $event.stopPropagation()"
+                  >
                     <z-icon zType="chevron-left" />
                   </z-button>
                 </div>
                 <div class="absolute right-2 top-1/2 -translate-y-1/2">
-                  <z-button zType="ghost" zSize="sm" class="rounded-full bg-background/80" (click)="nextImage()">
+                  <z-button 
+                    zType="ghost" 
+                    zSize="sm" 
+                    type="button"
+                    class="rounded-full bg-background/80 select-none" 
+                    (click)="nextImage($event)"
+                    (mousedown)="$event.preventDefault(); $event.stopPropagation()"
+                  >
                     <z-icon zType="chevron-right" />
                   </z-button>
                 </div>
@@ -104,50 +129,52 @@
           <z-card zBodySpacing="none">
             <div class="space-y-3">
               <h3 class="text-sm font-semibold">Owner Information</h3>
-              <div class="flex items-start gap-3">
-                @if (getOwnerAvatarUrl()) {
-                  <img
-                    [src]="getOwnerAvatarUrl()!"
-                    [alt]="getOwnerName()"
-                    class="w-16 h-16 rounded-full object-cover border border-border flex-shrink-0"
-                  />
-                } @else {
-                  <z-avatar
-                    [zImage]="{ fallback: getOwnerInitials() }"
-                    zType="default"
-                    zSize="lg"
-                    zShape="circle"
-                    class="w-16 h-16 flex-shrink-0"
-                  />
-                }
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-2 mb-1">
-                    <span class="text-sm font-semibold">{{ getOwnerName() }}</span>
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex items-start gap-3 flex-1 min-w-0">
+                  @if (getOwnerAvatarUrl()) {
+                    <img
+                      [src]="getOwnerAvatarUrl()!"
+                      [alt]="getOwnerName()"
+                      class="w-16 h-16 rounded-full object-cover border border-border flex-shrink-0"
+                    />
+                  } @else {
+                    <z-avatar
+                      [zImage]="{ fallback: getOwnerInitials() }"
+                      zType="default"
+                      zSize="lg"
+                      zShape="circle"
+                      class="w-16 h-16 flex-shrink-0"
+                    />
+                  }
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="text-sm font-semibold">{{ getOwnerName() }}</span>
+                    </div>
+                    @if (getOwnerIdentifier()) {
+                      <div class="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                        <z-icon zType="id-card" zSize="sm" />
+                        <span>Ref: {{ getOwnerIdentifier() }}</span>
+                      </div>
+                    }
+                    @if (getOwnerEmail()) {
+                      <div class="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                        <z-icon zType="mail" zSize="sm" />
+                        <span>{{ getOwnerEmail() }}</span>
+                      </div>
+                    }
+                    @if (getOwnerPhones().length > 0) {
+                      <div class="flex items-center gap-2 text-sm text-muted-foreground">
+                        <z-icon zType="smartphone" zSize="sm" />
+                        <span>{{ getOwnerPhones().join(', ') }}</span>
+                      </div>
+                    }
                   </div>
-                  @if (getOwnerIdentifier()) {
-                    <div class="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                      <z-icon zType="id-card" zSize="sm" />
-                      <span>Ref: {{ getOwnerIdentifier() }}</span>
-                    </div>
-                  }
-                  @if (getOwnerEmail()) {
-                    <div class="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                      <z-icon zType="mail" zSize="sm" />
-                      <span>{{ getOwnerEmail() }}</span>
-                    </div>
-                  }
-                  @if (getOwnerPhones().length > 0) {
-                    <div class="flex items-center gap-2 text-sm text-muted-foreground">
-                      <z-icon zType="smartphone" zSize="sm" />
-                      <span>{{ getOwnerPhones().join(', ') }}</span>
-                    </div>
-                  }
-                  <div class="mt-3">
-                    <z-button zType="outline" zSize="sm" (click)="viewOwnerProfile()">
-                      <z-icon zType="user" zSize="sm" class="mr-2" />
-                      View Profile
-                    </z-button>
-                  </div>
+                </div>
+                <div class="flex-shrink-0">
+                  <z-button zType="outline" zSize="sm" (click)="viewOwnerProfile()">
+                    <z-icon zType="user" zSize="sm" class="mr-2" />
+                    View Profile
+                  </z-button>
                 </div>
               </div>
             </div>
