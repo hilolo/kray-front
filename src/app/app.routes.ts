@@ -4,7 +4,7 @@ import { LoginComponent } from './login/login.component';
 import { HeroiconExampleComponent } from './shared/components/icon/heroicon-example.component';
 import { AiChatComponent } from './ai-chat/ai-chat.component';
 import { FileManagerComponent } from './file-manager/file-manager.component';
-import { TasksComponent } from './tasks/tasks.component';
+import { MaintenanceComponent } from './maintenance/maintenance.component';
 import { authGuard } from './shared/guards/auth.guard';
 import { loginGuard } from './shared/guards/login.guard';
 
@@ -55,8 +55,8 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
-    path: 'tasks',
-    component: TasksComponent,
+    path: 'maintenance',
+    component: MaintenanceComponent,
     canActivate: [authGuard],
   },
 ];

@@ -9,12 +9,17 @@
       [class.p-2]="isColumnHovered(column.id)"
     >
       <!-- Column Header -->
-      <div class="flex items-center gap-2 mb-4 flex-shrink-0">
-        <div class="w-2 h-2 rounded-full {{ getStatusColor(column.status) }}"></div>
-        <h3 class="text-sm font-semibold">{{ column.title }}</h3>
-        <span class="text-xs text-muted-foreground bg-muted rounded-full px-2 py-0.5">
-          {{ column.tasks.length }}
-        </span>
+      <div class="flex items-center justify-between mb-4 flex-shrink-0">
+        <div class="flex items-center gap-2">
+          <h3 class="text-sm font-semibold">{{ column.title }}</h3>
+          <span class="text-xs text-muted-foreground bg-muted rounded-full px-2 py-0.5">
+            {{ column.tasks.length }}
+          </span>
+        </div>
+        <div class="flex items-center gap-2">
+          <z-icon zType="layers-2" zSize="sm" class="text-muted-foreground cursor-pointer hover:text-foreground transition-colors" />
+          <z-icon zType="plus" zSize="sm" class="text-muted-foreground cursor-pointer hover:text-foreground transition-colors" />
+        </div>
       </div>
 
       <!-- Column Tasks -->
@@ -40,34 +45,91 @@
               <!-- Task Title -->
               <h4 class="text-sm font-medium leading-tight">{{ task.title }}</h4>
 
-              <!-- Task Date Range -->
-              @if (task.dateRange) {
-                <p class="text-xs text-muted-foreground">{{ task.dateRange }}</p>
+              <!-- Task Description -->
+              @if (task.description) {
+                <p class="text-xs text-muted-foreground leading-relaxed">
+                  {{ truncateDescription(task.description) }}
+                </p>
               }
 
               <!-- Task Footer -->
-              <div class="flex items-center justify-between mt-2">
-                <div class="flex items-center gap-2">
-                  @if (task.avatar && task.avatar.fallback) {
+              <div class="flex flex-col gap-3 mt-1">
+                <!-- Assigned Users -->
+                @if (task.assignedUsers && task.assignedUsers.length > 0) {
+                  <div class="flex items-center gap-1.5">
+                    @for (user of task.assignedUsers; track $index) {
+                      <z-avatar
+                        [zImage]="{ fallback: user.fallback, url: user.url }"
+                        zSize="sm"
+                        zShape="circle"
+                        class="border-2 border-background"
+                        [style.margin-left.px]="$index > 0 ? -8 : 0"
+                      />
+                    }
+                  </div>
+                } @else if (task.avatar && task.avatar.fallback) {
+                  <div class="flex items-center gap-1.5">
                     <z-avatar
                       [zImage]="{ fallback: task.avatar.fallback, url: task.avatar.url }"
                       zSize="sm"
                       zShape="circle"
                     />
+                  </div>
+                }
+
+                <!-- Progress, Priority, Attachments, Comments -->
+                <div class="flex items-center gap-3">
+                  <!-- Progress Indicator -->
+                  @if (task.progress !== undefined) {
+                    <div [class.text-muted-foreground]="task.progress === 0">
+                      <z-circular-progress
+                        [progress]="task.progress"
+                        zSize="sm"
+                        [zType]="getProgressType(task.progress)"
+                        [showLabel]="true"
+                      />
+                    </div>
                   }
-                  @if (task.icon) {
-                    <z-icon [zType]="task.icon" class="w-4 h-4 text-muted-foreground" />
+
+                  <!-- Priority Badge -->
+                  @if (task.priority) {
+                    <z-badge
+                      [zType]="getPriorityBadgeType(task.priority)"
+                      zShape="default"
+                      class="text-xs"
+                    >
+                      {{ task.priority }}
+                    </z-badge>
                   }
+
+                  <!-- Spacer -->
+                  <div class="flex-1"></div>
+
+                  <!-- Attachments and Comments -->
+                  <div class="flex items-center gap-3">
+                    @if (task.attachmentCount !== undefined && task.attachmentCount > 0) {
+                      <div class="flex items-center gap-1">
+                        <z-icon zType="paperclip" zSize="sm" class="text-muted-foreground" />
+                        <span class="text-xs text-muted-foreground">{{ task.attachmentCount }}</span>
+                      </div>
+                    }
+                    @if (task.commentCount !== undefined && task.commentCount > 0) {
+                      <div class="flex items-center gap-1">
+                        <z-icon zType="message-circle" zSize="sm" class="text-muted-foreground" />
+                        <span class="text-xs text-muted-foreground">{{ task.commentCount }}</span>
+                      </div>
+                    }
+                  </div>
                 </div>
               </div>
             </div>
 
             <!-- CDK Drag Preview -->
-            <div *cdkDragPreview class="bg-card border-2 border-primary rounded-lg p-4 shadow-2xl opacity-95 transform rotate-2 scale-105 z-50">
+            <div *cdkDragPreview class="bg-card border-2 border-primary rounded-lg p-4 shadow-2xl opacity-95 transform rotate-2 scale-105 z-50 min-w-[280px]">
               <div class="flex flex-col gap-2">
                 <h4 class="text-sm font-medium">{{ task.title }}</h4>
-                @if (task.dateRange) {
-                  <p class="text-xs text-muted-foreground">{{ task.dateRange }}</p>
+                @if (task.description) {
+                  <p class="text-xs text-muted-foreground">{{ truncateDescription(task.description, 40) }}</p>
                 }
               </div>
             </div>

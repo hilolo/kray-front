@@ -20,6 +20,8 @@ import {
 } from './kanban.variants';
 import { ZardAvatarComponent } from '../avatar/avatar.component';
 import { ZardIconComponent } from '../icon/icon.component';
+import { ZardCircularProgressComponent } from '../circular-progress/circular-progress.component';
+import { ZardBadgeComponent } from '../badge/badge.component';
 import { CommonModule } from '@angular/common';
 
 import type { ZardIcon } from '../icon/icons';
@@ -29,6 +31,14 @@ export interface KanbanTask {
   title: string;
   description?: string;
   dateRange?: string;
+  assignedUsers?: Array<{
+    url?: string;
+    fallback: string;
+  }>;
+  progress?: number; // 0-100
+  priority?: 'High' | 'Medium' | 'Low';
+  attachmentCount?: number;
+  commentCount?: number;
   avatar?: {
     url?: string;
     fallback: string;
@@ -48,7 +58,7 @@ export interface KanbanColumn {
   selector: 'z-kanban',
   exportAs: 'zKanban',
   standalone: true,
-  imports: [DragDropModule, CommonModule, ZardAvatarComponent, ZardIconComponent],
+  imports: [DragDropModule, CommonModule, ZardAvatarComponent, ZardIconComponent, ZardCircularProgressComponent, ZardBadgeComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   templateUrl: './kanban.component.html',
@@ -92,6 +102,35 @@ export class ZardKanbanComponent {
       default:
         return 'bg-gray-500';
     }
+  }
+
+  // Get priority badge type
+  getPriorityBadgeType(priority?: string): 'default' | 'destructive' | 'secondary' {
+    switch (priority) {
+      case 'High':
+        return 'destructive';
+      case 'Medium':
+        return 'default';
+      case 'Low':
+        return 'secondary';
+      default:
+        return 'secondary';
+    }
+  }
+
+  // Get progress type based on progress value
+  getProgressType(progress?: number): 'default' | 'success' | 'warning' {
+    if (!progress) return 'default';
+    if (progress === 100) return 'success';
+    if (progress > 0) return 'warning';
+    return 'default';
+  }
+
+  // Truncate description
+  truncateDescription(description?: string, maxLength: number = 60): string {
+    if (!description) return '';
+    if (description.length <= maxLength) return description;
+    return description.substring(0, maxLength) + '...';
   }
 
   // Get connected columns for drag-drop

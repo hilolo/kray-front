@@ -58,7 +58,7 @@ export class AppSidebarComponent implements OnDestroy {
     { route: '/reservations', label: 'Réservations', labelKey: 'menu.reservations', icon: 'calendar' },
     { route: '/inventaires', label: 'Inventaires', labelKey: 'menu.inventaires', icon: 'folder' },
     { route: '/etat-des-lieux', label: 'Etat des lieux', labelKey: 'menu.etatDesLieux', icon: 'clipboard' },
-    { route: '/tasks', label: 'Tasks', labelKey: 'menu.tasks', icon: 'check' },
+    { route: '/maintenance', label: 'Maintenance', labelKey: 'menu.maintenance', icon: 'settings' },
     { route: '/contact/tenants', label: 'Tenants', labelKey: 'menu.tenants', icon: 'user' },
     { route: '/contact/owners', label: 'Owners', labelKey: 'menu.owners', icon: 'users' },
     { route: '/contact/services', label: 'Services', labelKey: 'menu.services', icon: 'building' },
