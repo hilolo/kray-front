@@ -95,26 +95,26 @@ export class LeasingListComponent implements OnInit, OnDestroy {
   readonly isArchiving = signal(false);
   readonly totalPages = signal(1);
   readonly totalItems = signal(0);
-  readonly selectedOwner = signal<string | null>(null);
+  readonly selectedTenant = signal<string | null>(null);
   readonly selectedProperty = signal<string | null>(null);
   
-  // Owners and Properties for filtering
-  readonly owners = signal<Contact[]>([]);
-  readonly ownerOptions = signal<ZardComboboxOption[]>([]);
-  readonly isLoadingOwners = signal(false);
+  // Tenants and Properties for filtering
+  readonly tenants = signal<Contact[]>([]);
+  readonly tenantOptions = signal<ZardComboboxOption[]>([]);
+  readonly isLoadingTenants = signal(false);
   
   readonly properties = signal<Property[]>([]);
   readonly propertyOptions = signal<ZardComboboxOption[]>([]);
   readonly isLoadingProperties = signal(false);
 
   // Template references for comboboxes (to reset internal values)
-  readonly ownerComboboxRef = viewChild<ZardComboboxComponent>('ownerCombobox');
+  readonly tenantComboboxRef = viewChild<ZardComboboxComponent>('tenantCombobox');
   readonly propertyComboboxRef = viewChild<ZardComboboxComponent>('propertyCombobox');
 
   // Check if any filters are active
   readonly hasActiveFilters = computed(() => {
     return (this.searchQuery() && this.searchQuery().trim() !== '') || 
-           this.selectedOwner() !== null || 
+           this.selectedTenant() !== null || 
            this.selectedProperty() !== null;
   });
 
@@ -177,6 +177,10 @@ export class LeasingListComponent implements OnInit, OnDestroy {
     return leases;
   });
 
+  readonly hasData = computed(() => {
+    return this.filteredLeases().length > 0;
+  });
+
   // Effect to load preferences on init
   private readonly preferencesEffect = effect(() => {
     const route = this.route.snapshot.routeConfig?.path || 'leasing';
@@ -203,7 +207,7 @@ export class LeasingListComponent implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
-    this.loadOwners();
+    this.loadTenants();
     this.loadProperties();
     this.loadLeases();
   }
@@ -225,7 +229,7 @@ export class LeasingListComponent implements OnInit, OnDestroy {
       searchQuery: this.searchQuery() || undefined,
       companyId: companyId,
       propertyId: this.selectedProperty() || undefined,
-      contactId: this.selectedOwner() || undefined,
+      contactId: this.selectedTenant() || undefined,
       isArchived: this.showArchived() || undefined,
     };
 
@@ -270,30 +274,30 @@ export class LeasingListComponent implements OnInit, OnDestroy {
     this.savePreferences();
   }
 
-  loadOwners(): void {
-    this.isLoadingOwners.set(true);
+  loadTenants(): void {
+    this.isLoadingTenants.set(true);
     const companyId = this.userService.getCurrentUser()?.companyId;
     const request = {
       currentPage: 1,
       pageSize: 1000,
       ignore: false,
-      type: ContactType.Owner,
+      type: ContactType.Tenant,
       companyId: companyId,
     };
     
     this.contactService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response) => {
-        this.owners.set(response.result);
+        this.tenants.set(response.result);
         const options: ZardComboboxOption[] = response.result.map(contact => ({
           value: contact.id,
-          label: this.getOwnerDisplayName(contact),
+          label: this.getTenantDisplayName(contact),
         }));
-        this.ownerOptions.set(options);
-        this.isLoadingOwners.set(false);
+        this.tenantOptions.set(options);
+        this.isLoadingTenants.set(false);
       },
       error: (error) => {
-        console.error('Error loading owners:', error);
-        this.isLoadingOwners.set(false);
+        console.error('Error loading tenants:', error);
+        this.isLoadingTenants.set(false);
       },
     });
   }
@@ -331,7 +335,7 @@ export class LeasingListComponent implements OnInit, OnDestroy {
     });
   }
 
-  getOwnerDisplayName(contact: Contact): string {
+  getTenantDisplayName(contact: Contact): string {
     let name = '';
     if (contact.isACompany) {
       name = contact.companyName || '';
@@ -344,11 +348,11 @@ export class LeasingListComponent implements OnInit, OnDestroy {
     if (contact.identifier) {
       return name ? `${name} (${contact.identifier})` : contact.identifier;
     }
-    return name || 'Unnamed Owner';
+    return name || 'Unnamed Tenant';
   }
 
-  onOwnerChange(ownerId: string | null): void {
-    this.selectedOwner.set(ownerId);
+  onTenantChange(tenantId: string | null): void {
+    this.selectedTenant.set(tenantId);
     this.currentPage.set(1);
     this.loadLeases();
   }
@@ -365,17 +369,17 @@ export class LeasingListComponent implements OnInit, OnDestroy {
     this.searchQuery.set('');
     this.currentPage.set(1);
     
-    // Clear owner selection
-    this.selectedOwner.set(null);
+    // Clear tenant selection
+    this.selectedTenant.set(null);
     
     // Clear property selection
     this.selectedProperty.set(null);
     
     // Clear combobox internal values using ControlValueAccessor
     setTimeout(() => {
-      const ownerCombobox = this.ownerComboboxRef();
-      if (ownerCombobox) {
-        (ownerCombobox as any).writeValue(null);
+      const tenantCombobox = this.tenantComboboxRef();
+      if (tenantCombobox) {
+        (tenantCombobox as any).writeValue(null);
       }
       const propertyCombobox = this.propertyComboboxRef();
       if (propertyCombobox) {
@@ -667,6 +671,11 @@ export class LeasingListComponent implements OnInit, OnDestroy {
       return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
     }
     return lease.tenantName.substring(0, 2).toUpperCase();
+  }
+
+  getTenantIdentifier(lease: Lease): string | null {
+    const tenant = this.tenants().find(t => t.id === lease.contactId);
+    return tenant?.identifier || null;
   }
 
   trackByIndex(index: number): number {
