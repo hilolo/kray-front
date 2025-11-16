@@ -230,7 +230,8 @@ export class LeasingListComponent implements OnInit, OnDestroy {
       companyId: companyId,
       propertyId: this.selectedProperty() || undefined,
       contactId: this.selectedTenant() || undefined,
-      isArchived: this.showArchived() || undefined,
+      // Only include isArchived when showing archived (true), otherwise omit it so backend defaults to false
+      ...(this.showArchived() ? { isArchived: true } : {}),
     };
 
     this.leaseService.list(request).pipe(takeUntil(this.destroy$)).subscribe({

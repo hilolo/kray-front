@@ -178,10 +178,13 @@ export class PropertyListComponent implements OnInit, OnDestroy {
     return this.selectedCount() > 0;
   });
 
+  readonly showWithoutBuilding = signal(false);
+
   readonly showResetButton = computed(() => {
     return (this.searchQuery() && this.searchQuery().trim() !== '') || 
            this.selectedOwnerId() !== null || 
-           this.selectedPropertyTypes().length > 0;
+           this.selectedPropertyTypes().length > 0 ||
+           this.showWithoutBuilding();
   });
 
   ngOnInit(): void {
@@ -241,6 +244,7 @@ export class PropertyListComponent implements OnInit, OnDestroy {
       ...(this.searchQuery() && this.searchQuery().trim() ? { searchQuery: this.searchQuery().trim() } : {}),
       ...(this.selectedOwnerId() ? { contactId: this.selectedOwnerId()! } : {}),
       ...(this.selectedPropertyTypes().length > 0 ? { typeProperties: this.selectedPropertyTypes() } : {}),
+      ...(this.showWithoutBuilding() ? { unattachedOnly: true } : {}),
       // Only include isArchived when showing archived (true), otherwise omit it so backend defaults to false
       ...(this.showArchived() ? { isArchived: true } : {}),
     };
@@ -359,7 +363,16 @@ export class PropertyListComponent implements OnInit, OnDestroy {
     // Clear property types selection
     this.selectedPropertyTypes.set([]);
     
+    // Clear without building filter
+    this.showWithoutBuilding.set(false);
+    
     // Reload properties
+    this.loadProperties();
+  }
+
+  onShowWithoutBuildingChange(show: boolean): void {
+    this.showWithoutBuilding.set(show);
+    this.currentPage.set(1);
     this.loadProperties();
   }
 
@@ -419,6 +432,7 @@ export class PropertyListComponent implements OnInit, OnDestroy {
     this.searchInput.set('');
     this.selectedOwnerId.set(null);
     this.selectedPropertyTypes.set([]);
+    this.showWithoutBuilding.set(false);
     // Clear combobox internal value
     setTimeout(() => {
       const combobox = this.ownerComboboxRef();

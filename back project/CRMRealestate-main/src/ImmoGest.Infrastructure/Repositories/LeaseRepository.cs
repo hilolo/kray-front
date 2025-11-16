@@ -67,10 +67,15 @@ namespace ImmoGest.Infrastructure.Repositories
                     query = query.Where(l => l.Status == leasesFilter.Status.Value);
                 }
 
-                // Filter by archived status
+                // Filter by archived status - default to false if not specified
                 if (leasesFilter.IsArchived.HasValue)
                 {
                     query = query.Where(l => l.IsArchived == leasesFilter.IsArchived.Value);
+                }
+                else
+                {
+                    // Default: only show non-archived leases
+                    query = query.Where(l => !l.IsArchived);
                 }
             }
             // Also check for GetRentalesFilter (legacy/alternative filter)

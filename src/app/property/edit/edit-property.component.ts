@@ -20,7 +20,9 @@ import { PropertyService } from '@shared/services/property.service';
 import { UserService } from '@shared/services/user.service';
 import { ContactService } from '@shared/services/contact.service';
 import { ToastService } from '@shared/services/toast.service';
+import { BuildingService } from '@shared/services/building.service';
 import { EditContactComponent } from '../../contact/edit/edit-contact.component';
+import type { Building } from '@shared/models/building/building.model';
 import type { Property } from '@shared/models/property/property.model';
 import { PropertyCategory, TypePaiment, AttachmentDetails } from '@shared/models/property/property.model';
 import type { CreatePropertyRequest, PropertyImageInput } from '@shared/models/property/create-property-request.model';
@@ -98,6 +100,7 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
   private readonly propertyService = inject(PropertyService);
   private readonly userService = inject(UserService);
   private readonly contactService = inject(ContactService);
+  private readonly buildingService = inject(BuildingService);
   private readonly dialogService = inject(ZardDialogService);
   private readonly toastService = inject(ToastService);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -180,6 +183,11 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
   readonly owners = signal<Contact[]>([]);
   readonly ownerOptions = signal<ZardComboboxOption[]>([]);
   readonly isLoadingOwners = signal(false);
+
+  // Buildings
+  readonly buildings = signal<Building[]>([]);
+  readonly buildingOptions = signal<ZardComboboxOption[]>([]);
+  readonly isLoadingBuildings = signal(false);
 
   // Settings
   readonly propertyTypes = signal<string[]>([]);
@@ -384,6 +392,9 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
     // Load owners
     this.loadOwners();
 
+    // Load buildings
+    this.loadBuildings();
+
     // Load settings (property types and categories)
     this.loadSettings();
 
@@ -524,6 +535,33 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
       error: (error) => {
         console.error('Error loading owners:', error);
         this.isLoadingOwners.set(false);
+      },
+    });
+  }
+
+  loadBuildings(): void {
+    this.isLoadingBuildings.set(true);
+    const companyId = this.userService.getCurrentUser()?.companyId;
+    const request = {
+      currentPage: 1,
+      pageSize: 1000,
+      ignore: false,
+      companyId: companyId,
+    };
+    
+    this.buildingService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (response) => {
+        this.buildings.set(response.result);
+        const options: ZardComboboxOption[] = response.result.map(building => ({
+          value: building.id,
+          label: building.name || 'Unnamed Building',
+        }));
+        this.buildingOptions.set(options);
+        this.isLoadingBuildings.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading buildings:', error);
+        this.isLoadingBuildings.set(false);
       },
     });
   }
@@ -1143,6 +1181,13 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
     if (!contactId) return 'Select owner';
     const owner = this.owners().find(o => o.id === contactId);
     return owner ? this.getOwnerDisplayName(owner) : 'Select owner';
+  }
+
+  getBuildingLabel(): string {
+    const buildingId = this.formData().buildingId;
+    if (!buildingId) return 'Select building (optional)';
+    const building = this.buildings().find(b => b.id === buildingId);
+    return building ? building.name : 'Select building (optional)';
   }
 
   /**

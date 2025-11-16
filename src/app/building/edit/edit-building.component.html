@@ -1,0 +1,354 @@
+<z-page [zTitle]="isEditMode() ? 'Edit Building' : 'Add Building'">
+  <div class="flex flex-col min-h-0 h-full overflow-hidden">
+    <!-- Header Section -->
+    <div class="space-y-4 pb-6 flex-shrink-0">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-3xl font-bold mb-2">
+            @if (isEditMode()) {
+              Edit Building
+            } @else {
+              Add New Building
+            }
+          </h2>
+          <p class="text-muted-foreground">
+            @if (isEditMode()) {
+              Update the building information below
+            } @else {
+              Create a new building by filling in the information below
+            }
+          </p>
+        </div>
+        <div class="flex gap-2">
+          <z-button zType="outline" zSize="default" [disabled]="isSaving()" (click)="!isSaving() && onCancel()">
+            Cancel
+          </z-button>
+          <z-button [zType]="isSaving() || !isFormValid() ? 'ghost' : 'default'" [disabled]="isSaving()" (click)="!isSaving() && onSave()">
+            @if (isSaving()) {
+              <span class="flex items-center gap-2">
+                <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+                Saving...
+              </span>
+            } @else {
+              <z-icon zType="check" zSize="sm" class="mr-2" />
+              Save Building
+            }
+          </z-button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Form -->
+    <div class="flex-1 min-h-0 overflow-y-auto">
+      @if (isLoading()) {
+        <div class="flex items-center justify-center h-full">
+          <div class="flex flex-col items-center gap-4">
+            <z-icon zType="loader-circle" zSize="lg" class="animate-spin text-primary" />
+            <p class="text-muted-foreground">Loading building data...</p>
+          </div>
+        </div>
+      } @else {
+        <z-card class="max-w-7xl mx-auto">
+          <div class="p-8 space-y-8">
+            <!-- Top Row: Image (Left) and Basic Info (Right) -->
+            <div class="flex items-start justify-between gap-6 pb-4 border-b">
+              <!-- Image -->
+              <div class="flex-shrink-0">
+                <div class="relative">
+                  @if (imageUrl()) {
+                    <div class="w-32 h-32 rounded-lg overflow-hidden border-4 border-border">
+                      <img
+                        [src]="imageUrl()"
+                        alt="Building image"
+                        class="w-full h-full object-cover"
+                        [zImageHoverPreview]="imageUrl()!"
+                        [zAlt]="'Building image'"
+                        [zPosition]="'right'"
+                        [zMaxWidth]="'400px'"
+                        [zMaxHeight]="'400px'"
+                      />
+                    </div>
+                  } @else {
+                    <div class="w-32 h-32 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-primary-foreground text-4xl font-bold border-4 border-border">
+                      {{ getInitials() }}
+                    </div>
+                  }
+                  <button
+                    type="button"
+                    (click)="onImageClick()"
+                    class="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-2 hover:bg-primary/90 transition-colors shadow-lg"
+                    title="Change image"
+                  >
+                    <z-icon zType="camera" zSize="sm" />
+                  </button>
+                  @if (imageUrl()) {
+                    <button
+                      type="button"
+                      (click)="onRemoveImage()"
+                      class="absolute top-0 right-0 bg-destructive text-destructive-foreground rounded-full p-1.5 hover:bg-destructive/90 transition-colors shadow-lg"
+                      title="Remove image"
+                    >
+                      <z-icon zType="x" zSize="sm" />
+                    </button>
+                  }
+                  <input
+                    #imageInput
+                    type="file"
+                    accept="image/*"
+                    (change)="onImageSelected($event)"
+                    class="hidden"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Basic Information Section -->
+            <div class="space-y-6 pb-6 border-b">
+              <div>
+                <h3 class="text-lg font-semibold mb-1">Basic Information</h3>
+                <p class="text-sm text-muted-foreground">
+                  Enter the basic details of the building
+                </p>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <z-form-field>
+                  <z-form-label zRequired>Name</z-form-label>
+                  <z-form-control [errorMessage]="nameError()">
+                    <z-input-group [zPrefix]="buildingIconTemplate">
+                      <input
+                        z-input
+                        type="text"
+                        [ngModel]="formData().name"
+                        (ngModelChange)="updateField('name', $event)"
+                        placeholder="Enter building name"
+                        [zStatus]="nameHasError() ? 'error' : undefined"
+                        class="w-full"
+                      />
+                    </z-input-group>
+                  </z-form-control>
+                </z-form-field>
+
+                <z-form-field>
+                  <z-form-label>City</z-form-label>
+                  <z-form-control>
+                    <z-input-group [zPrefix]="mapPinIconTemplate">
+                      <input
+                        z-input
+                        type="text"
+                        [ngModel]="formData().city"
+                        (ngModelChange)="updateField('city', $event)"
+                        placeholder="Enter city"
+                        class="w-full"
+                      />
+                    </z-input-group>
+                  </z-form-control>
+                </z-form-field>
+              </div>
+
+              <z-form-field>
+                <z-form-label>Address</z-form-label>
+                <z-form-control>
+                  <z-input-group [zPrefix]="mapPinIconTemplate">
+                    <input
+                      z-input
+                      type="text"
+                      [ngModel]="formData().address"
+                      (ngModelChange)="updateField('address', $event)"
+                      placeholder="Enter address"
+                      class="w-full"
+                    />
+                  </z-input-group>
+                </z-form-control>
+              </z-form-field>
+
+              <z-form-field>
+                <z-form-label>Description</z-form-label>
+                <z-form-control>
+                  <textarea
+                    z-input
+                    [ngModel]="formData().description"
+                    (ngModelChange)="updateField('description', $event)"
+                    placeholder="Enter building description"
+                    rows="4"
+                    class="w-full resize-y"
+                  ></textarea>
+                </z-form-control>
+              </z-form-field>
+            </div>
+
+            <!-- Building Details Section -->
+            <div class="space-y-6 pb-6 border-b">
+              <div>
+                <h3 class="text-lg font-semibold mb-1">Building Details</h3>
+                <p class="text-sm text-muted-foreground">
+                  Enter the building specifications
+                </p>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <z-form-field>
+                  <z-form-label zRequired>Construction</z-form-label>
+                  <z-form-control [errorMessage]="constructionError()">
+                    <z-input-group [zPrefix]="buildingIconTemplate">
+                      <input
+                        z-input
+                        type="number"
+                        [ngModel]="formData().construction"
+                        (ngModelChange)="updateField('construction', +$event)"
+                        placeholder="0"
+                        min="0"
+                        step="1"
+                        [zStatus]="constructionHasError() ? 'error' : undefined"
+                        class="w-full"
+                      />
+                    </z-input-group>
+                  </z-form-control>
+                </z-form-field>
+
+                <z-form-field>
+                  <z-form-label zRequired>Year</z-form-label>
+                  <z-form-control [errorMessage]="yearError()">
+                    <z-input-group [zPrefix]="calendarIconTemplate">
+                      <input
+                        z-input
+                        type="number"
+                        [ngModel]="formData().year"
+                        (ngModelChange)="updateField('year', +$event)"
+                        placeholder="2024"
+                        min="1900"
+                        max="2100"
+                        step="1"
+                        [zStatus]="yearHasError() ? 'error' : undefined"
+                        class="w-full"
+                      />
+                    </z-input-group>
+                  </z-form-control>
+                </z-form-field>
+
+                <z-form-field>
+                  <z-form-label zRequired>Floors</z-form-label>
+                  <z-form-control [errorMessage]="floorError()">
+                    <z-input-group [zPrefix]="layersIconTemplate">
+                      <input
+                        z-input
+                        type="number"
+                        [ngModel]="formData().floor"
+                        (ngModelChange)="updateField('floor', +$event)"
+                        placeholder="0"
+                        min="0"
+                        step="1"
+                        [zStatus]="floorHasError() ? 'error' : undefined"
+                        class="w-full"
+                      />
+                    </z-input-group>
+                  </z-form-control>
+                </z-form-field>
+              </div>
+            </div>
+
+            <!-- Attach Properties Section (only in edit mode) -->
+            @if (isEditMode()) {
+              <div class="space-y-6 pb-6 border-b">
+                <div>
+                  <h3 class="text-lg font-semibold mb-1">Attach Properties</h3>
+                  <p class="text-sm text-muted-foreground">
+                    Attach properties that don't have a building assigned to this building
+                  </p>
+                </div>
+
+                @if (isLoadingProperties()) {
+                  <div class="flex items-center justify-center py-8">
+                    <div class="flex flex-col items-center gap-4">
+                      <z-icon zType="loader-circle" zSize="lg" class="animate-spin text-primary" />
+                      <p class="text-muted-foreground">Loading properties...</p>
+                    </div>
+                  </div>
+                } @else if (unattachedProperties().length === 0) {
+                  <div class="flex items-center justify-center py-8">
+                    <div class="flex flex-col items-center gap-2">
+                      <z-icon zType="house" zSize="lg" class="text-muted-foreground" />
+                      <p class="text-muted-foreground">No unattached properties available</p>
+                    </div>
+                  </div>
+                } @else {
+                  <div class="space-y-3">
+                    @for (property of unattachedProperties(); track property.id) {
+                      <div class="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors">
+                        <div class="flex items-center gap-4 flex-1 min-w-0">
+                          @if (property.defaultAttachmentUrl) {
+                            <img
+                              [src]="property.defaultAttachmentUrl"
+                              [alt]="property.name || property.identifier"
+                              class="w-16 h-16 object-cover rounded-md border border-border flex-shrink-0"
+                              [zImageHoverPreview]="property.defaultAttachmentUrl"
+                              [zAlt]="property.name || property.identifier"
+                              [zPosition]="'right'"
+                              [zMaxWidth]="'400px'"
+                              [zMaxHeight]="'400px'"
+                            />
+                          } @else {
+                            <div class="w-16 h-16 rounded-md border border-border bg-muted flex items-center justify-center flex-shrink-0">
+                              <z-icon zType="house" zSize="default" class="text-muted-foreground" />
+                            </div>
+                          }
+                          <div class="flex flex-col gap-1 flex-1 min-w-0">
+                            <span class="font-semibold text-base truncate">
+                              {{ property.name || property.identifier || 'Unnamed Property' }}
+                            </span>
+                            @if (property.identifier && property.name) {
+                              <span class="text-sm text-muted-foreground truncate">{{ property.identifier }}</span>
+                            }
+                            @if (property.address || property.city) {
+                              <div class="flex items-center gap-1 text-sm text-muted-foreground">
+                                <z-icon zType="map-pin" zSize="sm" />
+                                <span class="truncate">{{ property.address }}{{ property.address && property.city ? ', ' : '' }}{{ property.city || '' }}</span>
+                              </div>
+                            }
+                          </div>
+                        </div>
+                        <z-button
+                          zType="default"
+                          zSize="sm"
+                          class="ml-4 flex-shrink-0"
+                          [disabled]="attachingPropertyId() === property.id"
+                          (click)="onAttachProperty(property)"
+                        >
+                          @if (attachingPropertyId() === property.id) {
+                            <z-icon zType="loader-circle" zSize="sm" class="animate-spin mr-2" />
+                            <span>Attaching...</span>
+                          } @else {
+                            <z-icon zType="plus" zSize="sm" class="mr-2" />
+                            <span>Attach</span>
+                          }
+                        </z-button>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </z-card>
+      }
+    </div>
+  </div>
+</z-page>
+
+<!-- Icon Templates -->
+<ng-template #buildingIconTemplate>
+  <z-icon zType="building" zSize="sm" />
+</ng-template>
+
+<ng-template #mapPinIconTemplate>
+  <z-icon zType="map-pin" zSize="sm" />
+</ng-template>
+
+<ng-template #calendarIconTemplate>
+  <z-icon zType="calendar" zSize="sm" />
+</ng-template>
+
+<ng-template #layersIconTemplate>
+  <z-icon zType="layers" zSize="sm" />
+</ng-template>
+

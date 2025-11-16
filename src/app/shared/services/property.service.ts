@@ -81,5 +81,19 @@ export class PropertyService {
       isArchived,
     });
   }
+
+  /**
+   * Update property building (attach or detach)
+   * PATCH api/Property/update-building
+   * @param propertyId Property ID
+   * @param buildingId Building ID (null to detach)
+   * @returns Observable of updated property
+   */
+  updatePropertyBuilding(propertyId: string, buildingId: string | null): Observable<Property> {
+    return this.apiService.patch<Property>('Property/update-building', {
+      propertyId,
+      buildingId: buildingId || null,
+    });
+  }
 }
 
