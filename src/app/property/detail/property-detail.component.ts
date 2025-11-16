@@ -25,6 +25,10 @@ import { generateICalFile, downloadICalFile, shareICalViaWhatsApp, shareTextViaW
 import { ToastService } from '@shared/services/toast.service';
 import { ZardSwitchComponent } from '@shared/components/switch/switch.component';
 import { ZardAvatarComponent } from '@shared/components/avatar/avatar.component';
+import { ZardReservationCalendarComponent } from '@shared/components/reservation-calendar/reservation-calendar.component';
+import { ReservationService } from '@shared/services/reservation.service';
+import type { Reservation } from '@shared/models/reservation/reservation.model';
+import { UserService } from '@shared/services/user.service';
 
 @Component({
   selector: 'app-property-detail',
@@ -49,6 +53,7 @@ import { ZardAvatarComponent } from '@shared/components/avatar/avatar.component'
     TranslateModule,
     ZardSwitchComponent,
     ZardAvatarComponent,
+    ZardReservationCalendarComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './property-detail.component.html',
@@ -58,6 +63,8 @@ export class PropertyDetailComponent implements OnInit {
   readonly router = inject(Router);
   private readonly propertyService = inject(PropertyService);
   private readonly toastService = inject(ToastService);
+  private readonly reservationService = inject(ReservationService);
+  private readonly userService = inject(UserService);
 
   // Property data
   readonly property = signal<Property | null>(null);
@@ -65,6 +72,8 @@ export class PropertyDetailComponent implements OnInit {
   readonly currentImageIndex = signal(0);
   readonly isImageViewerOpen = signal(false);
   readonly imageViewerIndex = signal(0);
+  readonly reservations = signal<Reservation[]>([]);
+  readonly isLoadingReservations = signal(false);
 
   // Template references
   readonly calendarCopyButtonTemplate = viewChild<TemplateRef<void>>('calendarCopyButtonTemplate');
@@ -194,7 +203,41 @@ export class PropertyDetailComponent implements OnInit {
           // Initialize sharing settings from property
           this.enableSharing.set(property.isPublic || false);
           this.enableAddressSharing.set(property.isPublicAdresse || false);
+          // Load reservations if location vacante
+          if (property.category === PropertyCategory.LocationVacances) {
+            this.loadReservations(property.id);
+          }
         }
+      });
+  }
+
+  private loadReservations(propertyId: string): void {
+    this.isLoadingReservations.set(true);
+    const companyId = this.userService.getCurrentUser()?.companyId;
+    
+    if (!companyId) {
+      this.isLoadingReservations.set(false);
+      return;
+    }
+
+    this.reservationService
+      .list({
+        currentPage: 1,
+        pageSize: 1000,
+        ignore: false,
+        companyId: companyId,
+        propertyId: propertyId,
+      })
+      .pipe(
+        catchError((error) => {
+          console.error('Error loading reservations:', error);
+          this.isLoadingReservations.set(false);
+          return of({ result: [], totalPages: 0, totalItems: 0 });
+        }),
+      )
+      .subscribe((response) => {
+        this.reservations.set(response.result);
+        this.isLoadingReservations.set(false);
       });
   }
 

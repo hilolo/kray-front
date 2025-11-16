@@ -256,124 +256,141 @@
                 <p class="text-sm text-muted-foreground">Finance content coming soon</p>
               </div>
             </z-tab>
-            <z-tab label="LEASING">
-              <div class="pt-2 space-y-2">
-                <h3 class="text-sm font-semibold">Leasing</h3>
-
-                <div class="space-y-3">
-                  @for (lease of leases(); track lease.id) {
-                    <z-card class="p-4" zBodySpacing="none">
-                      <div class="space-y-3">
-                        <!-- Tenant Information with Image -->
-                        <div class="flex items-start gap-3">
-                          @if (lease.tenantAvatarUrl) {
-                            <img
-                              [src]="lease.tenantAvatarUrl"
-                              [alt]="lease.tenantName"
-                              class="w-16 h-16 rounded-full object-cover border border-border flex-shrink-0"
-                            />
-                          } @else {
-                            <z-avatar
-                              [zImage]="{ fallback: getTenantInitials(lease) }"
-                              zType="default"
-                              zSize="lg"
-                              zShape="circle"
-                              class="w-16 h-16 flex-shrink-0"
-                            />
-                          }
-                          <div class="flex-1 min-w-0">
-                            <div class="flex items-center gap-2 mb-1">
-                              <span class="text-sm font-semibold">{{ lease.tenantName || 'Unnamed tenant' }}</span>
-                            </div>
-                            @if (lease.tenantIdentifier) {
-                              <div class="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                                <z-icon zType="id-card" zSize="sm" />
-                                <span>Ref: {{ lease.tenantIdentifier }}</span>
-                              </div>
-                            }
-                            @if (lease.tenantEmail) {
-                              <div class="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                                <z-icon zType="mail" zSize="sm" />
-                                <span>{{ lease.tenantEmail }}</span>
-                              </div>
-                            }
-                            @if (lease.tenantPhone) {
-                              <div class="flex items-center gap-2 text-sm text-muted-foreground">
-                                <z-icon zType="smartphone" zSize="sm" />
-                                <span>{{ lease.tenantPhone }}</span>
-                              </div>
-                            }
-                          </div>
-                        </div>
-
-                        <div class="border-t border-border pt-3 space-y-2">
-                          <!-- Lease Status -->
-                          <div class="flex items-center gap-2">
-                            <z-badge [zType]="getLeaseStatusBadgeType(lease.status)">
-                              {{ getLeaseStatusLabel(lease.status) }}
-                            </z-badge>
-                          </div>
-
-                          <!-- Lease Type -->
-                          <div class="flex items-center gap-2">
-                            <z-icon zType="file-text" zSize="sm" class="text-muted-foreground" />
-                            <span class="text-sm text-muted-foreground">{{ getLeaseType(lease) }}</span>
-                          </div>
-
-                          <!-- Tenancy Dates -->
-                          <div class="flex items-center gap-2">
-                            <z-icon zType="calendar" zSize="sm" class="text-muted-foreground" />
-                            <span class="text-sm text-muted-foreground">
-                              {{ formatDate(lease.tenancyStart) }} - {{ formatDate(lease.tenancyEnd) }}
-                            </span>
-                          </div>
-                          @if (lease.tenancyDuration) {
-                            <div class="text-xs text-muted-foreground ml-6">
-                              Duration: {{ lease.tenancyDuration }} months
-                            </div>
-                          }
-
-                          <!-- Rent Information -->
-                          <div class="flex items-center gap-2">
-                            <z-icon zType="circle-dollar-sign" zSize="sm" class="text-muted-foreground" />
-                            <span class="text-sm font-semibold">
-                              {{ formatLeasePrice(lease.rentPrice, lease.paymentType) }}
-                            </span>
-                          </div>
-
-                          <!-- Payment Method -->
-                          <div class="flex items-center gap-2">
-                            <z-icon zType="credit-card" zSize="sm" class="text-muted-foreground" />
-                            <span class="text-sm text-muted-foreground">{{ getPaymentMethodLabel(lease.paymentMethod) }}</span>
-                          </div>
-
-                          <!-- Payment Date -->
-                          @if (lease.paymentDate) {
-                            <div class="flex items-center gap-2">
-                              <z-icon zType="calendar" zSize="sm" class="text-muted-foreground" />
-                              <span class="text-sm text-muted-foreground">Payment Date: Day {{ lease.paymentDate }}</span>
-                            </div>
-                          }
-
-                          <!-- Special Terms -->
-                          @if (lease.specialTerms) {
-                            <div class="mt-2 pt-2 border-t border-border">
-                              <p class="text-xs font-medium text-muted-foreground mb-1">Special Terms:</p>
-                              <p class="text-sm text-muted-foreground">{{ lease.specialTerms }}</p>
-                            </div>
-                          }
-                        </div>
+            @if (isVacationLocation()) {
+              <z-tab label="RESERVATIONS">
+                <div class="pt-4">
+                  @if (isLoadingReservations()) {
+                    <div class="flex items-center justify-center py-8">
+                      <div class="text-center space-y-4">
+                        <z-icon zType="loader-circle" class="w-8 h-8 animate-spin mx-auto" />
+                        <p class="text-sm text-muted-foreground">Loading reservations...</p>
                       </div>
-                    </z-card>
-                  }
-                  @if (leases().length === 0) {
-                    <div class="text-center py-8 text-sm text-muted-foreground">
-                      No leases found
                     </div>
+                  } @else {
+                    <z-reservation-calendar [reservations]="reservations()" />
                   }
                 </div>
-              </div>
-            </z-tab>
+              </z-tab>
+            } @else {
+              <z-tab label="LEASING">
+                <div class="pt-2 space-y-2">
+                  <h3 class="text-sm font-semibold">Leasing</h3>
+
+                  <div class="space-y-3">
+                    @for (lease of leases(); track lease.id) {
+                      <z-card class="p-4" zBodySpacing="none">
+                        <div class="space-y-3">
+                          <!-- Tenant Information with Image -->
+                          <div class="flex items-start gap-3">
+                            @if (lease.tenantAvatarUrl) {
+                              <img
+                                [src]="lease.tenantAvatarUrl"
+                                [alt]="lease.tenantName"
+                                class="w-16 h-16 rounded-full object-cover border border-border flex-shrink-0"
+                              />
+                            } @else {
+                              <z-avatar
+                                [zImage]="{ fallback: getTenantInitials(lease) }"
+                                zType="default"
+                                zSize="lg"
+                                zShape="circle"
+                                class="w-16 h-16 flex-shrink-0"
+                              />
+                            }
+                            <div class="flex-1 min-w-0">
+                              <div class="flex items-center gap-2 mb-1">
+                                <span class="text-sm font-semibold">{{ lease.tenantName || 'Unnamed tenant' }}</span>
+                              </div>
+                              @if (lease.tenantIdentifier) {
+                                <div class="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                                  <z-icon zType="id-card" zSize="sm" />
+                                  <span>Ref: {{ lease.tenantIdentifier }}</span>
+                                </div>
+                              }
+                              @if (lease.tenantEmail) {
+                                <div class="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                                  <z-icon zType="mail" zSize="sm" />
+                                  <span>{{ lease.tenantEmail }}</span>
+                                </div>
+                              }
+                              @if (lease.tenantPhone) {
+                                <div class="flex items-center gap-2 text-sm text-muted-foreground">
+                                  <z-icon zType="smartphone" zSize="sm" />
+                                  <span>{{ lease.tenantPhone }}</span>
+                                </div>
+                              }
+                            </div>
+                          </div>
+
+                          <div class="border-t border-border pt-3 space-y-2">
+                            <!-- Lease Status -->
+                            <div class="flex items-center gap-2">
+                              <z-badge [zType]="getLeaseStatusBadgeType(lease.status)">
+                                {{ getLeaseStatusLabel(lease.status) }}
+                              </z-badge>
+                            </div>
+
+                            <!-- Lease Type -->
+                            <div class="flex items-center gap-2">
+                              <z-icon zType="file-text" zSize="sm" class="text-muted-foreground" />
+                              <span class="text-sm text-muted-foreground">{{ getLeaseType(lease) }}</span>
+                            </div>
+
+                            <!-- Tenancy Dates -->
+                            <div class="flex items-center gap-2">
+                              <z-icon zType="calendar" zSize="sm" class="text-muted-foreground" />
+                              <span class="text-sm text-muted-foreground">
+                                {{ formatDate(lease.tenancyStart) }} - {{ formatDate(lease.tenancyEnd) }}
+                              </span>
+                            </div>
+                            @if (lease.tenancyDuration) {
+                              <div class="text-xs text-muted-foreground ml-6">
+                                Duration: {{ lease.tenancyDuration }} months
+                              </div>
+                            }
+
+                            <!-- Rent Information -->
+                            <div class="flex items-center gap-2">
+                              <z-icon zType="circle-dollar-sign" zSize="sm" class="text-muted-foreground" />
+                              <span class="text-sm font-semibold">
+                                {{ formatLeasePrice(lease.rentPrice, lease.paymentType) }}
+                              </span>
+                            </div>
+
+                            <!-- Payment Method -->
+                            <div class="flex items-center gap-2">
+                              <z-icon zType="credit-card" zSize="sm" class="text-muted-foreground" />
+                              <span class="text-sm text-muted-foreground">{{ getPaymentMethodLabel(lease.paymentMethod) }}</span>
+                            </div>
+
+                            <!-- Payment Date -->
+                            @if (lease.paymentDate) {
+                              <div class="flex items-center gap-2">
+                                <z-icon zType="calendar" zSize="sm" class="text-muted-foreground" />
+                                <span class="text-sm text-muted-foreground">Payment Date: Day {{ lease.paymentDate }}</span>
+                              </div>
+                            }
+
+                            <!-- Special Terms -->
+                            @if (lease.specialTerms) {
+                              <div class="mt-2 pt-2 border-t border-border">
+                                <p class="text-xs font-medium text-muted-foreground mb-1">Special Terms:</p>
+                                <p class="text-sm text-muted-foreground">{{ lease.specialTerms }}</p>
+                              </div>
+                            }
+                          </div>
+                        </div>
+                      </z-card>
+                    }
+                    @if (leases().length === 0) {
+                      <div class="text-center py-8 text-sm text-muted-foreground">
+                        No leases found
+                      </div>
+                    }
+                  </div>
+                </div>
+              </z-tab>
+            }
           </z-tab-group>
         </z-card>
 
