@@ -239,32 +239,9 @@ export class EditMaintenanceComponent implements OnInit, OnDestroy {
         const hours = String(scheduledDate.getHours()).padStart(2, '0');
         const minutes = String(scheduledDate.getMinutes()).padStart(2, '0');
         
-        // Convert priority to number - handle both string and number formats
-        let priority: MaintenancePriority;
-        if (typeof maintenance.priority === 'string') {
-          const priorityMap: Record<string, MaintenancePriority> = {
-            'Low': MaintenancePriority.Low,
-            'Medium': MaintenancePriority.Medium,
-            'Urgent': MaintenancePriority.Urgent,
-          };
-          priority = priorityMap[maintenance.priority] || parseInt(maintenance.priority, 10) || MaintenancePriority.Low;
-        } else {
-          priority = maintenance.priority;
-        }
-        
-        // Convert status to number - handle both string and number formats
-        let status: MaintenanceStatus;
-        if (typeof maintenance.status === 'string') {
-          const statusMap: Record<string, MaintenanceStatus> = {
-            'Waiting': MaintenanceStatus.Waiting,
-            'InProgress': MaintenanceStatus.InProgress,
-            'Done': MaintenanceStatus.Done,
-            'Cancelled': MaintenanceStatus.Cancelled,
-          };
-          status = statusMap[maintenance.status] || parseInt(maintenance.status, 10) || MaintenanceStatus.Waiting;
-        } else {
-          status = maintenance.status;
-        }
+        // Backend now returns priority and status as numbers directly
+        const priority = maintenance.priority as MaintenancePriority;
+        const status = maintenance.status as MaintenanceStatus;
         
         this.formData.set({
           propertyId: maintenance.propertyId || '',
@@ -393,12 +370,17 @@ export class EditMaintenanceComponent implements OnInit, OnDestroy {
   parsePriority(value: string | number): MaintenancePriority {
     // Ensure we convert to number properly
     const numValue = typeof value === 'string' ? parseInt(value, 10) : value;
+    
+    // Check for NaN
+    if (isNaN(numValue)) {
+      return MaintenancePriority.Low;
+    }
+    
     // Validate the value is a valid priority (1, 2, or 3)
     if (numValue === MaintenancePriority.Low || numValue === MaintenancePriority.Medium || numValue === MaintenancePriority.Urgent) {
       return numValue as MaintenancePriority;
     }
     // Default to Low if invalid
-    console.warn('Invalid priority value:', value, 'defaulting to Low');
     return MaintenancePriority.Low;
   }
 
@@ -416,13 +398,11 @@ export class EditMaintenanceComponent implements OnInit, OnDestroy {
 
   onPriorityChange(value: any): void {
     const priority = this.parsePriority(value);
-    console.log('Priority changed:', value, '->', priority, 'type:', typeof priority);
     this.updateField('priority', priority);
   }
 
   onStatusChange(value: any): void {
     const status = this.parseStatus(value);
-    console.log('Status changed:', value, '->', status, 'type:', typeof status);
     this.updateField('status', status);
   }
 
@@ -446,9 +426,6 @@ export class EditMaintenanceComponent implements OnInit, OnDestroy {
       ? formData.status 
       : parseInt(String(formData.status), 10) as MaintenanceStatus;
 
-    console.log('Submitting with priority:', priority, 'type:', typeof priority);
-    console.log('Submitting with status:', status, 'type:', typeof status);
-
     if (this.isEditMode()) {
       const id = this.maintenanceId();
       if (!id) {
@@ -456,6 +433,7 @@ export class EditMaintenanceComponent implements OnInit, OnDestroy {
         return;
       }
 
+      // Backend now expects enum as number (JsonStringEnumConverter removed)
       const request: UpdateMaintenanceRequest = {
         id,
         propertyId: formData.propertyId,
@@ -484,6 +462,7 @@ export class EditMaintenanceComponent implements OnInit, OnDestroy {
         },
       });
     } else {
+      // Backend now expects enum as number (JsonStringEnumConverter removed)
       const request: CreateMaintenanceRequest = {
         propertyId: formData.propertyId,
         companyId,

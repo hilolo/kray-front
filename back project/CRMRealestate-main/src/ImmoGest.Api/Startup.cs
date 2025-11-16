@@ -81,7 +81,9 @@ namespace ImmoGest.Api
             services.AddControllers().AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.IgnoreNullValues = true;
-                options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()); // for enum as strings
+                // Removed JsonStringEnumConverter - enums will be serialized as numbers (default)
+                // This is more efficient and type-safe for API communication
+                // options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
             });
 
             var tokenConfig = Configuration.GetSection("TokenConfiguration");

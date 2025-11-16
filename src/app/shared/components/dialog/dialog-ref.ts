@@ -16,12 +16,20 @@ export class ZardDialogRef<T = any, R = any, U = any> {
   private isClosing = false;
   protected result?: R;
   componentInstance: T | null = null;
+  private readonly afterClosedSubject: Subject<R | undefined> = new Subject();
 
   /**
    * Get the dialog result
    */
   getResult(): R | undefined {
     return this.result;
+  }
+
+  /**
+   * Observable that emits when the dialog is closed
+   */
+  afterClosed() {
+    return this.afterClosedSubject.asObservable();
   }
 
   constructor(
@@ -79,6 +87,10 @@ export class ZardDialogRef<T = any, R = any, U = any> {
         }
         this.overlayRef.dispose();
       }
+
+      // Emit the result to afterClosed subscribers
+      this.afterClosedSubject.next(result);
+      this.afterClosedSubject.complete();
 
       if (!this.destroy$.closed) {
         this.destroy$.next();

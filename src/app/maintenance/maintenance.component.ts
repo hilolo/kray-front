@@ -127,19 +127,8 @@ export class MaintenanceComponent implements OnInit, OnDestroy {
       // Get contact avatar URL directly from maintenance (now included in API response)
       const contactAvatarUrl = maintenance.contactImageUrl || null;
       
-      // Convert priority to number - handle both string and number formats
-      let priority: MaintenancePriority;
-      if (typeof maintenance.priority === 'string') {
-        // Map string priority names to enum values
-        const priorityMap: Record<string, MaintenancePriority> = {
-          'Low': MaintenancePriority.Low,
-          'Medium': MaintenancePriority.Medium,
-          'Urgent': MaintenancePriority.Urgent,
-        };
-        priority = priorityMap[maintenance.priority] || parseInt(maintenance.priority, 10) || MaintenancePriority.Low;
-      } else {
-        priority = maintenance.priority;
-      }
+      // Backend now returns priority as number directly
+      const priority = maintenance.priority as MaintenancePriority;
       
       const task: KanbanTask = {
         id: maintenance.id,
@@ -161,20 +150,8 @@ export class MaintenanceComponent implements OnInit, OnDestroy {
         serviceAvatarUrl: contactAvatarUrl || undefined,
       };
 
-      // Convert status to number - handle both string and number formats
-      let status: MaintenanceStatus;
-      if (typeof maintenance.status === 'string') {
-        // Map string status names to enum values
-        const statusMap: Record<string, MaintenanceStatus> = {
-          'Waiting': MaintenanceStatus.Waiting,
-          'InProgress': MaintenanceStatus.InProgress,
-          'Done': MaintenanceStatus.Done,
-          'Cancelled': MaintenanceStatus.Cancelled,
-        };
-        status = statusMap[maintenance.status] || parseInt(maintenance.status, 10) || MaintenanceStatus.Waiting;
-      } else {
-        status = maintenance.status;
-      }
+      // Backend now returns status as number directly
+      const status = maintenance.status as MaintenanceStatus;
       
       switch (status) {
         case MaintenanceStatus.Waiting:
@@ -461,23 +438,13 @@ export class MaintenanceComponent implements OnInit, OnDestroy {
       zClosable: true,
     });
 
-    // Poll for result
-    let checkInterval: any = null;
-    let attempts = 0;
-    const maxAttempts = 60; // 6 seconds
-
-    checkInterval = setInterval(() => {
-      attempts++;
-      const result = (dialogRef as any)?.getResult?.();
-      
+    // Subscribe to dialog close event
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result: any) => {
       if (result && result.maintenanceId) {
-        clearInterval(checkInterval);
-        this.toastService.success('Maintenance created successfully');
+        // Reload maintenances to update the list and kanban
         this.loadMaintenances();
-      } else if (attempts >= maxAttempts) {
-        clearInterval(checkInterval);
       }
-    }, 100);
+    });
   }
 
   editMaintenance(maintenanceId: string): void {
@@ -491,23 +458,13 @@ export class MaintenanceComponent implements OnInit, OnDestroy {
       zClosable: true,
     });
 
-    // Poll for result
-    let checkInterval: any = null;
-    let attempts = 0;
-    const maxAttempts = 60; // 6 seconds
-
-    checkInterval = setInterval(() => {
-      attempts++;
-      const result = (dialogRef as any)?.getResult?.();
-      
+    // Subscribe to dialog close event
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result: any) => {
       if (result && result.maintenanceId) {
-        clearInterval(checkInterval);
-        this.toastService.success('Maintenance updated successfully');
+        // Reload maintenances to update the list and kanban
         this.loadMaintenances();
-      } else if (attempts >= maxAttempts) {
-        clearInterval(checkInterval);
       }
-    }, 100);
+    });
   }
 
   // Handle image error - show fallback
