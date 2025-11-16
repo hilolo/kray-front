@@ -7,7 +7,6 @@ export interface UpdateBuildingRequest {
   address?: string;
   city?: string;
   description?: string;
-  construction?: number;
   year?: number;
   floor?: number;
   image?: {

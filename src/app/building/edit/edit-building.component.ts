@@ -28,7 +28,6 @@ type BuildingFormData = {
   address: string;
   city: string;
   description: string;
-  construction: number;
   year: number;
   floor: number;
 };
@@ -112,7 +111,6 @@ export class EditBuildingComponent implements OnInit, OnDestroy {
     address: '',
     city: '',
     description: '',
-    construction: 0,
     year: new Date().getFullYear(),
     floor: 0,
   });
@@ -133,7 +131,6 @@ export class EditBuildingComponent implements OnInit, OnDestroy {
     const data = this.formData();
     return (
       data.name.trim() !== '' &&
-      data.construction > 0 &&
       data.year > 0 &&
       data.floor > 0
     );
@@ -149,20 +146,11 @@ export class EditBuildingComponent implements OnInit, OnDestroy {
     return '';
   });
 
-  readonly constructionError = computed(() => {
-    if (!this.formSubmitted()) return '';
-    const value = this.formData().construction;
-    if (value <= 0) {
-      return 'Construction must be greater than 0';
-    }
-    return '';
-  });
-
   readonly yearError = computed(() => {
     if (!this.formSubmitted()) return '';
     const value = this.formData().year;
     if (value <= 0) {
-      return 'Year must be greater than 0';
+      return 'Construction Year must be greater than 0';
     }
     return '';
   });
@@ -179,10 +167,6 @@ export class EditBuildingComponent implements OnInit, OnDestroy {
   // Error states
   readonly nameHasError = computed(() => {
     return this.formSubmitted() && (!this.formData().name || this.formData().name.trim() === '');
-  });
-
-  readonly constructionHasError = computed(() => {
-    return this.formSubmitted() && this.formData().construction <= 0;
   });
 
   readonly yearHasError = computed(() => {
@@ -372,7 +356,6 @@ export class EditBuildingComponent implements OnInit, OnDestroy {
       address: building.address || '',
       city: city,
       description: building.description || '',
-      construction: building.construction || 0,
       year: building.year || new Date().getFullYear(),
       floor: building.floor || 0,
     });
@@ -388,7 +371,6 @@ export class EditBuildingComponent implements OnInit, OnDestroy {
       address: '',
       city: '',
       description: '',
-      construction: 0,
       year: new Date().getFullYear(),
       floor: 0,
     });
@@ -513,7 +495,6 @@ export class EditBuildingComponent implements OnInit, OnDestroy {
       address: formData.address?.trim() || undefined,
       city: formData.city?.trim() || undefined,
       description: formData.description?.trim() || undefined,
-      construction: formData.construction,
       year: formData.year,
       floor: formData.floor,
     };
@@ -544,7 +525,6 @@ export class EditBuildingComponent implements OnInit, OnDestroy {
       address: formData.address?.trim() || undefined,
       city: formData.city?.trim() || undefined,
       description: formData.description?.trim() || undefined,
-      construction: formData.construction || undefined,
       year: formData.year || undefined,
       floor: formData.floor || undefined,
     };

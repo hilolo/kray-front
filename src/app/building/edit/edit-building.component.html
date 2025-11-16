@@ -187,28 +187,9 @@
                 </p>
               </div>
 
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <z-form-field>
-                  <z-form-label zRequired>Construction</z-form-label>
-                  <z-form-control [errorMessage]="constructionError()">
-                    <z-input-group [zPrefix]="buildingIconTemplate">
-                      <input
-                        z-input
-                        type="number"
-                        [ngModel]="formData().construction"
-                        (ngModelChange)="updateField('construction', +$event)"
-                        placeholder="0"
-                        min="0"
-                        step="1"
-                        [zStatus]="constructionHasError() ? 'error' : undefined"
-                        class="w-full"
-                      />
-                    </z-input-group>
-                  </z-form-control>
-                </z-form-field>
-
-                <z-form-field>
-                  <z-form-label zRequired>Year</z-form-label>
+                  <z-form-label zRequired>Construction Year</z-form-label>
                   <z-form-control [errorMessage]="yearError()">
                     <z-input-group [zPrefix]="calendarIconTemplate">
                       <input
