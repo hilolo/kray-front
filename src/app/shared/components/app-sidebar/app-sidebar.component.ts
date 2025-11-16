@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, TemplateRef, ViewChild, ViewContainerRef, ViewEncapsulation, OnDestroy } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { NgClass } from '@angular/common';
 import type { ClassValue } from 'clsx';
 import { LayoutModule } from '@shared/components/layout/layout.module';
 import { ZardIconComponent } from '@shared/components/icon/icon.component';
@@ -21,7 +22,7 @@ import { DarkModeService } from '@shared/services/darkmode.service';
   selector: 'app-sidebar',
   exportAs: 'appSidebar',
   standalone: true,
-  imports: [LayoutModule, ZardIconComponent, ZardDropdownModule, RouterLink, RouterLinkActive, TranslateModule, ZardAvatarComponent, ZardDividerComponent, ZardTooltipModule],
+  imports: [LayoutModule, ZardIconComponent, ZardDropdownModule, RouterLink, RouterLinkActive, TranslateModule, ZardAvatarComponent, ZardDividerComponent, ZardTooltipModule, NgClass],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   templateUrl: './app-sidebar.component.html',

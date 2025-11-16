@@ -37,7 +37,19 @@ export class ZardDialogRef<T = any, R = any, U = any> {
       this.overlayRef
         .outsidePointerEvents()
         .pipe(takeUntil(this.destroy$))
-        .subscribe(() => this.close());
+        .subscribe((event) => {
+          // Check if the click is on an overlay pane element (like dropdown, combobox, etc.)
+          const target = event.target as HTMLElement;
+          if (target) {
+            // Check if the click is within any CDK overlay pane (dropdown, select, combobox, etc.)
+            const overlayPane = target.closest('.cdk-overlay-pane');
+            if (overlayPane) {
+              // Click is on an overlay pane (like a dropdown), don't close the dialog
+              return;
+            }
+          }
+          this.close();
+        });
     }
 
     if (isPlatformBrowser(this.platformId)) {

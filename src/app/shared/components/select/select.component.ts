@@ -63,6 +63,7 @@ type OnChangeType = (value: string) => void;
     >
       <span class="flex items-center gap-2">
         @if (selectedValue()) {
+          <ng-content select="[slot=selected-icon]"></ng-content>
           <span>{{ selectedLabel() }}</span>
         } @else {
           <span class="text-muted-foreground">{{ zPlaceholder() }}</span>

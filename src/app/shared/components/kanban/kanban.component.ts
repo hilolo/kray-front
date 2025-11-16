@@ -4,6 +4,7 @@ import {
   computed,
   effect,
   input,
+  output,
   signal,
   ViewEncapsulation,
 } from '@angular/core';
@@ -69,6 +70,8 @@ export interface KanbanColumn {
 export class ZardKanbanComponent {
   readonly columns = input<KanbanColumn[]>([]);
   readonly class = input<ClassValue>('');
+  readonly zTaskDropped = output<{ taskId: string; newStatus: 'planned' | 'in-progress' | 'done'; previousStatus: 'planned' | 'in-progress' | 'done' }>();
+  readonly zTaskClicked = output<{ taskId: string }>();
 
   // Convert input to signal for reactivity
   readonly columnsSignal = signal<KanbanColumn[]>([]);
@@ -181,6 +184,14 @@ export class ZardKanbanComponent {
   // Handle drag and drop
   drop(event: CdkDragDrop<KanbanTask[]>): void {
     const currentColumns = [...this.columnsSignal()];
+    const task = event.item.data as KanbanTask;
+    
+    // Find previous column status before moving
+    const previousColumnIndex = currentColumns.findIndex(col => 
+      col.tasks === event.previousContainer.data
+    );
+    const previousColumn = previousColumnIndex >= 0 ? currentColumns[previousColumnIndex] : null;
+    const previousStatus = previousColumn?.status || 'planned';
     
     if (event.previousContainer === event.container) {
       // Move within same column
@@ -193,6 +204,23 @@ export class ZardKanbanComponent {
         event.previousIndex,
         event.currentIndex
       );
+      
+      // Find new column status after moving
+      // Find which column's tasks array matches the container data
+      const newColumnIndex = currentColumns.findIndex(col => 
+        col.tasks === event.container.data
+      );
+      const newColumn = newColumnIndex >= 0 ? currentColumns[newColumnIndex] : null;
+      const newStatus = newColumn?.status || 'planned';
+      
+      // Emit event if status changed
+      if (previousStatus !== newStatus) {
+        this.zTaskDropped.emit({
+          taskId: task.id,
+          newStatus,
+          previousStatus,
+        });
+      }
     }
 
     // Update signal with new state
@@ -209,6 +237,14 @@ export class ZardKanbanComponent {
   // Get column ID for CDK drag-drop
   getColumnId(index: number): string {
     return `column-${index}`;
+  }
+
+  // Handle task click
+  onTaskClick(taskId: string): void {
+    // Only emit if not dragging
+    if (!this.draggedTaskId()) {
+      this.zTaskClicked.emit({ taskId });
+    }
   }
 }
 
