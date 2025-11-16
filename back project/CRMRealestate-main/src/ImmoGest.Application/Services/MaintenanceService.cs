@@ -135,6 +135,12 @@ namespace ImmoGest.Application.Services
 
                     try
                     {
+                        // Set property identifier (manually set to ensure it's always populated)
+                        if (entity.Property != null)
+                        {
+                            dto.PropertyIdentifier = entity.Property.Identifier;
+                        }
+
                         // Generate property image URL if default attachment exists
                         if (entity.Property != null && entity.Property.DefaultAttachmentId.HasValue)
                         {
@@ -222,6 +228,12 @@ namespace ImmoGest.Application.Services
                 if (entityResult != null && entityResult.IsSuccess() && entityResult.Data != null)
                 {
                     var maintenance = entityResult.Data;
+                    
+                    // Set property identifier (manually set to ensure it's always populated)
+                    if (maintenance.Property != null)
+                    {
+                        dto.PropertyIdentifier = maintenance.Property.Identifier;
+                    }
                     
                     // Generate property image URL if default attachment exists
                     if (maintenance.Property != null && maintenance.Property.DefaultAttachmentId.HasValue)

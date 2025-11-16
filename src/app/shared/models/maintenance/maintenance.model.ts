@@ -23,6 +23,7 @@ export enum MaintenancePriority {
 export interface Maintenance {
   id: string;
   propertyId: string;
+  propertyIdentifier: string | null;
   propertyName: string;
   propertyAddress: string;
   propertyImageUrl: string | null;

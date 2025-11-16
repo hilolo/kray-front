@@ -65,8 +65,8 @@
 
             <!-- Content: Property and Service Info -->
             <div class="flex flex-col gap-1.5 flex-1 min-h-0 justify-end">
-              <!-- Property Information -->
-              @if (task.propertyName || task.propertyAddress) {
+              <!-- Property Information (with reference) -->
+              @if (task.propertyName || task.propertyAddress || task.propertyReference) {
                 <div class="flex items-center gap-1.5 p-1.5 bg-muted/20 rounded-md flex-shrink-0">
                   @if (task.propertyImageUrl) {
                     <img 
@@ -81,11 +81,18 @@
                     </div>
                   }
                   <div class="flex-1 min-w-0">
-                    @if (task.propertyName) {
-                      <p class="text-[10px] font-medium truncate leading-tight">{{ task.propertyName }}</p>
-                    }
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                      @if (task.propertyName) {
+                        <p class="text-[10px] font-medium truncate leading-tight">{{ task.propertyName }}</p>
+                      }
+                      @if (task.propertyReference) {
+                        <span class="text-[9px] text-muted-foreground/70 font-mono bg-muted/50 px-1.5 py-0.5 rounded flex-shrink-0">
+                          Ref: {{ task.propertyReference }}
+                        </span>
+                      }
+                    </div>
                     @if (task.propertyAddress) {
-                      <p class="text-[9px] text-muted-foreground truncate leading-tight">{{ task.propertyAddress }}</p>
+                      <p class="text-[9px] text-muted-foreground truncate leading-tight mt-0.5">{{ task.propertyAddress }}</p>
                     }
                   </div>
                 </div>

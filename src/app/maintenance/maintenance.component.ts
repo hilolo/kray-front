@@ -154,10 +154,14 @@ export class MaintenanceComponent implements OnInit, OnDestroy {
           url: contactAvatarUrl || undefined,
         }] : undefined,
         dateRange: this.formatDateRange(maintenance.scheduledDateTime),
-        // Property information
+        // Property information (combined in one item)
         propertyName: maintenance.propertyName,
         propertyAddress: maintenance.propertyAddress,
         propertyImageUrl: maintenance.propertyImageUrl,
+        // Only use propertyIdentifier if it exists and is not empty, otherwise don't show reference (don't fallback to GUID)
+        propertyReference: maintenance.propertyIdentifier && maintenance.propertyIdentifier.trim() !== '' 
+          ? maintenance.propertyIdentifier 
+          : undefined,
         // Service/Contact information
         serviceName: maintenance.contactName,
         serviceAvatarUrl: contactAvatarUrl || undefined,

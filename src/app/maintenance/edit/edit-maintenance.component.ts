@@ -276,7 +276,7 @@ export class EditMaintenanceComponent implements OnInit, OnDestroy {
         this.properties.set(response.result);
         const options: ZardComboboxOption[] = response.result.map(property => ({
           value: property.id,
-          label: `${property.identifier} - ${property.name}`,
+          label: this.getPropertyDisplayNameWithAddress(property),
         }));
         this.propertyOptions.set(options);
         this.isLoadingProperties.set(false);
@@ -286,6 +286,31 @@ export class EditMaintenanceComponent implements OnInit, OnDestroy {
         this.isLoadingProperties.set(false);
       },
     });
+  }
+
+  getPropertyDisplayNameWithAddress(property: Property): string {
+    const name = property.name || 'Unnamed Property';
+    const identifier = property.identifier || '';
+    const address = property.address || '';
+    const city = property.city || '';
+    
+    // Build display string with name, reference (identifier), and address
+    let display = name;
+    
+    // Add reference (identifier) if available
+    if (identifier) {
+      display = `${name} (${identifier})`;
+    }
+    
+    // Add address if available
+    if (address) {
+      const fullAddress = city ? `${address}, ${city}` : address;
+      display = `${display} - ${fullAddress}`;
+    } else if (city) {
+      display = `${display} - ${city}`;
+    }
+    
+    return display;
   }
 
   loadContacts(): void {

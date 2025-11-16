@@ -47,6 +47,7 @@ export interface KanbanTask {
   propertyName?: string;
   propertyAddress?: string;
   propertyImageUrl?: string | null;
+  propertyReference?: string; // Property identifier/reference
   // Service/Contact information
   serviceName?: string;
   serviceAvatarUrl?: string | null;

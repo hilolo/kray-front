@@ -372,6 +372,7 @@ namespace ImmoGest.Application.MappingProfiles
         private void MaintenanceMapper()
         {
             CreateMap<Maintenance, MaintenanceDto>()
+                .ForMember(dest => dest.PropertyIdentifier, opt => opt.MapFrom(src => src.Property != null ? src.Property.Identifier : null))
                 .ForMember(dest => dest.PropertyName, opt => opt.MapFrom(src => src.Property != null ? src.Property.Name : null))
                 .ForMember(dest => dest.PropertyAddress, opt => opt.MapFrom(src => src.Property != null ? src.Property.Address : null))
                 .ForMember(dest => dest.OwnerName, opt => opt.MapFrom(src => 
