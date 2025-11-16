@@ -143,11 +143,15 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
   // Form validation
   readonly isFormValid = computed(() => {
     const data = this.formData();
+    const hasValidDates = data.tenancyStart !== null && 
+      data.tenancyEnd !== null && 
+      data.tenancyEnd > data.tenancyStart;
     return (
       data.propertyId !== '' &&
       data.contactId !== '' &&
       data.tenancyStart !== null &&
       data.tenancyEnd !== null &&
+      hasValidDates &&
       data.rentPrice > 0 &&
       data.paymentDate >= 1 &&
       data.paymentDate <= 31
@@ -190,6 +194,10 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
     if (!value) {
       return 'Tenancy end date is required';
     }
+    const startDate = this.formData().tenancyStart;
+    if (startDate && value <= startDate) {
+      return 'End date must be after start date';
+    }
     return '';
   });
 
@@ -225,8 +233,12 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
   });
 
   readonly tenancyEndHasError = computed(() => {
+    if (!this.formSubmitted()) return false;
     const value = this.formData().tenancyEnd;
-    return this.formSubmitted() && !value;
+    if (!value) return true;
+    const startDate = this.formData().tenancyStart;
+    if (startDate && value <= startDate) return true;
+    return false;
   });
 
   readonly rentPriceHasError = computed(() => {
@@ -236,6 +248,15 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
   readonly paymentDateHasError = computed(() => {
     const value = this.formData().paymentDate;
     return this.formSubmitted() && (value < 1 || value > 31);
+  });
+
+  // Minimum date for end date picker (start date + 1 day)
+  readonly tenancyEndMinDate = computed(() => {
+    const startDate = this.formData().tenancyStart;
+    if (!startDate) return null;
+    const minDate = new Date(startDate);
+    minDate.setDate(minDate.getDate() + 1);
+    return minDate;
   });
 
   // Tenancy duration calculation

@@ -297,16 +297,20 @@ export class ZardCalendarComponent {
   protected previousMonth() {
     const currentDate = this.currentDate();
     const currentMonth = parseInt(this.currentMonthValue());
-    const previous = new Date(currentDate.getFullYear(), (isNaN(currentMonth) ? currentDate.getMonth() : currentMonth) - 1, 1);
+    const currentYear = parseInt(this.currentYearValue());
+    const previous = new Date(isNaN(currentYear) ? currentDate.getFullYear() : currentYear, (isNaN(currentMonth) ? currentDate.getMonth() : currentMonth) - 1, 1);
     this.currentMonthValue.set(previous.getMonth().toString());
+    this.currentYearValue.set(previous.getFullYear().toString());
     this.focusedDayIndex.set(-1);
   }
 
   protected nextMonth() {
     const currentDate = this.currentDate();
     const currentMonth = parseInt(this.currentMonthValue());
-    const next = new Date(currentDate.getFullYear(), (isNaN(currentMonth) ? currentDate.getMonth() : currentMonth) + 1, 1);
+    const currentYear = parseInt(this.currentYearValue());
+    const next = new Date(isNaN(currentYear) ? currentDate.getFullYear() : currentYear, (isNaN(currentMonth) ? currentDate.getMonth() : currentMonth) + 1, 1);
     this.currentMonthValue.set(next.getMonth().toString());
+    this.currentYearValue.set(next.getFullYear().toString());
     this.focusedDayIndex.set(-1);
   }
 
@@ -318,7 +322,8 @@ export class ZardCalendarComponent {
 
     const currentDate = this.currentDate();
     const currentMonth = parseInt(this.currentMonthValue());
-    const lastDayOfPreviousMonth = new Date(currentDate.getFullYear(), isNaN(currentMonth) ? currentDate.getMonth() : currentMonth, 0);
+    const currentYear = parseInt(this.currentYearValue());
+    const lastDayOfPreviousMonth = new Date(isNaN(currentYear) ? currentDate.getFullYear() : currentYear, isNaN(currentMonth) ? currentDate.getMonth() : currentMonth, 0);
 
     return lastDayOfPreviousMonth.getTime() < minDate.getTime();
   }
@@ -331,7 +336,8 @@ export class ZardCalendarComponent {
 
     const currentDate = this.currentDate();
     const currentMonth = parseInt(this.currentMonthValue());
-    const nextMonth = new Date(currentDate.getFullYear(), (isNaN(currentMonth) ? currentDate.getMonth() : currentMonth) + 1, 1);
+    const currentYear = parseInt(this.currentYearValue());
+    const nextMonth = new Date(isNaN(currentYear) ? currentDate.getFullYear() : currentYear, (isNaN(currentMonth) ? currentDate.getMonth() : currentMonth) + 1, 1);
 
     return nextMonth.getTime() > maxDate.getTime();
   }
