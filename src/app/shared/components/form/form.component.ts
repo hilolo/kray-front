@@ -33,15 +33,13 @@ export class ZardFormFieldComponent {
     <div class="relative">
       <ng-content></ng-content>
     </div>
-    @if (errorMessage() || helpText()) {
-      <div class="mt-1.5 min-h-[1.25rem]">
-        @if (errorMessage()) {
-          <p class="text-sm text-red-500">{{ errorMessage() }}</p>
-        } @else if (helpText()) {
-          <p class="text-sm text-muted-foreground">{{ helpText() }}</p>
-        }
-      </div>
-    }
+    <div class="mt-1.5 min-h-[1.25rem]">
+      @if (errorMessage()) {
+        <p class="text-sm text-red-500">{{ errorMessage() }}</p>
+      } @else if (helpText()) {
+        <p class="text-sm text-muted-foreground">{{ helpText() }}</p>
+      }
+    </div>
   `,
   host: {
     '[class]': 'classes()',

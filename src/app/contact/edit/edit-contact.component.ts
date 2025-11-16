@@ -197,8 +197,7 @@ export class EditContactComponent implements OnInit, OnDestroy {
       // Company validation
       return (
         data.companyName.trim() !== '' &&
-        data.ice.trim() !== '' &&
-        data.rc.trim() !== '' &&
+        data.identifier.trim() !== '' &&
         data.phoneNumbers[0] && data.phoneNumbers[0].trim() !== ''
       );
     } else {
@@ -223,20 +222,12 @@ export class EditContactComponent implements OnInit, OnDestroy {
   });
 
   readonly iceError = computed(() => {
-    if (!this.formSubmitted() || !this.isCompany()) return '';
-    const ice = this.formData().ice;
-    if (!ice || ice.trim() === '') {
-      return 'ICE is required';
-    }
+    // ICE is optional, no validation needed
     return '';
   });
 
   readonly rcError = computed(() => {
-    if (!this.formSubmitted() || !this.isCompany()) return '';
-    const rc = this.formData().rc;
-    if (!rc || rc.trim() === '') {
-      return 'RC is required';
-    }
+    // RC is optional, no validation needed
     return '';
   });
 
@@ -260,7 +251,7 @@ export class EditContactComponent implements OnInit, OnDestroy {
   });
 
   readonly identifierError = computed(() => {
-    if (!this.formSubmitted() || this.isCompany()) return '';
+    if (!this.formSubmitted()) return '';
     const identifier = this.formData().identifier;
     if (!identifier || identifier.trim() === '') {
       return 'Identifier is required';
@@ -284,11 +275,13 @@ export class EditContactComponent implements OnInit, OnDestroy {
   });
 
   readonly iceHasError = computed(() => {
-    return this.formSubmitted() && this.isCompany() && (!this.formData().ice || this.formData().ice.trim() === '');
+    // ICE is optional, no error state
+    return false;
   });
 
   readonly rcHasError = computed(() => {
-    return this.formSubmitted() && this.isCompany() && (!this.formData().rc || this.formData().rc.trim() === '');
+    // RC is optional, no error state
+    return false;
   });
 
   readonly firstNameHasError = computed(() => {
@@ -300,7 +293,7 @@ export class EditContactComponent implements OnInit, OnDestroy {
   });
 
   readonly identifierHasError = computed(() => {
-    return this.formSubmitted() && !this.isCompany() && (!this.formData().identifier || this.formData().identifier.trim() === '');
+    return this.formSubmitted() && (!this.formData().identifier || this.formData().identifier.trim() === '');
   });
 
   readonly phoneNumberHasError = computed(() => {

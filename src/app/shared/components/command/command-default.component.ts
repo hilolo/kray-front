@@ -21,6 +21,7 @@ import { ZardCommandEmptyComponent } from './command-empty.component';
 import { CommandPaletteService } from '@shared/services/command-palette.service';
 import { mergeClasses } from '@shared/utils/merge-classes';
 import { ZardIcon } from '../icon/icons';
+import { MODULES } from '@shared/constants/modules.constant';
 
 export interface ZardCommandDefaultOption {
   value: string;
@@ -103,39 +104,58 @@ export class ZardCommandDefaultComponent implements OnInit {
     mergeClasses('fixed inset-0 z-50 flex items-center justify-center p-4', this.class())
   );
 
-  // Default command options
-  private readonly defaultOptions: ZardCommandDefaultOption[] = [
-    {
-      value: 'dashboard',
-      label: 'Dashboard',
-      icon: 'monitor',
-      route: '/',
-    },
-    {
-      value: 'settings',
-      label: 'Settings',
-      icon: 'settings',
-      route: '/settings',
-    },
-    {
-      value: 'contacts',
-      label: 'Contacts',
-      icon: 'user',
-      route: '/contact/tenants',
-    },
-    {
-      value: 'file-manager',
-      label: 'File Manager',
-      icon: 'folder',
-      route: '/file-manager',
-    },
-    {
-      value: 'ai-chat',
-      label: 'AI Chat',
-      icon: 'sparkles',
-      route: '/ai-chat',
-    },
-  ];
+  // Route mapping for modules
+  private static readonly moduleRoutes: Record<string, string> = {
+    dashboard: '/',
+    properties: '/property',
+    buildings: '/buildings',
+    leasing: '/leasing',
+    reservations: '/reservations',
+    maintenance: '/maintenance',
+    keys: '/keys',
+    banks: '/banks',
+    payments: '/payments',
+    'file-manager': '/file-manager',
+    reports: '/reports',
+    settings: '/settings',
+  };
+
+  // Generate default options from MODULES constant
+  private readonly defaultOptions: ZardCommandDefaultOption[] = MODULES.filter(module => module.key !== 'contacts')
+    .map(module => ({
+      value: module.key,
+      label: module.label,
+      icon: module.icon as ZardIcon,
+      route: ZardCommandDefaultComponent.moduleRoutes[module.key],
+    }))
+    .concat([
+      // Contact sub-modules
+      {
+        value: 'tenants',
+        label: 'Tenants',
+        icon: 'users',
+        route: '/contact/tenants',
+      },
+      {
+        value: 'owners',
+        label: 'Owners',
+        icon: 'users',
+        route: '/contact/owners',
+      },
+      {
+        value: 'services',
+        label: 'Services',
+        icon: 'users',
+        route: '/contact/services',
+      },
+      // Additional options not in MODULES
+      {
+        value: 'ai-chat',
+        label: 'AI Chat',
+        icon: 'sparkles',
+        route: '/ai-chat',
+      },
+    ]);
 
   // Grouped options - filter based on search term from command component
   protected readonly filteredGroups = computed(() => {

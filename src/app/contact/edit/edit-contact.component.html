@@ -237,7 +237,24 @@
           </z-form-field>
 
           <z-form-field>
-            <z-form-label zRequired>ICE</z-form-label>
+            <z-form-label zRequired>Identifier</z-form-label>
+            <z-form-control [errorMessage]="identifierError()" helpText="Company identifier or registration number">
+              <z-input-group [zPrefix]="idCardIconTemplate">
+                <input
+                  z-input
+                  type="text"
+                  [ngModel]="formData().identifier"
+                  (ngModelChange)="updateField('identifier', $event)"
+                  placeholder="Enter identifier"
+                  [zStatus]="identifierHasError() ? 'error' : undefined"
+                  class="w-full"
+                />
+              </z-input-group>
+            </z-form-control>
+          </z-form-field>
+
+          <z-form-field>
+            <z-form-label>ICE</z-form-label>
             <z-form-control [errorMessage]="iceError()" helpText="Identifiant Commun de l'Entreprise">
               <z-input-group [zPrefix]="idCardIconTemplate">
                 <input
@@ -254,7 +271,7 @@
           </z-form-field>
 
           <z-form-field>
-            <z-form-label zRequired>RC</z-form-label>
+            <z-form-label>RC</z-form-label>
             <z-form-control [errorMessage]="rcError()" helpText="Registre de Commerce">
               <z-input-group [zPrefix]="idCardIconTemplate">
                 <input
