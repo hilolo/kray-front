@@ -10,7 +10,7 @@ import { mergeClasses } from '@shared/utils/merge-classes';
 import type { Reservation } from '@shared/models/reservation/reservation.model';
 import { ReservationStatus } from '@shared/models/reservation/reservation.model';
 
-export type DateStatus = 'available' | 'pending' | 'reserved' | 'checkin' | 'checkout';
+export type DateStatus = 'available' | 'pending' | 'reserved' | 'checkin' | 'checkout' | 'checkin-checkout';
 
 export interface CalendarDateInfo {
   date: Date;
@@ -170,6 +170,12 @@ export class ZardReservationCalendarComponent {
     const reservations = this.reservations();
     const dateStr = this.formatDateKey(date);
     
+    let checkInReservation: Reservation | undefined;
+    let checkOutReservation: Reservation | undefined;
+    let hasPending = false;
+    let hasReserved = false;
+    
+    // First pass: collect all matching reservations
     for (const reservation of reservations) {
       if (reservation.status === ReservationStatus.Cancelled) continue;
       
@@ -182,19 +188,46 @@ export class ZardReservationCalendarComponent {
       const endStr = this.formatDateKey(endDate);
       
       if (dateStr === startStr) {
-        return { status: 'checkin', checkInReservation: reservation };
+        checkInReservation = reservation;
       }
       if (dateStr === endStr) {
-        return { status: 'checkout', checkOutReservation: reservation };
+        checkOutReservation = reservation;
       }
       if (date > startDate && date < endDate) {
         if (reservation.status === ReservationStatus.Pending) {
-          return { status: 'pending' };
+          hasPending = true;
         }
         if (reservation.status === ReservationStatus.Approved) {
-          return { status: 'reserved' };
+          hasReserved = true;
         }
       }
+    }
+    
+    // Check if date is both checkout and checkin
+    if (checkOutReservation && checkInReservation) {
+      return { 
+        status: 'checkin-checkout', 
+        checkInReservation, 
+        checkOutReservation 
+      };
+    }
+    
+    // Check if date is checkin
+    if (checkInReservation) {
+      return { status: 'checkin', checkInReservation };
+    }
+    
+    // Check if date is checkout
+    if (checkOutReservation) {
+      return { status: 'checkout', checkOutReservation };
+    }
+    
+    // Check if date is in the middle of a reservation
+    if (hasReserved) {
+      return { status: 'reserved' };
+    }
+    if (hasPending) {
+      return { status: 'pending' };
     }
     
     return { status: 'available' };
@@ -478,6 +511,10 @@ export class ZardReservationCalendarComponent {
           // Base is green (available), overlay will be red (reserved) on top-left
           statusClasses = 'bg-green-600 text-white hover:opacity-90';
           break;
+        case 'checkin-checkout':
+          // Base is green (available), will have two overlays
+          statusClasses = 'bg-green-600 text-white hover:opacity-90';
+          break;
       }
     } else {
       statusClasses = 'bg-transparent';
@@ -493,10 +530,10 @@ export class ZardReservationCalendarComponent {
   }
 
   // Split overlay classes for check-in/check-out
-  getSplitOverlayClasses(day: CalendarDateInfo): string {
-    if (day.status === 'checkin' || day.status === 'checkout') {
+  getSplitOverlayClasses(day: CalendarDateInfo, overlayType: 'checkin' | 'checkout'): string {
+    if (day.status === 'checkin' || day.status === 'checkout' || day.status === 'checkin-checkout') {
       // Get the reservation status to determine color
-      const reservation = day.status === 'checkin' ? day.checkInReservation : day.checkOutReservation;
+      const reservation = overlayType === 'checkin' ? day.checkInReservation : day.checkOutReservation;
       if (reservation) {
         if (reservation.status === ReservationStatus.Approved) {
           return 'absolute inset-0 bg-red-600';
@@ -511,8 +548,19 @@ export class ZardReservationCalendarComponent {
   }
 
   // Get clip-path for diagonal split
-  getSplitClipPath(day: CalendarDateInfo): string {
-    if (day.status === 'checkin') {
+  getSplitClipPath(day: CalendarDateInfo, overlayType: 'checkin' | 'checkout'): string {
+    if (day.status === 'checkin-checkout') {
+      // When both checkout and checkin: diagonal split
+      if (overlayType === 'checkout') {
+        // Checkout: top-left triangle (ending reservation)
+        // Triangle covering top-left: top-left (0,0) -> top-right (100%,0) -> bottom-left (0,100%)
+        return 'polygon(0 0, 100% 0, 0 100%)';
+      } else {
+        // Checkin: bottom-right triangle (starting reservation)
+        // Triangle covering bottom-right: top-right (100%,0) -> bottom-right (100%,100%) -> bottom-left (0,100%)
+        return 'polygon(100% 0, 100% 100%, 0 100%)';
+      }
+    } else if (day.status === 'checkin') {
       // Check-in: red on top-right half (diagonal from top-left to bottom-right)
       // Creates a triangle covering top-right: top-left (0,0) -> top-right (100%,0) -> bottom-right (100%,100%)
       return 'polygon(0 0, 100% 0, 100% 100%)';
@@ -526,7 +574,12 @@ export class ZardReservationCalendarComponent {
 
   // Check if date has dot indicator
   hasDot(day: CalendarDateInfo): boolean {
-    return day.isCurrentMonth && (day.status === 'reserved' || day.status === 'checkin' || day.status === 'checkout');
+    return day.isCurrentMonth && (day.status === 'reserved' || day.status === 'checkin' || day.status === 'checkout' || day.status === 'checkin-checkout');
+  }
+  
+  // Check if date has both checkin and checkout (needs two overlays)
+  hasBothCheckinCheckout(day: CalendarDateInfo): boolean {
+    return day.status === 'checkin-checkout';
   }
 
   // Print calendar and reservations
@@ -585,6 +638,7 @@ export class ZardReservationCalendarComponent {
             break;
           case 'checkin':
           case 'checkout':
+          case 'checkin-checkout':
             bgColor = '#16a34a'; // green base
             textColor = '#ffffff';
             break;
@@ -595,23 +649,47 @@ export class ZardReservationCalendarComponent {
       }
       
       // Check if has split (check-in or check-out)
-      const hasSplit = day.status === 'checkin' || day.status === 'checkout';
-      const splitColor = hasSplit 
-        ? (day.status === 'checkin' && day.checkInReservation?.status === ReservationStatus.Approved) || 
-          (day.status === 'checkout' && day.checkOutReservation?.status === ReservationStatus.Approved)
-          ? '#dc2626' // red-600
-          : '#eab308' // yellow-500
-        : '';
+      const hasSplit = day.status === 'checkin' || day.status === 'checkout' || day.status === 'checkin-checkout';
       
-      const splitStyle = hasSplit 
-        ? day.status === 'checkin'
-          // Check-in: red on top-right triangle (matches clip-path: polygon(0 0, 100% 0, 100% 100%))
-          // Gradient from top-right to bottom-left: red starts at top-right, green at bottom-left
-          ? `background: linear-gradient(to bottom left, ${splitColor} 0%, ${splitColor} 50%, ${bgColor} 50%, ${bgColor} 100%);`
-          // Check-out: red on top-left triangle (matches clip-path: polygon(0 0, 100% 0, 0 100%))
-          // Gradient from top-left to bottom-right: red starts at top-left, green at bottom-right
-          : `background: linear-gradient(to bottom right, ${splitColor} 0%, ${splitColor} 50%, ${bgColor} 50%, ${bgColor} 100%);`
-        : `background-color: ${bgColor};`;
+      let splitStyle = `background-color: ${bgColor};`;
+      
+      if (hasSplit) {
+        if (day.status === 'checkin-checkout') {
+          // Both checkout and checkin: need to show both colors
+          const checkoutColor = day.checkOutReservation?.status === ReservationStatus.Approved 
+            ? '#dc2626' // red-600
+            : '#eab308'; // yellow-500
+          const checkinColor = day.checkInReservation?.status === ReservationStatus.Approved 
+            ? '#dc2626' // red-600
+            : '#eab308'; // yellow-500
+          
+          // Create a complex gradient showing both colors
+          // Top-left triangle: checkout color (ending reservation)
+          // Bottom-right triangle: checkin color (starting reservation)
+          // Using diagonal gradient to create the split effect
+          splitStyle = `
+            background: 
+              linear-gradient(to bottom right, ${checkoutColor} 0%, ${checkoutColor} 50%, transparent 50%),
+              linear-gradient(to top left, ${checkinColor} 0%, ${checkinColor} 50%, transparent 50%),
+              ${bgColor};
+          `;
+        } else {
+          const splitColor = (day.status === 'checkin' && day.checkInReservation?.status === ReservationStatus.Approved) || 
+            (day.status === 'checkout' && day.checkOutReservation?.status === ReservationStatus.Approved)
+            ? '#dc2626' // red-600
+            : '#eab308'; // yellow-500
+          
+          if (day.status === 'checkin') {
+            // Check-in: red on top-right triangle (matches clip-path: polygon(0 0, 100% 0, 100% 100%))
+            // Gradient from top-right to bottom-left: red starts at top-right, green at bottom-left
+            splitStyle = `background: linear-gradient(to bottom left, ${splitColor} 0%, ${splitColor} 50%, ${bgColor} 50%, ${bgColor} 100%);`;
+          } else {
+            // Check-out: red on top-left triangle (matches clip-path: polygon(0 0, 100% 0, 0 100%))
+            // Gradient from top-left to bottom-right: red starts at top-left, green at bottom-right
+            splitStyle = `background: linear-gradient(to bottom right, ${splitColor} 0%, ${splitColor} 50%, ${bgColor} 50%, ${bgColor} 100%);`;
+          }
+        }
+      }
       
       return `
         <div style="

@@ -25,8 +25,12 @@
         <div class="aspect-square p-1">
           <div [class]="getDayContainerClasses(day)" [class.opacity-50]="!day.isCurrentMonth">
             <span class="relative z-10">{{ day.date.getDate() }}</span>
-            @if (day.status === 'checkin' || day.status === 'checkout') {
-              <div [class]="getSplitOverlayClasses(day)" [style.clip-path]="getSplitClipPath(day)"></div>
+            @if (hasBothCheckinCheckout(day)) {
+              <!-- Show both overlays when date is both checkout and checkin -->
+              <div [class]="getSplitOverlayClasses(day, 'checkout')" [style.clip-path]="getSplitClipPath(day, 'checkout')"></div>
+              <div [class]="getSplitOverlayClasses(day, 'checkin')" [style.clip-path]="getSplitClipPath(day, 'checkin')"></div>
+            } @else if (day.status === 'checkin' || day.status === 'checkout') {
+              <div [class]="getSplitOverlayClasses(day, day.status === 'checkin' ? 'checkin' : 'checkout')" [style.clip-path]="getSplitClipPath(day, day.status === 'checkin' ? 'checkin' : 'checkout')"></div>
             }
             @if (hasDot(day)) {
               <span class="absolute top-1 right-1 w-1 h-1 bg-white rounded-full z-10"></span>
