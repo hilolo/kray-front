@@ -16,7 +16,7 @@ import { cardBodyVariants, cardHeaderVariants, cardVariants, type ZardCardBodyVa
   template: `
     @if (zTitle()) {
       <div [class]="headerClasses()">
-        <div class="text-2xl font-semibold leading-none tracking-tight">
+        <div class="text-base font-semibold leading-none tracking-tight">
           <ng-container *zStringTemplateOutlet="zTitle()">{{ zTitle() }}</ng-container>
         </div>
 

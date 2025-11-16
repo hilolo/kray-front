@@ -1,5 +1,5 @@
 <z-page zTitle="Property Details">
-  <div class="container mx-auto max-w-6xl px-4 py-4">
+  <div class="container mx-auto max-w-6xl px-2 py-2">
     @if (isLoading()) {
       <div class="flex items-center justify-center min-h-[400px]">
         <div class="text-center space-y-4">
@@ -17,9 +17,9 @@
         </z-button>
       </div>
 
-      <div class="flex flex-col lg:flex-row gap-4 h-full">
+      <div class="flex flex-col lg:flex-row gap-2 h-full">
       <!-- Left Section: Property Details -->
-      <div class="w-full lg:w-1/2 space-y-4 min-w-0">
+      <div class="w-full lg:w-1/2 space-y-2 min-w-0">
         <!-- Property Media -->
         <z-card class="p-0 overflow-hidden" zBodySpacing="none">
           <div class="relative w-full aspect-[4/3] bg-muted flex items-center justify-center overflow-hidden">
@@ -65,15 +65,15 @@
         <z-card zBodySpacing="none">
           <div class="flex items-start justify-between gap-4">
             <div class="space-y-2 flex-1">
-              <h1 class="text-base font-semibold">{{ propertyName() }}</h1>
-              <p class="text-muted-foreground">{{ propertyType() }}</p>
+              <h1 class="text-sm font-semibold">{{ propertyName() }}</h1>
+              <p class="text-sm text-muted-foreground">{{ propertyType() }}</p>
               <div class="flex items-center gap-2 text-sm text-muted-foreground">
                 <z-icon zType="map-pin" zSize="sm" />
                 <span>{{ propertyLocation() }}</span>
               </div>
             </div>
             <div class="text-right">
-              <div class="text-base font-bold">
+              <div class="text-sm font-bold">
                 {{ property()?.price | propertyPrice: property()?.typePaiment }}
               </div>
               @if (property()?.identifier) {
@@ -139,7 +139,7 @@
       </div>
 
       <!-- Right Section: Tenancy Management -->
-      <div class="w-full lg:w-1/2 space-y-4 min-w-0">
+      <div class="w-full lg:w-1/2 space-y-2 min-w-0">
         <z-card zBodySpacing="none">
           <z-tab-group zTabsPosition="top" zActivePosition="bottom">
             <z-tab label="FINANCE">
@@ -148,9 +148,9 @@
               </div>
             </z-tab>
             <z-tab label="TENANCIES">
-              <div class="pt-3 space-y-3">
+              <div class="pt-2 space-y-2">
                 <div class="flex items-center justify-between">
-                  <h3 class="text-base font-semibold">Tenancies</h3>
+                  <h3 class="text-sm font-semibold">Tenancies</h3>
                   <z-button zType="default" zSize="sm">
                     <z-icon zType="plus" zSize="sm" />
                     Add new tenancy
@@ -168,7 +168,7 @@
                         <div class="space-y-2">
                           <div class="flex items-center gap-2">
                             <z-icon zType="user" zSize="sm" class="text-muted-foreground" />
-                            <span class="font-medium">{{ lease.tenantName || 'Unnamed tenancy' }}</span>
+                            <span class="text-sm font-medium">{{ lease.tenantName || 'Unnamed tenancy' }}</span>
                           </div>
                           <p class="text-sm text-muted-foreground">{{ getLeaseType(lease) }}</p>
                           <p class="text-sm text-muted-foreground">
@@ -200,7 +200,7 @@
 
         <!-- Calendar and Public Profile -->
         <z-card zBodySpacing="none">
-          <div class="space-y-4">
+          <div class="space-y-2">
             <!-- Calendar Link -->
             @if (isVacationLocation()) {
               <div class="space-y-2 pb-4">
@@ -254,7 +254,7 @@
             }
 
             <!-- Public Profile -->
-            <div class="space-y-3">
+              <div class="space-y-2">
               <div class="flex items-center gap-2">
                 <span class="text-sm font-medium">Public property profile</span>
                 <z-icon zType="info" zSize="sm" class="text-muted-foreground" />

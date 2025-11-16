@@ -46,7 +46,7 @@
     <div class="flex-1 min-h-0 overflow-y-auto">
       @if (isLoading()) {
         <div class="flex items-center justify-center h-full">
-          <div class="flex flex-col items-center gap-4">
+          <div class="flex flex-col items-center gap-2">
             <z-icon zType="loader-circle" zSize="lg" class="animate-spin text-primary" />
             <p class="text-muted-foreground">Loading lease data...</p>
           </div>
@@ -67,7 +67,7 @@
                 </p>
               </div>
 
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <!-- Property Field -->
                 @if (isEditMode()) {
                   <!-- Read-only display in edit mode -->
@@ -188,7 +188,7 @@
                 </p>
               </div>
 
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <z-form-field>
                   <z-form-label zRequired>Start Date</z-form-label>
                   <z-form-control [errorMessage]="tenancyStartError()">
@@ -239,7 +239,7 @@
                 </p>
               </div>
 
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <z-form-field>
                   <z-form-label zRequired>Rent Price</z-form-label>
                   <z-form-control [errorMessage]="rentPriceError()">
@@ -318,7 +318,7 @@
                 </p>
               </div>
 
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
                 <div class="flex items-center justify-between p-4 border rounded-md">
                   <div>
                     <p class="font-medium">Enable Receipts</p>

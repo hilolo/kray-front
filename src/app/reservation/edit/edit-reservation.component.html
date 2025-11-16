@@ -46,7 +46,7 @@
     <div class="flex-1 min-h-0 overflow-y-auto">
       @if (isLoading()) {
         <div class="flex items-center justify-center h-full">
-          <div class="flex flex-col items-center gap-4">
+          <div class="flex flex-col items-center gap-2">
             <z-icon zType="loader-circle" zSize="lg" class="animate-spin text-primary" />
             <p class="text-muted-foreground">Loading reservation data...</p>
           </div>
@@ -67,7 +67,7 @@
                 </p>
               </div>
 
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <!-- Property Field -->
                 @if (isEditMode()) {
                   <z-form-field>
@@ -184,7 +184,7 @@
                 </p>
               </div>
 
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <z-form-field>
                   <z-form-label zRequired>Start Date</z-form-label>
                   <z-form-control [errorMessage]="startDateError()">
@@ -246,7 +246,7 @@
                 </p>
               </div>
 
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <z-form-field>
                   <z-form-label zRequired>Total Amount</z-form-label>
                   <z-form-control [errorMessage]="totalAmountError()">

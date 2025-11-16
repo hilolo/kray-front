@@ -42,7 +42,7 @@
         <div class="flex-1 min-h-0 overflow-y-auto">
           @if (isLoading()) {
             <div class="flex items-center justify-center h-full">
-              <div class="flex flex-col items-center gap-4">
+              <div class="flex flex-col items-center gap-2">
                 <z-icon zType="loader-circle" zSize="lg" class="animate-spin text-primary" />
                 <p class="text-muted-foreground">Loading property data...</p>
               </div>
@@ -60,7 +60,7 @@
                   </div>
 
                   <!-- First Row: Category, Identifier, Name, Type Property -->
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <z-form-field>
                       <z-form-label>Category</z-form-label>
                       <z-form-control>
@@ -166,7 +166,7 @@
                     </p>
                   </div>
 
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <z-form-field>
                       <z-form-label>Address</z-form-label>
                       <z-form-control>
@@ -211,7 +211,7 @@
                     </p>
                   </div>
 
-                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                     <z-form-field>
                       <z-form-label zRequired>Area (m²)</z-form-label>
                       <z-form-control [errorMessage]="areaError()">
@@ -269,7 +269,7 @@
                     </z-form-field>
                   </div>
 
-                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                     <z-form-field class="md:col-span-1 lg:col-span-2">
                       <z-form-label zRequired>Price</z-form-label>
                       <z-form-control [errorMessage]="priceError()">
@@ -423,7 +423,7 @@
 
                       <!-- Image Gallery -->
                       @if (hasImages()) {
-                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
                           @for (image of allImages(); track image.id) {
                             <div class="relative group">
                               <div class="aspect-square rounded-lg overflow-hidden border-2 relative" [class.border-primary]="image.isDefault" [class.border-border]="!image.isDefault">
