@@ -45,7 +45,6 @@ namespace ImmoGest.Domain.Entities
         public ICollection<Attachment> Attachments { get; set; }
         
         public bool IsDeleted { get; set; }
-        public bool IsArchived { get; set; }
         
         public override void BuildSearchTerms()
         {

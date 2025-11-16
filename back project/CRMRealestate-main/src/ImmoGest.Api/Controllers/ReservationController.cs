@@ -86,24 +86,6 @@ namespace ImmoGest.Api.Controllers
             => ActionResultFor(await _reservationService.GetAsPagedResultAsync<ReservationDto, GetReservationsFilter>(filter));
 
         /// <summary>
-        /// Toggle archive status of a reservation (archive if active, activate if archived)
-        /// </summary>
-        /// <param name="id">The reservation's ID</param>
-        /// <param name="archive">True to archive, false to activate</param>
-        /// <returns></returns>
-        [HttpPost]
-        [Route("{id}/archive")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<Result>> ToggleArchiveReservation(Guid id, [FromQuery] bool archive = true)
-        {
-            if (archive)
-                return ActionResultFor(await _reservationService.ArchiveReservationAsync(id));
-            else
-                return ActionResultFor(await _reservationService.ActivateReservationAsync(id));
-        }
-
-        /// <summary>
         /// Update the status of a reservation
         /// </summary>
         /// <param name="id">The reservation's ID</param>

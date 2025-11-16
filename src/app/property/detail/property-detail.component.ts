@@ -16,6 +16,7 @@ import { PropertyService } from '@shared/services/property.service';
 import type { Property } from '@shared/models/property/property.model';
 import { PropertyCategory } from '@shared/models/property/property.model';
 import type { Lease } from '@shared/models/property/property.model';
+import { LeasingStatus } from '@shared/models/lease/lease.model';
 import { catchError, of } from 'rxjs';
 import { ZardImageViewerComponent, type ImageItem } from '@shared/image-viewer/image-viewer.component';
 import { PropertyPricePipe } from '@shared/pipes/property-price.pipe';
@@ -194,6 +195,9 @@ export class PropertyDetailComponent implements OnInit {
           this.property.set(property);
           // Reset image index to 0 when property loads (default image will be first after sorting)
           this.currentImageIndex.set(0);
+          // Initialize sharing settings from property
+          this.enableSharing.set(property.isPublic || false);
+          this.enableAddressSharing.set(property.isPublicAdresse || false);
         }
       });
   }
@@ -368,6 +372,36 @@ export class PropertyDetailComponent implements OnInit {
     }
   }
 
+  getLeaseStatusLabel(status: number): string {
+    switch (status) {
+      case LeasingStatus.Active:
+        return 'Active';
+      case LeasingStatus.Expired:
+        return 'Expired';
+      case LeasingStatus.Terminated:
+        return 'Terminated';
+      case LeasingStatus.Pending:
+        return 'Pending';
+      default:
+        return 'Unknown';
+    }
+  }
+
+  getLeaseStatusBadgeType(status: number): 'default' | 'secondary' | 'destructive' | 'outline' {
+    switch (status) {
+      case LeasingStatus.Active:
+        return 'default';
+      case LeasingStatus.Expired:
+        return 'secondary';
+      case LeasingStatus.Terminated:
+        return 'destructive';
+      case LeasingStatus.Pending:
+        return 'outline';
+      default:
+        return 'outline';
+    }
+  }
+
   openImageViewer(event?: Event): void {
     if (event) {
       event.preventDefault();
@@ -525,14 +559,114 @@ export class PropertyDetailComponent implements OnInit {
   }
 
   updateEnableSharing(value: boolean): void {
+    const property = this.property();
+    if (!property) return;
+
     this.enableSharing.set(value);
+    
+    // If sharing is disabled, also disable address sharing and send both updates
     if (!value) {
-      // If sharing is disabled, also disable address sharing
       this.enableAddressSharing.set(false);
+      // Send both updates: disable isPublic and isPublicAdresse
+      this.updatePropertySharingAndAddress(value, false);
+    } else {
+      // Only update isPublic when enabling
+      this.updatePropertySharing(value);
     }
   }
 
   updateEnableAddressSharing(value: boolean): void {
+    const property = this.property();
+    if (!property) return;
+
+    // Address sharing can only be enabled if sharing is enabled
+    if (!this.enableSharing()) {
+      return;
+    }
+
     this.enableAddressSharing.set(value);
+    // Update backend for isSharingAdresse
+    this.updatePropertySharingAdresse(value);
+  }
+
+  private updatePropertySharing(isPublic: boolean): void {
+    const property = this.property();
+    if (!property) return;
+
+    this.propertyService
+      .updatePropertySharing({
+        propertyId: property.id,
+        isPublic: isPublic,
+      })
+      .pipe(
+        catchError((error) => {
+          console.error('Error updating property sharing:', error);
+          this.toastService.error('Failed to update sharing settings');
+          // Revert to previous value on error
+          this.enableSharing.set(property.isPublic || false);
+          return of(null);
+        }),
+      )
+      .subscribe((updatedProperty) => {
+        if (updatedProperty) {
+          this.property.set(updatedProperty);
+          this.toastService.success('Sharing settings updated successfully');
+        }
+      });
+  }
+
+  private updatePropertySharingAdresse(isPublicAdresse: boolean): void {
+    const property = this.property();
+    if (!property) return;
+
+    this.propertyService
+      .updatePropertySharingAdresse({
+        propertyId: property.id,
+        isPublicAdresse: isPublicAdresse,
+      })
+      .pipe(
+        catchError((error) => {
+          console.error('Error updating property address sharing:', error);
+          this.toastService.error('Failed to update address sharing settings');
+          // Revert to previous value on error
+          this.enableAddressSharing.set(property.isPublicAdresse || false);
+          return of(null);
+        }),
+      )
+      .subscribe((updatedProperty) => {
+        if (updatedProperty) {
+          this.property.set(updatedProperty);
+          this.toastService.success('Address sharing settings updated successfully');
+        }
+      });
+  }
+
+  private updatePropertySharingAndAddress(isPublic: boolean, isPublicAdresse: boolean): void {
+    const property = this.property();
+    if (!property) return;
+
+    // Send both fields in a single request
+    this.propertyService
+      .updatePropertyVisibility({
+        propertyId: property.id,
+        isPublic: isPublic,
+        isPublicAdresse: isPublicAdresse,
+      })
+      .pipe(
+        catchError((error) => {
+          console.error('Error updating property sharing settings:', error);
+          this.toastService.error('Failed to update sharing settings');
+          // Revert to previous values on error
+          this.enableSharing.set(property.isPublic || false);
+          this.enableAddressSharing.set(property.isPublicAdresse || false);
+          return of(null);
+        }),
+      )
+      .subscribe((updatedProperty) => {
+        if (updatedProperty) {
+          this.property.set(updatedProperty);
+          this.toastService.success('Sharing settings updated successfully');
+        }
+      });
   }
 }

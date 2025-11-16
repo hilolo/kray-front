@@ -10,8 +10,6 @@ namespace ImmoGest.Application.Interfaces
 {
     public interface IReservationService : IDataService<Reservation>
     {
-        Task<Result> ArchiveReservationAsync(Guid reservationId);
-        Task<Result> ActivateReservationAsync(Guid reservationId);
         Task<Result> UpdateStatusAsync(Guid reservationId, ReservationStatus status);
         Task<Result<List<ReservationDto>>> GetOverlappingReservationsAsync(Guid propertyId, DateTime startDate, DateTime endDate, Guid? excludeReservationId = null);
     }

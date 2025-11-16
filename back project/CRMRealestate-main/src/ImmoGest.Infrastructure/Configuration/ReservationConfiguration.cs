@@ -49,10 +49,6 @@ namespace ImmoGest.Infrastructure.Configuration
                 .IsRequired()
                 .HasDefaultValue(false);
 
-            builder.Property(v => v.IsArchived)
-                .IsRequired()
-                .HasDefaultValue(false);
-
             builder.Property(v => v.ContactId)
                 .IsRequired();
 

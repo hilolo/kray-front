@@ -43,7 +43,6 @@ namespace ImmoGest.Domain.Entities
         public bool IsArchived { get; set; }
         public bool IsPublic { get; set; }
         public bool IsPublicAdresse { get; set; }
-        public bool IsShared { get; set; }
         public ICollection<Maintenance> Maintenances { get; set; }
         public ICollection<Lease> Leases { get; set; }
         public ICollection<Key> Keys { get; set; }

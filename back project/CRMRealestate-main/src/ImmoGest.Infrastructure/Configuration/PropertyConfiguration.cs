@@ -85,10 +85,6 @@ namespace ImmoGest.Infrastructure.Configuration
                 .IsRequired()
                 .HasDefaultValue(false);
 
-            builder.Property(p => p.IsShared)
-                .IsRequired()
-                .HasDefaultValue(false);
-
             builder.HasOne(p => p.Building)
                 .WithMany()
                 .HasForeignKey(p => p.BuildingId)

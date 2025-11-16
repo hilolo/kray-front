@@ -68,17 +68,6 @@ namespace ImmoGest.Infrastructure.Repositories
                     query = query.Where(v => v.Status == reservationsFilter.Status.Value);
                 }
 
-                // Filter by archived status - default to false if not specified
-                if (reservationsFilter.IsArchived.HasValue)
-                {
-                    query = query.Where(v => v.IsArchived == reservationsFilter.IsArchived.Value);
-                }
-                else
-                {
-                    // Default: only show non-archived reservations
-                    query = query.Where(v => !v.IsArchived);
-                }
-
                 // Filter by date range - show reservations that overlap with the date range
                 // A reservation overlaps if: startDate <= rangeEnd AND endDate >= rangeStart
                 if (reservationsFilter.StartDateFrom.HasValue && reservationsFilter.StartDateTo.HasValue)

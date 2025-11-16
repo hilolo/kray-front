@@ -64,7 +64,6 @@ type PropertyFormData = {
   category: PropertyCategory;
   isPublic: boolean;
   isPublicAdresse: boolean;
-  isShared: boolean;
 };
 
 @Component({
@@ -165,7 +164,6 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
     category: PropertyCategory.Location,
     isPublic: false,
     isPublicAdresse: false,
-    isShared: false,
   });
 
   // Images
@@ -447,7 +445,6 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
       category: property.category || PropertyCategory.Location,
       isPublic: property.isPublic || false,
       isPublicAdresse: property.isPublicAdresse || false,
-      isShared: property.isShared || false,
     });
 
     // Set existing images
@@ -488,7 +485,6 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
       category: PropertyCategory.Location,
       isPublic: false,
       isPublicAdresse: false,
-      isShared: false,
     });
     this.existingImages.set([]);
     this.uploadedImages.set([]);
@@ -996,7 +992,6 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
       category: formData.category,
       isPublic: formData.isPublic,
       isPublicAdresse: formData.isPublicAdresse,
-      isShared: formData.isShared,
     };
 
     // Convert uploaded images to PropertyImageInput
@@ -1052,7 +1047,6 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
       category: formData.category,
       isPublic: formData.isPublic,
       isPublicAdresse: formData.isPublicAdresse,
-      isShared: formData.isShared,
     };
 
     // Convert uploaded images to PropertyImageInput

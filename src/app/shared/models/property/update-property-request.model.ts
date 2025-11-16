@@ -28,7 +28,6 @@ export interface UpdatePropertyRequest {
   category?: PropertyCategory;
   isPublic?: boolean;
   isPublicAdresse?: boolean;
-  isShared?: boolean;
   imagesToAdd?: PropertyImageInput[];
   attachmentsToDelete?: string[];
 }

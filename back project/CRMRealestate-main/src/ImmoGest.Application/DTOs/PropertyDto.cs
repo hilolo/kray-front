@@ -31,7 +31,6 @@ namespace ImmoGest.Application.DTOs
         public bool IsArchived { get; set; }
         public bool IsPublic { get; set; }
         public bool IsPublicAdresse { get; set; }
-        public bool IsShared { get; set; }
         
         // Contact/Owner information
         public string OwnerName { get; set; }
@@ -104,7 +103,6 @@ namespace ImmoGest.Application.DTOs
         public PropertyCategory Category { get; set; }
         public bool IsPublic { get; set; }
         public bool IsPublicAdresse { get; set; }
-        public bool IsShared { get; set; }
         public List<PropertyImageInput> Images { get; set; }
         public string DefaultImageId { get; set; }
     }
@@ -140,7 +138,6 @@ namespace ImmoGest.Application.DTOs
         public PropertyCategory? Category { get; set; }
         public bool? IsPublic { get; set; }
         public bool? IsPublicAdresse { get; set; }
-        public bool? IsShared { get; set; }
         
         // Attachment management
         public List<PropertyImageInput>? ImagesToAdd { get; set; }

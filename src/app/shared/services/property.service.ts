@@ -5,6 +5,7 @@ import type { PropertyListRequest } from '../models/property/property-list-reque
 import type { PropertyListResponse } from '../models/property/property-list-response.model';
 import type { CreatePropertyRequest } from '../models/property/create-property-request.model';
 import type { UpdatePropertyRequest } from '../models/property/update-property-request.model';
+import type { UpdatePropertySharingRequest, UpdatePropertySharingAdresseRequest, UpdatePropertyVisibilityRequest } from '../models/property/update-property-visibility-request.model';
 import type { Property } from '../models/property/property.model';
 
 /**
@@ -94,6 +95,48 @@ export class PropertyService {
       propertyId,
       buildingId: buildingId || null,
     });
+  }
+
+  /**
+   * Update property sharing (isPublic)
+   * PATCH api/Property/visibility (sends only isPublic)
+   * @param request Property sharing update data
+   * @returns Observable of updated property
+   */
+  updatePropertySharing(request: UpdatePropertySharingRequest): Observable<Property> {
+    const body: { propertyId: string; isPublic?: boolean } = {
+      propertyId: request.propertyId,
+    };
+    if (request.isPublic !== undefined) {
+      body.isPublic = request.isPublic;
+    }
+    return this.apiService.patch<Property>('Property/visibility', body);
+  }
+
+  /**
+   * Update property address sharing (isPublicAdresse)
+   * PATCH api/Property/visibility (sends only isPublicAdresse)
+   * @param request Property address sharing update data
+   * @returns Observable of updated property
+   */
+  updatePropertySharingAdresse(request: UpdatePropertySharingAdresseRequest): Observable<Property> {
+    const body: { propertyId: string; isPublicAdresse?: boolean } = {
+      propertyId: request.propertyId,
+    };
+    if (request.isPublicAdresse !== undefined) {
+      body.isPublicAdresse = request.isPublicAdresse;
+    }
+    return this.apiService.patch<Property>('Property/visibility', body);
+  }
+
+  /**
+   * Update both property sharing fields (isPublic and isPublicAdresse)
+   * PATCH api/Property/visibility
+   * @param request Property visibility update data
+   * @returns Observable of updated property
+   */
+  updatePropertyVisibility(request: UpdatePropertyVisibilityRequest): Observable<Property> {
+    return this.apiService.patch<Property>('Property/visibility', request);
   }
 }
 

@@ -498,37 +498,8 @@ namespace ImmoGest.Application.Services
         }
 
 
-        public async Task<Result> ArchiveReservationAsync(Guid reservationId)
-        {
-            var entityResult = await _reservationRepository.GetByIdAsync(reservationId);
-            if (!entityResult.IsSuccess() || entityResult.Data == null)
-                return Result.Failure();
-
-            var reservation = entityResult.Data;
-            reservation.IsArchived = true;
-
-            var updateResult = await _reservationRepository.Update(reservation);
-            if (updateResult.IsSuccess())
-                return Result.Success();
-
-            return Result.Failure();
-        }
-
-        public async Task<Result> ActivateReservationAsync(Guid reservationId)
-        {
-            var entityResult = await _reservationRepository.GetByIdAsync(reservationId);
-            if (!entityResult.IsSuccess() || entityResult.Data == null)
-                return Result.Failure();
-
-            var reservation = entityResult.Data;
-            reservation.IsArchived = false;
-
-            var updateResult = await _reservationRepository.Update(reservation);
-            if (updateResult.IsSuccess())
-                return Result.Success();
-
-            return Result.Failure();
-        }
+        // Archive/Activate methods removed - IsArchived column has been removed from Reservations table
+        // Use status-based filtering instead (e.g., Cancelled status for archived reservations)
 
         public async Task<Result> UpdateStatusAsync(Guid reservationId, ReservationStatus status)
         {

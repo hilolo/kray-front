@@ -307,6 +307,13 @@
                         </div>
 
                         <div class="border-t border-border pt-3 space-y-2">
+                          <!-- Lease Status -->
+                          <div class="flex items-center gap-2">
+                            <z-badge [zType]="getLeaseStatusBadgeType(lease.status)">
+                              {{ getLeaseStatusLabel(lease.status) }}
+                            </z-badge>
+                          </div>
+
                           <!-- Lease Type -->
                           <div class="flex items-center gap-2">
                             <z-icon zType="file-text" zSize="sm" class="text-muted-foreground" />

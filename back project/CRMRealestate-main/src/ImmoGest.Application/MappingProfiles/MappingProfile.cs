@@ -317,7 +317,6 @@ namespace ImmoGest.Application.MappingProfiles
                 .ForMember(dest => dest.ApprovalDate, opt => opt.Ignore())
                 .ForMember(dest => dest.ApprovalNotes, opt => opt.Ignore())
                 .ForMember(dest => dest.IsDeleted, opt => opt.Ignore())
-                .ForMember(dest => dest.IsArchived, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedOn, opt => opt.Ignore())
                 .ForMember(dest => dest.LastModifiedOn, opt => opt.Ignore())
                 .ForMember(dest => dest.SearchTerms, opt => opt.Ignore());
@@ -331,7 +330,6 @@ namespace ImmoGest.Application.MappingProfiles
                 .ForMember(dest => dest.NumberOfNights, opt => opt.Ignore()) // Calculated in service
                 .ForMember(dest => dest.ApprovalDate, opt => opt.Ignore()) // Set in service based on status
                 .ForMember(dest => dest.IsDeleted, opt => opt.Ignore())
-                .ForMember(dest => dest.IsArchived, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedOn, opt => opt.Ignore())
                 .ForMember(dest => dest.LastModifiedOn, opt => opt.Ignore())
                 .ForMember(dest => dest.SearchTerms, opt => opt.Ignore())

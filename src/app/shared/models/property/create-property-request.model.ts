@@ -35,7 +35,6 @@ export interface CreatePropertyRequest {
   category: PropertyCategory;
   isPublic: boolean;
   isPublicAdresse: boolean;
-  isShared: boolean;
   images?: PropertyImageInput[];
   defaultImageId?: string;
 }
