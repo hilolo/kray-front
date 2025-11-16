@@ -116,7 +116,7 @@
 
             <!-- Availability Calendar (only if enabled and location vacance) -->
             @if (shouldShowCalendar()) {
-              <z-card zTitle="Availability Calendar">
+              <z-card zTitle="Share the reservation booking">
                 @if (isLoadingReservations()) {
                   <div class="flex items-center justify-center py-8">
                     <div class="text-center space-y-4">
@@ -129,7 +129,7 @@
                     [reservations]="reservations()" 
                     [currentMonthInput]="currentCalendarMonth()"
                     [currentYearInput]="currentCalendarYear()"
-                    [hideReservationsList]="true"
+                    [hideReservationsList]="false"
                     (monthChange)="onMonthChange($event)" 
                   />
                 }
