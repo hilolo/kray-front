@@ -357,17 +357,17 @@
             </div>
             
             <!-- Reservation Details -->
-            <div class="space-y-3 flex-1">
-              <!-- Property Address -->
-              @if (row.propertyAddress) {
-                <div class="flex items-center gap-2 text-sm pb-2 border-b border-border/50">
+            <div class="flex flex-col gap-3 flex-1">
+              <!-- Property Address - Always reserve space -->
+              <div class="min-h-[24px] flex items-center gap-2 text-sm pb-2 border-b border-border/50">
+                @if (row.propertyAddress) {
                   <z-icon zType="map-pin" zSize="sm" class="text-muted-foreground flex-shrink-0" />
                   <span class="text-muted-foreground truncate text-xs">{{ row.propertyAddress }}</span>
-                </div>
-              }
+                }
+              </div>
               
-              <!-- Reservation Period -->
-              <div class="space-y-1.5">
+              <!-- Reservation Period - Always reserve space -->
+              <div class="space-y-1.5 min-h-[48px]">
                 <div class="flex items-center gap-2 text-sm">
                   <z-icon zType="calendar" zSize="sm" class="text-muted-foreground flex-shrink-0" />
                   <span class="text-muted-foreground text-xs">
@@ -382,47 +382,33 @@
                 }
               </div>
               
-              <!-- Amount Information - Highlighted -->
-              <div class="bg-primary/5 dark:bg-primary/10 rounded-lg p-3 space-y-2 border border-primary/10">
+              <!-- Amount Information - Highlighted - Fixed height -->
+              <div class="bg-primary/5 dark:bg-primary/10 rounded-lg p-3 border border-primary/10 min-h-[48px] flex items-center">
                 <div class="flex items-center gap-2">
                   <z-icon zType="banknote" zSize="sm" class="text-primary flex-shrink-0" />
                   <span class="font-semibold text-base text-primary">{{ formatCurrency(row.totalAmount) }}</span>
                 </div>
               </div>
               
-              <!-- Contact Contact Info -->
-              @if (row.contactEmail || row.contactPhone) {
-                <div class="space-y-1.5 pt-1">
-                  @if (row.contactEmail) {
-                    <div class="flex items-center gap-2 text-xs">
-                      <z-icon zType="mail" zSize="sm" class="text-muted-foreground/70 flex-shrink-0 w-3 h-3" />
-                      <span class="text-muted-foreground/70 truncate">{{ row.contactEmail }}</span>
-                    </div>
-                  }
-                  @if (row.contactPhone) {
-                    <div class="flex items-center gap-2 text-xs">
-                      <z-icon zType="smartphone" zSize="sm" class="text-muted-foreground/70 flex-shrink-0 w-3 h-3" />
-                      <span class="text-muted-foreground/70">{{ row.contactPhone }}</span>
-                    </div>
-                  }
-                </div>
-              }
+              <!-- Contact Contact Info - Always reserve space -->
+              <div class="space-y-1.5 min-h-[48px]">
+                @if (row.contactEmail) {
+                  <div class="flex items-center gap-2 text-xs">
+                    <z-icon zType="mail" zSize="sm" class="text-muted-foreground/70 flex-shrink-0 w-3 h-3" />
+                    <span class="text-muted-foreground/70 truncate">{{ row.contactEmail }}</span>
+                  </div>
+                }
+                @if (row.contactPhone) {
+                  <div class="flex items-center gap-2 text-xs">
+                    <z-icon zType="smartphone" zSize="sm" class="text-muted-foreground/70 flex-shrink-0 w-3 h-3" />
+                    <span class="text-muted-foreground/70">{{ row.contactPhone }}</span>
+                  </div>
+                }
+              </div>
               
-              <!-- Status Select -->
-              <div class="flex items-center justify-end pt-2">
-                <z-select
-                  [zValue]="row.status.toString()"
-                  [zLabel]="getStatusLabel(row.status)"
-                  [zDisabled]="isUpdatingStatus(row.id)"
-                  class="w-[140px]"
-                  (zSelectionChange)="onStatusChange(row, +$event)"
-                >
-                  @for (option of statusOptions; track option.value) {
-                    <z-select-item [zValue]="option.value.toString()">
-                      {{ option.label }}
-                    </z-select-item>
-                  }
-                </z-select>
+              <!-- Status Select - Fixed position at bottom -->
+              <div class="flex items-center justify-end pt-2 mt-auto">
+                <ng-container *ngTemplateOutlet="statusCell; context: { $implicit: row.status, row: row }" />
               </div>
             </div>
           </div>

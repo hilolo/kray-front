@@ -4,6 +4,7 @@ import {
   Component,
   computed,
   contentChildren,
+  effect,
   ElementRef,
   forwardRef,
   HostListener,
@@ -147,6 +148,18 @@ export class ZardSelectComponent implements ControlValueAccessor, OnInit, AfterC
   );
 
   protected readonly contentClasses = computed(() => mergeClasses(selectContentVariants()));
+
+  constructor() {
+    // Effect to sync _selectedValue when zValue changes externally
+    effect(() => {
+      const inputValue = this.zValue();
+      // Update _selectedValue when zValue changes (including "0" for Pending status)
+      // Only update if the value is different to avoid unnecessary updates
+      if (inputValue !== undefined && inputValue !== null && this._selectedValue() !== inputValue) {
+        this._selectedValue.set(inputValue);
+      }
+    });
+  }
 
   ngOnInit() {
     // Initialize selected value from input immediately
