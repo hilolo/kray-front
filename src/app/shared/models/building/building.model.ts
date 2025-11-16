@@ -14,6 +14,7 @@ export interface Building {
   defaultAttachmentId: string | null;
   defaultAttachmentUrl: string | null;
   propertiesCount: number;
+  isArchived: boolean;
   createdAt: string;
   updatedAt: string;
 }

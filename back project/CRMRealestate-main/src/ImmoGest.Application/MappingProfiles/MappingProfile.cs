@@ -182,6 +182,7 @@ namespace ImmoGest.Application.MappingProfiles
                 .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Description))
                 .ForMember(dest => dest.DefaultAttachmentId, opt => opt.MapFrom(src => src.DefaultAttachmentId))
                 .ForMember(dest => dest.CompanyId, opt => opt.MapFrom(src => src.CompanyId))
+                .ForMember(dest => dest.IsArchived, opt => opt.MapFrom(src => src.IsArchived))
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedOn.DateTime))
                 .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => src.LastModifiedOn.HasValue ? src.LastModifiedOn.Value.DateTime : src.CreatedOn.DateTime))
                 .ForMember(dest => dest.DefaultAttachmentUrl, opt => opt.Ignore()) // Set manually in service

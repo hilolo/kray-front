@@ -1,5 +1,7 @@
 using ImmoGest.Domain.Entities;
 using ImmoGest.Domain.Repositories;
+using ImmoGest.Domain.Core.Interfaces;
+using ImmoGest.Application.Filters;
 using ImmoGest.Infrastructure.Context;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -48,6 +50,31 @@ namespace ImmoGest.Infrastructure.Repositories
             return await Db.Set<Property>()
                 .Where(p => p.BuildingId == buildingId && !p.IsDeleted)
                 .CountAsync();
+        }
+
+        protected override IQueryable<Building> SetPagedResultFilterOptions<IFilter>(IQueryable<Building> query, IFilter filterOption)
+        {
+            if (filterOption is GetBuildingesFilter filter)
+            {
+                // Filter by company
+                if (filter.CompanyId.HasValue)
+                {
+                    query = query.Where(b => b.CompanyId == filter.CompanyId.Value);
+                }
+
+                // Filter by IsArchived - default to false if not specified
+                if (filter.IsArchived.HasValue)
+                {
+                    query = query.Where(b => b.IsArchived == filter.IsArchived.Value);
+                }
+                else
+                {
+                    // Default: only show non-archived buildings
+                    query = query.Where(b => !b.IsArchived);
+                }
+            }
+
+            return base.SetPagedResultFilterOptions(query, filterOption);
         }
     }
 }

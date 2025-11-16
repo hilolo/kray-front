@@ -20,6 +20,8 @@ namespace ImmoGest.Application.DTOs
         public List<PropertyDto> Properties { get; set; }
         public int PropertiesCount { get; set; }
         
+        public bool IsArchived { get; set; }
+        
         // Timestamps
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
@@ -54,6 +56,12 @@ namespace ImmoGest.Application.DTOs
     {
         public string FileName { get; set; }
         public string Base64Content { get; set; }
+    }
+
+    public class UpdateBuildingArchiveStatusDto
+    {
+        public Guid BuildingId { get; set; }
+        public bool IsArchived { get; set; }
     }
 }
 

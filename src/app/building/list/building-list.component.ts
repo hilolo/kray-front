@@ -17,6 +17,8 @@ import { ZardSelectComponent } from '@shared/components/select/select.component'
 import { ZardSelectItemComponent } from '@shared/components/select/select-item.component';
 import { ZardImageHoverPreviewDirective } from '@shared/components/image-hover-preview/image-hover-preview.component';
 import { ZardSwitchComponent } from '@shared/components/switch/switch.component';
+import { ZardSheetService } from '@shared/components/sheet/sheet.service';
+import { ZardSheetRef } from '@shared/components/sheet/sheet-ref';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import type { Building } from '@shared/models/building/building.model';
@@ -25,6 +27,8 @@ import { BuildingService } from '@shared/services/building.service';
 import { RoutePreferencesService } from '@shared/services/route-preferences.service';
 import { ToastService } from '@shared/services/toast.service';
 import { UserService } from '@shared/services/user.service';
+import { PropertyService } from '@shared/services/property.service';
+import type { Property } from '@shared/models/property/property.model';
 
 @Component({
   selector: 'app-building-list',
@@ -61,6 +65,8 @@ export class BuildingListComponent implements OnInit, OnDestroy {
   private readonly preferencesService = inject(RoutePreferencesService);
   private readonly toastService = inject(ToastService);
   private readonly userService = inject(UserService);
+  private readonly propertyService = inject(PropertyService);
+  private readonly sheetService = inject(ZardSheetService);
   private readonly destroy$ = new Subject<void>();
   private readonly searchInputSubject = new Subject<string>();
 
@@ -90,6 +96,7 @@ export class BuildingListComponent implements OnInit, OnDestroy {
   readonly addressCell = viewChild<TemplateRef<any>>('addressCell');
   readonly detailsCell = viewChild<TemplateRef<any>>('detailsCell');
   readonly actionsCell = viewChild<TemplateRef<any>>('actionsCell');
+  readonly propertiesSheetTemplate = viewChild<TemplateRef<any>>('propertiesSheetTemplate');
 
   // Define columns for datatable
   readonly columns = computed<DatatableColumn<Building>[]>(() => [
@@ -184,11 +191,13 @@ export class BuildingListComponent implements OnInit, OnDestroy {
       ignore: false,
       searchQuery: this.searchQuery() || undefined,
       companyId: companyId,
-      isArchived: this.showArchived() || undefined,
+      // Only include isArchived when showing archived (true), otherwise omit it so backend defaults to false
+      ...(this.showArchived() ? { isArchived: true } : {}),
     };
 
     this.buildingService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response) => {
+        // Store in the appropriate signal based on archive status
         if (this.showArchived()) {
           this.archivedBuildings.set(response.result);
         } else {
@@ -197,6 +206,8 @@ export class BuildingListComponent implements OnInit, OnDestroy {
         this.totalPages.set(response.totalPages);
         this.totalItems.set(response.totalItems);
         this.isLoading.set(false);
+        // Ensure selection is cleared after data loads
+        this.selectedRows.set(new Set());
       },
       error: (error) => {
         console.error('Error loading buildings:', error);
@@ -238,6 +249,8 @@ export class BuildingListComponent implements OnInit, OnDestroy {
   onShowArchivedChange(show: boolean): void {
     this.showArchived.set(show);
     this.currentPage.set(1);
+    // Clear selection when switching between archived and non-archived
+    this.selectedRows.set(new Set());
     this.loadBuildings();
   }
 
@@ -306,6 +319,14 @@ export class BuildingListComponent implements OnInit, OnDestroy {
     return this.filteredBuildings().filter(building => selectedIds.has(building.id));
   });
 
+  readonly selectedCount = computed(() => {
+    return this.selectedRows().size;
+  });
+
+  readonly hasSelectedBuildings = computed(() => {
+    return this.selectedRows().size > 0;
+  });
+
   toggleSelectAll(): void {
     const buildings = this.filteredBuildings();
     const allSelected = this.allSelected();
@@ -341,6 +362,188 @@ export class BuildingListComponent implements OnInit, OnDestroy {
 
   trackByIndex(index: number): number {
     return index;
+  }
+
+  // Properties sheet state
+  private propertiesSheetRef: ZardSheetRef | null = null;
+  readonly buildingProperties = signal<Property[]>([]);
+  readonly isLoadingProperties = signal(false);
+  readonly selectedBuildingId = signal<string | null>(null);
+  readonly detachingPropertyId = signal<string | null>(null);
+
+  onViewProperties(building: Building): void {
+    if (this.propertiesSheetRef) {
+      return; // Sheet already open
+    }
+
+    this.selectedBuildingId.set(building.id);
+    this.loadBuildingProperties(building.id);
+
+    this.propertiesSheetRef = this.sheetService.create({
+      zContent: this.propertiesSheetTemplate(),
+      zSide: 'right',
+      zSize: 'lg',
+      zTitle: `Properties - ${building.name}`,
+      zClosable: true,
+      zMaskClosable: true,
+      zHideFooter: true,
+      zViewContainerRef: this.viewContainerRef,
+      zOnCancel: () => {
+        this.propertiesSheetRef = null;
+        this.selectedBuildingId.set(null);
+        this.buildingProperties.set([]);
+      },
+    });
+  }
+
+  private loadBuildingProperties(buildingId: string): void {
+    this.isLoadingProperties.set(true);
+    const companyId = this.userService.getCurrentUser()?.companyId;
+    
+    if (!companyId) {
+      this.isLoadingProperties.set(false);
+      return;
+    }
+
+    this.propertyService.list({
+      currentPage: 1,
+      pageSize: 100,
+      ignore: false,
+      buildingId: buildingId,
+      companyId: companyId,
+      isArchived: false,
+    })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          this.buildingProperties.set(response.result);
+          this.isLoadingProperties.set(false);
+        },
+        error: (error) => {
+          console.error('Error loading building properties:', error);
+          this.toastService.error('Failed to load properties');
+          this.isLoadingProperties.set(false);
+        },
+      });
+  }
+
+  showArchiveConfirmation(): void {
+    const selectedCount = this.selectedCount();
+    const dialogRef = this.alertDialogService.confirm({
+      zTitle: 'Archive Buildings',
+      zDescription: `Are you sure you want to archive ${selectedCount} building${selectedCount > 1 ? 's' : ''}?`,
+      zOkText: 'Archive',
+      zCancelText: 'Cancel',
+      zOkDestructive: false,
+      zViewContainerRef: this.viewContainerRef,
+    });
+
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result) => {
+      if (result) {
+        this.archiveSelectedBuildings();
+      }
+    });
+  }
+
+  showUnarchiveConfirmation(): void {
+    const selectedCount = this.selectedCount();
+    const dialogRef = this.alertDialogService.confirm({
+      zTitle: 'Unarchive Buildings',
+      zDescription: `Are you sure you want to unarchive ${selectedCount} building${selectedCount > 1 ? 's' : ''}?`,
+      zOkText: 'Unarchive',
+      zCancelText: 'Cancel',
+      zOkDestructive: false,
+      zViewContainerRef: this.viewContainerRef,
+    });
+
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result) => {
+      if (result) {
+        this.unarchiveSelectedBuildings();
+      }
+    });
+  }
+
+  archiveSelectedBuildings(): void {
+    const selectedIds = Array.from(this.selectedRows());
+    if (selectedIds.length === 0) return;
+
+    this.isDeleting.set(true);
+    
+    // Archive each selected building via API
+    const archivePromises = selectedIds.map(id => 
+      this.buildingService.updateArchiveStatus(id, true).pipe(takeUntil(this.destroy$)).toPromise()
+    );
+
+    Promise.all(archivePromises).then(() => {
+      // Reload buildings to get updated list from server
+      this.loadBuildings();
+      this.selectedRows.set(new Set());
+      this.isDeleting.set(false);
+      this.toastService.success(`Successfully archived ${selectedIds.length} building${selectedIds.length > 1 ? 's' : ''}`);
+    }).catch((error) => {
+      console.error('Error archiving buildings:', error);
+      this.toastService.error('Failed to archive buildings');
+      this.isDeleting.set(false);
+    });
+  }
+
+  unarchiveSelectedBuildings(): void {
+    const selectedIds = Array.from(this.selectedRows());
+    if (selectedIds.length === 0) return;
+
+    this.isDeleting.set(true);
+    
+    // Unarchive each selected building via API
+    const unarchivePromises = selectedIds.map(id => 
+      this.buildingService.updateArchiveStatus(id, false).pipe(takeUntil(this.destroy$)).toPromise()
+    );
+
+    Promise.all(unarchivePromises).then(() => {
+      // Reload buildings to get updated list from server
+      this.loadBuildings();
+      this.selectedRows.set(new Set());
+      this.isDeleting.set(false);
+      this.toastService.success(`Successfully unarchived ${selectedIds.length} building${selectedIds.length > 1 ? 's' : ''}`);
+    }).catch((error) => {
+      console.error('Error unarchiving buildings:', error);
+      this.toastService.error('Failed to unarchive buildings');
+      this.isDeleting.set(false);
+    });
+  }
+
+  onDetachProperty(property: Property): void {
+    const dialogRef = this.alertDialogService.confirm({
+      zTitle: 'Detach Property',
+      zDescription: `Are you sure you want to detach "${property.name || property.identifier}" from this building?`,
+      zOkText: 'Detach',
+      zCancelText: 'Cancel',
+      zOkDestructive: true,
+      zViewContainerRef: this.viewContainerRef,
+    });
+
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((confirmed) => {
+      if (confirmed) {
+        this.detachingPropertyId.set(property.id);
+        
+        this.propertyService.updatePropertyBuilding(property.id, null)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: () => {
+              this.toastService.success(`Property "${property.name || property.identifier}" detached successfully`);
+              // Remove from building properties list
+              this.buildingProperties.update(properties => 
+                properties.filter(p => p.id !== property.id)
+              );
+              this.detachingPropertyId.set(null);
+            },
+            error: (error) => {
+              console.error('Error detaching property:', error);
+              this.toastService.error('Failed to detach property');
+              this.detachingPropertyId.set(null);
+            },
+          });
+      }
+    });
   }
 }
 

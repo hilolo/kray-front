@@ -66,5 +66,19 @@ export class BuildingService {
   delete(id: string): Observable<void> {
     return this.apiService.delete<void>(`Building/${id}`);
   }
+
+  /**
+   * Update the archive status of a building
+   * PATCH api/Building/archive-status
+   * @param buildingId Building ID
+   * @param isArchived Archive status
+   * @returns Observable of updated building
+   */
+  updateArchiveStatus(buildingId: string, isArchived: boolean): Observable<Building> {
+    return this.apiService.patch<Building>('Building/archive-status', {
+      buildingId,
+      isArchived,
+    });
+  }
 }
 

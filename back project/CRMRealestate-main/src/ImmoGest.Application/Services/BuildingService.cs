@@ -653,6 +653,48 @@ namespace ImmoGest.Application.Services
             }
         }
 
+        /// <summary>
+        /// Update the archive status of a building
+        /// </summary>
+        public async Task<Result<BuildingDto>> UpdateArchiveStatusAsync(UpdateBuildingArchiveStatusDto dto)
+        {
+            try
+            {
+                var buildingResult = await _buildingRepository.GetByIdAsync(dto.BuildingId);
+                if (!buildingResult.IsSuccess() || buildingResult.Data == null)
+                {
+                    return Result.Failure<BuildingDto>();
+                }
+
+                var building = buildingResult.Data;
+
+                // Ensure the building belongs to the current company
+                if (building.CompanyId != _session.CompanyId)
+                {
+                    return Result.Failure<BuildingDto>();
+                }
+
+                // Update archive status
+                building.IsArchived = dto.IsArchived;
+                building.LastModifiedOn = DateTimeOffset.UtcNow;
+                building.BuildSearchTerms();
+
+                var updateResult = await _buildingRepository.Update(building);
+                if (!updateResult.IsSuccess())
+                {
+                    return Result.Failure<BuildingDto>();
+                }
+
+                // Return updated building as DTO
+                return await GetByIdAsync<BuildingDto>(dto.BuildingId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[Building UpdateArchiveStatus] Error updating archive status for BuildingId: {BuildingId}", dto.BuildingId);
+                return Result.Failure<BuildingDto>();
+            }
+        }
+
         #endregion
     }
 }

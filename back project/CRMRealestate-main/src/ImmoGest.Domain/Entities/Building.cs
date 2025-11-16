@@ -21,6 +21,7 @@ namespace ImmoGest.Domain.Entities
         public Attachment DefaultAttachment { get; set; }
         public Company Company { get; set; }
         public Guid CompanyId { get; set; }
+        public bool IsArchived { get; set; }
         
         // Navigation property for Properties
         public ICollection<Property> Properties { get; set; }

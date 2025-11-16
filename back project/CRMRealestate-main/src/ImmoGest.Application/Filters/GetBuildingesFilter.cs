@@ -9,5 +9,6 @@ namespace ImmoGest.Application.Filters
 {
     public class GetBuildingesFilter : FilterOption
     {
+        public bool? IsArchived { get; set; }
     }
 }

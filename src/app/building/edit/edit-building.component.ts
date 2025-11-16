@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, ElementRef, inject, OnDestroy, OnInit, signal, TemplateRef, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, ElementRef, inject, OnDestroy, OnInit, signal, TemplateRef, ViewContainerRef, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { ZardPageComponent } from '../../page/page.component';
 import { ZardButtonComponent } from '@shared/components/button/button.component';
@@ -11,6 +11,7 @@ import { ZardFormFieldComponent, ZardFormControlComponent, ZardFormLabelComponen
 import { ZardInputGroupComponent } from '@shared/components/input-group/input-group.component';
 import { ZardCardComponent } from '@shared/components/card/card.component';
 import { ZardImageHoverPreviewDirective } from '@shared/components/image-hover-preview/image-hover-preview.component';
+import { ZardAlertDialogService } from '@shared/components/alert-dialog/alert-dialog.service';
 import { BuildingService } from '@shared/services/building.service';
 import { PropertyService } from '@shared/services/property.service';
 import { UserService } from '@shared/services/user.service';
@@ -36,6 +37,7 @@ type BuildingFormData = {
   imports: [
     CommonModule,
     FormsModule,
+    RouterLink,
     ZardPageComponent,
     ZardButtonComponent,
     ZardInputDirective,
@@ -57,6 +59,8 @@ export class EditBuildingComponent implements OnInit, OnDestroy {
   private readonly propertyService = inject(PropertyService);
   private readonly userService = inject(UserService);
   private readonly toastService = inject(ToastService);
+  private readonly alertDialogService = inject(ZardAlertDialogService);
+  private readonly viewContainerRef = inject(ViewContainerRef);
   private readonly destroy$ = new Subject<void>();
 
   readonly buildingId = signal<string | null>(null);
@@ -69,6 +73,11 @@ export class EditBuildingComponent implements OnInit, OnDestroy {
   readonly unattachedProperties = signal<Property[]>([]);
   readonly isLoadingProperties = signal(false);
   readonly attachingPropertyId = signal<string | null>(null);
+
+  // Associated properties (properties already attached to this building)
+  readonly associatedProperties = signal<Property[]>([]);
+  readonly isLoadingAssociatedProperties = signal(false);
+  readonly detachingPropertyId = signal<string | null>(null);
 
   // Form data
   readonly formData = signal<BuildingFormData>({
@@ -192,9 +201,10 @@ export class EditBuildingComponent implements OnInit, OnDestroy {
         next: (building) => {
           this.populateFormFromBuilding(building);
           this.isLoading.set(false);
-          // Load unattached properties when in edit mode
+          // Load unattached and associated properties when in edit mode
           if (this.isEditMode()) {
             this.loadUnattachedProperties();
+            this.loadAssociatedProperties();
           }
         },
         error: (error) => {
@@ -234,6 +244,41 @@ export class EditBuildingComponent implements OnInit, OnDestroy {
       });
   }
 
+  private loadAssociatedProperties(): void {
+    const buildingId = this.buildingId();
+    if (!buildingId) {
+      return;
+    }
+
+    this.isLoadingAssociatedProperties.set(true);
+    const companyId = this.userService.getCurrentUser()?.companyId;
+    
+    if (!companyId) {
+      this.isLoadingAssociatedProperties.set(false);
+      return;
+    }
+
+    this.propertyService.list({
+      currentPage: 1,
+      pageSize: 100, // Load a reasonable number of properties
+      ignore: false,
+      buildingId: buildingId,
+      companyId: companyId,
+      isArchived: false,
+    })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          this.associatedProperties.set(response.result);
+          this.isLoadingAssociatedProperties.set(false);
+        },
+        error: (error) => {
+          console.error('Error loading associated properties:', error);
+          this.isLoadingAssociatedProperties.set(false);
+        },
+      });
+  }
+
   onAttachProperty(property: Property): void {
     if (!this.buildingId()) {
       return;
@@ -250,6 +295,8 @@ export class EditBuildingComponent implements OnInit, OnDestroy {
           this.unattachedProperties.update(properties => 
             properties.filter(p => p.id !== property.id)
           );
+          // Reload associated properties to include the newly attached one
+          this.loadAssociatedProperties();
           this.attachingPropertyId.set(null);
         },
         error: (error) => {
@@ -258,6 +305,43 @@ export class EditBuildingComponent implements OnInit, OnDestroy {
           this.attachingPropertyId.set(null);
         },
       });
+  }
+
+  onDetachProperty(property: Property): void {
+    const dialogRef = this.alertDialogService.confirm({
+      zTitle: 'Detach Property',
+      zDescription: `Are you sure you want to detach "${property.name || property.identifier}" from this building?`,
+      zOkText: 'Detach',
+      zCancelText: 'Cancel',
+      zOkDestructive: true,
+      zViewContainerRef: this.viewContainerRef,
+    });
+
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((confirmed) => {
+      if (confirmed) {
+        this.detachingPropertyId.set(property.id);
+        
+        this.propertyService.updatePropertyBuilding(property.id, null)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: () => {
+              this.toastService.success(`Property "${property.name || property.identifier}" detached successfully`);
+              // Remove from associated list
+              this.associatedProperties.update(properties => 
+                properties.filter(p => p.id !== property.id)
+              );
+              // Reload unattached properties to include the newly detached one
+              this.loadUnattachedProperties();
+              this.detachingPropertyId.set(null);
+            },
+            error: (error) => {
+              console.error('Error detaching property:', error);
+              this.toastService.error('Failed to detach property');
+              this.detachingPropertyId.set(null);
+            },
+          });
+      }
+    });
   }
 
   private populateFormFromBuilding(building: Building): void {

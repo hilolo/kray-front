@@ -29,6 +29,19 @@
           </div>
           <!-- Buttons on right -->
           <div class="flex gap-2 items-center ml-auto">
+            @if (hasSelectedBuildings()) {
+              @if (showArchived()) {
+                <z-button zType="outline" zSize="default" class="gap-2 bg-green-400 hover:bg-green-500 text-green-950 border-green-400 hover:border-green-500 dark:bg-green-600 dark:hover:bg-green-700 dark:text-green-50 dark:border-green-600 dark:hover:border-green-700 shadow-xs" (click)="showUnarchiveConfirmation()" [disabled]="isDeleting()">
+                  <z-icon zType="folder-open" zSize="sm" />
+                  Unarchive
+                </z-button>
+              } @else {
+                <z-button zType="outline" zSize="default" class="gap-2 bg-yellow-400 hover:bg-yellow-500 text-yellow-950 border-yellow-400 hover:border-yellow-500 dark:bg-yellow-600 dark:hover:bg-yellow-700 dark:text-yellow-50 dark:border-yellow-600 dark:hover:border-yellow-700 shadow-xs" (click)="showArchiveConfirmation()" [disabled]="isDeleting()">
+                  <z-icon zType="folder" zSize="sm" />
+                  Archive
+                </z-button>
+              }
+            }
             @if (hasActiveFilters()) {
               <z-button 
                 zType="outline" 
@@ -148,6 +161,11 @@
             <z-button zType="ghost" zSize="icon" class="h-8 w-8" dropdown-trigger>
               <z-icon zType="ellipsis" zSize="sm" />
             </z-button>
+            <z-dropdown-menu-item (click)="onViewProperties(row)">
+              <z-icon zType="house" zSize="sm" class="mr-2" />
+              <span>View Properties</span>
+            </z-dropdown-menu-item>
+            <z-divider class="my-1" />
             <z-dropdown-menu-item (click)="onEditBuilding(row)">
               <z-icon zType="pencil" zSize="sm" class="mr-2" />
               <span>Edit</span>
@@ -170,6 +188,11 @@
                 <z-button zType="ghost" zSize="icon" class="h-8 w-8 flex-shrink-0" dropdown-trigger>
                   <z-icon zType="ellipsis" zSize="sm" />
                 </z-button>
+                <z-dropdown-menu-item (click)="onViewProperties(row)">
+                  <z-icon zType="house" zSize="sm" class="mr-2" />
+                  <span>View Properties</span>
+                </z-dropdown-menu-item>
+                <z-divider class="my-1" />
                 <z-dropdown-menu-item (click)="onEditBuilding(row)">
                   <z-icon zType="pencil" zSize="sm" class="mr-2" />
                   <span>Edit</span>
@@ -280,4 +303,97 @@
     }
   </div>
 </z-page>
+
+<!-- Properties Sheet Template -->
+<ng-template #propertiesSheetTemplate>
+  <div class="flex flex-col h-full overflow-hidden">
+    <div class="flex-1 min-h-0 overflow-y-auto p-4">
+      @if (isLoadingProperties()) {
+        <div class="flex items-center justify-center py-12">
+          <div class="flex flex-col items-center gap-4">
+            <z-icon zType="loader-circle" zSize="lg" class="animate-spin text-primary" />
+            <p class="text-muted-foreground">Loading properties...</p>
+          </div>
+        </div>
+      } @else if (buildingProperties().length === 0) {
+        <div class="flex items-center justify-center py-12">
+          <div class="flex flex-col items-center gap-2">
+            <z-icon zType="house" zSize="lg" class="text-muted-foreground" />
+            <p class="text-muted-foreground">No properties found for this building</p>
+          </div>
+        </div>
+      } @else {
+        <div class="space-y-3">
+          @for (property of buildingProperties(); track property.id) {
+            <div class="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors">
+              <div class="flex items-center gap-4 flex-1 min-w-0">
+                @if (property.defaultAttachmentUrl) {
+                  <img
+                    [src]="property.defaultAttachmentUrl"
+                    [alt]="property.name || property.identifier"
+                    class="w-16 h-16 object-cover rounded-md border border-border flex-shrink-0"
+                    [zImageHoverPreview]="property.defaultAttachmentUrl"
+                    [zAlt]="property.name || property.identifier"
+                    [zPosition]="'right'"
+                    [zMaxWidth]="'400px'"
+                    [zMaxHeight]="'400px'"
+                  />
+                } @else {
+                  <div class="w-16 h-16 rounded-md border border-border bg-muted flex items-center justify-center flex-shrink-0">
+                    <z-icon zType="house" zSize="default" class="text-muted-foreground" />
+                  </div>
+                }
+                <div class="flex flex-col gap-1 flex-1 min-w-0">
+                  <span class="font-semibold text-base truncate">
+                    {{ property.name || property.identifier || 'Unnamed Property' }}
+                  </span>
+                  @if (property.identifier && property.name) {
+                    <span class="text-sm text-muted-foreground truncate">{{ property.identifier }}</span>
+                  }
+                  @if (property.address || property.city) {
+                    <div class="flex items-center gap-1 text-sm text-muted-foreground">
+                      <z-icon zType="map-pin" zSize="sm" />
+                      <span class="truncate">{{ property.address }}{{ property.address && property.city ? ', ' : '' }}{{ property.city || '' }}</span>
+                    </div>
+                  }
+                  @if (property.price) {
+                    <div class="flex items-center gap-1 text-sm font-medium">
+                      <z-icon zType="banknote" zSize="sm" />
+                      <span>{{ property.price | number }} MAD</span>
+                    </div>
+                  }
+                </div>
+              </div>
+              <div class="flex items-center gap-2 ml-4 flex-shrink-0">
+                <z-button
+                  zType="outline"
+                  zSize="sm"
+                  routerLink="/property/{{ property.id }}/edit"
+                >
+                  <z-icon zType="arrow-right" zSize="sm" class="mr-2" />
+                  <span>View</span>
+                </z-button>
+                <z-button
+                  zType="outline"
+                  zSize="sm"
+                  class="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
+                  [disabled]="detachingPropertyId() === property.id"
+                  (click)="onDetachProperty(property)"
+                >
+                  @if (detachingPropertyId() === property.id) {
+                    <z-icon zType="loader-circle" zSize="sm" class="animate-spin mr-2" />
+                    <span>Detaching...</span>
+                  } @else {
+                    <z-icon zType="x" zSize="sm" class="mr-2" />
+                    <span>Detach</span>
+                  }
+                </z-button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+</ng-template>
 

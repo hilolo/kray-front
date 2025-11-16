@@ -83,6 +83,19 @@ namespace ImmoGest.Api.Controllers
         [ProducesResponseType(typeof(PaginatedList<BuildingDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<Result<PaginatedList<BuildingDto>>>> GetBuildings([FromBody] GetBuildingesFilter filter)
             => ActionResultFor(await _buildingService.GetAsPagedResultAsync<BuildingDto, GetBuildingesFilter>(filter));
+
+        /// <summary>
+        /// Update the archive status of a building
+        /// </summary>
+        /// <param name="dto">Archive status update data</param>
+        /// <returns>Updated building</returns>
+        [HttpPatch]
+        [Route("archive-status")]
+        [ProducesResponseType(typeof(BuildingDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(Result), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<Result<BuildingDto>>> UpdateArchiveStatus([FromBody] UpdateBuildingArchiveStatusDto dto)
+            => ActionResultFor(await _buildingService.UpdateArchiveStatusAsync(dto));
     }
 }
 
