@@ -14,14 +14,13 @@ import { ZardDividerComponent } from '@shared/components/divider/divider.compone
 import { UserService } from '@shared/services/user.service';
 import { AuthService } from '@shared/services/auth.service';
 import { ZardAlertDialogService } from '@shared/components/alert-dialog/alert-dialog.service';
-import { ZardTooltipModule } from '@shared/components/tooltip/tooltip';
 import { DarkModeService } from '@shared/services/darkmode.service';
 
 @Component({
   selector: 'app-sidebar',
   exportAs: 'appSidebar',
   standalone: true,
-  imports: [LayoutModule, ZardIconComponent, ZardDropdownModule, RouterLink, RouterLinkActive, TranslateModule, ZardAvatarComponent, ZardDividerComponent, ZardTooltipModule],
+  imports: [LayoutModule, ZardIconComponent, ZardDropdownModule, RouterLink, RouterLinkActive, TranslateModule, ZardAvatarComponent, ZardDividerComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   templateUrl: './app-sidebar.component.html',
@@ -147,16 +146,6 @@ export class AppSidebarComponent implements OnDestroy {
     return route === '/' ? { exact: true } : { exact: false };
   }
 
-  getTooltipText(item: { label: string; labelKey?: string }): string | null {
-    // Show tooltip when collapsed (inverse of previous behavior)
-    if (!this.sidebarCollapsed()) {
-      return null;
-    }
-    if (item.labelKey) {
-      return this.translateService.instant(item.labelKey);
-    }
-    return item.label;
-  }
 
   onSettingsClick(): void {
     this.router.navigate(['/settings']);

@@ -34,11 +34,6 @@
               routerLinkActive="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
               [routerLinkActiveOptions]="getRouterLinkActiveOptions(item.route)"
               class="flex items-center justify-center px-2 py-2 rounded-md transition-colors group hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-              [attr.title]="item.labelKey ? (item.labelKey | translate) : item.label"
-              [zTooltip]="getTooltipText(item)"
-              [zTooltipIcon]="item.icon || null"
-              [zFollowMouse]="true"
-              [zTrigger]="'hover'"
               (click)="closeMobileSidebar()"
             >
               @if (item.icon) {
