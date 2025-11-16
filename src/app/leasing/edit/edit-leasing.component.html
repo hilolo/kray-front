@@ -326,6 +326,7 @@
                   <z-checkbox
                     [ngModel]="formData().enableReceipts"
                     (checkChange)="updateEnableReceipts($event)"
+                    [disabled]="false"
                   />
                 </div>
 
@@ -337,6 +338,7 @@
                   <z-checkbox
                     [ngModel]="formData().notificationEmail"
                     (checkChange)="updateNotificationEmail($event)"
+                    [disabled]="false"
                   />
                 </div>
 
@@ -348,6 +350,7 @@
                   <z-checkbox
                     [ngModel]="formData().notificationWhatsapp"
                     (checkChange)="updateNotificationWhatsapp($event)"
+                    [disabled]="false"
                   />
                 </div>
               </div>
