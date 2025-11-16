@@ -214,7 +214,7 @@
                 <span class="text-sm font-medium">Link to calendar with availability</span>
                 <z-icon zType="info" zSize="sm" class="text-muted-foreground" />
               </div>
-              <z-input-group>
+              <z-input-group [zSuffix]="calendarCopyButtonTemplateRef()">
                 <input
                   z-input
                   type="text"
@@ -222,12 +222,19 @@
                   readonly
                   class="flex-1"
                 />
-                <ng-container zSuffix>
-                  <z-button zType="ghost" zSize="sm">
-                    <z-icon zType="ellipsis" />
-                  </z-button>
-                </ng-container>
               </z-input-group>
+              <ng-template #calendarCopyButtonTemplate>
+                <z-button 
+                  zType="ghost" 
+                  zSize="sm"
+                  type="button"
+                  (click)="copyCalendarLink($event)"
+                  [attr.aria-label]="'Copy calendar link'"
+                  class="cursor-pointer"
+                >
+                  <z-icon zType="copy" zSize="sm" />
+                </z-button>
+              </ng-template>
               <p class="text-xs text-muted-foreground">
                 Use this iCal link to synchronize with external services such as Airbnb and Google Calendar.
               </p>
@@ -251,40 +258,56 @@
               </div>
             </div>
 
-            <!-- Calendar Sync -->
-            <div class="space-y-2">
-              <div class="flex items-center gap-2">
-                <span class="text-sm font-medium">Calendar sync</span>
-                <z-icon zType="info" zSize="sm" class="text-muted-foreground" />
-              </div>
-              <p class="text-xs text-muted-foreground">
-                Import this other calendars you use. Rentila will automatically update the availability of this accommodation.
-                <z-button zType="link" zSize="sm" class="p-0 h-auto text-xs">
-                  Click here.
-                </z-button>
-              </p>
-            </div>
-
             <!-- Public Profile -->
-            <div class="space-y-2">
+            <div class="space-y-4">
               <div class="flex items-center gap-2">
                 <span class="text-sm font-medium">Public property profile</span>
                 <z-icon zType="info" zSize="sm" class="text-muted-foreground" />
               </div>
-              <z-input-group>
+              
+              <!-- Enable Sharing Toggle -->
+              <div class="flex items-center justify-between">
+                <label class="text-sm text-muted-foreground">Enable sharing</label>
+                <z-switch
+                  [ngModel]="enableSharing()"
+                  (checkChange)="updateEnableSharing($event)"
+                />
+              </div>
+
+              <!-- Enable Address Sharing Toggle -->
+              <div class="flex items-center justify-between">
+                <label class="text-sm text-muted-foreground">Enable address sharing</label>
+                <z-switch
+                  [ngModel]="enableAddressSharing()"
+                  (checkChange)="updateEnableAddressSharing($event)"
+                  [disabled]="!enableSharing()"
+                />
+              </div>
+
+              <!-- Public Profile Link -->
+              <z-input-group [zSuffix]="publicProfileCopyButtonTemplateRef()">
                 <input
                   z-input
                   type="text"
                   [ngModel]="publicProfileLink()"
                   readonly
+                  [disabled]="isPublicProfileDisabled()"
                   class="flex-1"
                 />
-                <ng-container zSuffix>
-                  <z-button zType="ghost" zSize="sm">
-                    <z-icon zType="ellipsis" />
-                  </z-button>
-                </ng-container>
               </z-input-group>
+              <ng-template #publicProfileCopyButtonTemplate>
+                <z-button 
+                  zType="ghost" 
+                  zSize="sm"
+                  type="button"
+                  (click)="copyPublicProfileLink($event)"
+                  [disabled]="isPublicProfileDisabled()"
+                  [attr.aria-label]="'Copy link'"
+                  class="cursor-pointer"
+                >
+                  <z-icon zType="copy" zSize="sm" />
+                </z-button>
+              </ng-template>
             </div>
           </div>
         </z-card>

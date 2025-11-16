@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal, TemplateRef, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ZardPageComponent } from '../../page/page.component';
@@ -22,6 +22,7 @@ import { PropertyPricePipe } from '@shared/pipes/property-price.pipe';
 import { TranslateModule } from '@ngx-translate/core';
 import { generateICalFile, downloadICalFile, shareICalViaWhatsApp, type ICalEventData } from '@shared/utils/ical.util';
 import { ToastService } from '@shared/services/toast.service';
+import { ZardSwitchComponent } from '@shared/components/switch/switch.component';
 
 @Component({
   selector: 'app-property-detail',
@@ -44,6 +45,7 @@ import { ToastService } from '@shared/services/toast.service';
     ZardImageViewerComponent,
     PropertyPricePipe,
     TranslateModule,
+    ZardSwitchComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './property-detail.component.html',
@@ -64,7 +66,18 @@ export class PropertyDetailComponent implements OnInit {
   readonly isImageViewerOpen = signal(false);
   readonly imageViewerIndex = signal(0);
 
-  // Computed values
+  // Template references
+  readonly calendarCopyButtonTemplate = viewChild<TemplateRef<void>>('calendarCopyButtonTemplate');
+  readonly publicProfileCopyButtonTemplate = viewChild<TemplateRef<void>>('publicProfileCopyButtonTemplate');
+  
+  readonly calendarCopyButtonTemplateRef = computed(() => this.calendarCopyButtonTemplate() ?? undefined);
+  readonly publicProfileCopyButtonTemplateRef = computed(() => this.publicProfileCopyButtonTemplate() ?? undefined);
+
+  // Sharing settings
+  readonly enableSharing = signal(false);
+  readonly enableAddressSharing = signal(false);
+
+y  // Computed values
   readonly propertyName = computed(() => this.property()?.name || '');
   readonly propertyType = computed(() => this.property()?.typeProperty || '');
   readonly propertyLocation = computed(() => {
@@ -111,7 +124,16 @@ export class PropertyDetailComponent implements OnInit {
   readonly publicProfileLink = computed(() => {
     const prop = this.property();
     if (!prop) return '';
+    // If address sharing is enabled, include address in the link, otherwise just the ID
+    if (this.enableAddressSharing() && prop.address) {
+      // You might want to encode the address for URL
+      return `https://www.rentila.co.uk/${prop.id}`;
+    }
     return `https://www.rentila.co.uk/${prop.id}`;
+  });
+
+  readonly isPublicProfileDisabled = computed(() => {
+    return !this.enableSharing();
   });
   readonly validationErrors = computed(() => {
     // Validation errors removed as per requirements
@@ -301,5 +323,80 @@ export class PropertyDetailComponent implements OnInit {
     const message = `Property Calendar: ${property.name || 'Property'}\n\nCalendar Link: ${this.calendarLink()}\n\nLocation: ${location}`;
     shareICalViaWhatsApp(icalContent, message);
     this.toastService.success('Opening WhatsApp to share calendar file');
+  }
+
+  // Copy calendar link to clipboard
+  copyCalendarLink(event?: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    const link = this.calendarLink();
+    if (!link) {
+      this.toastService.error('No link available to copy');
+      return;
+    }
+
+    this.copyToClipboard(link);
+  }
+
+  // Copy public profile link to clipboard
+  copyPublicProfileLink(event?: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    const link = this.publicProfileLink();
+    if (!link) {
+      this.toastService.error('No link available to copy');
+      return;
+    }
+
+    this.copyToClipboard(link);
+  }
+
+  // Helper method to copy text to clipboard
+  private copyToClipboard(text: string): void {
+    navigator.clipboard.writeText(text).then(() => {
+      console.log('Link copied to clipboard:', text);
+      this.toastService.success('Link copied to clipboard!');
+    }).catch((error) => {
+      console.error('Clipboard API failed, trying fallback:', error);
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.opacity = '0';
+      textArea.style.left = '-9999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+          console.log('Link copied to clipboard (fallback):', text);
+          this.toastService.success('Link copied to clipboard!');
+        } else {
+          throw new Error('Copy command failed');
+        }
+      } catch (err) {
+        console.error('Failed to copy link:', err);
+        this.toastService.error('Failed to copy link. Please try again.');
+      } finally {
+        document.body.removeChild(textArea);
+      }
+    });
+  }
+
+  updateEnableSharing(value: boolean): void {
+    this.enableSharing.set(value);
+    if (!value) {
+      // If sharing is disabled, also disable address sharing
+      this.enableAddressSharing.set(false);
+    }
+  }
+
+  updateEnableAddressSharing(value: boolean): void {
+    this.enableAddressSharing.set(value);
   }
 }

@@ -52,7 +52,7 @@ export const inputGroupAddonVariants = cva(
   },
 );
 
-export const inputGroupAffixVariants = cva('absolute inset-y-0 flex items-center text-muted-foreground pointer-events-none z-10', {
+export const inputGroupAffixVariants = cva('absolute inset-y-0 flex items-center text-muted-foreground z-10', {
   variants: {
     zSize: {
       sm: 'text-xs',
@@ -60,8 +60,8 @@ export const inputGroupAffixVariants = cva('absolute inset-y-0 flex items-center
       lg: 'text-base',
     },
     zPosition: {
-      prefix: 'left-0 pl-3',
-      suffix: 'right-0 pr-3',
+      prefix: 'left-0 pl-3 pointer-events-none',
+      suffix: 'right-0 pr-3 [&_*]:pointer-events-auto',
     },
   },
   defaultVariants: {
