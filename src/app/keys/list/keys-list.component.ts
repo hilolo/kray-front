@@ -11,9 +11,7 @@ import { ZardDatatableComponent, DatatableColumn } from '@shared/components/data
 import { ZardDropdownMenuComponent } from '@shared/components/dropdown/dropdown.component';
 import { ZardDropdownMenuItemComponent } from '@shared/components/dropdown/dropdown-item.component';
 import { ZardDividerComponent } from '@shared/components/divider/divider.component';
-import { ZardPaginationComponent } from '@shared/components/pagination/pagination.component';
-import { ZardSelectComponent } from '@shared/components/select/select.component';
-import { ZardSelectItemComponent } from '@shared/components/select/select-item.component';
+import { ZardDatatablePaginationComponent } from '@shared/components/datatable/datatable-pagination.component';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import type { Key } from '@shared/models/key/key.model';
@@ -39,9 +37,7 @@ import { EditKeyComponent } from '../edit/edit-key.component';
     ZardDropdownMenuComponent,
     ZardDropdownMenuItemComponent,
     ZardDividerComponent,
-    ZardPaginationComponent,
-    ZardSelectComponent,
-    ZardSelectItemComponent,
+    ZardDatatablePaginationComponent,
     ZardComboboxComponent,
     TranslateModule,
     FormsModule,

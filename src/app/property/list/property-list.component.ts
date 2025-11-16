@@ -14,9 +14,7 @@ import { ZardDatatableComponent, DatatableColumn } from '@shared/components/data
 import { ZardDropdownMenuComponent } from '@shared/components/dropdown/dropdown.component';
 import { ZardDropdownMenuItemComponent } from '@shared/components/dropdown/dropdown-item.component';
 import { ZardDividerComponent } from '@shared/components/divider/divider.component';
-import { ZardPaginationComponent } from '@shared/components/pagination/pagination.component';
-import { ZardSelectComponent } from '@shared/components/select/select.component';
-import { ZardSelectItemComponent } from '@shared/components/select/select-item.component';
+import { ZardDatatablePaginationComponent } from '@shared/components/datatable/datatable-pagination.component';
 import { ZardImageHoverPreviewDirective } from '@shared/components/image-hover-preview/image-hover-preview.component';
 import { ZardComboboxComponent, ZardComboboxOption } from '@shared/components/combobox/combobox.component';
 import { ZardSwitchComponent } from '@shared/components/switch/switch.component';
@@ -49,9 +47,7 @@ import { ContactType } from '@shared/models/contact/contact.model';
     ZardDropdownMenuComponent,
     ZardDropdownMenuItemComponent,
     ZardDividerComponent,
-    ZardPaginationComponent,
-    ZardSelectComponent,
-    ZardSelectItemComponent,
+    ZardDatatablePaginationComponent,
     ZardComboboxComponent,
     ZardImageHoverPreviewDirective,
     ZardSwitchComponent,

@@ -132,12 +132,7 @@
         [zViewMode]="viewMode()"
         [zSelectable]="true"
         [zSelectedRows]="selectedRows()"
-        [zCurrentPage]="currentPage()"
-        [zPageSize]="pageSize()"
-        [zShowPagination]="false"
         [zEmptyMessage]="emptyMessage()"
-        (zPageChange)="onPageChange($event)"
-        (zPageSizeChange)="onPageSizeChange($event)"
         (zSelectionChange)="onSelectionChange($event)"
       >
         <!-- Property ID Column Template -->
@@ -349,40 +344,15 @@
     </div>
 
     <!-- Pagination Footer -->
-    @if (hasData()) {
-      <div class="border-t bg-background pt-4 pb-4 flex-shrink-0 -mx-6 px-6 mt-auto">
-        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <!-- Left side: Rows per page selector -->
-          <div class="flex items-center gap-2 flex-shrink-0 whitespace-nowrap">
-            <z-select
-              [zValue]="pageSize().toString()"
-              [zLabel]="pageSize().toString()"
-              class="h-8 w-[70px]"
-              (zSelectionChange)="onPageSizeChange(+$event)"
-            >
-              @for (option of pageSizeOptions(); track option) {
-                <z-select-item [zValue]="option.toString()">
-                  {{ option }}
-                </z-select-item>
-              }
-            </z-select>
-            <span class="text-sm text-muted-foreground">Rows per page</span>
-          </div>
-
-          <!-- Right side: Page info and pagination -->
-          <div class="flex items-center gap-4 flex-shrink-0 whitespace-nowrap">
-            <div class="text-sm text-muted-foreground">
-              Page {{ currentPage() }} of {{ totalPages() }}
-            </div>
-            <z-pagination
-              [zPageIndex]="currentPage()"
-              [zTotal]="totalPages()"
-              (zPageIndexChange)="onPageChange($event)"
-            />
-          </div>
-        </div>
-      </div>
-    }
+    <z-datatable-pagination
+      [zCurrentPage]="currentPage()"
+      [zTotalPages]="totalPages()"
+      [zPageSize]="pageSize()"
+      [zPageSizeOptions]="pageSizeOptions()"
+      [zShow]="hasData()"
+      (zPageChange)="onPageChange($event)"
+      (zPageSizeChange)="onPageSizeChange($event)"
+    />
   </div>
 </z-page>
 

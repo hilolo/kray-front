@@ -49,7 +49,7 @@
                 </tr>
               </thead>
               <tbody z-table-body>
-                @for (row of paginatedData(); track trackByIndex($index)) {
+                @for (row of zData(); track trackByIndex($index)) {
                   <tr z-table-row (click)="onRowClick(row)">
                     @if (zSelectable()) {
                       <td z-table-cell>
@@ -81,7 +81,7 @@
         } @else {
           <!-- Card View -->
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            @for (row of paginatedData(); track trackByIndex($index)) {
+            @for (row of zData(); track trackByIndex($index)) {
               <z-card class="relative" (click)="onRowClick(row)">
                 @if (cardTemplate()) {
                   <ng-container
@@ -126,41 +126,5 @@
       }
     </div>
   </div>
-
-  <!-- Pagination Footer -->
-  @if (zShowPagination() && hasData()) {
-    <div class="sticky bottom-0 left-0 right-0 border-t bg-background z-10 shadow-sm">
-      <div class="px-6 py-4 flex flex-row items-center justify-between gap-4 overflow-x-auto">
-        <!-- Left side: Rows per page selector -->
-        <div class="flex items-center gap-2 flex-shrink-0 whitespace-nowrap">
-          <z-select
-            [zValue]="pageSize().toString()"
-            [zLabel]="pageSize().toString()"
-            class="h-8 w-[70px]"
-            (zSelectionChange)="onPageSizeChange(+$event)"
-          >
-            @for (option of zPageSizeOptions(); track option) {
-              <z-select-item [zValue]="option.toString()">
-                {{ option }}
-              </z-select-item>
-            }
-          </z-select>
-          <span class="text-sm text-muted-foreground">Rows per page</span>
-        </div>
-
-        <!-- Right side: Page info and pagination -->
-        <div class="flex items-center gap-4 flex-shrink-0 whitespace-nowrap">
-          <div class="text-sm text-muted-foreground">
-            Page {{ currentPage() }} of {{ totalPages() }}
-          </div>
-          <z-pagination
-            [zPageIndex]="currentPage()"
-            [zTotal]="totalPages()"
-            (zPageIndexChange)="onPageChange($event)"
-          />
-        </div>
-      </div>
-    </div>
-  }
 </div>
 

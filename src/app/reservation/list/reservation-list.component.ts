@@ -15,7 +15,7 @@ import { ZardDatatableComponent, DatatableColumn } from '@shared/components/data
 import { ZardDropdownMenuComponent } from '@shared/components/dropdown/dropdown.component';
 import { ZardDropdownMenuItemComponent } from '@shared/components/dropdown/dropdown-item.component';
 import { ZardDividerComponent } from '@shared/components/divider/divider.component';
-import { ZardPaginationComponent } from '@shared/components/pagination/pagination.component';
+import { ZardDatatablePaginationComponent } from '@shared/components/datatable/datatable-pagination.component';
 import { ZardSelectComponent } from '@shared/components/select/select.component';
 import { ZardSelectItemComponent } from '@shared/components/select/select-item.component';
 import { ZardImageHoverPreviewDirective } from '@shared/components/image-hover-preview/image-hover-preview.component';
@@ -53,7 +53,7 @@ import { PropertyCategory } from '@shared/models/property/property.model';
     ZardDropdownMenuComponent,
     ZardDropdownMenuItemComponent,
     ZardDividerComponent,
-    ZardPaginationComponent,
+    ZardDatatablePaginationComponent,
     ZardSelectComponent,
     ZardSelectItemComponent,
     ZardComboboxComponent,
