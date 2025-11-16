@@ -102,7 +102,11 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
   readonly formData = signal({
     propertyId: '',
     contactId: '',
-    tenancyStart: null as Date | null,
+    tenancyStart: (() => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return today;
+    })() as Date | null,
     tenancyEnd: null as Date | null,
     paymentType: TypePaimentLease.Monthly,
     paymentMethod: PaymentMethod.Cash,
@@ -232,6 +236,74 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
   readonly paymentDateHasError = computed(() => {
     const value = this.formData().paymentDate;
     return this.formSubmitted() && (value < 1 || value > 31);
+  });
+
+  // Tenancy duration calculation
+  readonly tenancyDuration = computed(() => {
+    const start = this.formData().tenancyStart;
+    const end = this.formData().tenancyEnd;
+
+    if (!start || !end) {
+      return null;
+    }
+
+    // Ensure end date is after start date
+    if (end <= start) {
+      return null;
+    }
+
+    // Calculate the difference
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+
+    // Reset time to midnight for accurate day calculation
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(0, 0, 0, 0);
+
+    // Calculate years
+    let years = endDate.getFullYear() - startDate.getFullYear();
+    let months = endDate.getMonth() - startDate.getMonth();
+    let days = endDate.getDate() - startDate.getDate();
+
+    // Adjust for negative days
+    if (days < 0) {
+      months--;
+      const lastDayOfPrevMonth = new Date(endDate.getFullYear(), endDate.getMonth(), 0);
+      days += lastDayOfPrevMonth.getDate();
+    }
+
+    // Adjust for negative months
+    if (months < 0) {
+      years--;
+      months += 12;
+    }
+
+    // Format the duration based on the requirements
+    const parts: string[] = [];
+
+    // If it surpasses years, show years, months, and days
+    if (years > 0) {
+      parts.push(`${years} ${years === 1 ? 'year' : 'years'}`);
+      if (months > 0) {
+        parts.push(`${months} ${months === 1 ? 'month' : 'months'}`);
+      }
+      if (days > 0) {
+        parts.push(`${days} ${days === 1 ? 'day' : 'days'}`);
+      }
+    }
+    // If it surpasses months (but not years), show months and days
+    else if (months > 0) {
+      parts.push(`${months} ${months === 1 ? 'month' : 'months'}`);
+      if (days > 0) {
+        parts.push(`${days} ${days === 1 ? 'day' : 'days'}`);
+      }
+    }
+    // If just days, show days
+    else {
+      parts.push(`${days} ${days === 1 ? 'day' : 'days'}`);
+    }
+
+    return parts.join(', ');
   });
 
   // Payment type options

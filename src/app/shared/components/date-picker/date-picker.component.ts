@@ -84,6 +84,7 @@ export class ZardDatePickerComponent {
       !hasValue && 'text-muted-foreground',
       this.zSize() === 'sm' ? 'h-8' : this.zSize() === 'lg' ? 'h-12' : 'h-10',
       'min-w-[240px]',
+      this.class(),
     );
   });
 

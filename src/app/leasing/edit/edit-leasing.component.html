@@ -192,25 +192,41 @@
                 <z-form-field>
                   <z-form-label zRequired>Start Date</z-form-label>
                   <z-form-control [errorMessage]="tenancyStartError()">
-                    <z-date-picker
-                      [value]="formData().tenancyStart"
-                      [placeholder]="formData().tenancyStart ? '' : 'Pick a date'"
-                      (dateChange)="updateTenancyStart($event)"
-                    />
+                    <div class="w-full">
+                      <z-date-picker
+                        [value]="formData().tenancyStart"
+                        [placeholder]="formData().tenancyStart ? '' : 'Pick a date'"
+                        (dateChange)="updateTenancyStart($event)"
+                        class="w-full"
+                      />
+                    </div>
                   </z-form-control>
                 </z-form-field>
 
                 <z-form-field>
                   <z-form-label zRequired>End Date</z-form-label>
                   <z-form-control [errorMessage]="tenancyEndError()">
-                    <z-date-picker
-                      [value]="formData().tenancyEnd"
-                      [placeholder]="formData().tenancyEnd ? '' : 'Pick a date'"
-                      (dateChange)="updateTenancyEnd($event)"
-                    />
+                    <div class="w-full">
+                      <z-date-picker
+                        [value]="formData().tenancyEnd"
+                        [placeholder]="formData().tenancyEnd ? '' : 'Pick a date'"
+                        (dateChange)="updateTenancyEnd($event)"
+                        class="w-full"
+                      />
+                    </div>
                   </z-form-control>
                 </z-form-field>
               </div>
+
+              <!-- Duration Display -->
+              @if (tenancyDuration()) {
+                <div class="flex items-center gap-2 p-3 rounded-md bg-muted/50 border">
+                  <z-icon zType="calendar" zSize="sm" class="text-primary" />
+                  <span class="text-sm font-medium">
+                    Duration: <span class="text-primary">{{ tenancyDuration() }}</span>
+                  </span>
+                </div>
+              }
             </div>
 
             <!-- Payment Information Section -->
