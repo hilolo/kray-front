@@ -532,24 +532,27 @@ export class ReservationListComponent implements OnInit, OnDestroy {
           
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <p class="text-sm font-medium text-muted-foreground mb-1">Start Date</p>
-              <p class="text-sm">${this.formatDate(reservation.startDate)}</p>
+              <p class="text-xs font-medium text-muted-foreground mb-1 uppercase">START DATE</p>
+              <p class="text-sm font-medium">${this.formatDate(reservation.startDate)}</p>
             </div>
             <div>
-              <p class="text-sm font-medium text-muted-foreground mb-1">End Date</p>
-              <p class="text-sm">${this.formatDate(reservation.endDate)}</p>
-            </div>
-          </div>
-          
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <p class="text-sm font-medium text-muted-foreground mb-1">Duration</p>
-              <p class="text-sm">${this.getDurationDays(reservation)} day${this.getDurationDays(reservation) !== 1 ? 's' : ''}</p>
+              <p class="text-xs font-medium text-muted-foreground mb-1 uppercase">AMOUNT</p>
+              <p class="text-sm font-medium">${this.formatCurrencyMAD(reservation.totalAmount)}</p>
             </div>
             <div>
-              <p class="text-sm font-medium text-muted-foreground mb-1">Total Amount</p>
-              <p class="text-sm font-semibold">${this.formatCurrencyMAD(reservation.totalAmount)}</p>
+              <p class="text-xs font-medium text-muted-foreground mb-1 uppercase">END DATE</p>
+              <p class="text-sm font-medium">${this.formatDate(reservation.endDate)}</p>
             </div>
+            <div>
+              <p class="text-xs font-medium text-muted-foreground mb-1 uppercase">DURATION</p>
+              <p class="text-sm font-medium">${this.getNights(reservation)} night${this.getNights(reservation) !== 1 ? 's' : ''}</p>
+            </div>
+            ${reservation.contactPhone ? `
+            <div class="col-span-2">
+              <p class="text-xs font-medium text-muted-foreground mb-1 uppercase">PHONE</p>
+              <p class="text-sm font-medium">${this.escapeHtml(reservation.contactPhone)}</p>
+            </div>
+            ` : ''}
           </div>
           
           <div>
@@ -761,6 +764,33 @@ export class ReservationListComponent implements OnInit, OnDestroy {
 
     const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    return diffDays;
+  }
+
+  // Get number of nights for reservation
+  // Nights = difference between end date and start date (not including the end date as a night)
+  // Example: Nov 15 to Nov 20 = 5 nights (Nov 15-16, 16-17, 17-18, 18-19, 19-20)
+  getNights(reservation: Reservation): number {
+    // Use numberOfNights if available from backend
+    if (reservation.numberOfNights !== undefined && reservation.numberOfNights !== null) {
+      return reservation.numberOfNights;
+    }
+    
+    // Otherwise calculate from dates
+    if (!reservation.startDate || !reservation.endDate) {
+      return 0;
+    }
+
+    const startDate = new Date(reservation.startDate);
+    const endDate = new Date(reservation.endDate);
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(0, 0, 0, 0);
+
+    // Calculate difference in milliseconds
+    const diffTime = endDate.getTime() - startDate.getTime();
+    // Convert to days (not using Math.ceil to avoid rounding up)
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
     
     return diffDays;
   }

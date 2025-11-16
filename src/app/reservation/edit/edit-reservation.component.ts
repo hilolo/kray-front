@@ -290,22 +290,12 @@ export class EditReservationComponent implements OnInit, OnDestroy {
     startDate.setHours(0, 0, 0, 0);
     endDate.setHours(0, 0, 0, 0);
 
-    const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    const nights = diffDays - 1;
+    // Calculate difference in milliseconds, then convert to days
+    // End date is checkout day (not included), so nights = days between start and end
+    const diffTime = endDate.getTime() - startDate.getTime();
+    const nights = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-    if (diffDays === 1) {
-      return '1 day';
-    } else if (diffDays < 7) {
-      return `${diffDays} days (${nights} night${nights !== 1 ? 's' : ''})`;
-    } else {
-      const weeks = Math.floor(diffDays / 7);
-      const remainingDays = diffDays % 7;
-      if (remainingDays === 0) {
-        return `${weeks} week${weeks !== 1 ? 's' : ''}`;
-      }
-      return `${weeks} week${weeks !== 1 ? 's' : ''}, ${remainingDays} day${remainingDays !== 1 ? 's' : ''}`;
-    }
+    return `${nights} night${nights !== 1 ? 's' : ''}`;
   });
 
   // Status options - all statuses available in both add and edit mode

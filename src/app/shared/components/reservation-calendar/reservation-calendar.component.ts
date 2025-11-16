@@ -275,7 +275,18 @@ export class ZardReservationCalendarComponent {
 
   // Get number of nights
   getNights(reservation: Reservation): number {
-    return reservation.numberOfNights || 0;
+    // Calculate nights based on start and end dates
+    // End date is checkout day (not included), so nights = days between start and end
+    const startDate = new Date(reservation.startDate);
+    startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date(reservation.endDate);
+    endDate.setHours(0, 0, 0, 0);
+    
+    // Calculate difference in milliseconds, then convert to days
+    const diffTime = endDate.getTime() - startDate.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    return diffDays;
   }
 
   // Classes
