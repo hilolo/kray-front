@@ -335,11 +335,6 @@ export class KeysListComponent implements OnInit, OnDestroy {
     this.preferencesService.setViewType(routeKey, newViewMode);
   }
 
-  onViewKey(key: Key): void {
-    console.log('View key:', key);
-    // TODO: Implement view functionality
-  }
-
   onEditKey(key: Key): void {
     const dialogRef = this.dialogService.create({
       zContent: EditKeyComponent,

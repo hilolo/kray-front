@@ -140,47 +140,9 @@
   </z-page>
 } @else {
   <!-- Dialog Mode -->
-  <div class="flex flex-col h-full min-h-0 overflow-hidden max-h-[85vh]">
-    <!-- Header Section -->
-    <div class="space-y-3 pb-4 flex-shrink-0">
-      <div class="flex items-center justify-between">
-        <div>
-          <h2 class="text-2xl font-bold mb-1">
-            @if (isEditMode()) {
-              Edit Key
-            } @else {
-              Add New Key
-            }
-          </h2>
-          <p class="text-sm text-muted-foreground">
-            @if (isEditMode()) {
-              Update the key information below
-            } @else {
-              Create a new key by filling in the information below
-            }
-          </p>
-        </div>
-        <div class="flex gap-2">
-          <z-button zType="outline" zSize="default" [disabled]="isSaving()" (click)="!isSaving() && dialogRef?.close()">
-            Cancel
-          </z-button>
-          <z-button [zType]="isSaving() || !isFormValid() ? 'ghost' : 'default'" [disabled]="isSaving()" (click)="!isSaving() && onSave()">
-            @if (isSaving()) {
-              <span class="flex items-center gap-2">
-                <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
-                Saving...
-              </span>
-            } @else {
-              <z-icon zType="check" zSize="sm" class="mr-2" />
-              Save Key
-            }
-          </z-button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Main Form Card -->
-    <div class="flex-1 min-h-0 overflow-y-auto">
+  <div class="flex flex-col h-full max-h-[90vh] overflow-hidden">
+    <!-- Dialog Content -->
+    <div class="flex-1 overflow-y-auto p-6">
       @if (isLoading()) {
         <div class="flex items-center justify-center h-full">
           <div class="flex flex-col items-center gap-4">
@@ -189,64 +151,92 @@
           </div>
         </div>
       } @else {
-        <z-card class="w-full">
-          <div class="p-6 space-y-6">
-            <!-- Name Field -->
-            <z-form-field>
-              <z-form-label zRequired>Name</z-form-label>
-              <z-form-control [errorMessage]="nameError()">
-                <z-input-group [zPrefix]="keyIconTemplate">
-                  <input
-                    z-input
-                    type="text"
-                    [ngModel]="formData().name"
-                    (ngModelChange)="updateField('name', $event)"
-                    name="name"
-                    placeholder="Enter key name"
-                    [zStatus]="nameHasError() ? 'error' : undefined"
-                    class="w-full"
-                  />
-                </z-input-group>
-              </z-form-control>
-            </z-form-field>
-
-            <!-- Description Field -->
-            <z-form-field>
-              <z-form-label>Description</z-form-label>
-              <z-form-control>
-                <textarea
+        <form (ngSubmit)="onSave()" class="space-y-6">
+          <!-- Name Field -->
+          <z-form-field>
+            <z-form-label zRequired>Name</z-form-label>
+            <z-form-control [errorMessage]="nameError()">
+              <z-input-group [zPrefix]="keyIconTemplate">
+                <input
                   z-input
-                  [ngModel]="formData().description"
-                  (ngModelChange)="updateField('description', $event)"
-                  name="description"
-                  placeholder="Enter key description (optional)"
-                  rows="4"
-                  class="w-full resize-y"
-                ></textarea>
-              </z-form-control>
-            </z-form-field>
-
-            <!-- Property Field -->
-            <z-form-field>
-              <z-form-label zRequired>Property</z-form-label>
-              <z-form-control [errorMessage]="propertyIdError()">
-                <z-combobox
-                  [options]="propertyOptions()"
-                  [value]="formData().propertyId || null"
-                  [placeholder]="'Select property...'"
-                  [searchPlaceholder]="'Search properties...'"
-                  [emptyText]="'No properties found'"
-                  [searchable]="true"
-                  [disabled]="isLoadingProperties()"
-                  (zValueChange)="updateField('propertyId', $event || '')"
-                  [zWidth]="'full'"
-                  class="[&_z-command-list]:max-h-[500px] [&_z-popover]:!w-[400px]"
+                  type="text"
+                  [ngModel]="formData().name"
+                  (ngModelChange)="updateField('name', $event)"
+                  name="name"
+                  placeholder="Enter key name"
+                  [zStatus]="nameHasError() ? 'error' : undefined"
+                  class="w-full"
                 />
-              </z-form-control>
-            </z-form-field>
-          </div>
-        </z-card>
+              </z-input-group>
+            </z-form-control>
+          </z-form-field>
+
+          <!-- Description Field -->
+          <z-form-field>
+            <z-form-label>Description</z-form-label>
+            <z-form-control>
+              <textarea
+                z-input
+                [ngModel]="formData().description"
+                (ngModelChange)="updateField('description', $event)"
+                name="description"
+                placeholder="Enter key description (optional)"
+                rows="4"
+                class="w-full resize-none"
+              ></textarea>
+            </z-form-control>
+          </z-form-field>
+
+          <!-- Property Field -->
+          <z-form-field>
+            <z-form-label zRequired>Property</z-form-label>
+            <z-form-control [errorMessage]="propertyIdError()">
+              <z-combobox
+                [options]="propertyOptions()"
+                [value]="formData().propertyId || null"
+                [placeholder]="'Select property...'"
+                [searchPlaceholder]="'Search properties...'"
+                [emptyText]="'No properties found'"
+                [searchable]="true"
+                [disabled]="isLoadingProperties()"
+                (zValueChange)="updateField('propertyId', $event || '')"
+                [zWidth]="'full'"
+                class="[&_z-command-list]:max-h-[500px] [&_z-popover]:!w-[400px]"
+              />
+            </z-form-control>
+          </z-form-field>
+        </form>
       }
+    </div>
+
+    <!-- Dialog Footer -->
+    <div class="border-t bg-background px-6 py-4 flex justify-end gap-3 flex-shrink-0">
+      <z-button
+        zType="outline"
+        zSize="default"
+        type="button"
+        (click)="onCancel()"
+        [disabled]="isSaving()"
+      >
+        Cancel
+      </z-button>
+      <z-button
+        [zType]="isSaving() || !isFormValid() ? 'ghost' : 'default'"
+        zSize="default"
+        type="button"
+        [disabled]="isSaving()"
+        (click)="!isSaving() && onSave()"
+      >
+        @if (isSaving()) {
+          <span class="flex items-center gap-2">
+            <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+            Saving...
+          </span>
+        } @else {
+          <z-icon zType="check" zSize="sm" class="mr-2" />
+          Save Key
+        }
+      </z-button>
     </div>
   </div>
 }

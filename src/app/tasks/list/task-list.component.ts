@@ -368,11 +368,6 @@ export class TaskListComponent implements OnInit, OnDestroy {
     this.preferencesService.setViewType(routeKey, newViewMode);
   }
 
-  onViewTask(task: Task): void {
-    console.log('View task:', task);
-    // TODO: Implement view functionality
-  }
-
   onEditTask(task: Task): void {
     const dialogRef = this.dialogService.create({
       zContent: EditTaskComponent,
