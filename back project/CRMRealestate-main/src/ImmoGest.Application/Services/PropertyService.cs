@@ -651,8 +651,72 @@ namespace ImmoGest.Application.Services
                         // but we already have the Property entity loaded
                         foreach (var leaseDto in dto.Leases)
                         {
+                            // Find the corresponding lease entity
+                            var leaseEntity = entity.Leases.FirstOrDefault(l => l.Id == leaseDto.Id);
+                            
                             leaseDto.PropertyName = entity.Name;
                             leaseDto.PropertyAddress = entity.Address;
+                            
+                            // Set tenant information from Contact if available
+                            if (leaseEntity?.Contact != null)
+                            {
+                                // Set tenant phone (first phone from list)
+                                if (leaseEntity.Contact.Phones != null && leaseEntity.Contact.Phones.Count > 0)
+                                {
+                                    leaseDto.TenantPhone = leaseEntity.Contact.Phones[0];
+                                }
+                                
+                                // Set tenant identifier
+                                if (!string.IsNullOrEmpty(leaseEntity.Contact.Identifier))
+                                {
+                                    leaseDto.TenantIdentifier = leaseEntity.Contact.Identifier;
+                                }
+                                
+                                // Generate tenant avatar URL
+                                if (!string.IsNullOrEmpty(leaseEntity.Contact.Avatar))
+                                {
+                                    try
+                                    {
+                                        var bucketName = GetBucketName();
+                                        string key;
+
+                                        // Use hash-based key if available (new avatars), otherwise fallback to folder-based (old avatars)
+                                        if (!string.IsNullOrEmpty(leaseEntity.Contact.AvatarStorageHash))
+                                        {
+                                            // Use hash-based key (immutable, never changes even when name changes)
+                                            key = S3PathConstants.BuildContactAvatarKey(
+                                                leaseEntity.Contact.CompanyId.ToString(),
+                                                leaseEntity.Contact.AvatarStorageHash,
+                                                leaseEntity.Contact.Avatar
+                                            );
+                                        }
+                                        else
+                                        {
+                                            // Fallback for old avatars without hash (backward compatibility)
+                                            var contactFolder = GetContactFolderNameFromProperties(
+                                                leaseEntity.Contact.FirstName,
+                                                leaseEntity.Contact.LastName,
+                                                leaseEntity.Contact.CompanyName,
+                                                leaseEntity.Contact.IsACompany,
+                                                leaseEntity.Contact.Id
+                                            );
+                                            key = S3PathConstants.BuildContactAvatarKeyWithFolder(
+                                                leaseEntity.Contact.CompanyId.ToString(),
+                                                contactFolder,
+                                                leaseEntity.Contact.Avatar
+                                            );
+                                        }
+
+                                        // Use cached URL (for avatars, we don't have an attachment entity, so pass null)
+                                        leaseDto.TenantAvatarUrl = await _s3StorageService.GetOrGenerateCachedUrlAsync(bucketName, key, null, null, 24);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        leaseDto.TenantAvatarUrl = null;
+                                        _logger.LogWarning(ex, "Failed to generate tenant avatar URL for lease {LeaseId}", leaseDto.Id);
+                                    }
+                                }
+                            }
                             
                             // Set PropertyImageUrl if default attachment exists
                             if (entity.DefaultAttachmentId.HasValue && string.IsNullOrEmpty(leaseDto.PropertyImageUrl))

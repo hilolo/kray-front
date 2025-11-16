@@ -50,19 +50,48 @@ export interface PropertyMaintenanceSummary {
 }
 
 /**
- * Lease model from backend (simplified)
+ * Lease model from backend (simplified for Property context)
  */
 export interface Lease {
   id: string;
-  // Add other lease properties as needed
+  propertyId: string;
+  propertyName: string;
+  propertyAddress: string;
+  propertyImageUrl: string;
+  contactId: string;
+  tenantName: string;
+  tenantEmail: string;
+  tenantPhone: string;
+  tenantAvatarUrl: string;
+  tenantIdentifier: string;
+  tenancyStart: string;
+  tenancyEnd: string;
+  tenancyDuration: number | null;
+  paymentType: number; // TypePaimentLease enum
+  paymentMethod: number; // PaymentMethod enum
+  paymentDate: number;
+  rentPrice: number;
+  enableReceipts: boolean;
+  notificationWhatsapp: boolean;
+  notificationEmail: boolean;
+  specialTerms: string;
+  privateNote: string;
+  status: number; // LeasingStatus enum
+  isArchived: boolean;
+  createdAt: string;
+  updatedAt: string | null;
 }
 
 /**
- * Key model from backend (simplified)
+ * Key model from backend (simplified for Property context)
  */
 export interface Key {
   id: string;
-  // Add other key properties as needed
+  name: string;
+  description: string;
+  propertyId: string;
+  createdOn: string;
+  lastModifiedOn?: string;
 }
 
 /**

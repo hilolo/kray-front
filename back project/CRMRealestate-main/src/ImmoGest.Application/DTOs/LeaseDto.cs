@@ -16,6 +16,7 @@ namespace ImmoGest.Application.DTOs
         public string TenantEmail { get; set; }
         public string TenantPhone { get; set; }
         public string TenantAvatarUrl { get; set; }
+        public string TenantIdentifier { get; set; }
 
         // Tenancy Information
         public DateTime TenancyStart { get; set; }

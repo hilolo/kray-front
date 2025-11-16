@@ -13,10 +13,9 @@ import { ZardInputGroupComponent } from '@shared/components/input-group/input-gr
 import { ZardInputDirective } from '@shared/components/input/input.directive';
 import { FormsModule } from '@angular/forms';
 import { PropertyService } from '@shared/services/property.service';
-import { LeaseService } from '@shared/services/lease.service';
 import type { Property } from '@shared/models/property/property.model';
 import { PropertyCategory } from '@shared/models/property/property.model';
-import type { Lease } from '@shared/models/lease/lease.model';
+import type { Lease } from '@shared/models/property/property.model';
 import { catchError, of } from 'rxjs';
 import { ZardImageViewerComponent, type ImageItem } from '@shared/image-viewer/image-viewer.component';
 import { PropertyPricePipe } from '@shared/pipes/property-price.pipe';
@@ -25,7 +24,6 @@ import { generateICalFile, downloadICalFile, shareICalViaWhatsApp, type ICalEven
 import { ToastService } from '@shared/services/toast.service';
 import { ZardSwitchComponent } from '@shared/components/switch/switch.component';
 import { ZardAvatarComponent } from '@shared/components/avatar/avatar.component';
-import { PaymentMethod, TypePaimentLease } from '@shared/models/lease/lease.model';
 
 @Component({
   selector: 'app-property-detail',
@@ -58,14 +56,11 @@ export class PropertyDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   readonly router = inject(Router);
   private readonly propertyService = inject(PropertyService);
-  private readonly leaseService = inject(LeaseService);
   private readonly toastService = inject(ToastService);
 
   // Property data
   readonly property = signal<Property | null>(null);
   readonly isLoading = signal(false);
-  readonly isLoadingLeases = signal(false);
-  readonly leases = signal<Lease[]>([]);
   readonly currentImageIndex = signal(0);
   readonly isImageViewerOpen = signal(false);
   readonly imageViewerIndex = signal(0);
@@ -180,7 +175,6 @@ export class PropertyDetailComponent implements OnInit {
     }
 
     this.loadProperty(propertyId);
-    this.loadLeases(propertyId);
   }
 
   private loadProperty(id: string): void {
@@ -204,27 +198,15 @@ export class PropertyDetailComponent implements OnInit {
       });
   }
 
-  private loadLeases(propertyId: string): void {
-    this.isLoadingLeases.set(true);
-    this.leaseService
-      .list({
-        currentPage: 1,
-        pageSize: 100,
-        ignore: false,
-        propertyId: propertyId,
-        isArchived: false,
-      })
-      .pipe(
-        catchError((error) => {
-          console.error('Error loading leases:', error);
-          return of({ result: [], totalPages: 0, totalItems: 0 });
-        }),
-      )
-      .subscribe((response) => {
-        this.isLoadingLeases.set(false);
-        this.leases.set(response.result || []);
-      });
-  }
+  // Computed signal to get keys from property
+  readonly keys = computed(() => {
+    return this.property()?.keys || [];
+  });
+
+  // Computed signal to get leases from property
+  readonly leases = computed(() => {
+    return this.property()?.leases || [];
+  });
 
   // Methods
   formatDate(date: Date | string): string {
@@ -270,13 +252,13 @@ export class PropertyDetailComponent implements OnInit {
     return 'Assured shorthold tenancy';
   }
 
-  getPaymentMethodLabel(method: PaymentMethod): string {
+  getPaymentMethodLabel(method: number): string {
     switch (method) {
-      case PaymentMethod.Cash:
+      case 0: // PaymentMethod.Cash
         return 'Cash';
-      case PaymentMethod.BankTransfer:
+      case 1: // PaymentMethod.BankTransfer
         return 'Bank Transfer';
-      case PaymentMethod.Check:
+      case 2: // PaymentMethod.Check
         return 'Check';
       default:
         return 'Unknown';
@@ -362,7 +344,7 @@ export class PropertyDetailComponent implements OnInit {
     return name.substring(0, 2).toUpperCase();
   }
 
-  formatLeasePrice(price: number, paymentType: TypePaimentLease): string {
+  formatLeasePrice(price: number, paymentType: number): string {
     if (!price || price === 0) {
       return '-';
     }
@@ -373,13 +355,13 @@ export class PropertyDetailComponent implements OnInit {
     });
 
     switch (paymentType) {
-      case TypePaimentLease.Monthly:
+      case 0: // TypePaimentLease.Monthly
         return `${formattedPrice} MAD/month`;
-      case TypePaimentLease.Quarterly:
+      case 1: // TypePaimentLease.Quarterly
         return `${formattedPrice} MAD/quarter`;
-      case TypePaimentLease.SemiAnnually:
+      case 2: // TypePaimentLease.SemiAnnually
         return `${formattedPrice} MAD/6 months`;
-      case TypePaimentLease.Fully:
+      case 3: // TypePaimentLease.Fully
         return `${formattedPrice} MAD (full payment)`;
       default:
         return `${formattedPrice} MAD`;
