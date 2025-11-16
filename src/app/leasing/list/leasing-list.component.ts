@@ -677,6 +677,21 @@ export class LeasingListComponent implements OnInit, OnDestroy {
     return tenant?.identifier || null;
   }
 
+  getTenantAvatarUrl(lease: Lease): string | null {
+    // Check if tenantAvatarUrl exists and is not empty
+    if (lease.tenantAvatarUrl && lease.tenantAvatarUrl.trim() !== '') {
+      return lease.tenantAvatarUrl;
+    }
+    
+    // Fallback: try to get avatar from tenants list
+    const tenant = this.tenants().find(t => t.id === lease.contactId);
+    if (tenant?.avatar && tenant.avatar.trim() !== '') {
+      return tenant.avatar;
+    }
+    
+    return null;
+  }
+
   trackByIndex(index: number): number {
     return index;
   }

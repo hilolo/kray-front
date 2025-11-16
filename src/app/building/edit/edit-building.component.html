@@ -132,16 +132,17 @@
                 <z-form-field>
                   <z-form-label>City</z-form-label>
                   <z-form-control>
-                    <z-input-group [zPrefix]="mapPinIconTemplate">
-                      <input
-                        z-input
-                        type="text"
-                        [ngModel]="formData().city"
-                        (ngModelChange)="updateField('city', $event)"
-                        placeholder="Enter city"
-                        class="w-full"
-                      />
-                    </z-input-group>
+                    <z-select
+                      [zValue]="formData().city || ''"
+                      [zLabel]="formData().city || 'Select city'"
+                      (zSelectionChange)="updateField('city', $event)"
+                    >
+                      @for (city of cityOptions; track city) {
+                        <z-select-item [zValue]="city">
+                          {{ city }}
+                        </z-select-item>
+                      }
+                    </z-select>
                   </z-form-control>
                 </z-form-field>
               </div>

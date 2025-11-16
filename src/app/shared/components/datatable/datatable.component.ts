@@ -72,6 +72,7 @@ export class ZardDatatableComponent<T = any> {
   readonly zType = input<ZardDatatableVariants['zType']>('default');
   readonly zSize = input<ZardDatatableVariants['zSize']>('default');
   readonly class = input<ClassValue>('');
+  readonly zCardGridClass = input<string>('grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3');
   
   // Templates
   readonly cellTemplate = contentChild<TemplateRef<any>>('cellTemplate');

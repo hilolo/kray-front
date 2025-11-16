@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, ElementRef, inject, OnDestroy, OnInit, signal, TemplateRef, ViewContainerRef, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, inject, OnDestroy, OnInit, signal, TemplateRef, ViewContainerRef, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
@@ -9,6 +9,8 @@ import { ZardInputDirective } from '@shared/components/input/input.directive';
 import { ZardIconComponent } from '@shared/components/icon/icon.component';
 import { ZardFormFieldComponent, ZardFormControlComponent, ZardFormLabelComponent } from '@shared/components/form/form.component';
 import { ZardInputGroupComponent } from '@shared/components/input-group/input-group.component';
+import { ZardSelectComponent } from '@shared/components/select/select.component';
+import { ZardSelectItemComponent } from '@shared/components/select/select-item.component';
 import { ZardCardComponent } from '@shared/components/card/card.component';
 import { ZardImageHoverPreviewDirective } from '@shared/components/image-hover-preview/image-hover-preview.component';
 import { ZardAlertDialogService } from '@shared/components/alert-dialog/alert-dialog.service';
@@ -46,6 +48,8 @@ type BuildingFormData = {
     ZardFormControlComponent,
     ZardFormLabelComponent,
     ZardInputGroupComponent,
+    ZardSelectComponent,
+    ZardSelectItemComponent,
     ZardCardComponent,
     ZardImageHoverPreviewDirective,
   ],
@@ -63,11 +67,40 @@ export class EditBuildingComponent implements OnInit, OnDestroy {
   private readonly viewContainerRef = inject(ViewContainerRef);
   private readonly destroy$ = new Subject<void>();
 
+  // Effect to sync default city after settings load
+  private readonly cityEffect = effect(() => {
+    const defaultCity = this.defaultCity();
+    const currentCity = this.formData().city;
+    const isEdit = this.isEditMode();
+    
+    if (defaultCity && !isEdit && (!currentCity || currentCity.trim() === '')) {
+      console.log('[Default City] Effect triggered - Setting city:', defaultCity, 'Current city:', currentCity, 'Is edit:', isEdit);
+      // Use setTimeout to ensure this runs after the initial form setup and select component initialization
+      setTimeout(() => {
+        this.formData.update(data => ({
+          ...data,
+          city: defaultCity,
+        }));
+        console.log('[Default City] City set via effect:', this.formData().city);
+        // Force change detection by updating the signal again
+        setTimeout(() => {
+          console.log('[Default City] Final city value:', this.formData().city);
+        }, 100);
+      }, 100);
+    }
+  });
+
   readonly buildingId = signal<string | null>(null);
   readonly isEditMode = computed(() => this.buildingId() !== null);
   readonly isLoading = signal(false);
   readonly isSaving = signal(false);
   readonly formSubmitted = signal(false);
+
+  // Settings
+  readonly defaultCity = signal<string>('');
+  
+  // City options (same as in settings)
+  readonly cityOptions = ['Tanger', 'Casablanca', 'Rabat', 'Kenitra', 'Agadir'];
 
   // Properties without building
   readonly unattachedProperties = signal<Property[]>([]);
@@ -172,6 +205,9 @@ export class EditBuildingComponent implements OnInit, OnDestroy {
       this.buildingId.set(id);
       this.loadBuilding(id);
     }
+
+    // Load settings (for default city)
+    this.loadSettings();
 
     this.route.paramMap.pipe(takeUntil(this.destroy$)).subscribe(params => {
       const updatedId = params.get('id');
@@ -331,10 +367,16 @@ export class EditBuildingComponent implements OnInit, OnDestroy {
   }
 
   private populateFormFromBuilding(building: Building): void {
+    // If city from building is not in the options, use default city or empty
+    let city = building.city || '';
+    if (city && !this.cityOptions.includes(city)) {
+      city = this.defaultCity() || '';
+    }
+    
     this.formData.set({
       name: building.name || '',
       address: building.address || '',
-      city: building.city || '',
+      city: city,
       description: building.description || '',
       construction: building.construction || 0,
       year: building.year || new Date().getFullYear(),
@@ -559,6 +601,25 @@ export class EditBuildingComponent implements OnInit, OnDestroy {
       ...data,
       [field]: value,
     }));
+  }
+
+  loadSettings(): void {
+    try {
+      const settingsStr = localStorage.getItem('settings');
+      
+      if (settingsStr) {
+        const settings = JSON.parse(settingsStr);
+        
+        if (settings.defaultCity) {
+          console.log('[Default City] Found in settings:', settings.defaultCity);
+          this.defaultCity.set(settings.defaultCity);
+        } else {
+          console.log('[Default City] No defaultCity found in settings');
+        }
+      }
+    } catch (error) {
+      console.error('Error loading settings from localStorage:', error);
+    }
   }
 }
 

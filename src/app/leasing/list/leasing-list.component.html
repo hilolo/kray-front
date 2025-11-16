@@ -106,8 +106,9 @@
         [zColumns]="columns()"
         [zViewMode]="viewMode()"
         [zSelectable]="true"
-          [zSelectedRows]="selectedRows()"
+        [zSelectedRows]="selectedRows()"
         [zEmptyMessage]="emptyMessage()"
+        [zCardGridClass]="'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3'"
         (zSelectionChange)="onSelectionChange($event)"
       >
         <!-- Property Column Template -->
@@ -141,12 +142,12 @@
         <!-- Tenant Column Template -->
         <ng-template #tenantCell let-value let-row="row">
           <div class="flex items-center gap-3">
-            @if (row.tenantAvatarUrl) {
+            @if (getTenantAvatarUrl(row)) {
               <img
-                [src]="row.tenantAvatarUrl"
+                [src]="getTenantAvatarUrl(row)!"
                 [alt]="row.tenantName"
                 class="w-12 h-12 rounded-full object-cover border border-border"
-                [zImageHoverPreview]="row.tenantAvatarUrl"
+                [zImageHoverPreview]="getTenantAvatarUrl(row)!"
                 [zAlt]="row.tenantName"
                 [zPosition]="'right'"
                 [zMaxWidth]="'200px'"
@@ -279,12 +280,12 @@
               
               <!-- Tenant -->
               <div class="flex flex-col items-center gap-1.5 flex-1">
-                @if (row.tenantAvatarUrl) {
+                @if (getTenantAvatarUrl(row)) {
                   <img
-                    [src]="row.tenantAvatarUrl"
+                    [src]="getTenantAvatarUrl(row)!"
                     [alt]="row.tenantName"
                     class="w-16 h-16 rounded-full object-cover border-2 border-border shadow-sm"
-                    [zImageHoverPreview]="row.tenantAvatarUrl"
+                    [zImageHoverPreview]="getTenantAvatarUrl(row)!"
                     [zAlt]="row.tenantName"
                     [zPosition]="'right'"
                     [zMaxWidth]="'200px'"
