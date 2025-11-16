@@ -548,8 +548,7 @@ export class PropertyListComponent implements OnInit, OnDestroy {
   }
 
   onViewProperty(property: Property): void {
-    console.log('View property:', property);
-    // TODO: Implement view functionality
+    this.router.navigate(['/property/detail', property.id]);
   }
 
   onEditProperty(property: Property): void {
