@@ -77,7 +77,7 @@ export class PropertyDetailComponent implements OnInit {
   readonly enableSharing = signal(false);
   readonly enableAddressSharing = signal(false);
 
-y  // Computed values
+  // Computed values
   readonly propertyName = computed(() => this.property()?.name || '');
   readonly propertyType = computed(() => this.property()?.typeProperty || '');
   readonly propertyLocation = computed(() => {
