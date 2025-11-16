@@ -40,6 +40,11 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: 'keys',
+    loadChildren: () => import('./keys/keys.routes').then((m) => m.keysRoutes),
+    canActivate: [authGuard],
+  },
+  {
     path: 'ai-chat',
     component: AiChatComponent,
     canActivate: [authGuard],

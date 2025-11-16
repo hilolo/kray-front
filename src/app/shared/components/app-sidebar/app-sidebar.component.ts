@@ -63,6 +63,7 @@ export class AppSidebarComponent implements OnDestroy {
     { route: '/contact/owners', label: 'Owners', labelKey: 'menu.owners', icon: 'users' },
     { route: '/contact/services', label: 'Services', labelKey: 'menu.services', icon: 'building' },
     { route: '/property', label: 'Properties', labelKey: 'menu.properties', icon: 'house' },
+    { route: '/keys', label: 'Keys', labelKey: 'menu.keys', icon: 'lock' },
     { route: '/ai-chat', label: 'AI Chat', labelKey: 'menu.aiChat', icon: 'sparkles' },
     { route: '/file-manager', label: 'File Manager', labelKey: 'menu.fileManager', icon: 'folder' },
     { route: '/settings', label: 'Settings', labelKey: 'menu.settings', icon: 'settings' },

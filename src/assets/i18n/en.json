@@ -50,6 +50,7 @@
     "owners": "Owners",
     "services": "Services",
     "properties": "Properties",
+    "keys": "Keys",
     "aiChat": "AI Chat",
     "fileManager": "File Manager"
   },

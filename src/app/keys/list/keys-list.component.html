@@ -1,0 +1,234 @@
+<z-page zTitle="Keys">
+  <div class="flex flex-col h-full min-h-0">
+    <!-- Header Section -->
+    <div class="space-y-6 pb-6 flex-shrink-0">
+      <!-- Filter and Action Bar -->
+      <div class="flex flex-col gap-4">
+        <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+          <!-- Search on left -->
+          <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-1">
+            <!-- Search input -->
+            <div class="relative flex-1 sm:flex-initial w-full sm:w-[300px]">
+              <z-icon zType="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" zSize="sm" />
+              <input
+                z-input
+                type="text"
+                placeholder="Search keys..."
+                class="pl-9 w-full"
+                [value]="searchInput()"
+                (input)="onSearchInputChange($any($event.target).value)"
+                (keydown)="onSearchKeyDown($event)"
+              />
+            </div>
+            <!-- Property select -->
+            <div class="w-full sm:w-[200px]">
+              <z-combobox
+                #propertyCombobox
+                [options]="propertyOptions()"
+                [value]="selectedPropertyId()"
+                [placeholder]="'Select property...'"
+                [searchPlaceholder]="'Search properties...'"
+                [emptyText]="'No properties found'"
+                [searchable]="true"
+                [disabled]="isLoadingProperties()"
+                (zValueChange)="onPropertyChange($event)"
+                class="w-full"
+              />
+            </div>
+          </div>
+          <!-- Buttons on right - Reset, Card View, then Add Key -->
+          <div class="flex gap-2 items-center ml-auto">
+            <!-- Reset button -->
+            @if (showResetButton()) {
+              <z-button zType="outline" zSize="default" class="gap-2 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground" (click)="onResetFilters()">
+                <z-icon zType="x" zSize="sm" />
+                <span>Reset</span>
+              </z-button>
+            }
+            <z-button zType="outline" zSize="default" class="gap-2" (click)="toggleViewMode()">
+              @if (viewMode() === 'list') {
+                <z-icon zType="layout-dashboard" zSize="sm" />
+                <span>Card View</span>
+              } @else {
+                <z-icon zType="layers" zSize="sm" />
+                <span>List View</span>
+              }
+            </z-button>
+            <z-button zType="default" zSize="default" class="gap-2" routerLink="/keys/add">
+              <z-icon zType="plus" zSize="sm" />
+              Add Key
+            </z-button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Datatable -->
+    <div class="flex-1 min-h-0 overflow-y-auto pb-4 -mx-6 px-6">
+      <z-datatable
+        [zData]="filteredKeys()"
+        [zColumns]="columns()"
+        [zViewMode]="viewMode()"
+        [zSelectable]="true"
+        [zSelectedRows]="selectedRows()"
+        [zCurrentPage]="currentPage()"
+        [zPageSize]="pageSize()"
+        [zShowPagination]="false"
+        [zEmptyMessage]="emptyMessage()"
+        (zPageChange)="onPageChange($event)"
+        (zPageSizeChange)="onPageSizeChange($event)"
+        (zSelectionChange)="onSelectionChange($event)"
+      >
+        <!-- Key ID Column Template -->
+        <ng-template #keyIdCell let-value let-row="row">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-md border border-border bg-primary/10 flex items-center justify-center">
+              <z-icon zType="lock" zSize="sm" class="text-primary" />
+            </div>
+          </div>
+        </ng-template>
+
+        <!-- Name Column Template -->
+        <ng-template #nameCell let-value let-row="row">
+          <div class="flex flex-col gap-1">
+            <span class="font-medium">{{ getKeyDisplayName(row) }}</span>
+          </div>
+        </ng-template>
+
+        <!-- Property Column Template -->
+        <ng-template #propertyCell let-value let-row="row">
+          <div class="flex flex-col gap-1">
+            <span class="text-sm">{{ getPropertyName(row) }}</span>
+          </div>
+        </ng-template>
+
+        <!-- Description Column Template -->
+        <ng-template #descriptionCell let-value let-row="row">
+          @if (row.description) {
+            <span class="text-sm text-muted-foreground line-clamp-2">{{ row.description }}</span>
+          } @else {
+            <span class="text-muted-foreground text-sm">-</span>
+          }
+        </ng-template>
+
+        <!-- Actions Column Template -->
+        <ng-template #actionsCell let-value let-row="row">
+          <z-dropdown-menu>
+            <z-button zType="ghost" zSize="icon" class="h-8 w-8" dropdown-trigger>
+              <z-icon zType="ellipsis" zSize="sm" />
+            </z-button>
+            <z-dropdown-menu-item (click)="onViewKey(row)">
+              <z-icon zType="eye" zSize="sm" class="mr-2" />
+              <span>View</span>
+            </z-dropdown-menu-item>
+            <z-dropdown-menu-item (click)="onEditKey(row)">
+              <z-icon zType="pencil" zSize="sm" class="mr-2" />
+              <span>Edit</span>
+            </z-dropdown-menu-item>
+            <z-divider class="my-1" />
+            <z-dropdown-menu-item (click)="onDeleteKey(row)" class="text-destructive focus:text-destructive">
+              <z-icon zType="x" zSize="sm" class="mr-2" />
+              <span>Delete</span>
+            </z-dropdown-menu-item>
+          </z-dropdown-menu>
+        </ng-template>
+
+        <!-- Card Template -->
+        <ng-template #cardTemplate let-row="row">
+          <div class="flex flex-col relative h-full">
+            <!-- Header: Checkbox and Actions -->
+            <div class="flex items-start justify-between mb-4 -mt-6">
+              <z-checkbox [ngModel]="isSelected(row.id)" (checkChange)="toggleSelect(row.id)" />
+              <z-dropdown-menu>
+                <z-button zType="ghost" zSize="icon" class="h-8 w-8 flex-shrink-0" dropdown-trigger>
+                  <z-icon zType="ellipsis" zSize="sm" />
+                </z-button>
+                <z-dropdown-menu-item (click)="onViewKey(row)">
+                  <z-icon zType="eye" zSize="sm" class="mr-2" />
+                  <span>View</span>
+                </z-dropdown-menu-item>
+                <z-dropdown-menu-item (click)="onEditKey(row)">
+                  <z-icon zType="pencil" zSize="sm" class="mr-2" />
+                  <span>Edit</span>
+                </z-dropdown-menu-item>
+                <z-divider class="my-1" />
+                <z-dropdown-menu-item (click)="onDeleteKey(row)" class="text-destructive focus:text-destructive">
+                  <z-icon zType="x" zSize="sm" class="mr-2" />
+                  <span>Delete</span>
+                </z-dropdown-menu-item>
+              </z-dropdown-menu>
+            </div>
+            
+            <!-- Main content: Icon/Type on left, Name/Details on right -->
+            <div class="flex gap-6 flex-1">
+              <!-- Left side: Icon -->
+              <div class="flex flex-col items-center gap-3 flex-shrink-0">
+                <div class="w-16 h-16 rounded-md border border-border bg-primary/10 flex items-center justify-center">
+                  <z-icon zType="lock" zSize="lg" class="text-primary" />
+                </div>
+              </div>
+              
+              <!-- Right side: Name and Key details -->
+              <div class="flex flex-col gap-3 flex-1 min-w-0">
+                <h3 class="font-semibold text-lg leading-tight">{{ getKeyDisplayName(row) }}</h3>
+                
+                <!-- Key details -->
+                <div class="space-y-2.5">
+                  @if (getPropertyName(row)) {
+                    <div class="flex items-center gap-2 text-base">
+                      <z-icon zType="building" zSize="default" class="text-muted-foreground flex-shrink-0" />
+                      <span class="text-muted-foreground truncate">{{ getPropertyName(row) }}</span>
+                    </div>
+                  }
+                  @if (row.description) {
+                    <div class="flex items-center gap-2 text-base">
+                      <z-icon zType="file-text" zSize="default" class="text-muted-foreground flex-shrink-0" />
+                      <span class="text-muted-foreground line-clamp-2">{{ row.description }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        </ng-template>
+      </z-datatable>
+    </div>
+
+    <!-- Pagination Footer -->
+    @if (hasData()) {
+      <div class="border-t bg-background pt-4 pb-4 flex-shrink-0 -mx-6 px-6 mt-auto">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <!-- Left side: Rows per page selector -->
+          <div class="flex items-center gap-2 flex-shrink-0 whitespace-nowrap">
+            <z-select
+              [zValue]="pageSize().toString()"
+              [zLabel]="pageSize().toString()"
+              class="h-8 w-[70px]"
+              (zSelectionChange)="onPageSizeChange(+$event)"
+            >
+              @for (option of pageSizeOptions(); track option) {
+                <z-select-item [zValue]="option.toString()">
+                  {{ option }}
+                </z-select-item>
+              }
+            </z-select>
+            <span class="text-sm text-muted-foreground">Rows per page</span>
+          </div>
+
+          <!-- Right side: Page info and pagination -->
+          <div class="flex items-center gap-4 flex-shrink-0 whitespace-nowrap">
+            <div class="text-sm text-muted-foreground">
+              Page {{ currentPage() }} of {{ totalPages() }}
+            </div>
+            <z-pagination
+              [zPageIndex]="currentPage()"
+              [zTotal]="totalPages()"
+              (zPageIndexChange)="onPageChange($event)"
+            />
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</z-page>
+
