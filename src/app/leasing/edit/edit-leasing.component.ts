@@ -258,8 +258,12 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
       this.leaseId.set(id);
       this.loadLease(id);
     } else {
-      this.loadProperties();
-      this.loadTenants();
+      // Load properties and tenants asynchronously to prevent blocking initial render
+      // Use requestAnimationFrame to ensure DOM is ready before loading data
+      requestAnimationFrame(() => {
+        this.loadProperties();
+        this.loadTenants();
+      });
     }
   }
 
@@ -347,34 +351,40 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
     const companyId = this.userService.getCurrentUser()?.companyId;
     const request = {
       currentPage: 1,
-      pageSize: 1000,
+      pageSize: 500, // Reduced from 1000 to improve initial load performance
       ignore: false,
       companyId: companyId,
     };
 
-    this.propertyService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
-      next: (response) => {
-        this.properties.set(response.result);
-        const options: ZardComboboxOption[] = response.result.map((property) => {
-          const parts: string[] = [];
-          if (property.identifier) parts.push(property.identifier);
-          if (property.name) parts.push(property.name);
-          if (property.address) parts.push(property.address);
-          return {
-            value: property.id,
-            label: parts.join(' - '),
-          };
-        });
-        this.propertyOptions.set(options);
-        this.isLoadingProperties.set(false);
-        this.cdr.markForCheck();
-      },
-      error: (error) => {
-        console.error('Error loading properties:', error);
-        this.isLoadingProperties.set(false);
-        this.cdr.markForCheck();
-      },
-    });
+    // Use setTimeout to defer loading and allow initial render to complete
+    setTimeout(() => {
+      this.propertyService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
+        next: (response) => {
+          this.properties.set(response.result);
+          // Use requestAnimationFrame to batch DOM updates
+          requestAnimationFrame(() => {
+            const options: ZardComboboxOption[] = response.result.map((property) => {
+              const parts: string[] = [];
+              if (property.identifier) parts.push(property.identifier);
+              if (property.name) parts.push(property.name);
+              if (property.address) parts.push(property.address);
+              return {
+                value: property.id,
+                label: parts.join(' - '),
+              };
+            });
+            this.propertyOptions.set(options);
+            this.isLoadingProperties.set(false);
+            this.cdr.markForCheck();
+          });
+        },
+        error: (error) => {
+          console.error('Error loading properties:', error);
+          this.isLoadingProperties.set(false);
+          this.cdr.markForCheck();
+        },
+      });
+    }, 0);
   }
 
   loadTenants(): void {
@@ -382,40 +392,46 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
     const companyId = this.userService.getCurrentUser()?.companyId;
     const request = {
       currentPage: 1,
-      pageSize: 1000,
+      pageSize: 500, // Reduced from 1000 to improve initial load performance
       ignore: false,
       type: ContactType.Tenant,
       companyId: companyId,
     };
 
-    this.contactService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
-      next: (response) => {
-        this.tenants.set(response.result);
-        const options: ZardComboboxOption[] = response.result.map((contact) => {
-          let name = '';
-          if (contact.isACompany) {
-            name = contact.companyName || '';
-          } else {
-            name = `${contact.firstName || ''} ${contact.lastName || ''}`.trim();
-          }
-          const parts: string[] = [];
-          if (name) parts.push(name);
-          if (contact.identifier) parts.push(contact.identifier);
-          return {
-            value: contact.id,
-            label: parts.join(' - '),
-          };
-        });
-        this.tenantOptions.set(options);
-        this.isLoadingTenants.set(false);
-        this.cdr.markForCheck();
-      },
-      error: (error) => {
-        console.error('Error loading tenants:', error);
-        this.isLoadingTenants.set(false);
-        this.cdr.markForCheck();
-      },
-    });
+    // Use setTimeout to defer loading and allow initial render to complete
+    setTimeout(() => {
+      this.contactService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
+        next: (response) => {
+          this.tenants.set(response.result);
+          // Use requestAnimationFrame to batch DOM updates
+          requestAnimationFrame(() => {
+            const options: ZardComboboxOption[] = response.result.map((contact) => {
+              let name = '';
+              if (contact.isACompany) {
+                name = contact.companyName || '';
+              } else {
+                name = `${contact.firstName || ''} ${contact.lastName || ''}`.trim();
+              }
+              const parts: string[] = [];
+              if (name) parts.push(name);
+              if (contact.identifier) parts.push(contact.identifier);
+              return {
+                value: contact.id,
+                label: parts.join(' - '),
+              };
+            });
+            this.tenantOptions.set(options);
+            this.isLoadingTenants.set(false);
+            this.cdr.markForCheck();
+          });
+        },
+        error: (error) => {
+          console.error('Error loading tenants:', error);
+          this.isLoadingTenants.set(false);
+          this.cdr.markForCheck();
+        },
+      });
+    }, 0);
   }
 
 
