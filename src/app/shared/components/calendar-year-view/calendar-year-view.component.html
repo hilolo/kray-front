@@ -53,15 +53,27 @@
       </button>
     </div>
 
-    <button
-      z-button
-      zType="outline"
-      zSize="default"
-      (click)="goToToday()"
-      class="gap-2"
-    >
-      Today
-    </button>
+    <div class="flex items-center gap-2">
+      <button
+        z-button
+        zType="outline"
+        zSize="default"
+        (click)="goToToday()"
+        class="gap-2"
+      >
+        Today
+      </button>
+      <button
+        z-button
+        zType="outline"
+        zSize="default"
+        (click)="printCalendar()"
+        class="gap-2"
+      >
+        <z-icon zType="printer" zSize="sm" />
+        Print
+      </button>
+    </div>
   </div>
 
   <!-- Month View -->

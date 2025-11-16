@@ -358,5 +358,321 @@ export class ZardCalendarYearViewComponent {
     event.stopPropagation();
     this.reservationClick.emit(reservationId);
   }
+
+  printCalendar(): void {
+    // Create a print-friendly HTML content
+    const printContent = this.generatePrintContent();
+    
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      console.error('Failed to open print window');
+      return;
+    }
+
+    // Write the content to the print window
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+
+    // Wait for content to load, then print
+    printWindow.onload = () => {
+      setTimeout(() => {
+        printWindow.print();
+        // Close the window after printing (optional)
+        // printWindow.close();
+      }, 250);
+    };
+  }
+
+  private generatePrintContent(): string {
+    const monthName = this.currentMonthName();
+    const year = this.currentYear();
+    const currentMonth = this.currentMonth();
+    const allReservations = this.reservations();
+    const days = this.monthDays();
+    
+    // Filter reservations to only include those that fall within the current month
+    const monthStart = new Date(year, currentMonth, 1);
+    monthStart.setHours(0, 0, 0, 0);
+    const monthEnd = new Date(year, currentMonth + 1, 0);
+    monthEnd.setHours(23, 59, 59, 999);
+    
+    const reservations = allReservations
+      .filter(res => {
+        const resStart = new Date(res.startDate);
+        resStart.setHours(0, 0, 0, 0);
+        const resEnd = new Date(res.endDate);
+        resEnd.setHours(23, 59, 59, 999);
+        
+        // Include if reservation overlaps with the current month
+        return (resStart <= monthEnd && resEnd >= monthStart);
+      })
+      .sort((a, b) => {
+        // Sort by start date
+        const dateA = new Date(a.startDate).getTime();
+        const dateB = new Date(b.startDate).getTime();
+        return dateA - dateB;
+      });
+    
+    // Format reservations for the list
+    const reservationsListHtml = reservations.map(res => {
+      const startDate = new Date(res.startDate);
+      const endDate = new Date(res.endDate);
+      const startDateStr = startDate.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+      });
+      const endDateStr = endDate.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+      });
+      
+      return `
+        <tr style="border-bottom: 1px solid #e5e7eb;">
+          <td style="padding: 8px; font-weight: 500;">${this.escapeHtml(res.propertyIdentifier || 'N/A')}</td>
+          <td style="padding: 8px;">${this.escapeHtml(res.contactName || 'N/A')}</td>
+          <td style="padding: 8px;">${startDateStr} - ${endDateStr}</td>
+          <td style="padding: 8px;">
+            <span style="padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; 
+              ${res.status === 'active' 
+                ? 'background-color: #dcfce7; color: #166534;' 
+                : 'background-color: #fef3c7; color: #92400e;'
+              }">
+              ${res.status === 'active' ? 'Active' : 'Pending'}
+            </span>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    // Generate calendar grid HTML
+    const weekdaysHeader = this.weekdays.map(day => 
+      `<div style="padding: 8px; text-align: center; font-weight: 600; font-size: 12px; color: #6b7280; border: 1px solid #e5e7eb; background-color: #f9fafb;">${day}</div>`
+    ).join('');
+
+    const calendarDaysHtml = days.map(day => {
+      const isToday = day.isToday;
+      const dateNum = day.date.getDate();
+      const isCurrentMonth = day.isCurrentMonth;
+      
+      // Get all reservations for this day (not just starting ones)
+      const dayReservations = day.reservations;
+      
+      // Create labels for each reservation, showing different info based on position
+      const reservationLabels = dayReservations.map(r => {
+        const isStart = r.isStart;
+        const isEnd = r.isEnd;
+        const isFullDay = r.isFullDay;
+        
+        let label = '';
+        if (isStart) {
+          // Show full info on start day
+          label = `${r.reservation.propertyIdentifier || ''}${r.reservation.propertyIdentifier && r.reservation.contactName ? ' - ' : ''}${r.reservation.contactName || ''}`;
+        } else if (isEnd) {
+          // Show property identifier on end day
+          label = r.reservation.propertyIdentifier || r.reservation.contactName || '';
+        } else if (isFullDay) {
+          // Show property identifier for days in between
+          label = r.reservation.propertyIdentifier || r.reservation.contactName || '';
+        }
+        
+        return {
+          label: label.trim(),
+          isStart,
+          isEnd,
+          isFullDay
+        };
+      }).filter(item => item.label).slice(0, 3); // Limit to 3 per day for print
+      
+      const remainingCount = dayReservations.length - reservationLabels.length;
+      
+      return `
+        <div style="
+          min-height: 80px; 
+          border: 1px solid #e5e7eb; 
+          padding: 4px; 
+          position: relative;
+          ${!isCurrentMonth ? 'background-color: #f9fafb; opacity: 0.6;' : ''}
+        ">
+          <div style="
+            font-size: 12px; 
+            font-weight: ${isToday ? '700' : '500'}; 
+            margin-bottom: 4px;
+            ${isToday ? 'background-color: #3b82f6; color: white; padding: 2px 6px; border-radius: 4px; display: inline-block;' : 'color: ' + (isCurrentMonth ? '#1f2937' : '#9ca3af') + ';'}
+          ">
+            ${dateNum}
+          </div>
+          <div style="font-size: 10px; color: #6b7280; line-height: 1.3;">
+            ${reservationLabels.map(item => {
+              const style = item.isStart 
+                ? 'margin-top: 2px; font-weight: 500;' 
+                : item.isEnd 
+                  ? 'margin-top: 2px; font-style: italic;' 
+                  : 'margin-top: 2px;';
+              return `<div style="${style}">${this.escapeHtml(item.label)}</div>`;
+            }).join('')}
+            ${remainingCount > 0 ? `<div style="margin-top: 2px; font-style: italic; color: #9ca3af;">+${remainingCount} more</div>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    const calendarHtml = `
+      <div style="margin-bottom: 20px;">
+        <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 0; border: 1px solid #e5e7eb;">
+          ${weekdaysHeader}
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 0; border: 1px solid #e5e7eb; border-top: none;">
+          ${calendarDaysHtml}
+        </div>
+      </div>
+    `;
+
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Calendar - ${monthName} ${year}</title>
+          <style>
+            @media print {
+              @page {
+                margin: 1cm;
+                size: A4;
+              }
+              body {
+                margin: 0;
+                padding: 0;
+              }
+            }
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+              color: #1f2937;
+              padding: 20px;
+              background: white;
+            }
+            .print-header {
+              text-align: center;
+              margin-bottom: 30px;
+              border-bottom: 2px solid #e5e7eb;
+              padding-bottom: 15px;
+            }
+            .print-header h1 {
+              margin: 0;
+              font-size: 24px;
+              font-weight: 600;
+              color: #111827;
+            }
+            .print-header p {
+              margin: 5px 0 0 0;
+              font-size: 14px;
+              color: #6b7280;
+            }
+            .calendar-section {
+              margin-bottom: 40px;
+              page-break-inside: avoid;
+            }
+            .calendar-section h2 {
+              font-size: 18px;
+              font-weight: 600;
+              margin-bottom: 15px;
+              color: #111827;
+            }
+            .reservations-section {
+              margin-top: 40px;
+              page-break-inside: avoid;
+            }
+            .reservations-section h2 {
+              font-size: 18px;
+              font-weight: 600;
+              margin-bottom: 15px;
+              color: #111827;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 10px;
+            }
+            th {
+              background-color: #f9fafb;
+              padding: 12px 8px;
+              text-align: left;
+              font-weight: 600;
+              font-size: 14px;
+              color: #374151;
+              border-bottom: 2px solid #e5e7eb;
+            }
+            td {
+              padding: 8px;
+              font-size: 14px;
+              color: #1f2937;
+            }
+            .calendar-grid {
+              border: 1px solid #e5e7eb;
+            }
+            .calendar-grid > div {
+              border: 1px solid #e5e7eb;
+            }
+            .print-footer {
+              margin-top: 30px;
+              padding-top: 15px;
+              border-top: 1px solid #e5e7eb;
+              text-align: center;
+              font-size: 12px;
+              color: #6b7280;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="print-header">
+            <h1>Reservation Calendar</h1>
+            <p>${monthName} ${year}</p>
+            <p style="font-size: 12px; margin-top: 5px;">Printed on ${new Date().toLocaleDateString('en-US', { 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}</p>
+          </div>
+          
+          <div class="calendar-section">
+            <h2>Calendar View</h2>
+            ${calendarHtml || '<p>Calendar view not available</p>'}
+          </div>
+          
+          <div class="reservations-section">
+            <h2>Reservations List (${reservations.length} ${reservations.length === 1 ? 'reservation' : 'reservations'})</h2>
+            ${reservations.length > 0 ? `
+              <table>
+                <thead>
+                  <tr>
+                    <th>Property</th>
+                    <th>Contact</th>
+                    <th>Period</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${reservationsListHtml}
+                </tbody>
+              </table>
+            ` : '<p style="color: #6b7280; font-style: italic;">No reservations for this period.</p>'}
+          </div>
+          
+          <div class="print-footer">
+            <p>Generated from Admin Template</p>
+          </div>
+        </body>
+      </html>
+    `;
+  }
+
+  private escapeHtml(text: string): string {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
 }
 
