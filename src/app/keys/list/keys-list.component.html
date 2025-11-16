@@ -54,7 +54,7 @@
                 <span>List View</span>
               }
             </z-button>
-            <z-button zType="default" zSize="default" class="gap-2" routerLink="/keys/add">
+            <z-button zType="default" zSize="default" class="gap-2" (click)="onAddKey()">
               <z-icon zType="plus" zSize="sm" />
               Add Key
             </z-button>
@@ -69,15 +69,12 @@
         [zData]="filteredKeys()"
         [zColumns]="columns()"
         [zViewMode]="viewMode()"
-        [zSelectable]="true"
-        [zSelectedRows]="selectedRows()"
         [zCurrentPage]="currentPage()"
         [zPageSize]="pageSize()"
         [zShowPagination]="false"
         [zEmptyMessage]="emptyMessage()"
         (zPageChange)="onPageChange($event)"
         (zPageSizeChange)="onPageSizeChange($event)"
-        (zSelectionChange)="onSelectionChange($event)"
       >
         <!-- Key ID Column Template -->
         <ng-template #keyIdCell let-value let-row="row">
@@ -105,7 +102,9 @@
         <!-- Description Column Template -->
         <ng-template #descriptionCell let-value let-row="row">
           @if (row.description) {
-            <span class="text-sm text-muted-foreground line-clamp-2">{{ row.description }}</span>
+            <div class="max-w-md">
+              <span class="text-sm text-muted-foreground line-clamp-4 whitespace-pre-wrap">{{ row.description }}</span>
+            </div>
           } @else {
             <span class="text-muted-foreground text-sm">-</span>
           }
@@ -136,9 +135,8 @@
         <!-- Card Template -->
         <ng-template #cardTemplate let-row="row">
           <div class="flex flex-col relative h-full">
-            <!-- Header: Checkbox and Actions -->
-            <div class="flex items-start justify-between mb-4 -mt-6">
-              <z-checkbox [ngModel]="isSelected(row.id)" (checkChange)="toggleSelect(row.id)" />
+            <!-- Header: Actions -->
+            <div class="flex items-start justify-end mb-4 -mt-6">
               <z-dropdown-menu>
                 <z-button zType="ghost" zSize="icon" class="h-8 w-8 flex-shrink-0" dropdown-trigger>
                   <z-icon zType="ellipsis" zSize="sm" />
@@ -173,7 +171,7 @@
                 <h3 class="font-semibold text-lg leading-tight">{{ getKeyDisplayName(row) }}</h3>
                 
                 <!-- Key details -->
-                <div class="space-y-2.5">
+                <div class="space-y-3">
                   @if (getPropertyName(row)) {
                     <div class="flex items-center gap-2 text-base">
                       <z-icon zType="building" zSize="default" class="text-muted-foreground flex-shrink-0" />
@@ -181,9 +179,14 @@
                     </div>
                   }
                   @if (row.description) {
-                    <div class="flex items-center gap-2 text-base">
-                      <z-icon zType="file-text" zSize="default" class="text-muted-foreground flex-shrink-0" />
-                      <span class="text-muted-foreground line-clamp-2">{{ row.description }}</span>
+                    <div class="flex flex-col gap-2">
+                      <div class="flex items-center gap-2">
+                        <z-icon zType="file-text" zSize="default" class="text-muted-foreground flex-shrink-0" />
+                        <span class="text-sm font-medium text-foreground">Description</span>
+                      </div>
+                      <div class="pl-6">
+                        <p class="text-sm text-muted-foreground line-clamp-5 whitespace-pre-wrap leading-relaxed">{{ row.description }}</p>
+                      </div>
                     </div>
                   }
                 </div>

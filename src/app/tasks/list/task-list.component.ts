@@ -1,11 +1,10 @@
 import { AfterViewInit, ChangeDetectionStrategy, Component, computed, inject, OnDestroy, OnInit, signal, TemplateRef, ViewContainerRef, viewChild } from '@angular/core';
-import {  Router, ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { ZardPageComponent } from '../../page/page.component';
 import { ZardButtonComponent } from '@shared/components/button/button.component';
 import { ZardInputDirective } from '@shared/components/input/input.directive';
+import { ZardBadgeComponent } from '@shared/components/badge/badge.component';
 import { ZardIconComponent } from '@shared/components/icon/icon.component';
-import { TranslateModule } from '@ngx-translate/core';
-import { FormsModule } from '@angular/forms';
 import { ZardAlertDialogService } from '@shared/components/alert-dialog/alert-dialog.service';
 import { ZardDatatableComponent, DatatableColumn } from '@shared/components/datatable/datatable.component';
 import { ZardDropdownMenuComponent } from '@shared/components/dropdown/dropdown.component';
@@ -16,24 +15,24 @@ import { ZardSelectComponent } from '@shared/components/select/select.component'
 import { ZardSelectItemComponent } from '@shared/components/select/select-item.component';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { CommonModule } from '@angular/common';
-import type { Key } from '@shared/models/key/key.model';
-import type { KeyListRequest } from '@shared/models/key/key-list-request.model';
-import { KeyService } from '@shared/services/key.service';
+import { FormsModule } from '@angular/forms';
+import type { Task } from '@shared/models/task/task.model';
+import type { TaskListRequest } from '@shared/models/task/task-list-request.model';
+import { TaskService } from '@shared/services/task.service';
 import { RoutePreferencesService } from '@shared/services/route-preferences.service';
-import { PropertyService } from '@shared/services/property.service';
-import type { Property as PropertyModel } from '@shared/models/property/property.model';
-import { ZardComboboxComponent, ZardComboboxOption } from '@shared/components/combobox/combobox.component';
 import { ZardDialogService } from '@shared/components/dialog/dialog.service';
-import { EditKeyComponent } from '../edit/edit-key.component';
+import { EditTaskComponent } from '../edit/edit-task.component';
 
 @Component({
-  selector: 'app-keys-list',
+  selector: 'app-task-list',
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     ZardPageComponent,
     ZardButtonComponent,
     ZardInputDirective,
+    ZardBadgeComponent,
     ZardIconComponent,
     ZardDatatableComponent,
     ZardDropdownMenuComponent,
@@ -42,22 +41,18 @@ import { EditKeyComponent } from '../edit/edit-key.component';
     ZardPaginationComponent,
     ZardSelectComponent,
     ZardSelectItemComponent,
-    ZardComboboxComponent,
-    TranslateModule,
-    FormsModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  templateUrl: './keys-list.component.html',
+  templateUrl: './task-list.component.html',
 })
-export class KeysListComponent implements OnInit, OnDestroy {
+export class TaskListComponent implements OnInit, OnDestroy {
   private readonly alertDialogService = inject(ZardAlertDialogService);
   private readonly viewContainerRef = inject(ViewContainerRef);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly keyService = inject(KeyService);
-  private readonly propertyService = inject(PropertyService);
-  private readonly preferencesService = inject(RoutePreferencesService);
+  private readonly taskService = inject(TaskService);
   private readonly dialogService = inject(ZardDialogService);
+  private readonly preferencesService = inject(RoutePreferencesService);
   private readonly destroy$ = new Subject<void>();
   private readonly searchInputSubject = new Subject<string>();
 
@@ -68,50 +63,57 @@ export class KeysListComponent implements OnInit, OnDestroy {
   readonly pageSizeOptions = signal([10, 20, 50, 100]);
   readonly pageSize = signal(10); // Will be initialized from preferences in ngOnInit
   readonly viewMode = signal<'list' | 'card'>('list');
-  readonly keys = signal<Key[]>([]);
+  readonly tasks = signal<Task[]>([]);
   readonly isLoading = signal(false);
   readonly isDeleting = signal(false);
   readonly totalPages = signal(1);
   readonly totalItems = signal(0);
-  readonly properties = signal<PropertyModel[]>([]);
-  readonly propertyOptions = signal<ZardComboboxOption[]>([]);
-  readonly selectedPropertyId = signal<string | null>(null);
-  readonly isLoadingProperties = signal(false);
-  
-  // Reference to property combobox for clearing
-  readonly propertyComboboxRef = viewChild<ZardComboboxComponent>('propertyCombobox');
 
   // Template references for custom cells
-  readonly keyIdCell = viewChild<TemplateRef<any>>('keyIdCell');
-  readonly nameCell = viewChild<TemplateRef<any>>('nameCell');
-  readonly propertyCell = viewChild<TemplateRef<any>>('propertyCell');
-  readonly descriptionCell = viewChild<TemplateRef<any>>('descriptionCell');
+  readonly titleCell = viewChild<TemplateRef<any>>('titleCell');
+  readonly priorityCell = viewChild<TemplateRef<any>>('priorityCell');
+  readonly statusCell = viewChild<TemplateRef<any>>('statusCell');
+  readonly assignedUserCell = viewChild<TemplateRef<any>>('assignedUserCell');
+  readonly scheduledDateCell = viewChild<TemplateRef<any>>('scheduledDateCell');
+  readonly linkToCell = viewChild<TemplateRef<any>>('linkToCell');
   readonly actionsCell = viewChild<TemplateRef<any>>('actionsCell');
 
   // Define columns for datatable
-  readonly columns = computed<DatatableColumn<Key>[]>(() => [
+  readonly columns = computed<DatatableColumn<Task>[]>(() => [
     {
-      key: 'id',
-      label: 'Key',
-      cellTemplate: this.keyIdCell(),
+      key: 'title',
+      label: 'Title',
+      sortable: true,
+      cellTemplate: this.titleCell(),
     },
     {
-      key: 'name',
-      label: 'Name',
+      key: 'priority',
+      label: 'Priority',
       sortable: true,
-      cellTemplate: this.nameCell(),
+      cellTemplate: this.priorityCell(),
     },
     {
-      key: 'property',
-      label: 'Property',
+      key: 'status',
+      label: 'Status',
       sortable: true,
-      cellTemplate: this.propertyCell(),
+      cellTemplate: this.statusCell(),
     },
     {
-      key: 'description',
-      label: 'Description',
+      key: 'assignedUser',
+      label: 'Assigned To',
       sortable: true,
-      cellTemplate: this.descriptionCell(),
+      cellTemplate: this.assignedUserCell(),
+    },
+    {
+      key: 'scheduledDateTime',
+      label: 'Scheduled Date',
+      sortable: true,
+      cellTemplate: this.scheduledDateCell(),
+    },
+    {
+      key: 'linkTo',
+      label: 'Link To',
+      cellTemplate: this.linkToCell(),
     },
     {
       key: 'actions',
@@ -121,36 +123,13 @@ export class KeysListComponent implements OnInit, OnDestroy {
     },
   ]);
 
-  readonly filteredKeys = computed(() => {
-    return this.keys();
-  });
-
-  readonly emptyMessage = computed(() => {
-    if (this.searchQuery()) {
-      return 'No keys match your search';
-    }
-    return 'No keys available';
-  });
-
-  readonly hasData = computed(() => {
-    return this.filteredKeys().length > 0;
-  });
-
-  readonly selectedCount = computed(() => {
-    return this.selectedRows().size;
-  });
-
-  readonly hasSelectedKeys = computed(() => {
-    return this.selectedCount() > 0;
-  });
-
-  readonly showResetButton = computed(() => {
-    return (this.searchQuery() && this.searchQuery().trim() !== '') || 
-           this.selectedPropertyId() !== null;
+  // Since we're using server-side search, filteredTasks just returns tasks
+  readonly filteredTasks = computed(() => {
+    return this.tasks();
   });
 
   ngOnInit(): void {
-    // Get route key for preferences (e.g., 'keys/list')
+    // Get route key for preferences (e.g., 'tasks/list')
     const routeKey = this.getRouteKey();
     
     // Load view type preference for this route
@@ -181,34 +160,32 @@ export class KeysListComponent implements OnInit, OnDestroy {
           // If search term is less than 3 characters, clear the search query
           this.searchQuery.set('');
           this.currentPage.set(1);
-          this.loadKeys();
+          this.loadTasks();
         }
       });
     
-    this.loadKeys();
-    this.loadProperties();
+    this.loadTasks();
   }
 
   /**
    * Get the route key for preferences storage
    */
   private getRouteKey(): string {
-    return 'keys/list';
+    return 'tasks/list';
   }
 
-  loadKeys(): void {
+  loadTasks(): void {
     this.isLoading.set(true);
-    const request: KeyListRequest = {
+    const request: TaskListRequest = {
       currentPage: this.currentPage(),
       pageSize: this.pageSize(),
       ignore: false,
       ...(this.searchQuery() && this.searchQuery().trim() ? { searchQuery: this.searchQuery().trim() } : {}),
-      ...(this.selectedPropertyId() ? { propertyId: this.selectedPropertyId()! } : {}),
     };
     
-    this.keyService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
+    this.taskService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response) => {
-        this.keys.set(response.result);
+        this.tasks.set(response.result);
         this.totalPages.set(response.totalPages);
         this.totalItems.set(response.totalItems);
         this.isLoading.set(false);
@@ -216,7 +193,7 @@ export class KeysListComponent implements OnInit, OnDestroy {
         this.selectedRows.set(new Set());
       },
       error: (error) => {
-        console.error('Error loading keys:', error);
+        console.error('Error loading tasks:', error);
         this.isLoading.set(false);
         // Clear selection on error too
         this.selectedRows.set(new Set());
@@ -224,69 +201,36 @@ export class KeysListComponent implements OnInit, OnDestroy {
     });
   }
 
-  loadProperties(): void {
-    this.isLoadingProperties.set(true);
-    const request = {
-      currentPage: 1,
-      pageSize: 1000, // Large page size to get all properties
-      ignore: false,
-    };
-    
-    this.propertyService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
-      next: (response) => {
-        this.properties.set(response.result);
-        // Convert properties to combobox options
-        const options: ZardComboboxOption[] = response.result.map(property => ({
-          value: property.id,
-          label: this.getPropertyDisplayName(property),
-        }));
-        this.propertyOptions.set(options);
-        this.isLoadingProperties.set(false);
-      },
-      error: (error) => {
-        console.error('Error loading properties:', error);
-        this.isLoadingProperties.set(false);
-      },
-    });
-  }
+  readonly hasActiveFilters = computed(() => {
+    return this.searchQuery().trim().length > 0;
+  });
 
-  getPropertyDisplayName(property: PropertyModel): string {
-    let name = property.name || property.identifier || 'Unnamed Property';
-    
-    // Add identifier if available and different from name
-    if (property.identifier && property.identifier !== name) {
-      return `${name} (${property.identifier})`;
-    }
-    return name;
-  }
-
-  onPropertyChange(propertyId: string | null): void {
-    this.selectedPropertyId.set(propertyId);
-    this.currentPage.set(1);
-    this.loadKeys();
-  }
-
-  onResetFilters(): void {
-    // Clear search
-    this.searchInput.set('');
+  resetFilters(): void {
     this.searchQuery.set('');
+    this.searchInput.set('');
     this.currentPage.set(1);
     
-    // Clear property selection
-    this.selectedPropertyId.set(null);
-    
-    // Clear combobox internal value using ControlValueAccessor
-    setTimeout(() => {
-      const combobox = this.propertyComboboxRef();
-      if (combobox) {
-        // Clear internal value - writeValue is part of ControlValueAccessor interface
-        (combobox as any).writeValue(null);
-      }
-    }, 0);
-    
-    // Reload keys
-    this.loadKeys();
+    this.loadTasks();
   }
+
+  readonly selectedCount = computed(() => {
+    return this.selectedRows().size;
+  });
+
+  readonly hasSelectedTasks = computed(() => {
+    return this.selectedCount() > 0;
+  });
+
+  readonly emptyMessage = computed(() => {
+    if (this.searchQuery()) {
+      return 'No tasks match your search';
+    }
+    return 'No tasks available';
+  });
+
+  readonly hasData = computed(() => {
+    return this.filteredTasks().length > 0;
+  });
 
   onSearchInputChange(value: string): void {
     // Update the input value
@@ -307,8 +251,8 @@ export class KeysListComponent implements OnInit, OnDestroy {
       this.searchQuery.set(searchTerm);
       this.currentPage.set(1);
       
-      // Load keys immediately
-      this.loadKeys();
+      // Load tasks immediately
+      this.loadTasks();
     }
   }
 
@@ -335,54 +279,48 @@ export class KeysListComponent implements OnInit, OnDestroy {
     this.preferencesService.setViewType(routeKey, newViewMode);
   }
 
-  onViewKey(key: Key): void {
-    console.log('View key:', key);
+  onViewTask(task: Task): void {
+    console.log('View task:', task);
     // TODO: Implement view functionality
   }
 
-  onEditKey(key: Key): void {
+  onEditTask(task: Task): void {
     const dialogRef = this.dialogService.create({
-      zContent: EditKeyComponent,
-      zTitle: 'Edit Key',
-      zWidth: '800px',
-      zCustomClasses: 'max-w-[calc(100vw-2rem)] sm:max-w-[800px] max-h-[90vh] overflow-hidden flex flex-col',
-      zData: { keyId: key.id },
+      zContent: EditTaskComponent,
+      zTitle: 'Edit Task',
+      zWidth: '1200px',
+      zCustomClasses: 'max-w-[calc(100vw-2rem)] sm:max-w-[1200px] max-h-[90vh] overflow-hidden flex flex-col',
+      zData: { taskId: task.id },
       zHideFooter: true,
       zClosable: true,
     });
 
     dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result) => {
       if (result) {
-        // Reload keys after editing
-        this.loadKeys();
+        // Reload tasks after update
+        this.loadTasks();
       }
     });
   }
 
-  onAddKey(): void {
-    const dialogRef = this.dialogService.create({
-      zContent: EditKeyComponent,
-      zTitle: 'Add Key',
-      zWidth: '800px',
-      zCustomClasses: 'max-w-[calc(100vw-2rem)] sm:max-w-[800px] max-h-[90vh] overflow-hidden flex flex-col',
-      zData: {},
-      zHideFooter: true,
-      zClosable: true,
-    });
-
-    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result) => {
-      if (result) {
-        // Reload keys after adding
-        this.loadKeys();
-      }
+  onStatusChange(task: Task, newStatus: number): void {
+    this.taskService.updateStatus(task.id, newStatus).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => {
+        // Reload tasks to get updated list from server
+        this.loadTasks();
+      },
+      error: (error) => {
+        console.error('Error updating task status:', error);
+        // Error is already handled by ApiService (toast notification)
+      },
     });
   }
 
-  onDeleteKey(key: Key): void {
-    const keyName = key.name || 'this key';
+  onDeleteTask(task: Task): void {
+    const taskTitle = task.title;
     const dialogRef = this.alertDialogService.confirm({
-      zTitle: 'Delete Key',
-      zDescription: `Are you sure you want to delete ${keyName}? This action cannot be undone.`,
+      zTitle: 'Delete Task',
+      zDescription: `Are you sure you want to delete "${taskTitle}"? This action cannot be undone.`,
       zOkText: 'Delete',
       zCancelText: 'Cancel',
       zOkDestructive: true,
@@ -392,18 +330,18 @@ export class KeysListComponent implements OnInit, OnDestroy {
     dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result) => {
       if (result) {
         this.isDeleting.set(true);
-        this.keyService.delete(key.id).pipe(takeUntil(this.destroy$)).subscribe({
+        this.taskService.delete(task.id).pipe(takeUntil(this.destroy$)).subscribe({
           next: () => {
-            // Reload keys to get updated list from server
-            this.loadKeys();
+            // Reload tasks to get updated list from server
+            this.loadTasks();
             // Remove from selection if selected
             const newSet = new Set(this.selectedRows());
-            newSet.delete(key.id);
+            newSet.delete(task.id);
             this.selectedRows.set(newSet);
             this.isDeleting.set(false);
           },
           error: (error) => {
-            console.error('Error deleting key:', error);
+            console.error('Error deleting task:', error);
             this.isDeleting.set(false);
             // Error is already handled by ApiService (toast notification)
           },
@@ -412,9 +350,28 @@ export class KeysListComponent implements OnInit, OnDestroy {
     });
   }
 
+  onAddTask(): void {
+    const dialogRef = this.dialogService.create({
+      zContent: EditTaskComponent,
+      zTitle: 'Create Task',
+      zWidth: '1200px',
+      zCustomClasses: 'max-w-[calc(100vw-2rem)] sm:max-w-[1200px] max-h-[90vh] overflow-hidden flex flex-col',
+      zData: {},
+      zHideFooter: true,
+      zClosable: true,
+    });
+
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result) => {
+      if (result) {
+        // Reload tasks after creation
+        this.loadTasks();
+      }
+    });
+  }
+
   onPageChange(page: number): void {
     this.currentPage.set(page);
-    this.loadKeys();
+    this.loadTasks();
   }
 
   onPageSizeChange(size: number): void {
@@ -423,36 +380,68 @@ export class KeysListComponent implements OnInit, OnDestroy {
     // Save page size preference for current route
     const routeKey = this.getRouteKey();
     this.preferencesService.setPageSize(routeKey, size);
-    this.loadKeys();
+    this.loadTasks();
   }
 
   onSelectionChange(selection: Set<string>): void {
     this.selectedRows.set(selection);
   }
 
-  toggleSelect(keyId: string): void {
+  toggleSelect(taskId: string): void {
     const newSet = new Set(this.selectedRows());
-    if (newSet.has(keyId)) {
-      newSet.delete(keyId);
+    if (newSet.has(taskId)) {
+      newSet.delete(taskId);
     } else {
-      newSet.add(keyId);
+      newSet.add(taskId);
     }
     this.selectedRows.set(newSet);
   }
 
-  isSelected(keyId: string): boolean {
-    return this.selectedRows().has(keyId);
+  isSelected(taskId: string): boolean {
+    return this.selectedRows().has(taskId);
   }
 
-  getKeyDisplayName(key: Key): string {
-    return key.name || 'Unnamed Key';
-  }
-
-  getPropertyName(key: Key): string {
-    if (key.property) {
-      return this.getPropertyDisplayName(key.property as any);
+  getPriorityLabel(priority: number): string {
+    switch (priority) {
+      case 1: return 'Low';
+      case 2: return 'Medium';
+      case 3: return 'High';
+      case 4: return 'Critical';
+      default: return 'Unknown';
     }
-    return 'Unknown Property';
+  }
+
+  getPriorityColor(priority: number): 'default' | 'secondary' | 'destructive' | 'outline' {
+    switch (priority) {
+      case 1: return 'secondary';
+      case 2: return 'default';
+      case 3: return 'outline';
+      case 4: return 'destructive';
+      default: return 'secondary';
+    }
+  }
+
+  getStatusLabel(status: number): string {
+    switch (status) {
+      case 1: return 'To Do';
+      case 2: return 'In Progress';
+      case 3: return 'Completed';
+      default: return 'Unknown';
+    }
+  }
+
+  getStatusColor(status: number): 'default' | 'secondary' | 'destructive' | 'outline' {
+    switch (status) {
+      case 1: return 'secondary';
+      case 2: return 'default';
+      case 3: return 'outline';
+      default: return 'secondary';
+    }
+  }
+
+  formatDate(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   }
 
   ngOnDestroy(): void {

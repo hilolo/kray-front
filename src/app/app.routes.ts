@@ -59,4 +59,9 @@ export const routes: Routes = [
     component: MaintenanceComponent,
     canActivate: [authGuard],
   },
+  {
+    path: 'tasks',
+    loadChildren: () => import('./tasks/tasks.routes').then((m) => m.tasksRoutes),
+    canActivate: [authGuard],
+  },
 ];

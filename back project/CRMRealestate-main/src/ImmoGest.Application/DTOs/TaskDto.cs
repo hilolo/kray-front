@@ -15,8 +15,11 @@ namespace ImmoGest.Application.DTOs
         public string AssignedUserName { get; set; }
         public Guid? ContactId { get; set; }
         public string ContactName { get; set; }
+        public string ContactIdentifier { get; set; }
         public Guid? PropertyId { get; set; }
         public string PropertyName { get; set; }
+        public string PropertyIdentifier { get; set; }
+        public string PropertyAddress { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
     }

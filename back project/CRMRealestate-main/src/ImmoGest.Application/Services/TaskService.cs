@@ -59,18 +59,21 @@ namespace ImmoGest.Application.Services
                     dto.AssignedUserName = entity.AssignedUser.Name;
                 }
 
-                // Populate contact name
+                // Populate contact name and identifier
                 if (entity.ContactId.HasValue && entity.Contact != null)
                 {
                     dto.ContactName = entity.Contact.IsACompany 
                         ? entity.Contact.CompanyName 
                         : $"{entity.Contact.FirstName} {entity.Contact.LastName}";
+                    dto.ContactIdentifier = entity.Contact.Identifier;
                 }
 
-                // Populate property name
+                // Populate property name, identifier, and address
                 if (entity.PropertyId.HasValue && entity.Property != null)
                 {
                     dto.PropertyName = entity.Property.Name ?? entity.Property.Identifier;
+                    dto.PropertyIdentifier = entity.Property.Identifier;
+                    dto.PropertyAddress = entity.Property.Address;
                 }
 
                 // Map dates
@@ -133,10 +136,13 @@ namespace ImmoGest.Application.Services
                             dto.ContactName = entity.Contact.IsACompany 
                                 ? entity.Contact.CompanyName 
                                 : $"{entity.Contact.FirstName} {entity.Contact.LastName}";
+                            dto.ContactIdentifier = entity.Contact.Identifier;
                         }
                         if (entity.Property != null)
                         {
                             dto.PropertyName = entity.Property.Name ?? entity.Property.Identifier;
+                            dto.PropertyIdentifier = entity.Property.Identifier;
+                            dto.PropertyAddress = entity.Property.Address;
                         }
                         
                         // Update dates
@@ -188,10 +194,13 @@ namespace ImmoGest.Application.Services
                                 dto.ContactName = entity.Contact.IsACompany 
                                     ? entity.Contact.CompanyName 
                                     : $"{entity.Contact.FirstName} {entity.Contact.LastName}";
+                                dto.ContactIdentifier = entity.Contact.Identifier;
                             }
                             if (entity.Property != null)
                             {
                                 dto.PropertyName = entity.Property.Name ?? entity.Property.Identifier;
+                                dto.PropertyIdentifier = entity.Property.Identifier;
+                                dto.PropertyAddress = entity.Property.Address;
                             }
                         }
                     }
@@ -240,10 +249,13 @@ namespace ImmoGest.Application.Services
                 dto.ContactName = updateResult.Data.Contact.IsACompany 
                     ? updateResult.Data.Contact.CompanyName 
                     : $"{updateResult.Data.Contact.FirstName} {updateResult.Data.Contact.LastName}";
+                dto.ContactIdentifier = updateResult.Data.Contact.Identifier;
             }
             if (updateResult.Data.Property != null)
             {
                 dto.PropertyName = updateResult.Data.Property.Name ?? updateResult.Data.Property.Identifier;
+                dto.PropertyIdentifier = updateResult.Data.Property.Identifier;
+                dto.PropertyAddress = updateResult.Data.Property.Address;
             }
 
             dto.CreatedAt = updateResult.Data.CreatedOn.DateTime;

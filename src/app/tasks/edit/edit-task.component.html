@@ -1,0 +1,407 @@
+@if (!isDialogMode()) {
+  <z-page zTitle="{{ isEditMode() ? 'Edit Task' : 'Create Task' }}">
+    <div class="max-w-4xl mx-auto">
+      <div class="space-y-6">
+        <!-- Form -->
+        <form (ngSubmit)="onSave()" class="space-y-6">
+          <!-- Task Title -->
+          <z-form-field>
+            <z-form-label zRequired>Task Title</z-form-label>
+            <z-form-control [errorMessage]="titleError()">
+              <z-input-group [zPrefix]="titleIconTemplate">
+                <input
+                  z-input
+                  type="text"
+                  [ngModel]="formData().title"
+                  (ngModelChange)="updateTitle($event)"
+                  name="title"
+                  placeholder="Enter task title"
+                  [zStatus]="titleHasError() ? 'error' : undefined"
+                  class="w-full"
+                />
+              </z-input-group>
+            </z-form-control>
+          </z-form-field>
+
+          <!-- Assign To and Priority Row -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Assign To -->
+            <z-form-field>
+              <z-form-label zRequired>Assign To</z-form-label>
+              <z-form-control [errorMessage]="assignedUserError()">
+              <z-combobox
+                [options]="userOptions()"
+                [value]="formData().assignedUserId || null"
+                [placeholder]="getAssignedUserLabel()"
+                [disabled]="isLoadingUsers()"
+                (zValueChange)="onAssignedUserChange($event)"
+              />
+              </z-form-control>
+            </z-form-field>
+
+            <!-- Priority -->
+            <z-form-field>
+              <z-form-label>Priority</z-form-label>
+              <z-form-control>
+                <z-select
+                  [zValue]="formData().priority.toString()"
+                  [zLabel]="getPriorityLabel()"
+                  (zSelectionChange)="updatePriority($event)"
+                >
+                  @for (option of priorityOptions; track option.value) {
+                    <z-select-item [zValue]="option.value.toString()">
+                      <div class="flex items-center gap-2">
+                        <z-icon [zType]="option.icon" zSize="sm" />
+                        <span>{{ option.label }}</span>
+                      </div>
+                    </z-select-item>
+                  }
+                </z-select>
+              </z-form-control>
+            </z-form-field>
+          </div>
+
+          <!-- Status -->
+          <z-form-field>
+            <z-form-label>Status</z-form-label>
+            <z-form-control>
+              <z-select
+                [zValue]="formData().status.toString()"
+                [zLabel]="getStatusLabel()"
+                (zSelectionChange)="updateStatus($event)"
+              >
+                @for (option of statusOptions; track option.value) {
+                  <z-select-item [zValue]="option.value.toString()">
+                    <div class="flex items-center gap-2">
+                      <z-icon [zType]="option.icon" zSize="sm" />
+                      <span>{{ option.label }}</span>
+                    </div>
+                  </z-select-item>
+                }
+              </z-select>
+            </z-form-control>
+          </z-form-field>
+
+          <!-- Scheduled Date -->
+          <z-form-field>
+            <z-form-label>Scheduled Date</z-form-label>
+            <z-form-control>
+              <z-date-picker
+                [value]="formData().scheduledDateTime"
+                [placeholder]="formData().scheduledDateTime ? '' : 'Pick a date'"
+                (dateChange)="onScheduledDateChange($event)"
+              />
+            </z-form-control>
+          </z-form-field>
+
+          <!-- Link To -->
+          <z-form-field>
+            <z-form-label>Link To</z-form-label>
+            <z-form-control>
+              <z-select
+                [zValue]="formData().linkToType"
+                [zLabel]="getLinkToLabel()"
+                (zSelectionChange)="onLinkToTypeChange($event)"
+              >
+                @for (option of linkToOptions; track option.value) {
+                  <z-select-item [zValue]="option.value">
+                    {{ option.label }}
+                  </z-select-item>
+                }
+              </z-select>
+            </z-form-control>
+          </z-form-field>
+
+          <!-- Contact List (shown when Link To = Contact) -->
+          @if (showContactList()) {
+            <z-form-field>
+              <z-form-label>Contact</z-form-label>
+              <z-form-control>
+              <z-combobox
+                [options]="contactOptions()"
+                [value]="formData().contactId || null"
+                [placeholder]="getContactLabel()"
+                [searchPlaceholder]="'Search contacts...'"
+                [emptyText]="'No contacts found'"
+                [searchable]="true"
+                [disabled]="isLoadingContacts()"
+                (zValueChange)="onContactChange($event)"
+                [zWidth]="'full'"
+                class="[&_z-command-list]:max-h-[500px] [&_z-popover]:!w-[400px]"
+              />
+              </z-form-control>
+            </z-form-field>
+          }
+
+          <!-- Property List (shown when Link To = Property) -->
+          @if (showPropertyList()) {
+            <z-form-field>
+              <z-form-label>Property</z-form-label>
+              <z-form-control>
+              <z-combobox
+                [options]="propertyOptions()"
+                [value]="formData().propertyId || null"
+                [placeholder]="getPropertyLabel()"
+                [searchPlaceholder]="'Search properties...'"
+                [emptyText]="'No properties found'"
+                [searchable]="true"
+                [disabled]="isLoadingProperties()"
+                (zValueChange)="onPropertyChange($event)"
+                [zWidth]="'full'"
+                class="[&_z-command-list]:max-h-[500px] [&_z-popover]:!w-[400px]"
+              />
+              </z-form-control>
+            </z-form-field>
+          }
+
+          <!-- Description -->
+          <z-form-field>
+            <z-form-label>Description</z-form-label>
+            <z-form-control>
+              <textarea
+                z-input
+                [ngModel]="formData().description"
+                (ngModelChange)="updateDescription($event)"
+                name="description"
+                placeholder="Enter task description"
+                rows="4"
+                class="w-full resize-none"
+              ></textarea>
+            </z-form-control>
+          </z-form-field>
+
+          <!-- Buttons -->
+          <div class="flex justify-end gap-3 pt-4">
+            <z-button
+              zType="outline"
+              zSize="default"
+              type="button"
+              (click)="onCancel()"
+              [disabled]="isSaving()"
+            >
+              Cancel
+            </z-button>
+            <z-button
+              [zType]="isSaving() || !isFormValid() ? 'ghost' : 'default'"
+              zSize="default"
+              type="submit"
+              [disabled]="isSaving()"
+              (click)="!isSaving() && onSave()"
+            >
+              {{ isEditMode() ? 'Update Task' : 'Create Task' }}
+            </z-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </z-page>
+} @else {
+  <!-- Dialog Mode -->
+  <div class="flex flex-col h-full max-h-[90vh] overflow-hidden">
+    <!-- Dialog Content -->
+    <div class="flex-1 overflow-y-auto p-6">
+      <form (ngSubmit)="onSave()" class="space-y-6">
+        <!-- Task Title (Full Width) -->
+        <z-form-field>
+          <z-form-label zRequired>Task Title</z-form-label>
+          <z-form-control [errorMessage]="titleError()">
+            <z-input-group [zPrefix]="titleIconTemplate">
+              <input
+                z-input
+                type="text"
+                [ngModel]="formData().title"
+                (ngModelChange)="updateTitle($event)"
+                name="title"
+                placeholder="Enter task title"
+                [zStatus]="titleHasError() ? 'error' : undefined"
+                class="w-full"
+              />
+            </z-input-group>
+          </z-form-control>
+        </z-form-field>
+
+        <!-- Assign To and Priority Row (2 columns) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Assign To -->
+          <z-form-field>
+            <z-form-label zRequired>Assign To</z-form-label>
+            <z-form-control [errorMessage]="assignedUserError()">
+              <z-combobox
+                [options]="userOptions()"
+                [value]="formData().assignedUserId || null"
+                [placeholder]="getAssignedUserLabel()"
+                [disabled]="isLoadingUsers()"
+                (zValueChange)="onAssignedUserChange($event)"
+              />
+            </z-form-control>
+          </z-form-field>
+
+          <!-- Priority -->
+          <z-form-field>
+            <z-form-label>Priority</z-form-label>
+            <z-form-control>
+              <z-select
+                [zValue]="formData().priority.toString()"
+                [zLabel]="getPriorityLabel()"
+                (zSelectionChange)="updatePriority($event)"
+              >
+                @for (option of priorityOptions; track option.value) {
+                  <z-select-item [zValue]="option.value.toString()">
+                    {{ option.label }}
+                  </z-select-item>
+                }
+              </z-select>
+            </z-form-control>
+          </z-form-field>
+        </div>
+
+        <!-- Status and Scheduled Date Row (2 columns) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Status -->
+          <z-form-field>
+            <z-form-label>Status</z-form-label>
+            <z-form-control>
+              <z-select
+                [zValue]="formData().status.toString()"
+                [zLabel]="getStatusLabel()"
+                (zSelectionChange)="updateStatus($event)"
+              >
+                @for (option of statusOptions; track option.value) {
+                  <z-select-item [zValue]="option.value.toString()">
+                    <div class="flex items-center gap-2">
+                      <z-icon [zType]="option.icon" zSize="sm" />
+                      <span>{{ option.label }}</span>
+                    </div>
+                  </z-select-item>
+                }
+              </z-select>
+            </z-form-control>
+          </z-form-field>
+
+          <!-- Scheduled Date -->
+          <z-form-field>
+            <z-form-label>Scheduled Date</z-form-label>
+            <z-form-control>
+              <z-date-picker
+                [value]="formData().scheduledDateTime"
+                [placeholder]="formData().scheduledDateTime ? '' : 'Pick a date'"
+                (dateChange)="onScheduledDateChange($event)"
+              />
+            </z-form-control>
+          </z-form-field>
+        </div>
+
+        <!-- Link To and Contact/Property Row (2 columns) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Link To -->
+          <z-form-field>
+            <z-form-label>Link To</z-form-label>
+            <z-form-control>
+              <z-select
+                [zValue]="formData().linkToType"
+                [zLabel]="getLinkToLabel()"
+                (zSelectionChange)="onLinkToTypeChange($event)"
+              >
+                @for (option of linkToOptions; track option.value) {
+                  <z-select-item [zValue]="option.value">
+                    {{ option.label }}
+                  </z-select-item>
+                }
+              </z-select>
+            </z-form-control>
+          </z-form-field>
+
+          <!-- Contact List (shown when Link To = Contact) -->
+          @if (showContactList()) {
+            <z-form-field>
+              <z-form-label>Contact</z-form-label>
+              <z-form-control>
+                <z-combobox
+                  [options]="contactOptions()"
+                  [value]="formData().contactId || null"
+                  [placeholder]="getContactLabel()"
+                  [searchPlaceholder]="'Search contacts...'"
+                  [emptyText]="'No contacts found'"
+                  [searchable]="true"
+                  [disabled]="isLoadingContacts()"
+                  (zValueChange)="onContactChange($event)"
+                  [zWidth]="'full'"
+                  class="[&_z-command-list]:max-h-[500px] [&_z-popover]:!w-[400px]"
+                />
+              </z-form-control>
+            </z-form-field>
+          }
+
+          <!-- Property List (shown when Link To = Property) -->
+          @if (showPropertyList()) {
+            <z-form-field>
+              <z-form-label>Property</z-form-label>
+              <z-form-control>
+                <z-combobox
+                  [options]="propertyOptions()"
+                  [value]="formData().propertyId || null"
+                  [placeholder]="getPropertyLabel()"
+                  [searchPlaceholder]="'Search properties...'"
+                  [emptyText]="'No properties found'"
+                  [searchable]="true"
+                  [disabled]="isLoadingProperties()"
+                  (zValueChange)="onPropertyChange($event)"
+                  [zWidth]="'full'"
+                  class="[&_z-command-list]:max-h-[500px] [&_z-popover]:!w-[400px]"
+                />
+              </z-form-control>
+            </z-form-field>
+          }
+        </div>
+
+        <!-- Description (Full Width) -->
+        <z-form-field>
+          <z-form-label>Description</z-form-label>
+          <z-form-control>
+            <textarea
+              z-input
+              [ngModel]="formData().description"
+                (ngModelChange)="updateDescription($event)"
+              name="description"
+              placeholder="Enter task description"
+              rows="4"
+              class="w-full resize-none"
+            ></textarea>
+          </z-form-control>
+        </z-form-field>
+      </form>
+    </div>
+
+    <!-- Dialog Footer -->
+    <div class="border-t bg-background px-6 py-4 flex justify-end gap-3 flex-shrink-0">
+      <z-button
+        zType="outline"
+        zSize="default"
+        type="button"
+        (click)="onCancel()"
+        [disabled]="isSaving()"
+      >
+        Cancel
+      </z-button>
+      <z-button
+        [zType]="isSaving() || !isFormValid() ? 'ghost' : 'default'"
+        zSize="default"
+        type="button"
+        [disabled]="isSaving()"
+        (click)="!isSaving() && onSave()"
+      >
+        {{ isEditMode() ? 'Update Task' : 'Create Task' }}
+      </z-button>
+    </div>
+  </div>
+}
+
+<!-- Icon Templates -->
+<ng-template #titleIconTemplate>
+  <z-icon zType="file-text" zSize="sm" class="text-muted-foreground" />
+</ng-template>
+
+<ng-template #userIconTemplate>
+  <z-icon zType="user" zSize="sm" class="text-muted-foreground" />
+</ng-template>
+

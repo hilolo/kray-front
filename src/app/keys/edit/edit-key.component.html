@@ -1,17 +1,158 @@
-<z-page [zTitle]="isEditMode() ? 'Edit Key' : 'Add Key'">
-  <div class="flex flex-col min-h-0 h-full overflow-hidden">
+@if (!isDialogMode()) {
+  <z-page [zTitle]="isEditMode() ? 'Edit Key' : 'Add Key'">
+    <div class="flex flex-col min-h-0 h-full overflow-hidden">
+      <!-- Header Section -->
+      <div class="space-y-4 pb-6 flex-shrink-0">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-3xl font-bold mb-2">
+              @if (isEditMode()) {
+                Edit Key
+              } @else {
+                Add New Key
+              }
+            </h2>
+            <p class="text-muted-foreground">
+              @if (isEditMode()) {
+                Update the key information below
+              } @else {
+                Create a new key by filling in the information below
+              }
+            </p>
+          </div>
+          <div class="flex gap-2">
+            <z-button zType="outline" zSize="default" [disabled]="isSaving()" (click)="!isSaving() && onCancel()">
+              Cancel
+            </z-button>
+            <z-button [zType]="isSaving() || !isFormValid() ? 'ghost' : 'default'" [disabled]="isSaving()" (click)="!isSaving() && onSave()">
+              @if (isSaving()) {
+                <span class="flex items-center gap-2">
+                  <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+                  Saving...
+                </span>
+              } @else {
+                <z-icon zType="check" zSize="sm" class="mr-2" />
+                Save Key
+              }
+            </z-button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Form -->
+      <div class="flex-1 min-h-0 overflow-y-auto">
+        @if (isLoading()) {
+          <div class="flex items-center justify-center h-full">
+            <div class="flex flex-col items-center gap-4">
+              <z-icon zType="loader-circle" zSize="lg" class="animate-spin text-primary" />
+              <p class="text-muted-foreground">Loading key data...</p>
+            </div>
+          </div>
+        } @else {
+          <z-card class="max-w-7xl mx-auto">
+            <div class="p-8 space-y-8">
+              <!-- Basic Information Section -->
+              <div class="space-y-6 pb-6 border-b">
+                <div>
+                  <h3 class="text-lg font-semibold mb-1">Basic Information</h3>
+                  <p class="text-sm text-muted-foreground">
+                    Enter the basic details of the key
+                  </p>
+                </div>
+
+                <!-- Name Field -->
+                <z-form-field>
+                  <z-form-label zRequired>Name</z-form-label>
+                  <z-form-control [errorMessage]="nameError()">
+                    <z-input-group [zPrefix]="keyIconTemplate">
+                      <input
+                        z-input
+                        type="text"
+                        [ngModel]="formData().name"
+                        (ngModelChange)="updateField('name', $event)"
+                        placeholder="Enter key name"
+                        [zStatus]="nameHasError() ? 'error' : undefined"
+                        class="w-full"
+                      />
+                    </z-input-group>
+                  </z-form-control>
+                </z-form-field>
+
+              </div>
+
+              <!-- Description Section -->
+              <div class="space-y-6 pb-6 border-b">
+                <div>
+                  <h3 class="text-lg font-semibold mb-1">Description</h3>
+                  <p class="text-sm text-muted-foreground">
+                    Enter a detailed description for this key (optional)
+                  </p>
+                </div>
+
+                <z-form-field>
+                  <z-form-label>Description</z-form-label>
+                  <z-form-control>
+                    <textarea
+                      z-input
+                      [ngModel]="formData().description"
+                      (ngModelChange)="updateField('description', $event)"
+                      name="description"
+                      placeholder="Enter key description (optional)"
+                      rows="4"
+                      class="w-full resize-y"
+                    ></textarea>
+                  </z-form-control>
+                </z-form-field>
+              </div>
+
+              <!-- Property Section -->
+              <div class="space-y-6 pb-6 border-b">
+                <div>
+                  <h3 class="text-lg font-semibold mb-1">Property</h3>
+                  <p class="text-sm text-muted-foreground">
+                    Select the property this key belongs to
+                  </p>
+                </div>
+
+                <z-form-field>
+                  <z-form-label zRequired>Property</z-form-label>
+                  <z-form-control [errorMessage]="propertyIdError()">
+                    <z-combobox
+                      [options]="propertyOptions()"
+                      [value]="formData().propertyId || null"
+                      [placeholder]="'Select property...'"
+                      [searchPlaceholder]="'Search properties...'"
+                      [emptyText]="'No properties found'"
+                      [searchable]="true"
+                      [disabled]="isLoadingProperties()"
+                      (zValueChange)="updateField('propertyId', $event || '')"
+                      [zWidth]="'full'"
+                      class="[&_z-command-list]:max-h-[500px] [&_z-popover]:!w-[400px]"
+                    />
+                  </z-form-control>
+                </z-form-field>
+              </div>
+            </div>
+          </z-card>
+        }
+      </div>
+    </div>
+  </z-page>
+} @else {
+  <!-- Dialog Mode -->
+  <div class="flex flex-col h-full min-h-0 overflow-hidden max-h-[85vh]">
     <!-- Header Section -->
-    <div class="space-y-4 pb-6 flex-shrink-0">
+    <div class="space-y-3 pb-4 flex-shrink-0">
       <div class="flex items-center justify-between">
         <div>
-          <h2 class="text-3xl font-bold mb-2">
+          <h2 class="text-2xl font-bold mb-1">
             @if (isEditMode()) {
               Edit Key
             } @else {
               Add New Key
             }
           </h2>
-          <p class="text-muted-foreground">
+          <p class="text-sm text-muted-foreground">
             @if (isEditMode()) {
               Update the key information below
             } @else {
@@ -20,7 +161,7 @@
           </p>
         </div>
         <div class="flex gap-2">
-          <z-button zType="outline" zSize="default" [disabled]="isSaving()" (click)="!isSaving() && onCancel()">
+          <z-button zType="outline" zSize="default" [disabled]="isSaving()" (click)="!isSaving() && dialogRef?.close()">
             Cancel
           </z-button>
           <z-button [zType]="isSaving() || !isFormValid() ? 'ghost' : 'default'" [disabled]="isSaving()" (click)="!isSaving() && onSave()">
@@ -38,7 +179,7 @@
       </div>
     </div>
 
-    <!-- Main Form -->
+    <!-- Main Form Card -->
     <div class="flex-1 min-h-0 overflow-y-auto">
       @if (isLoading()) {
         <div class="flex items-center justify-center h-full">
@@ -48,86 +189,67 @@
           </div>
         </div>
       } @else {
-        <z-card class="max-w-7xl mx-auto">
-          <div class="p-8 space-y-8">
-            <!-- Basic Information Section -->
-            <div class="space-y-6 pb-6 border-b">
-              <div>
-                <h3 class="text-lg font-semibold mb-1">Basic Information</h3>
-                <p class="text-sm text-muted-foreground">
-                  Enter the basic details of the key
-                </p>
-              </div>
-
-              <!-- Name Field -->
-              <z-form-field>
-                <z-form-label zRequired>Name</z-form-label>
-                <z-form-control [errorMessage]="nameError()">
-                  <z-input-group [zPrefix]="keyIconTemplate">
-                    <input
-                      z-input
-                      type="text"
-                      [ngModel]="formData().name"
-                      (ngModelChange)="updateField('name', $event)"
-                      placeholder="Enter key name"
-                      [zStatus]="nameHasError() ? 'error' : undefined"
-                      class="w-full"
-                    />
-                  </z-input-group>
-                </z-form-control>
-              </z-form-field>
-
-              <!-- Description Field -->
-              <z-form-field>
-                <z-form-label>Description</z-form-label>
-                <z-form-control>
-                  <z-input-group [zPrefix]="fileTextIconTemplate">
-                    <textarea
-                      z-input
-                      [ngModel]="formData().description"
-                      (ngModelChange)="updateField('description', $event)"
-                      placeholder="Enter key description (optional)"
-                      rows="4"
-                      class="w-full resize-y"
-                    ></textarea>
-                  </z-input-group>
-                </z-form-control>
-              </z-form-field>
-            </div>
-
-            <!-- Property Section -->
-            <div class="space-y-6 pb-6 border-b">
-              <div>
-                <h3 class="text-lg font-semibold mb-1">Property</h3>
-                <p class="text-sm text-muted-foreground">
-                  Select the property this key belongs to
-                </p>
-              </div>
-
-              <z-form-field>
-                <z-form-label zRequired>Property</z-form-label>
-                <z-form-control [errorMessage]="propertyIdError()">
-                  <z-combobox
-                    [options]="propertyOptions()"
-                    [value]="formData().propertyId || null"
-                    [placeholder]="'Select property...'"
-                    [searchPlaceholder]="'Search properties...'"
-                    [emptyText]="'No properties found'"
-                    [searchable]="true"
-                    [disabled]="isLoadingProperties()"
-                    (zValueChange)="updateField('propertyId', $event || '')"
-                    [zWidth]="'full'"
-                    class="[&_z-command-list]:max-h-[500px] [&_z-popover]:!w-[400px]"
+        <z-card class="w-full">
+          <div class="p-6 space-y-6">
+            <!-- Name Field -->
+            <z-form-field>
+              <z-form-label zRequired>Name</z-form-label>
+              <z-form-control [errorMessage]="nameError()">
+                <z-input-group [zPrefix]="keyIconTemplate">
+                  <input
+                    z-input
+                    type="text"
+                    [ngModel]="formData().name"
+                    (ngModelChange)="updateField('name', $event)"
+                    name="name"
+                    placeholder="Enter key name"
+                    [zStatus]="nameHasError() ? 'error' : undefined"
+                    class="w-full"
                   />
-                </z-form-control>
-              </z-form-field>
-            </div>
+                </z-input-group>
+              </z-form-control>
+            </z-form-field>
+
+            <!-- Description Field -->
+            <z-form-field>
+              <z-form-label>Description</z-form-label>
+              <z-form-control>
+                <textarea
+                  z-input
+                  [ngModel]="formData().description"
+                  (ngModelChange)="updateField('description', $event)"
+                  name="description"
+                  placeholder="Enter key description (optional)"
+                  rows="4"
+                  class="w-full resize-y"
+                ></textarea>
+              </z-form-control>
+            </z-form-field>
+
+            <!-- Property Field -->
+            <z-form-field>
+              <z-form-label zRequired>Property</z-form-label>
+              <z-form-control [errorMessage]="propertyIdError()">
+                <z-combobox
+                  [options]="propertyOptions()"
+                  [value]="formData().propertyId || null"
+                  [placeholder]="'Select property...'"
+                  [searchPlaceholder]="'Search properties...'"
+                  [emptyText]="'No properties found'"
+                  [searchable]="true"
+                  [disabled]="isLoadingProperties()"
+                  (zValueChange)="updateField('propertyId', $event || '')"
+                  [zWidth]="'full'"
+                  class="[&_z-command-list]:max-h-[500px] [&_z-popover]:!w-[400px]"
+                />
+              </z-form-control>
+            </z-form-field>
           </div>
         </z-card>
       }
     </div>
   </div>
-</z-page>
+}
 
 <!-- Icon Templates -->
 <ng-template #keyIconTemplate>
@@ -138,7 +260,4 @@
   <z-icon zType="building" zSize="sm" />
 </ng-template>
 
-<ng-template #fileTextIconTemplate>
-  <z-icon zType="file-text" zSize="sm" />
-</ng-template>
 

@@ -445,7 +445,10 @@ namespace ImmoGest.Application.MappingProfiles
             CreateMap<TaskItem, TaskDto>()
                 .ForMember(dest => dest.AssignedUserName, opt => opt.Ignore()) // Set manually in service
                 .ForMember(dest => dest.ContactName, opt => opt.Ignore()) // Set manually in service
+                .ForMember(dest => dest.ContactIdentifier, opt => opt.Ignore()) // Set manually in service
                 .ForMember(dest => dest.PropertyName, opt => opt.Ignore()) // Set manually in service
+                .ForMember(dest => dest.PropertyIdentifier, opt => opt.Ignore()) // Set manually in service
+                .ForMember(dest => dest.PropertyAddress, opt => opt.Ignore()) // Set manually in service
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedOn.DateTime))
                 .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => src.LastModifiedOn.HasValue ? src.LastModifiedOn.Value.DateTime : (DateTime?)null));
             

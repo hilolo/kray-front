@@ -11,6 +11,8 @@ import { ZardFormFieldComponent, ZardFormControlComponent, ZardFormLabelComponen
 import { ZardInputGroupComponent } from '@shared/components/input-group/input-group.component';
 import { ZardCardComponent } from '@shared/components/card/card.component';
 import { ZardComboboxComponent, ZardComboboxOption } from '@shared/components/combobox/combobox.component';
+import { ZardDialogRef } from '@shared/components/dialog/dialog-ref';
+import { Z_MODAL_DATA } from '@shared/components/dialog/dialog.service';
 import { KeyService } from '@shared/services/key.service';
 import { PropertyService } from '@shared/services/property.service';
 import type { Key } from '@shared/models/key/key.model';
@@ -49,12 +51,15 @@ export class EditKeyComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly keyService = inject(KeyService);
   private readonly propertyService = inject(PropertyService);
+  readonly dialogRef = inject(ZardDialogRef, { optional: true });
+  private readonly dialogData = inject<{ keyId?: string }>(Z_MODAL_DATA, { optional: true });
   private readonly destroy$ = new Subject<void>();
 
   readonly keyId = signal<string | null>(null);
   readonly isEditMode = computed(() => this.keyId() !== null);
   readonly isLoading = signal(false);
   readonly isSaving = signal(false);
+  readonly isDialogMode = computed(() => this.dialogRef !== null);
   readonly formSubmitted = signal(false);
 
   // Form data
@@ -72,7 +77,6 @@ export class EditKeyComponent implements OnInit, OnDestroy {
   // Icon templates for input groups
   readonly keyIconTemplate = viewChild.required<TemplateRef<void>>('keyIconTemplate');
   readonly buildingIconTemplate = viewChild.required<TemplateRef<void>>('buildingIconTemplate');
-  readonly fileTextIconTemplate = viewChild.required<TemplateRef<void>>('fileTextIconTemplate');
 
   // Form validation
   readonly isFormValid = computed(() => {
@@ -112,29 +116,36 @@ export class EditKeyComponent implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
-    // Check if we're in edit mode (has ID in route params)
-    const id = this.route.snapshot.paramMap.get('id');
-    if (id && id !== 'add') {
-      this.keyId.set(id);
-      this.loadKey(id);
+    // Check if we're in dialog mode
+    if (this.dialogData?.keyId) {
+      // Dialog mode - use keyId from dialog data
+      this.keyId.set(this.dialogData.keyId);
+      this.loadKey(this.dialogData.keyId);
+    } else if (!this.isDialogMode()) {
+      // Page mode - check route params
+      const id = this.route.snapshot.paramMap.get('id');
+      if (id && id !== 'add') {
+        this.keyId.set(id);
+        this.loadKey(id);
+      }
+
+      // Listen to route changes (only in page mode)
+      this.route.paramMap.pipe(takeUntil(this.destroy$)).subscribe(params => {
+        const updatedId = params.get('id');
+        if (updatedId && updatedId !== 'add') {
+          if (updatedId !== this.keyId()) {
+            this.keyId.set(updatedId);
+            this.loadKey(updatedId);
+          }
+        } else {
+          this.keyId.set(null);
+          this.resetForm();
+        }
+      });
     }
 
     // Load properties
     this.loadProperties();
-
-    // Listen to route changes
-    this.route.paramMap.pipe(takeUntil(this.destroy$)).subscribe(params => {
-      const updatedId = params.get('id');
-      if (updatedId && updatedId !== 'add') {
-        if (updatedId !== this.keyId()) {
-          this.keyId.set(updatedId);
-          this.loadKey(updatedId);
-        }
-      } else {
-        this.keyId.set(null);
-        this.resetForm();
-      }
-    });
   }
 
   ngOnDestroy(): void {
@@ -248,8 +259,13 @@ export class EditKeyComponent implements OnInit, OnDestroy {
             this.formSubmitted.set(false);
             this.isSaving.set(false);
             
-            // Navigate back to list
-            this.router.navigate(['/keys']);
+            // If in dialog mode, close dialog
+            if (this.dialogRef) {
+              this.dialogRef.close({ keyId: updatedKey.id });
+            } else {
+              // Navigate back to list
+              this.router.navigate(['/keys']);
+            }
           },
           error: (error) => {
             console.error('Error updating key:', error);
@@ -275,8 +291,13 @@ export class EditKeyComponent implements OnInit, OnDestroy {
             this.formSubmitted.set(false);
             this.isSaving.set(false);
             
-            // Navigate back to list
-            this.router.navigate(['/keys']);
+            // If in dialog mode, close dialog
+            if (this.dialogRef) {
+              this.dialogRef.close({ keyId: createdKey.id });
+            } else {
+              // Navigate back to list
+              this.router.navigate(['/keys']);
+            }
           },
           error: (error) => {
             console.error('Error creating key:', error);
@@ -288,8 +309,13 @@ export class EditKeyComponent implements OnInit, OnDestroy {
   }
 
   onCancel(): void {
-    // Navigate back to list
-    this.router.navigate(['/keys']);
+    // If in dialog mode, close dialog
+    if (this.isDialogMode() && this.dialogRef) {
+      this.dialogRef.close();
+    } else {
+      // Navigate back to list
+      this.router.navigate(['/keys']);
+    }
   }
 
   // Update form field helper
