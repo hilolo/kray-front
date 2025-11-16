@@ -9,6 +9,7 @@ using ImmoGest.Domain.Entities;
 using ImmoGest.Domain.Entities.Enums;
 using ImmoGest.Domain.Repositories;
 using ImmoGest.Domain.Auth.Interfaces;
+using ImmoGest.Domain.Constants;
 using Microsoft.EntityFrameworkCore;
 using ResultNet;
 
@@ -23,6 +24,7 @@ namespace ImmoGest.Application.Services
         private readonly IMapper _mapper;
         private readonly ISession _session;
         private readonly FileAttachmentHelper _fileHelper;
+        private readonly IS3StorageService _s3StorageService;
 
         public MaintenanceService(
             IMapper mapper,
@@ -31,7 +33,8 @@ namespace ImmoGest.Application.Services
             IPropertyRepository propertyRepository,
             IAttachmentRepository attachmentRepository,
             ISession session,
-            FileAttachmentHelper fileHelper)
+            FileAttachmentHelper fileHelper,
+            IS3StorageService s3StorageService)
             : base(mapper, maintenanceRepository)
         {
             _maintenanceRepository = maintenanceRepository;
@@ -41,6 +44,7 @@ namespace ImmoGest.Application.Services
             _mapper = mapper;
             _session = session;
             _fileHelper = fileHelper;
+            _s3StorageService = s3StorageService;
         }
 
         protected override async Task InCreate_BeforInsertAsync<TCreateModel>(Maintenance entity, TCreateModel createModel)
@@ -153,6 +157,35 @@ namespace ImmoGest.Application.Services
                                 dto.PropertyImageUrl = null;
                             }
                         }
+
+                        // Generate contact avatar URL if contact exists and has avatar
+                        if (entity.Contact != null && !string.IsNullOrEmpty(entity.Contact.Avatar))
+                        {
+                            try
+                            {
+                                dto.ContactImageUrl = await GenerateContactAvatarUrlAsync(entity.Contact);
+                            }
+                            catch (Exception)
+                            {
+                                dto.ContactImageUrl = null;
+                            }
+                        }
+                        else if (entity.ContactId != Guid.Empty)
+                        {
+                            // Contact not loaded, fetch it separately
+                            try
+                            {
+                                var contactResult = await _contactRepository.GetByIdAsync(entity.ContactId);
+                                if (contactResult.IsSuccess() && contactResult.Data != null && !string.IsNullOrEmpty(contactResult.Data.Avatar))
+                                {
+                                    dto.ContactImageUrl = await GenerateContactAvatarUrlAsync(contactResult.Data);
+                                }
+                            }
+                            catch (Exception)
+                            {
+                                dto.ContactImageUrl = null;
+                            }
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -212,6 +245,35 @@ namespace ImmoGest.Application.Services
                             dto.PropertyImageUrl = null;
                         }
                     }
+
+                    // Generate contact avatar URL if contact exists and has avatar
+                    if (maintenance.Contact != null && !string.IsNullOrEmpty(maintenance.Contact.Avatar))
+                    {
+                        try
+                        {
+                            dto.ContactImageUrl = await GenerateContactAvatarUrlAsync(maintenance.Contact);
+                        }
+                        catch (Exception)
+                        {
+                            dto.ContactImageUrl = null;
+                        }
+                    }
+                    else if (maintenance.ContactId != Guid.Empty)
+                    {
+                        // Contact not loaded, fetch it separately
+                        try
+                        {
+                            var contactResult = await _contactRepository.GetByIdAsync(maintenance.ContactId);
+                            if (contactResult.IsSuccess() && contactResult.Data != null && !string.IsNullOrEmpty(contactResult.Data.Avatar))
+                            {
+                                dto.ContactImageUrl = await GenerateContactAvatarUrlAsync(contactResult.Data);
+                            }
+                        }
+                        catch (Exception)
+                        {
+                            dto.ContactImageUrl = null;
+                        }
+                    }
                 }
             }
 
@@ -232,6 +294,58 @@ namespace ImmoGest.Application.Services
                 return Result.Success();
 
             return Result.Failure();
+        }
+
+        /// <summary>
+        /// Generate avatar URL for a contact
+        /// </summary>
+        private async Task<string> GenerateContactAvatarUrlAsync(Contact contact)
+        {
+            if (string.IsNullOrEmpty(contact.Avatar))
+                return string.Empty;
+
+            try
+            {
+                // Use FileAttachmentHelper's method which handles bucket name retrieval
+                // But we need to build the key ourselves for hash-based vs folder-based logic
+                var bucketName = _fileHelper.GetBucketName();
+                string key;
+
+                // Use hash-based key if available (new avatars), otherwise fallback to folder-based (old avatars)
+                if (!string.IsNullOrEmpty(contact.AvatarStorageHash))
+                {
+                    // Use hash-based key (immutable, never changes even when name changes)
+                    key = S3PathConstants.BuildContactAvatarKey(
+                        contact.CompanyId.ToString(),
+                        contact.AvatarStorageHash,
+                        contact.Avatar
+                    );
+                }
+                else
+                {
+                    // Fallback for old avatars without hash (backward compatibility)
+                    var contactFolder = _fileHelper.GetContactFolderNameFromProperties(
+                        contact.FirstName,
+                        contact.LastName,
+                        contact.CompanyName,
+                        contact.IsACompany,
+                        contact.Id
+                    );
+                    key = S3PathConstants.BuildContactAvatarKeyWithFolder(
+                        contact.CompanyId.ToString(),
+                        contactFolder,
+                        contact.Avatar
+                    );
+                }
+
+                // Use cached URL (for avatars, we don't have an attachment entity, so pass null)
+                var avatarUrl = await _s3StorageService.GetOrGenerateCachedUrlAsync(bucketName, key, null, null, 24);
+                return avatarUrl;
+            }
+            catch (Exception)
+            {
+                return string.Empty;
+            }
         }
     }
 }

@@ -19,6 +19,7 @@ namespace ImmoGest.Application.DTOs
         public string ContactName { get; set; }
         public string ContactEmail { get; set; }
         public string ContactPhone { get; set; }
+        public string ContactImageUrl { get; set; }
         public MaintenanceStatus Status { get; set; }
         public string Subject { get; set; }
         public string Description { get; set; }

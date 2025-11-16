@@ -33,7 +33,7 @@
               [routerLink]="item.route"
               routerLinkActive="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
               [routerLinkActiveOptions]="getRouterLinkActiveOptions(item.route)"
-              class="flex items-center justify-center px-2 py-2 rounded-md transition-colors group hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              class="flex items-center justify-center px-2 py-2 rounded-md transition-colors group text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               (click)="closeMobileSidebar()"
             >
               @if (item.icon) {
@@ -45,13 +45,13 @@
               [routerLink]="item.route"
               routerLinkActive="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
               [routerLinkActiveOptions]="getRouterLinkActiveOptions(item.route)"
-              class="flex items-center gap-2.5 px-3 py-2 rounded-md transition-all group relative hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground hover:scale-[1.02] hover:pl-4 before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-sidebar-accent-foreground before:rounded-r-full before:opacity-0 before:transition-opacity hover:before:opacity-100"
+              class="flex items-center gap-2.5 px-3 py-2 rounded-md transition-all group relative text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground hover:scale-[1.02] hover:pl-4 before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-sidebar-accent-foreground before:rounded-r-full before:opacity-0 before:transition-opacity hover:before:opacity-100"
               (click)="closeMobileSidebar()"
             >
               @if (item.icon) {
                 <z-icon [zType]="item.icon" class="shrink-0 w-4 h-4" />
               }
-              <span class="text-sm">{{ item.labelKey ? (item.labelKey | translate) : item.label }}</span>
+              <span class="text-sm text-sidebar-foreground">{{ item.labelKey ? (item.labelKey | translate) : item.label }}</span>
             </a>
           }
         }
@@ -132,13 +132,13 @@
             [routerLink]="item.route"
             routerLinkActive="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
             [routerLinkActiveOptions]="getRouterLinkActiveOptions(item.route)"
-            class="flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
+            class="flex items-center gap-2.5 px-3 py-2 rounded-md text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
             (click)="closeMobileSidebar()"
           >
             @if (item.icon) {
               <z-icon [zType]="item.icon" class="shrink-0 w-4 h-4" />
             }
-            <span class="text-sm">{{ item.labelKey ? (item.labelKey | translate) : item.label }}</span>
+            <span class="text-sm text-sidebar-foreground">{{ item.labelKey ? (item.labelKey | translate) : item.label }}</span>
           </a>
         }
       </nav>

@@ -239,13 +239,40 @@ export class EditMaintenanceComponent implements OnInit, OnDestroy {
         const hours = String(scheduledDate.getHours()).padStart(2, '0');
         const minutes = String(scheduledDate.getMinutes()).padStart(2, '0');
         
+        // Convert priority to number - handle both string and number formats
+        let priority: MaintenancePriority;
+        if (typeof maintenance.priority === 'string') {
+          const priorityMap: Record<string, MaintenancePriority> = {
+            'Low': MaintenancePriority.Low,
+            'Medium': MaintenancePriority.Medium,
+            'Urgent': MaintenancePriority.Urgent,
+          };
+          priority = priorityMap[maintenance.priority] || parseInt(maintenance.priority, 10) || MaintenancePriority.Low;
+        } else {
+          priority = maintenance.priority;
+        }
+        
+        // Convert status to number - handle both string and number formats
+        let status: MaintenanceStatus;
+        if (typeof maintenance.status === 'string') {
+          const statusMap: Record<string, MaintenanceStatus> = {
+            'Waiting': MaintenanceStatus.Waiting,
+            'InProgress': MaintenanceStatus.InProgress,
+            'Done': MaintenanceStatus.Done,
+            'Cancelled': MaintenanceStatus.Cancelled,
+          };
+          status = statusMap[maintenance.status] || parseInt(maintenance.status, 10) || MaintenanceStatus.Waiting;
+        } else {
+          status = maintenance.status;
+        }
+        
         this.formData.set({
-          propertyId: maintenance.propertyId,
-          contactId: maintenance.contactId,
-          priority: maintenance.priority,
-          status: maintenance.status,
-          subject: maintenance.subject,
-          description: maintenance.description,
+          propertyId: maintenance.propertyId || '',
+          contactId: maintenance.contactId || '',
+          priority: priority,
+          status: status,
+          subject: maintenance.subject || '',
+          description: maintenance.description || '',
           scheduledDate: scheduledDate,
           scheduledTime: `${hours}:${minutes}`,
         });
@@ -313,16 +340,27 @@ export class EditMaintenanceComponent implements OnInit, OnDestroy {
   }
 
   getContactDisplayName(contact: Contact): string {
+    let displayName = '';
+    
     if (contact.isACompany && contact.companyName) {
-      return contact.companyName;
+      displayName = contact.companyName;
+    } else {
+      const parts: string[] = [];
+      if (contact.firstName) parts.push(contact.firstName);
+      if (contact.lastName) parts.push(contact.lastName);
+      if (parts.length === 0 && contact.companyName) {
+        displayName = contact.companyName;
+      } else {
+        displayName = parts.join(' ') || 'Unknown';
+      }
     }
-    const parts: string[] = [];
-    if (contact.firstName) parts.push(contact.firstName);
-    if (contact.lastName) parts.push(contact.lastName);
-    if (parts.length === 0 && contact.companyName) {
-      return contact.companyName;
+    
+    // Append identifier in parentheses if it exists
+    if (contact.identifier && contact.identifier.trim() !== '') {
+      return `${displayName} (${contact.identifier})`;
     }
-    return parts.join(' ') || contact.identifier || 'Unknown';
+    
+    return displayName;
   }
 
   getScheduledDateTimeISO(): string {
@@ -352,20 +390,40 @@ export class EditMaintenanceComponent implements OnInit, OnDestroy {
     return String(status);
   }
 
-  parsePriority(value: string): MaintenancePriority {
-    return Number(value) as MaintenancePriority;
+  parsePriority(value: string | number): MaintenancePriority {
+    // Ensure we convert to number properly
+    const numValue = typeof value === 'string' ? parseInt(value, 10) : value;
+    // Validate the value is a valid priority (1, 2, or 3)
+    if (numValue === MaintenancePriority.Low || numValue === MaintenancePriority.Medium || numValue === MaintenancePriority.Urgent) {
+      return numValue as MaintenancePriority;
+    }
+    // Default to Low if invalid
+    console.warn('Invalid priority value:', value, 'defaulting to Low');
+    return MaintenancePriority.Low;
   }
 
-  parseStatus(value: string): MaintenanceStatus {
-    return Number(value) as MaintenanceStatus;
+  parseStatus(value: string | number): MaintenanceStatus {
+    // Ensure we convert to number properly
+    const numValue = typeof value === 'string' ? parseInt(value, 10) : value;
+    // Validate the value is a valid status
+    if (numValue >= MaintenanceStatus.Waiting && numValue <= MaintenanceStatus.Cancelled) {
+      return numValue as MaintenanceStatus;
+    }
+    // Default to Waiting if invalid
+    console.warn('Invalid status value:', value, 'defaulting to Waiting');
+    return MaintenanceStatus.Waiting;
   }
 
   onPriorityChange(value: any): void {
-    this.updateField('priority', this.parsePriority(String(value)));
+    const priority = this.parsePriority(value);
+    console.log('Priority changed:', value, '->', priority, 'type:', typeof priority);
+    this.updateField('priority', priority);
   }
 
   onStatusChange(value: any): void {
-    this.updateField('status', this.parseStatus(String(value)));
+    const status = this.parseStatus(value);
+    console.log('Status changed:', value, '->', status, 'type:', typeof status);
+    this.updateField('status', status);
   }
 
   onSubmit(): void {
@@ -380,6 +438,17 @@ export class EditMaintenanceComponent implements OnInit, OnDestroy {
     const formData = this.formData();
     const companyId = this.companyId();
 
+    // Ensure priority and status are numbers (not strings)
+    const priority = typeof formData.priority === 'number' 
+      ? formData.priority 
+      : parseInt(String(formData.priority), 10) as MaintenancePriority;
+    const status = typeof formData.status === 'number' 
+      ? formData.status 
+      : parseInt(String(formData.status), 10) as MaintenanceStatus;
+
+    console.log('Submitting with priority:', priority, 'type:', typeof priority);
+    console.log('Submitting with status:', status, 'type:', typeof status);
+
     if (this.isEditMode()) {
       const id = this.maintenanceId();
       if (!id) {
@@ -391,9 +460,9 @@ export class EditMaintenanceComponent implements OnInit, OnDestroy {
         id,
         propertyId: formData.propertyId,
         companyId,
-        priority: formData.priority,
+        priority: priority,
         contactId: formData.contactId,
-        status: formData.status,
+        status: status,
         subject: formData.subject,
         description: formData.description,
         scheduledDateTime: this.getScheduledDateTimeISO(),
@@ -418,9 +487,9 @@ export class EditMaintenanceComponent implements OnInit, OnDestroy {
       const request: CreateMaintenanceRequest = {
         propertyId: formData.propertyId,
         companyId,
-        priority: formData.priority,
+        priority: priority,
         contactId: formData.contactId,
-        status: formData.status,
+        status: status,
         subject: formData.subject,
         description: formData.description,
         scheduledDateTime: this.getScheduledDateTimeISO(),

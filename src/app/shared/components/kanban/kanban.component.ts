@@ -19,9 +19,7 @@ import {
   kanbanColumnCountVariants,
   kanbanCardVariants,
 } from './kanban.variants';
-import { ZardAvatarComponent } from '../avatar/avatar.component';
 import { ZardIconComponent } from '../icon/icon.component';
-import { ZardCircularProgressComponent } from '../circular-progress/circular-progress.component';
 import { ZardBadgeComponent } from '../badge/badge.component';
 import { CommonModule } from '@angular/common';
 
@@ -45,6 +43,13 @@ export interface KanbanTask {
     fallback: string;
   };
   icon?: ZardIcon;
+  // Property information
+  propertyName?: string;
+  propertyAddress?: string;
+  propertyImageUrl?: string | null;
+  // Service/Contact information
+  serviceName?: string;
+  serviceAvatarUrl?: string | null;
 }
 
 export interface KanbanColumn {
@@ -59,7 +64,7 @@ export interface KanbanColumn {
   selector: 'z-kanban',
   exportAs: 'zKanban',
   standalone: true,
-  imports: [DragDropModule, CommonModule, ZardAvatarComponent, ZardIconComponent, ZardCircularProgressComponent, ZardBadgeComponent],
+  imports: [DragDropModule, CommonModule, ZardIconComponent, ZardBadgeComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   templateUrl: './kanban.component.html',
@@ -70,7 +75,7 @@ export interface KanbanColumn {
 export class ZardKanbanComponent {
   readonly columns = input<KanbanColumn[]>([]);
   readonly class = input<ClassValue>('');
-  readonly zTaskDropped = output<{ taskId: string; newStatus: 'planned' | 'in-progress' | 'done'; previousStatus: 'planned' | 'in-progress' | 'done' }>();
+  readonly zTaskDropped = output<{ taskId: string; newStatus: 'planned' | 'in-progress' | 'done'; previousStatus: 'planned' | 'in-progress' | 'done'; newColumnId?: string; previousColumnId?: string }>();
   readonly zTaskClicked = output<{ taskId: string }>();
 
   // Convert input to signal for reactivity
@@ -82,9 +87,8 @@ export class ZardKanbanComponent {
     // Sync input with signal when input changes
     effect(() => {
       const inputColumns = this.columns();
-      if (inputColumns.length > 0) {
-        this.columnsSignal.set(inputColumns.map(col => ({ ...col, tasks: [...col.tasks] })));
-      }
+      // Always update, even if empty, to ensure reactivity
+      this.columnsSignal.set(inputColumns.map(col => ({ ...col, tasks: [...col.tasks] })));
     });
   }
 
@@ -121,13 +125,6 @@ export class ZardKanbanComponent {
     }
   }
 
-  // Get progress type based on progress value
-  getProgressType(progress?: number): 'default' | 'success' | 'warning' {
-    if (!progress) return 'default';
-    if (progress === 100) return 'success';
-    if (progress > 0) return 'warning';
-    return 'default';
-  }
 
   // Truncate description
   truncateDescription(description?: string, maxLength: number = 60): string {
@@ -186,15 +183,21 @@ export class ZardKanbanComponent {
     const currentColumns = [...this.columnsSignal()];
     const task = event.item.data as KanbanTask;
     
+    if (!task || !task.id) {
+      console.error('Invalid task data in drop event:', task);
+      return;
+    }
+    
     // Find previous column status before moving
     const previousColumnIndex = currentColumns.findIndex(col => 
       col.tasks === event.previousContainer.data
     );
     const previousColumn = previousColumnIndex >= 0 ? currentColumns[previousColumnIndex] : null;
     const previousStatus = previousColumn?.status || 'planned';
+    const previousColumnId = previousColumn?.id || '';
     
     if (event.previousContainer === event.container) {
-      // Move within same column
+      // Move within same column - no status change, just reorder
       moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
     } else {
       // Move between columns
@@ -212,13 +215,16 @@ export class ZardKanbanComponent {
       );
       const newColumn = newColumnIndex >= 0 ? currentColumns[newColumnIndex] : null;
       const newStatus = newColumn?.status || 'planned';
+      const newColumnId = newColumn?.id || '';
       
-      // Emit event if status changed
-      if (previousStatus !== newStatus) {
+      // Emit event if status changed or column changed
+      if (previousStatus !== newStatus || previousColumnId !== newColumnId) {
         this.zTaskDropped.emit({
           taskId: task.id,
           newStatus,
           previousStatus,
+          newColumnId,
+          previousColumnId,
         });
       }
     }
@@ -244,6 +250,19 @@ export class ZardKanbanComponent {
     // Only emit if not dragging
     if (!this.draggedTaskId()) {
       this.zTaskClicked.emit({ taskId });
+    }
+  }
+
+  // Handle image error - show fallback
+  onImageError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    if (img) {
+      img.style.display = 'none';
+      const fallback = img.nextElementSibling as HTMLElement;
+      if (fallback) {
+        fallback.classList.remove('hidden');
+        fallback.style.display = 'flex';
+      }
     }
   }
 }

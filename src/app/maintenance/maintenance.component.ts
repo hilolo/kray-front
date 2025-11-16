@@ -51,8 +51,8 @@ export class MaintenanceComponent implements OnInit, OnDestroy {
   // Kanban columns
   readonly kanbanColumns = signal<KanbanColumn[]>([
     {
-      id: 'backlog',
-      title: 'Backlog',
+      id: 'waiting',
+      title: 'Waiting',
       status: 'planned',
       tasks: [],
     },
@@ -66,6 +66,12 @@ export class MaintenanceComponent implements OnInit, OnDestroy {
       id: 'done',
       title: 'Done',
       status: 'done',
+      tasks: [],
+    },
+    {
+      id: 'cancelled',
+      title: 'Cancelled',
+      status: 'planned',
       tasks: [],
     },
   ]);
@@ -91,38 +97,88 @@ export class MaintenanceComponent implements OnInit, OnDestroy {
     this.maintenanceService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response) => {
         this.maintenances.set(response.result);
-        this.updateKanbanColumns(response.result);
+        
+        // Update kanban columns with the loaded data (contact avatars are now included in the response)
+        if (response.result && response.result.length > 0) {
+          this.updateKanbanColumns(response.result);
+        } else {
+          // Reset to empty columns if no data
+          this.updateKanbanColumns([]);
+        }
         this.isLoading.set(false);
       },
       error: (error) => {
         console.error('Error loading maintenances:', error);
         this.toastService.error('Failed to load maintenances');
         this.isLoading.set(false);
+        // Reset columns on error
+        this.updateKanbanColumns([]);
       },
     });
   }
 
   updateKanbanColumns(maintenances: Maintenance[]): void {
-    const backlog: KanbanTask[] = [];
+    const waiting: KanbanTask[] = [];
     const inProgress: KanbanTask[] = [];
     const done: KanbanTask[] = [];
+    const cancelled: KanbanTask[] = [];
 
     maintenances.forEach((maintenance) => {
+      // Get contact avatar URL directly from maintenance (now included in API response)
+      const contactAvatarUrl = maintenance.contactImageUrl || null;
+      
+      // Convert priority to number - handle both string and number formats
+      let priority: MaintenancePriority;
+      if (typeof maintenance.priority === 'string') {
+        // Map string priority names to enum values
+        const priorityMap: Record<string, MaintenancePriority> = {
+          'Low': MaintenancePriority.Low,
+          'Medium': MaintenancePriority.Medium,
+          'Urgent': MaintenancePriority.Urgent,
+        };
+        priority = priorityMap[maintenance.priority] || parseInt(maintenance.priority, 10) || MaintenancePriority.Low;
+      } else {
+        priority = maintenance.priority;
+      }
+      
       const task: KanbanTask = {
         id: maintenance.id,
         title: maintenance.subject,
         description: maintenance.description,
-        priority: this.mapPriorityToKanban(maintenance.priority),
-        progress: this.calculateProgress(maintenance.status),
+        priority: this.mapPriorityToKanban(priority),
+        // Removed progress
         assignedUsers: maintenance.contactName ? [{
           fallback: this.getInitials(maintenance.contactName),
+          url: contactAvatarUrl || undefined,
         }] : undefined,
         dateRange: this.formatDateRange(maintenance.scheduledDateTime),
+        // Property information
+        propertyName: maintenance.propertyName,
+        propertyAddress: maintenance.propertyAddress,
+        propertyImageUrl: maintenance.propertyImageUrl,
+        // Service/Contact information
+        serviceName: maintenance.contactName,
+        serviceAvatarUrl: contactAvatarUrl || undefined,
       };
 
-      switch (maintenance.status) {
+      // Convert status to number - handle both string and number formats
+      let status: MaintenanceStatus;
+      if (typeof maintenance.status === 'string') {
+        // Map string status names to enum values
+        const statusMap: Record<string, MaintenanceStatus> = {
+          'Waiting': MaintenanceStatus.Waiting,
+          'InProgress': MaintenanceStatus.InProgress,
+          'Done': MaintenanceStatus.Done,
+          'Cancelled': MaintenanceStatus.Cancelled,
+        };
+        status = statusMap[maintenance.status] || parseInt(maintenance.status, 10) || MaintenanceStatus.Waiting;
+      } else {
+        status = maintenance.status;
+      }
+      
+      switch (status) {
         case MaintenanceStatus.Waiting:
-          backlog.push(task);
+          waiting.push(task);
           break;
         case MaintenanceStatus.InProgress:
           inProgress.push(task);
@@ -131,31 +187,45 @@ export class MaintenanceComponent implements OnInit, OnDestroy {
           done.push(task);
           break;
         case MaintenanceStatus.Cancelled:
-          // Cancelled items can go to backlog or be filtered out
+          cancelled.push(task);
+          break;
+        default:
+          // Default to waiting if status is unknown
+          waiting.push(task);
           break;
       }
     });
 
-    this.kanbanColumns.set([
+
+    // Update columns with new tasks - create completely new objects to trigger change detection
+    const newColumns: KanbanColumn[] = [
       {
-        id: 'backlog',
-        title: 'Backlog',
+        id: 'waiting',
+        title: 'Waiting',
         status: 'planned',
-        tasks: backlog,
+        tasks: waiting.map(t => ({ ...t })), // Deep copy tasks
       },
       {
         id: 'in-progress',
         title: 'In Progress',
         status: 'in-progress',
-        tasks: inProgress,
+        tasks: inProgress.map(t => ({ ...t })), // Deep copy tasks
       },
       {
         id: 'done',
         title: 'Done',
         status: 'done',
-        tasks: done,
+        tasks: done.map(t => ({ ...t })), // Deep copy tasks
       },
-    ]);
+      {
+        id: 'cancelled',
+        title: 'Cancelled',
+        status: 'planned',
+        tasks: cancelled.map(t => ({ ...t })), // Deep copy tasks
+      },
+    ];
+    
+    this.kanbanColumns.set(newColumns);
   }
 
   mapPriorityToKanban(priority: MaintenancePriority): 'High' | 'Medium' | 'Low' {
@@ -179,6 +249,22 @@ export class MaintenanceComponent implements OnInit, OnDestroy {
         return MaintenanceStatus.InProgress;
       case 'done':
         return MaintenanceStatus.Done;
+      default:
+        return MaintenanceStatus.Waiting;
+    }
+  }
+
+  mapKanbanColumnIdToMaintenanceStatus(columnId: string): MaintenanceStatus {
+    switch (columnId) {
+      case 'waiting':
+      case 'backlog': // Support old column ID for backward compatibility
+        return MaintenanceStatus.Waiting;
+      case 'in-progress':
+        return MaintenanceStatus.InProgress;
+      case 'done':
+        return MaintenanceStatus.Done;
+      case 'cancelled':
+        return MaintenanceStatus.Cancelled;
       default:
         return MaintenanceStatus.Waiting;
     }
@@ -248,19 +334,67 @@ export class MaintenanceComponent implements OnInit, OnDestroy {
     }
   }
 
-  getStatusLabel(status: MaintenanceStatus): string {
-    switch (status) {
-      case MaintenanceStatus.Waiting:
-        return 'Waiting';
-      case MaintenanceStatus.InProgress:
-        return 'In Progress';
-      case MaintenanceStatus.Done:
-        return 'Done';
-      case MaintenanceStatus.Cancelled:
-        return 'Cancelled';
-      default:
-        return 'Waiting';
+  // Status options with icons (matching edit component)
+  readonly statusOptions = [
+    { value: String(MaintenanceStatus.Waiting), label: 'Waiting', icon: 'loader-circle' as const },
+    { value: String(MaintenanceStatus.InProgress), label: 'In Progress', icon: 'refresh-cw' as const },
+    { value: String(MaintenanceStatus.Done), label: 'Done', icon: 'check' as const },
+    { value: String(MaintenanceStatus.Cancelled), label: 'Cancelled', icon: 'x' as const },
+  ];
+
+  getStatusValue(status: MaintenanceStatus | string): string {
+    // Convert status to number if it's a string
+    let statusNum: MaintenanceStatus;
+    if (typeof status === 'string') {
+      const statusMap: Record<string, MaintenanceStatus> = {
+        'Waiting': MaintenanceStatus.Waiting,
+        'InProgress': MaintenanceStatus.InProgress,
+        'Done': MaintenanceStatus.Done,
+        'Cancelled': MaintenanceStatus.Cancelled,
+      };
+      statusNum = statusMap[status] || parseInt(status, 10) || MaintenanceStatus.Waiting;
+    } else {
+      statusNum = status;
     }
+    return statusNum.toString();
+  }
+
+  getStatusLabel(status: MaintenanceStatus | string): string {
+    // Convert status to number if it's a string
+    let statusNum: MaintenanceStatus;
+    if (typeof status === 'string') {
+      const statusMap: Record<string, MaintenanceStatus> = {
+        'Waiting': MaintenanceStatus.Waiting,
+        'InProgress': MaintenanceStatus.InProgress,
+        'Done': MaintenanceStatus.Done,
+        'Cancelled': MaintenanceStatus.Cancelled,
+      };
+      statusNum = statusMap[status] || parseInt(status, 10) || MaintenanceStatus.Waiting;
+    } else {
+      statusNum = status;
+    }
+    
+    const option = this.statusOptions.find(opt => Number(opt.value) === statusNum);
+    return option?.label || 'Waiting';
+  }
+
+  getSelectedStatusIcon(status: MaintenanceStatus | string): 'loader-circle' | 'refresh-cw' | 'check' | 'x' {
+    // Convert status to number if it's a string
+    let statusNum: MaintenanceStatus;
+    if (typeof status === 'string') {
+      const statusMap: Record<string, MaintenanceStatus> = {
+        'Waiting': MaintenanceStatus.Waiting,
+        'InProgress': MaintenanceStatus.InProgress,
+        'Done': MaintenanceStatus.Done,
+        'Cancelled': MaintenanceStatus.Cancelled,
+      };
+      statusNum = statusMap[status] || parseInt(status, 10) || MaintenanceStatus.Waiting;
+    } else {
+      statusNum = status;
+    }
+    
+    const option = this.statusOptions.find(opt => Number(opt.value) === statusNum);
+    return (option?.icon || 'loader-circle') as 'loader-circle' | 'refresh-cw' | 'check' | 'x';
   }
 
   goToPreviousMonth(): void {
@@ -278,9 +412,25 @@ export class MaintenanceComponent implements OnInit, OnDestroy {
   }
 
 
-  onTaskDropped(event: { taskId: string; newStatus: 'planned' | 'in-progress' | 'done'; previousStatus: 'planned' | 'in-progress' | 'done' }): void {
-    const newMaintenanceStatus = this.mapKanbanStatusToMaintenanceStatus(event.newStatus);
+  onTaskDropped(event: { taskId: string; newStatus: 'planned' | 'in-progress' | 'done'; previousStatus: 'planned' | 'in-progress' | 'done'; newColumnId?: string; previousColumnId?: string }): void {
+    // Map column ID to maintenance status (handles cancelled column which also has status 'planned')
+    let newMaintenanceStatus: MaintenanceStatus;
     
+    if (event.newColumnId) {
+      // Use column ID from event to get the correct status (handles cancelled vs waiting)
+      newMaintenanceStatus = this.mapKanbanColumnIdToMaintenanceStatus(event.newColumnId);
+    } else {
+      // Fallback: use the event's newStatus
+      // If newStatus is 'planned', we need to check if it's waiting or cancelled
+      // Since we can't determine from status alone, default to waiting
+      if (event.newStatus === 'planned') {
+        newMaintenanceStatus = MaintenanceStatus.Waiting;
+      } else {
+        newMaintenanceStatus = this.mapKanbanStatusToMaintenanceStatus(event.newStatus);
+      }
+    }
+    
+    // Send update to API
     this.maintenanceService.updateStatus(event.taskId, newMaintenanceStatus).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.toastService.success('Maintenance status updated');
@@ -358,5 +508,17 @@ export class MaintenanceComponent implements OnInit, OnDestroy {
         clearInterval(checkInterval);
       }
     }, 100);
+  }
+
+  // Handle image error - show fallback
+  onImageError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    if (img) {
+      img.style.display = 'none';
+      const fallback = img.nextElementSibling as HTMLElement;
+      if (fallback) {
+        fallback.style.display = 'flex';
+      }
+    }
   }
 }

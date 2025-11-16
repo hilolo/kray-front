@@ -28,7 +28,7 @@ export const footerVariants = cva('flex items-center px-6 bg-background border-t
 export type FooterVariants = VariantProps<typeof footerVariants>;
 
 // Content Variants
-export const contentVariants = cva('flex-1 flex flex-col overflow-auto bg-background pt-6 px-6 min-h-0');
+export const contentVariants = cva('flex-1 flex flex-col overflow-y-auto overflow-x-hidden bg-background pt-6 px-6 min-h-0');
 export type ContentVariants = VariantProps<typeof contentVariants>;
 
 // Sidebar Variants

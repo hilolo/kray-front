@@ -30,12 +30,13 @@ export interface Maintenance {
   ownerPhone: string | null;
   companyId: string;
   companyName: string;
-  priority: MaintenancePriority;
+  priority: MaintenancePriority | string | number; // Can be enum, string, or number from API
   contactId: string;
   contactName: string;
   contactEmail: string;
   contactPhone: string;
-  status: MaintenanceStatus;
+  contactImageUrl: string | null;
+  status: MaintenanceStatus | string | number; // Can be enum, string, or number from API
   subject: string;
   description: string;
   scheduledDateTime: string; // ISO date string
