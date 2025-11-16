@@ -108,18 +108,12 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
     const isEdit = this.isEditMode();
     
     if (defaultCity && !isEdit && (!currentCity || currentCity.trim() === '')) {
-      console.log('[Default City] Effect triggered - Setting city:', defaultCity, 'Current city:', currentCity, 'Is edit:', isEdit);
       // Use setTimeout to ensure this runs after the initial form setup and select component initialization
       setTimeout(() => {
         this.formData.update(data => ({
           ...data,
           city: defaultCity,
         }));
-        console.log('[Default City] City set via effect:', this.formData().city);
-        // Force change detection by updating the signal again
-        setTimeout(() => {
-          console.log('[Default City] Final city value:', this.formData().city);
-        }, 100);
       }, 100);
     }
   });
@@ -670,10 +664,7 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
         }
         
         if (settings.defaultCity) {
-          console.log('[Default City] Found in settings:', settings.defaultCity);
           this.defaultCity.set(settings.defaultCity);
-        } else {
-          console.log('[Default City] No defaultCity found in settings');
         }
 
         if (settings.amenities && Array.isArray(settings.amenities)) {
@@ -903,12 +894,10 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
       // Update existing property
       this.prepareUpdateRequest(data, propertyId)
         .then((request) => {
-          console.log('Updating property with request:', request);
           this.propertyService.update(propertyId, request)
             .pipe(takeUntil(this.destroy$))
             .subscribe({
               next: (property) => {
-                console.log('Property updated successfully:', property);
                 this.formSubmitted.set(false);
                 this.isSaving.set(false);
                 this.toastService.success('Property updated successfully');
@@ -937,12 +926,10 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
       // Create new property
       this.prepareCreateRequest(data)
         .then((request) => {
-          console.log('Creating property with request:', request);
           this.propertyService.create(request)
             .pipe(takeUntil(this.destroy$))
             .subscribe({
               next: (property) => {
-                console.log('Property created successfully:', property);
                 this.formSubmitted.set(false);
                 this.isSaving.set(false);
                 this.toastService.success('Property created successfully');
@@ -1105,9 +1092,6 @@ export class EditPropertyComponent implements OnInit, OnDestroy {
     field: K,
     value: PropertyFormData[K]
   ): void {
-    if (field === 'city') {
-      console.log('[Default City] updateField called for city:', value);
-    }
     this.formData.update(data => ({
       ...data,
       [field]: value,

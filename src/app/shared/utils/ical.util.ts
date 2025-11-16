@@ -130,7 +130,7 @@ export function shareICalViaWhatsApp(icalContent: string, message: string = 'Res
       files: [file],
     })
       .then(() => {
-        console.log('File shared successfully via Web Share API');
+        // File shared successfully
       })
       .catch((error) => {
         console.error('Error sharing file:', error);

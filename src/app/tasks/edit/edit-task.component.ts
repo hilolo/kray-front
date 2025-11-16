@@ -496,8 +496,6 @@ export class EditTaskComponent implements OnInit, OnDestroy {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (updatedTask) => {
-            console.log('Task updated successfully:', updatedTask);
-            
             // Reset form submitted state on successful submission
             this.formSubmitted.set(false);
             this.isSaving.set(false);

@@ -290,13 +290,6 @@ export class ZardReservationCalendarComponent {
       newYear = currentYear - 1;
     }
     
-    console.log('Previous month calculation:', { 
-      currentMonth, 
-      currentYear, 
-      calculatedNewMonth: newMonth, 
-      calculatedNewYear: newYear 
-    });
-    
     // Create a completely new Date object
     const newDate = new Date(newYear, newMonth, 1);
     
@@ -313,17 +306,6 @@ export class ZardReservationCalendarComponent {
     const year = this.currentYear();
     const display = this.monthYearDisplay();
     const days = this.calendarDays();
-    
-    console.log('Previous month clicked:', { 
-      newMonth, 
-      newYear, 
-      updatedMonth, 
-      updatedYear,
-      month, 
-      year, 
-      display, 
-      daysCount: days.length 
-    });
     
     // Emit the change event with the calculated values
     this.monthChange.emit({ month: newMonth, year: newYear });
@@ -352,13 +334,6 @@ export class ZardReservationCalendarComponent {
       newYear = currentYear + 1;
     }
     
-    console.log('Next month calculation:', { 
-      currentMonth, 
-      currentYear, 
-      calculatedNewMonth: newMonth, 
-      calculatedNewYear: newYear 
-    });
-    
     // Create a completely new Date object
     const newDate = new Date(newYear, newMonth, 1);
     
@@ -375,17 +350,6 @@ export class ZardReservationCalendarComponent {
     const year = this.currentYear();
     const display = this.monthYearDisplay();
     const days = this.calendarDays();
-    
-    console.log('Next month clicked:', { 
-      newMonth, 
-      newYear, 
-      updatedMonth, 
-      updatedYear,
-      month, 
-      year, 
-      display, 
-      daysCount: days.length 
-    });
     
     // Emit the change event with the calculated values
     this.monthChange.emit({ month: newMonth, year: newYear });

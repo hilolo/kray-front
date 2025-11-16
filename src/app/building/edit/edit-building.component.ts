@@ -74,18 +74,12 @@ export class EditBuildingComponent implements OnInit, OnDestroy {
     const isEdit = this.isEditMode();
     
     if (defaultCity && !isEdit && (!currentCity || currentCity.trim() === '')) {
-      console.log('[Default City] Effect triggered - Setting city:', defaultCity, 'Current city:', currentCity, 'Is edit:', isEdit);
       // Use setTimeout to ensure this runs after the initial form setup and select component initialization
       setTimeout(() => {
         this.formData.update(data => ({
           ...data,
           city: defaultCity,
         }));
-        console.log('[Default City] City set via effect:', this.formData().city);
-        // Force change detection by updating the signal again
-        setTimeout(() => {
-          console.log('[Default City] Final city value:', this.formData().city);
-        }, 100);
       }, 100);
     }
   });
@@ -611,10 +605,7 @@ export class EditBuildingComponent implements OnInit, OnDestroy {
         const settings = JSON.parse(settingsStr);
         
         if (settings.defaultCity) {
-          console.log('[Default City] Found in settings:', settings.defaultCity);
           this.defaultCity.set(settings.defaultCity);
-        } else {
-          console.log('[Default City] No defaultCity found in settings');
         }
       }
     } catch (error) {

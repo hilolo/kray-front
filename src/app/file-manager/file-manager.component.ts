@@ -240,9 +240,6 @@ export class FileManagerComponent implements OnInit {
     // If file has URL, open in viewer
     if (file.url) {
       this.openFile(file.url, file.name, file.size || 0);
-    } else {
-      // Otherwise, just log (in real app, would fetch URL from backend)
-      console.log('Open file:', file);
     }
   }
 

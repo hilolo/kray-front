@@ -93,7 +93,6 @@ export class ZardNavbarComponent implements OnDestroy {
   }
 
   showLogoutConfirmation(): void {
-    console.log('Navbar: showLogoutConfirmation called');
     const dialogRef = this.alertDialogService.confirm({
       zTitle: 'Log out',
       zDescription: 'Are you sure you want to log out?',
@@ -103,15 +102,10 @@ export class ZardNavbarComponent implements OnDestroy {
       zViewContainerRef: this.viewContainerRef,
     });
 
-    console.log('Navbar: Dialog created, waiting for user response...');
     dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result) => {
-      console.log('Navbar: Dialog closed with result:', result);
       if (result) {
         // User confirmed logout
-        console.log('Navbar: User confirmed logout, calling authService.logout()');
         this.authService.logout();
-      } else {
-        console.log('Navbar: User cancelled logout');
       }
     });
   }

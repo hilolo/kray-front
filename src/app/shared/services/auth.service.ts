@@ -75,26 +75,19 @@ export class AuthService {
    * Logout user
    */
   logout(): void {
-    console.log('AuthService: logout() called');
-    console.log('AuthService: Current user before logout:', this.currentUser());
-    console.log('AuthService: Is authenticated before logout:', this.isAuthenticated());
-    
     // Clear user and token
     this.currentUser.set(null);
     this.token.set(null);
     this.isAuthenticated.set(false);
-    console.log('AuthService: Cleared user and token signals');
     
     // Clear localStorage
     localStorage.removeItem('user');
     localStorage.removeItem('token');
-    console.log('AuthService: Cleared localStorage');
     
     // Navigate to login
-    console.log('AuthService: Navigating to login page...');
     this.router.navigate(['/login']).then(
       (success) => {
-        console.log('AuthService: Navigation successful:', success);
+        // Navigation successful
       },
       (error) => {
         console.error('AuthService: Navigation error:', error);

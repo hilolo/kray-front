@@ -434,7 +434,6 @@ export class ContactListComponent implements OnInit, OnDestroy {
   }
 
   onViewContact(contact: Contact): void {
-    console.log('View contact:', contact);
     // TODO: Implement view functionality
   }
 

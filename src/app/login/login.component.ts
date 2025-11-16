@@ -84,19 +84,15 @@ export class LoginComponent {
     }
 
     // Call authentication service
-    console.log('Calling auth service with:', { email: emailValue, password: '***' });
     this.isLoading.set(true);
     this.authService.login(emailValue, passwordValue).subscribe({
       next: (response) => {
-        console.log('Login successful:', response);
         // After successful login, call sign-in-with-token to get full user data
         this.authService.signInWithToken().subscribe({
           next: (tokenResponse) => {
-            console.log('Sign in with token successful:', tokenResponse);
             // Fetch and store settings after successful login
             this.settingsService.getSettings().subscribe({
               next: (settings) => {
-                console.log('Settings fetched successfully:', settings);
                 // Store settings in localStorage
                 localStorage.setItem('settings', JSON.stringify(settings));
                 this.isLoading.set(false);

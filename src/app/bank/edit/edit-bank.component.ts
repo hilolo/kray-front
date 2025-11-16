@@ -341,8 +341,6 @@ export class EditBankComponent implements OnInit, OnDestroy {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (updatedBank) => {
-            console.log('Bank updated successfully:', updatedBank);
-            
             // Reset form submitted state on successful submission
             this.formSubmitted.set(false);
             this.isSaving.set(false);
@@ -376,8 +374,6 @@ export class EditBankComponent implements OnInit, OnDestroy {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (createdBank) => {
-            console.log('Bank created successfully:', createdBank);
-            
             // Reset form submitted state on successful submission
             this.formSubmitted.set(false);
             this.isSaving.set(false);

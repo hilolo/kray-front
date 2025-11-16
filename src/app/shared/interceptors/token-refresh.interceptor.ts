@@ -26,13 +26,11 @@ export const tokenRefreshInterceptor: HttpInterceptorFn = (req, next) => {
     
     // If token is empty and not a sign-in endpoint, try to refresh first
     if (!isSignInEndpoint && !tokenRefreshService.getIsRefreshing()) {
-      console.log('[TokenRefresh] Token is empty, attempting to refresh before request:', url);
       tokenRefreshService.setRefreshing(true);
       
       return authService.signInWithToken().pipe(
         switchMap((response) => {
           // Token refresh successful
-          console.log('[TokenRefresh] Token refresh successful, proceeding with request');
           const newToken = response.jwt.token;
           tokenRefreshService.setToken(newToken);
           
@@ -71,35 +69,28 @@ export const tokenRefreshInterceptor: HttpInterceptorFn = (req, next) => {
       if (shouldRefresh) {
         // Skip token refresh for sign-in and sign-in-with-token endpoints to avoid infinite loops
         if (isSignInEndpoint) {
-          console.log('[TokenRefresh] Skipping refresh for sign-in endpoint:', url);
           return throwError(() => error);
         }
 
         // Skip if this is already a retry attempt to prevent infinite loops
         if (req.headers.has('X-Retry-Attempt')) {
-          console.log('[TokenRefresh] Skipping refresh - already a retry attempt');
           return throwError(() => error);
         }
 
         // If token is empty, log out immediately
         if (tokenIsEmpty) {
-          console.log('[TokenRefresh] Token is empty, logging out');
           authService.logout();
           return throwError(() => error);
         }
 
-        console.log(`[TokenRefresh] ${error.status === 401 ? '401' : 'Status 0'} detected, attempting to refresh token for:`, url);
-
         // If we're not already refreshing, start the refresh process
         if (!tokenRefreshService.getIsRefreshing()) {
-          console.log('[TokenRefresh] Starting token refresh...');
           tokenRefreshService.setRefreshing(true);
 
           // Attempt to refresh the token
           return authService.signInWithToken().pipe(
             switchMap((response) => {
               // Token refresh successful
-              console.log('[TokenRefresh] Token refresh successful');
               const newToken = response.jwt.token;
               
               // Check if new token is empty
@@ -113,7 +104,6 @@ export const tokenRefreshInterceptor: HttpInterceptorFn = (req, next) => {
               tokenRefreshService.setToken(newToken);
               
               // Retry the original request with the new token
-              console.log('[TokenRefresh] Retrying original request with new token');
               return retryRequest(req, next, newToken);
             }),
             catchError((refreshError) => {
@@ -126,7 +116,6 @@ export const tokenRefreshInterceptor: HttpInterceptorFn = (req, next) => {
           );
         } else {
           // If we're already refreshing, wait for the token and then retry
-          console.log('[TokenRefresh] Token refresh in progress, waiting...');
           return tokenRefreshService.getToken().pipe(
             switchMap((token) => {
               // Check if token is empty
@@ -137,7 +126,6 @@ export const tokenRefreshInterceptor: HttpInterceptorFn = (req, next) => {
                 return throwError(() => new Error('Received empty token'));
               }
               
-              console.log('[TokenRefresh] Got refreshed token, retrying request');
               return retryRequest(req, next, token);
             })
           );

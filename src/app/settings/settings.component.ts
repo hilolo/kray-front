@@ -571,27 +571,12 @@ export class SettingsComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (settings) => {
-          console.log('Settings received from API:', settings);
           if (settings) {
-            console.log('Setting property settings with:', {
-              defaultCity: settings.defaultCity,
-              categories: settings.categories,
-              features: settings.features,
-              amenities: settings.amenities,
-              propertyTypes: settings.propertyTypes,
-            });
             this.propertySettings.defaultCity.set(settings.defaultCity || '');
             this.propertySettings.categories.set(settings.categories || []);
             this.propertySettings.features.set(settings.features || []);
             this.propertySettings.amenities.set(settings.amenities || []);
             this.propertySettings.propertyTypes.set(settings.propertyTypes || []);
-            console.log('Property settings after update:', {
-              defaultCity: this.propertySettings.defaultCity(),
-              categories: this.propertySettings.categories(),
-              features: this.propertySettings.features(),
-              amenities: this.propertySettings.amenities(),
-              propertyTypes: this.propertySettings.propertyTypes(),
-            });
           } else {
             console.warn('Settings is null or undefined');
             // Initialize with empty values if settings is null/undefined
@@ -638,7 +623,6 @@ export class SettingsComponent implements OnInit, OnDestroy {
             
             // Update localStorage with the updated settings
             localStorage.setItem('settings', JSON.stringify(settings));
-            console.log('Settings updated in localStorage:', settings);
           }
           this.isSavingPropertySettings.set(false);
           this.toastService.success('Property settings updated successfully');

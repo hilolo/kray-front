@@ -72,14 +72,12 @@ export class AiChatComponent {
   }
 
   onChatSelected(chatId: string): void {
-    console.log('Chat selected:', chatId);
     // Load chat messages for the selected chat
     // This would typically fetch messages from a service
   }
 
   onNewChat(): void {
     this.messages.set([]);
-    console.log('New chat created');
   }
 }
 

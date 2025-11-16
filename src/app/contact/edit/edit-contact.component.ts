@@ -719,8 +719,6 @@ export class EditContactComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this.destroy$))
             .subscribe({
               next: (updatedContact) => {
-                console.log('Contact updated successfully:', updatedContact);
-                
                 // Reset form submitted state on successful submission
                 this.formSubmitted.set(false);
                 this.isSaving.set(false);

@@ -237,16 +237,6 @@ export class PropertyDetailComponent implements OnInit {
       // month + 1 gives us the next month, day 0 gives us the last day of current month
       const lastDay = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999));
       startDateTo = lastDay.toISOString();
-      
-      console.log('Loading reservations for:', {
-        month,
-        year,
-        monthName: new Date(year, month, 1).toLocaleString('en-US', { month: 'long' }),
-        startDateFrom,
-        startDateTo,
-        firstDayUTC: firstDay.toISOString(),
-        lastDayUTC: lastDay.toISOString()
-      });
     }
 
     this.reservationService
@@ -637,7 +627,6 @@ export class PropertyDetailComponent implements OnInit {
   // Helper method to copy text to clipboard
   private copyToClipboard(text: string): void {
     navigator.clipboard.writeText(text).then(() => {
-      console.log('Link copied to clipboard:', text);
       this.toastService.success('Link copied to clipboard!');
     }).catch((error) => {
       console.error('Clipboard API failed, trying fallback:', error);
@@ -653,7 +642,6 @@ export class PropertyDetailComponent implements OnInit {
       try {
         const successful = document.execCommand('copy');
         if (successful) {
-          console.log('Link copied to clipboard (fallback):', text);
           this.toastService.success('Link copied to clipboard!');
         } else {
           throw new Error('Copy command failed');

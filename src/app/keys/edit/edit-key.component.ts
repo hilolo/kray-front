@@ -253,8 +253,6 @@ export class EditKeyComponent implements OnInit, OnDestroy {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (updatedKey) => {
-            console.log('Key updated successfully:', updatedKey);
-            
             // Reset form submitted state on successful submission
             this.formSubmitted.set(false);
             this.isSaving.set(false);
@@ -285,8 +283,6 @@ export class EditKeyComponent implements OnInit, OnDestroy {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (createdKey) => {
-            console.log('Key created successfully:', createdKey);
-            
             // Reset form submitted state on successful submission
             this.formSubmitted.set(false);
             this.isSaving.set(false);
