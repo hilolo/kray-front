@@ -403,9 +403,9 @@
                     type="button"
                     (click)="copyCalendarLink($event)"
                     [attr.aria-label]="'Copy calendar link'"
-                    class="cursor-pointer"
+                    class="!opacity-100 !text-foreground !bg-muted/50 hover:!bg-accent hover:!text-accent-foreground !min-w-0 !h-auto !p-1.5 !rounded"
                   >
-                    <z-icon zType="copy" zSize="sm" />
+                    <z-icon zType="copy" zSize="sm" class="!text-foreground" />
                   </z-button>
                 </ng-template>
                 <p class="text-xs text-muted-foreground">
@@ -466,7 +466,7 @@
                   [ngModel]="publicProfileLink()"
                   readonly
                   [disabled]="isPublicProfileDisabled()"
-                  class="flex-1"
+                  class="flex-1 !pr-20"
                 />
               </z-input-group>
               <ng-template #publicProfileCopyButtonTemplate>
@@ -478,19 +478,20 @@
                     (click)="copyPublicProfileLink($event)"
                     [disabled]="isPublicProfileDisabled()"
                     [attr.aria-label]="'Copy link'"
-                    class="cursor-pointer"
+                    class="!opacity-100 !text-foreground !bg-muted/50 hover:!bg-accent hover:!text-accent-foreground !min-w-0 !h-auto !p-1.5 !rounded"
                   >
-                    <z-icon zType="copy" zSize="sm" />
+                    <z-icon zType="copy" zSize="sm" class="!text-foreground" />
                   </z-button>
                   <z-button 
                     zType="ghost" 
                     zSize="sm"
                     type="button"
                     (click)="sharePublicProfileViaWhatsApp($event)"
+                    [disabled]="isPublicProfileDisabled()"
                     [attr.aria-label]="'Share via WhatsApp'"
-                    class="cursor-pointer"
+                    class="!opacity-100 !text-foreground !bg-muted/50 hover:!bg-accent hover:!text-accent-foreground !min-w-0 !h-auto !p-1.5 !rounded"
                   >
-                    <z-icon zType="message-circle" zSize="sm" />
+                    <z-icon zType="message-circle" zSize="sm" class="!text-foreground" />
                   </z-button>
                 </span>
               </ng-template>
