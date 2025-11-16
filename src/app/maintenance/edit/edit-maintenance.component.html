@@ -145,17 +145,12 @@
         <z-form-field>
           <z-form-label zRequired>Scheduled Time</z-form-label>
           <z-form-control [errorMessage]="scheduledTimeError()">
-            <z-input-group [zPrefix]="calendarIconTemplate">
-              <input
-                z-input
-                type="time"
-                [ngModel]="formData().scheduledTime"
-                (ngModelChange)="updateField('scheduledTime', $event)"
-                name="scheduledTime"
-                [zStatus]="scheduledTimeError() ? 'error' : undefined"
-                class="w-full"
-              />
-            </z-input-group>
+            <z-time-picker
+              [value]="formData().scheduledTime"
+              (timeChange)="updateField('scheduledTime', $event)"
+              zFormat="HH:mm"
+              placeholder="Pick a time"
+            />
           </z-form-control>
         </z-form-field>
       </div>
@@ -194,8 +189,4 @@
 
 <ng-template #userIconTemplate>
   <z-icon zType="user" zSize="sm" />
-</ng-template>
-
-<ng-template #calendarIconTemplate>
-  <z-icon zType="calendar" zSize="sm" />
 </ng-template>

@@ -13,6 +13,7 @@ import { ZardSelectComponent } from '@shared/components/select/select.component'
 import { ZardSelectItemComponent } from '@shared/components/select/select-item.component';
 import { ZardComboboxComponent, ZardComboboxOption } from '@shared/components/combobox/combobox.component';
 import { ZardDatePickerComponent } from '@shared/components/date-picker/date-picker.component';
+import { ZardTimePickerComponent } from '@shared/components/time-picker/time-picker.component';
 import { MaintenanceService } from '@shared/services/maintenance.service';
 import { PropertyService } from '@shared/services/property.service';
 import { ContactService } from '@shared/services/contact.service';
@@ -43,6 +44,7 @@ import { ContactType } from '@shared/models/contact/contact.model';
     ZardSelectItemComponent,
     ZardComboboxComponent,
     ZardDatePickerComponent,
+    ZardTimePickerComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './edit-maintenance.component.html',
@@ -129,7 +131,6 @@ export class EditMaintenanceComponent implements OnInit, OnDestroy {
   // Icon templates
   readonly homeIconTemplate = viewChild.required<TemplateRef<void>>('homeIconTemplate');
   readonly userIconTemplate = viewChild.required<TemplateRef<void>>('userIconTemplate');
-  readonly calendarIconTemplate = viewChild.required<TemplateRef<void>>('calendarIconTemplate');
 
   // Form validation
   readonly isFormValid = computed(() => {

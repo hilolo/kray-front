@@ -1,0 +1,68 @@
+<button
+  z-button
+  [zType]="zType()"
+  [zSize]="zSize()"
+  [disabled]="disabled()"
+  [class]="buttonClasses()"
+  zPopover
+  #popoverDirective="zPopover"
+  [zContent]="timePickerTemplate"
+  zTrigger="click"
+  (zVisibleChange)="onPopoverVisibilityChange($event)"
+  [attr.aria-expanded]="false"
+  [attr.aria-haspopup]="true"
+  aria-label="Choose time"
+>
+  <z-icon zType="clock" />
+  <span [class]="textClasses()">
+    {{ displayText() }}
+  </span>
+</button>
+
+<ng-template #timePickerTemplate>
+  <z-popover [class]="popoverClasses()">
+    <div class="p-4">
+      <div class="flex items-center gap-4">
+        <!-- Hours -->
+        <div class="flex flex-col items-center gap-2">
+          <label class="text-xs font-medium text-muted-foreground">Hours</label>
+          <div class="flex flex-col gap-1 max-h-[200px] overflow-y-auto scrollbar-hide">
+            @for (hour of hours(); track hour) {
+              <button
+                type="button"
+                [class]="getHourButtonClasses(hour)"
+                (click)="selectHour(hour)"
+                [attr.aria-selected]="selectedHour() === hour"
+              >
+                {{ formatNumber(hour) }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Separator -->
+        <div class="flex items-center pt-6">
+          <span class="text-lg font-semibold">:</span>
+        </div>
+
+        <!-- Minutes -->
+        <div class="flex flex-col items-center gap-2">
+          <label class="text-xs font-medium text-muted-foreground">Minutes</label>
+          <div class="flex flex-col gap-1 max-h-[200px] overflow-y-auto scrollbar-hide">
+            @for (minute of minutes(); track minute) {
+              <button
+                type="button"
+                [class]="getMinuteButtonClasses(minute)"
+                (click)="selectMinute(minute)"
+                [attr.aria-selected]="selectedMinute() === minute"
+              >
+                {{ formatNumber(minute) }}
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  </z-popover>
+</ng-template>
+

@@ -94,6 +94,7 @@ import {
   FileSpreadsheet,
   IdCard,
   Banknote,
+  Clock,
 } from 'lucide-angular';
 
 export const ZARD_ICONS = {
@@ -191,6 +192,7 @@ export const ZARD_ICONS = {
   'refresh-cw': RefreshCw,
   maximize2: Maximize2,
   minimize2: Minimize2,
+  clock: Clock,
 } as const satisfies Record<string, LucideIconData>;
 
 export declare type ZardIcon = keyof typeof ZARD_ICONS | LucideIconData;
