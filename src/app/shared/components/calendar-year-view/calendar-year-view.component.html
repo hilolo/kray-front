@@ -105,8 +105,8 @@
             >
               {{ day.date.getDate() }}
             </div>
-            <!-- Empty space for bars -->
-            <div class="flex-1 min-h-0"></div>
+            <!-- Space for reservation bars -->
+            <div class="flex-1 min-h-[20px]"></div>
           </div>
         }
       </div>
@@ -114,24 +114,25 @@
       <!-- Spanning Bars Overlay - positioned absolutely over the grid -->
       <div class="absolute inset-0 pointer-events-none">
         @for (bar of spanningBars(); track bar.reservation.id + '-' + bar.weekIndex) {
+          @let columnWidth = 100 / 7;
+          @let startOffset = bar.isStartOfReservation ? columnWidth * 0.5 : 0;
+          @let endOffset = bar.isEndOfReservation ? columnWidth * 0.5 : 0;
+          @let leftPercent = (bar.startColumn * columnWidth) + startOffset;
+          @let rightPercent = ((6 - bar.endColumn) * columnWidth) + endOffset;
+          @let widthPercent = 100 - leftPercent - rightPercent;
           <div
-            class="absolute text-xs px-1.5 py-0.5 rounded border truncate cursor-pointer hover:opacity-80 transition-opacity pointer-events-auto z-10 flex items-center"
-            [class]="getReservationColor(bar.reservation.propertyId)"
-            [style.left.%]="bar.isStartOfReservation ? ((bar.startColumn + 0.5) / 7) * 100 : (bar.startColumn / 7) * 100"
-            [style.right.%]="bar.isEndOfReservation ? ((6 - bar.endColumn + 0.5) / 7) * 100 : ((6 - bar.endColumn) / 7) * 100"
-            [style.top.px]="(bar.weekIndex * 60) + 30 + (bar.row * 20)"
-            [style.transform]="'translateY(-50%)'"
-            [title]="bar.reservation.propertyIdentifier || ''"
+            class="absolute h-5 bg-purple-500 text-white cursor-pointer hover:opacity-90 transition-opacity pointer-events-auto z-10 flex items-center px-1.5"
+            [style.left.%]="leftPercent"
+            [style.width.%]="widthPercent"
+            [style.top.px]="(bar.weekIndex * 60) + 28"
+            [title]="(bar.reservation.propertyIdentifier || '') + (bar.reservation.propertyIdentifier && bar.reservation.contactName ? ' - ' : '') + (bar.reservation.contactName || '')"
             (click)="onReservationClick(bar.reservation.id, $event)"
           >
             @if (bar.isStartOfReservation) {
-              <div
-                class="w-2 h-2 rounded-full flex-shrink-0"
-                [class]="getReservationDotColor(bar.reservation.propertyId)"
-              ></div>
-              <span class="truncate text-xs font-medium ml-1.5">
-                @if (bar.reservation.propertyIdentifier) {
-                  {{ bar.reservation.propertyIdentifier }}
+              <div class="w-1.5 h-1.5 rounded-full bg-white flex-shrink-0"></div>
+              <span class="truncate text-xs font-medium ml-1.5 text-white">
+                @if (bar.reservation.propertyIdentifier || bar.reservation.contactName) {
+                  {{ bar.reservation.propertyIdentifier || '' }}{{ bar.reservation.propertyIdentifier && bar.reservation.contactName ? ' - ' : '' }}{{ bar.reservation.contactName || '' }}
                 }
               </span>
             }
