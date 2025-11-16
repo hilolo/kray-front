@@ -102,14 +102,18 @@ namespace ImmoGest.Infrastructure.Repositories
 
         public async Task<List<Reservation>> GetOverlappingReservationsAsync(Guid propertyId, DateTime startDate, DateTime endDate, Guid? excludeReservationId = null)
         {
+            // Two reservations overlap if they share actual days (not just touching on boundaries)
+            // Allow same-day checkout/checkin: if reservation A ends on day X, reservation B can start on day X
+            // We compare dates only (using .Date) to ignore time components
+            // Overlap condition: existing.StartDate.Date < new.EndDate.Date AND existing.EndDate.Date > new.StartDate.Date
             var query = DbSet
                 .AsNoTracking()
                 .Include(r => r.Contact)
                 .Include(r => r.Property)
                 .Where(r => r.PropertyId == propertyId
                     && !r.IsDeleted
-                    && r.StartDate <= endDate
-                    && r.EndDate >= startDate);
+                    && r.StartDate.Date < endDate.Date
+                    && r.EndDate.Date > startDate.Date);
 
             // Exclude the current reservation if updating
             if (excludeReservationId.HasValue)
