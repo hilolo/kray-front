@@ -615,6 +615,12 @@ export class PropertyDetailComponent implements OnInit {
     const property = this.property();
     if (!property) return;
 
+    // Preserve existing related data
+    const existingLeases = property.leases || [];
+    const existingKeys = property.keys || [];
+    const existingMaintenances = property.maintenances || [];
+    const existingAttachments = property.attachments || [];
+
     this.propertyService
       .updatePropertySharing({
         propertyId: property.id,
@@ -631,7 +637,26 @@ export class PropertyDetailComponent implements OnInit {
       )
       .subscribe((updatedProperty) => {
         if (updatedProperty) {
-          this.property.set(updatedProperty);
+          // Merge updated property with existing related data
+          // Since visibility updates don't affect related entities, preserve them if backend didn't include them
+          const mergedProperty: Property = {
+            ...updatedProperty,
+            // Preserve existing leases if backend returned empty array but we had leases before
+            // or if leases are undefined/null
+            leases: (updatedProperty.leases !== undefined && updatedProperty.leases !== null && updatedProperty.leases.length > 0)
+              ? updatedProperty.leases 
+              : (existingLeases.length > 0 ? existingLeases : (updatedProperty.leases || [])),
+            keys: (updatedProperty.keys !== undefined && updatedProperty.keys !== null && updatedProperty.keys.length > 0)
+              ? updatedProperty.keys
+              : (existingKeys.length > 0 ? existingKeys : (updatedProperty.keys || [])),
+            maintenances: (updatedProperty.maintenances !== undefined && updatedProperty.maintenances !== null && updatedProperty.maintenances.length > 0)
+              ? updatedProperty.maintenances
+              : (existingMaintenances.length > 0 ? existingMaintenances : (updatedProperty.maintenances || [])),
+            attachments: (updatedProperty.attachments !== undefined && updatedProperty.attachments !== null && updatedProperty.attachments.length > 0)
+              ? updatedProperty.attachments
+              : (existingAttachments.length > 0 ? existingAttachments : (updatedProperty.attachments || [])),
+          };
+          this.property.set(mergedProperty);
           this.toastService.success('Sharing settings updated successfully');
         }
       });
@@ -640,6 +665,12 @@ export class PropertyDetailComponent implements OnInit {
   private updatePropertySharingAdresse(isPublicAdresse: boolean): void {
     const property = this.property();
     if (!property) return;
+
+    // Preserve existing related data
+    const existingLeases = property.leases || [];
+    const existingKeys = property.keys || [];
+    const existingMaintenances = property.maintenances || [];
+    const existingAttachments = property.attachments || [];
 
     this.propertyService
       .updatePropertySharingAdresse({
@@ -657,7 +688,26 @@ export class PropertyDetailComponent implements OnInit {
       )
       .subscribe((updatedProperty) => {
         if (updatedProperty) {
-          this.property.set(updatedProperty);
+          // Merge updated property with existing related data
+          // Since visibility updates don't affect related entities, preserve them if backend didn't include them
+          const mergedProperty: Property = {
+            ...updatedProperty,
+            // Preserve existing leases if backend returned empty array but we had leases before
+            // or if leases are undefined/null
+            leases: (updatedProperty.leases !== undefined && updatedProperty.leases !== null && updatedProperty.leases.length > 0)
+              ? updatedProperty.leases 
+              : (existingLeases.length > 0 ? existingLeases : (updatedProperty.leases || [])),
+            keys: (updatedProperty.keys !== undefined && updatedProperty.keys !== null && updatedProperty.keys.length > 0)
+              ? updatedProperty.keys
+              : (existingKeys.length > 0 ? existingKeys : (updatedProperty.keys || [])),
+            maintenances: (updatedProperty.maintenances !== undefined && updatedProperty.maintenances !== null && updatedProperty.maintenances.length > 0)
+              ? updatedProperty.maintenances
+              : (existingMaintenances.length > 0 ? existingMaintenances : (updatedProperty.maintenances || [])),
+            attachments: (updatedProperty.attachments !== undefined && updatedProperty.attachments !== null && updatedProperty.attachments.length > 0)
+              ? updatedProperty.attachments
+              : (existingAttachments.length > 0 ? existingAttachments : (updatedProperty.attachments || [])),
+          };
+          this.property.set(mergedProperty);
           this.toastService.success('Address sharing settings updated successfully');
         }
       });
@@ -666,6 +716,12 @@ export class PropertyDetailComponent implements OnInit {
   private updatePropertySharingAndAddress(isPublic: boolean, isPublicAdresse: boolean): void {
     const property = this.property();
     if (!property) return;
+
+    // Preserve existing related data
+    const existingLeases = property.leases || [];
+    const existingKeys = property.keys || [];
+    const existingMaintenances = property.maintenances || [];
+    const existingAttachments = property.attachments || [];
 
     // Send both fields in a single request
     this.propertyService
@@ -686,7 +742,26 @@ export class PropertyDetailComponent implements OnInit {
       )
       .subscribe((updatedProperty) => {
         if (updatedProperty) {
-          this.property.set(updatedProperty);
+          // Merge updated property with existing related data
+          // Since visibility updates don't affect related entities, preserve them if backend didn't include them
+          const mergedProperty: Property = {
+            ...updatedProperty,
+            // Preserve existing leases if backend returned empty array but we had leases before
+            // or if leases are undefined/null
+            leases: (updatedProperty.leases !== undefined && updatedProperty.leases !== null && updatedProperty.leases.length > 0)
+              ? updatedProperty.leases 
+              : (existingLeases.length > 0 ? existingLeases : (updatedProperty.leases || [])),
+            keys: (updatedProperty.keys !== undefined && updatedProperty.keys !== null && updatedProperty.keys.length > 0)
+              ? updatedProperty.keys
+              : (existingKeys.length > 0 ? existingKeys : (updatedProperty.keys || [])),
+            maintenances: (updatedProperty.maintenances !== undefined && updatedProperty.maintenances !== null && updatedProperty.maintenances.length > 0)
+              ? updatedProperty.maintenances
+              : (existingMaintenances.length > 0 ? existingMaintenances : (updatedProperty.maintenances || [])),
+            attachments: (updatedProperty.attachments !== undefined && updatedProperty.attachments !== null && updatedProperty.attachments.length > 0)
+              ? updatedProperty.attachments
+              : (existingAttachments.length > 0 ? existingAttachments : (updatedProperty.attachments || [])),
+          };
+          this.property.set(mergedProperty);
           this.toastService.success('Sharing settings updated successfully');
         }
       });
