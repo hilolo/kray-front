@@ -85,6 +85,10 @@ namespace ImmoGest.Infrastructure.Configuration
                 .IsRequired()
                 .HasDefaultValue(false);
 
+            builder.Property(p => p.IsReservationShow)
+                .IsRequired()
+                .HasDefaultValue(false);
+
             builder.HasOne(p => p.Building)
                 .WithMany()
                 .HasForeignKey(p => p.BuildingId)

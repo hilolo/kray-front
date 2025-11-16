@@ -7,6 +7,7 @@ import type { CreateReservationRequest } from '../models/reservation/create-rese
 import type { UpdateReservationRequest } from '../models/reservation/update-reservation-request.model';
 import type { Reservation } from '../models/reservation/reservation.model';
 import { ReservationStatus } from '../models/reservation/reservation.model';
+import type { PublicReservation } from '../models/reservation/public-reservation.model';
 
 /**
  * Service for reservation-related API calls
@@ -114,6 +115,16 @@ export class ReservationService {
       params.append('excludeReservationId', excludeReservationId);
     }
     return this.apiService.get<Reservation[]>(`Reservation/overlapping?${params.toString()}`);
+  }
+
+  /**
+   * Get public reservations for a property (only dates and status, no client information)
+   * GET api/public/properties/{propertyId}/reservations
+   * @param propertyId Property ID
+   * @returns Observable of public reservations
+   */
+  getPublicReservations(propertyId: string): Observable<PublicReservation[]> {
+    return this.apiService.get<PublicReservation[]>(`public/properties/${propertyId}/reservations`);
   }
 }
 

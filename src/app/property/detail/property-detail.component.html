@@ -456,6 +456,18 @@
                 />
               </div>
 
+              <!-- Enable Reservation Show Toggle (only for location vacance) -->
+              @if (isVacationLocation()) {
+                <div class="flex items-center justify-between">
+                  <label class="text-sm text-muted-foreground">Show reservations now</label>
+                  <z-switch
+                    [ngModel]="enableReservationShow()"
+                    (checkChange)="updateEnableReservationShow($event)"
+                    [disabled]="!enableSharing()"
+                  />
+                </div>
+              }
+
               <!-- Public Profile Link -->
               <z-input-group [zSuffix]="publicProfileCopyButtonTemplateRef()">
                 <input

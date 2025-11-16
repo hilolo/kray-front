@@ -21,7 +21,7 @@ namespace ImmoGest.Domain.Repositories
         /// <summary>
         /// Updates public visibility flags for a property
         /// </summary>
-        System.Threading.Tasks.Task UpdateVisibilityAsync(Guid propertyId, bool? isPublic, bool? isPublicAdresse);
+        System.Threading.Tasks.Task UpdateVisibilityAsync(Guid propertyId, bool? isPublic, bool? isPublicAdresse, bool? isReservationShow);
 
         /// <summary>
         /// Get a public property by id (only if marked as public)

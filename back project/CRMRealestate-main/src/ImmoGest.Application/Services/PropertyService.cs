@@ -1359,7 +1359,7 @@ namespace ImmoGest.Application.Services
                     return Result.Failure<PropertyDto>();
                 }
 
-                await _propertyRepository.UpdateVisibilityAsync(dto.PropertyId, dto.IsPublic, dto.IsPublicAdresse);
+                await _propertyRepository.UpdateVisibilityAsync(dto.PropertyId, dto.IsPublic, dto.IsPublicAdresse, dto.IsReservationShow);
 
                 return await GetByIdAsync<PropertyDto>(dto.PropertyId);
             }
@@ -1382,6 +1382,7 @@ namespace ImmoGest.Application.Services
                 var dto = _mapper.Map<PublicPropertyDto>(property);
                 dto.Attachments = new List<AttachmentDetailsDto>();
                 dto.IsAddressPublic = property.IsPublicAdresse;
+                dto.IsReservationShow = property.IsReservationShow;
 
                 if (!property.IsPublicAdresse)
                 {

@@ -114,6 +114,28 @@
               </div>
             </z-card>
 
+            <!-- Availability Calendar (only if enabled and location vacance) -->
+            @if (shouldShowCalendar()) {
+              <z-card zTitle="Availability Calendar">
+                @if (isLoadingReservations()) {
+                  <div class="flex items-center justify-center py-8">
+                    <div class="text-center space-y-4">
+                      <z-icon zType="loader-circle" class="w-8 h-8 animate-spin mx-auto text-primary" />
+                      <p class="text-sm text-muted-foreground">Loading availability...</p>
+                    </div>
+                  </div>
+                } @else {
+                  <z-reservation-calendar 
+                    [reservations]="reservations()" 
+                    [currentMonthInput]="currentCalendarMonth()"
+                    [currentYearInput]="currentCalendarYear()"
+                    [hideReservationsList]="true"
+                    (monthChange)="onMonthChange($event)" 
+                  />
+                }
+              </z-card>
+            }
+
             <!-- Price and Category -->
             <z-card>
               <div class="flex items-center justify-between">

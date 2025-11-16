@@ -97,7 +97,7 @@ namespace ImmoGest.Infrastructure.Repositories
         /// <summary>
         /// Updates the public visibility flags for a property
         /// </summary>
-        public async Task UpdateVisibilityAsync(Guid propertyId, bool? isPublic, bool? isPublicAdresse)
+        public async Task UpdateVisibilityAsync(Guid propertyId, bool? isPublic, bool? isPublicAdresse, bool? isReservationShow)
         {
             var property = await DbSet.FindAsync(propertyId);
             if (property != null)
@@ -110,6 +110,11 @@ namespace ImmoGest.Infrastructure.Repositories
                 if (isPublicAdresse.HasValue)
                 {
                     property.IsPublicAdresse = isPublicAdresse.Value;
+                }
+
+                if (isReservationShow.HasValue)
+                {
+                    property.IsReservationShow = isReservationShow.Value;
                 }
 
                 property.LastModifiedOn = DateTimeOffset.UtcNow;

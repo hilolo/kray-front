@@ -24,6 +24,7 @@ export interface PublicProperty {
   defaultAttachmentUrl: string | null;
   attachments: AttachmentDetails[];
   isAddressPublic: boolean;
+  isReservationShow: boolean;
   // Company information
   companyName: string | null;
   companyEmail: string | null;

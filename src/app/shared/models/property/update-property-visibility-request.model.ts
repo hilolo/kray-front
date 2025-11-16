@@ -24,5 +24,6 @@ export interface UpdatePropertyVisibilityRequest {
   propertyId: string;
   isPublic?: boolean;
   isPublicAdresse?: boolean;
+  isReservationShow?: boolean;
 }
 

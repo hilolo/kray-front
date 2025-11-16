@@ -15,6 +15,10 @@ import { LayoutComponent } from '@shared/components/layout/layout.component';
 import { ContentComponent } from '@shared/components/layout/content.component';
 import { ZardAvatarComponent } from '@shared/components/avatar/avatar.component';
 import { DarkModeService } from '@shared/services/darkmode.service';
+import { ZardReservationCalendarComponent } from '@shared/components/reservation-calendar/reservation-calendar.component';
+import { ReservationService } from '@shared/services/reservation.service';
+import type { PublicReservation } from '@shared/models/reservation/public-reservation.model';
+import type { Reservation } from '@shared/models/reservation/reservation.model';
 
 @Component({
   selector: 'app-public-property',
@@ -30,6 +34,7 @@ import { DarkModeService } from '@shared/services/darkmode.service';
     ZardImageViewerComponent,
     PropertyPricePipe,
     ZardAvatarComponent,
+    ZardReservationCalendarComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './public-property.component.html',
@@ -39,6 +44,7 @@ export class PublicPropertyComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly propertyService = inject(PropertyService);
   private readonly darkModeService = inject(DarkModeService);
+  private readonly reservationService = inject(ReservationService);
 
   // Property data
   readonly property = signal<PublicProperty | null>(null);
@@ -47,6 +53,12 @@ export class PublicPropertyComponent implements OnInit {
   readonly currentImageIndex = signal(0);
   readonly isImageViewerOpen = signal(false);
   readonly imageViewerIndex = signal(0);
+  readonly reservations = signal<Reservation[]>([]);
+  readonly isLoadingReservations = signal(false);
+  
+  // Current month/year for calendar
+  readonly currentCalendarMonth = signal<number | undefined>(undefined);
+  readonly currentCalendarYear = signal<number | undefined>(undefined);
 
   // Computed values
   readonly propertyName = computed(() => this.property()?.name || '');
@@ -104,6 +116,10 @@ export class PublicPropertyComponent implements OnInit {
     return !!(prop?.companyName || prop?.companyEmail || prop?.companyPhone || prop?.companyWebsite || prop?.companyAddress);
   });
   readonly currentTheme = this.darkModeService.getCurrentThemeSignal();
+  readonly shouldShowCalendar = computed(() => {
+    const prop = this.property();
+    return !!(prop?.isReservationShow && prop?.category === PropertyCategory.LocationVacances);
+  });
 
   ngOnInit(): void {
     const propertyId = this.route.snapshot.paramMap.get('id');
@@ -138,6 +154,15 @@ export class PublicPropertyComponent implements OnInit {
         if (property) {
           this.property.set(property);
           this.currentImageIndex.set(0);
+          // Load public reservations if calendar should be shown
+          if (property.isReservationShow && property.category === PropertyCategory.LocationVacances) {
+            const now = new Date();
+            const month = now.getMonth();
+            const year = now.getFullYear();
+            this.currentCalendarMonth.set(month);
+            this.currentCalendarYear.set(year);
+            this.loadPublicReservations(property.id);
+          }
         }
       });
   }
@@ -244,6 +269,71 @@ export class PublicPropertyComponent implements OnInit {
     if (prop?.companyEmail) {
       window.location.href = `mailto:${prop.companyEmail}`;
     }
+  }
+
+  private loadPublicReservations(propertyId: string): void {
+    this.isLoadingReservations.set(true);
+
+    this.reservationService
+      .getPublicReservations(propertyId)
+      .pipe(
+        catchError((error) => {
+          console.error('Error loading public reservations:', error);
+          this.isLoadingReservations.set(false);
+          return of([]);
+        }),
+      )
+      .subscribe((publicReservations) => {
+        // Convert PublicReservation to Reservation format for the calendar component
+        const reservations: Reservation[] = publicReservations.map((pr) => ({
+          id: pr.id,
+          contactId: '', // Not available in public reservations
+          contactName: '', // Not available for privacy
+          contactEmail: '', // Not available for privacy
+          contactPhone: '', // Not available for privacy
+          contactAvatarUrl: '', // Not available for privacy
+          propertyId: pr.propertyId,
+          propertyIdentifier: '',
+          propertyName: '',
+          propertyAddress: '',
+          propertyImageUrl: '',
+          startDate: pr.startDate,
+          endDate: pr.endDate,
+          durationDays: 0,
+          numberOfNights: 0,
+          totalAmount: 0,
+          reason: '',
+          description: '',
+          requestDate: pr.startDate,
+          status: pr.status,
+          approvedBy: null,
+          approvalDate: null,
+          approvalNotes: '',
+          privateNote: '',
+          attachments: [],
+          attachmentCount: 0,
+          isArchived: false,
+          companyId: '',
+          createdAt: pr.startDate,
+          updatedAt: null,
+        }));
+        this.reservations.set(reservations);
+        this.isLoadingReservations.set(false);
+      });
+  }
+
+  // Handle month change from calendar
+  onMonthChange(event: { month: number; year: number }): void {
+    const property = this.property();
+    if (!property) return;
+    
+    // Update the calendar month/year signals
+    this.currentCalendarMonth.set(event.month);
+    this.currentCalendarYear.set(event.year);
+    
+    // Reload reservations for the new month (for now, we load all reservations)
+    // The calendar component will filter by month
+    this.loadPublicReservations(property.id);
   }
 }
 

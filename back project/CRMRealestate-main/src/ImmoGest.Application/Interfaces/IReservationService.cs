@@ -12,6 +12,7 @@ namespace ImmoGest.Application.Interfaces
     {
         Task<Result> UpdateStatusAsync(Guid reservationId, ReservationStatus status);
         Task<Result<List<ReservationDto>>> GetOverlappingReservationsAsync(Guid propertyId, DateTime startDate, DateTime endDate, Guid? excludeReservationId = null);
+        Task<Result<List<PublicReservationDto>>> GetPublicReservationsByPropertyIdAsync(Guid propertyId);
     }
 }
 

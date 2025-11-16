@@ -58,7 +58,8 @@
   </div>
 
   <!-- Reservations List -->
-  <div class="mt-6 space-y-4">
+  @if (!hideReservationsList()) {
+    <div class="mt-6 space-y-4">
     <div class="flex items-center justify-between">
       <h3 class="text-lg font-semibold">reservations</h3>
       <div class="flex items-center gap-2">
@@ -143,6 +144,7 @@
         No reservations found
       </div>
     }
-  </div>
+    </div>
+  }
 </div>
 

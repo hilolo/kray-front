@@ -43,6 +43,7 @@ export class ZardReservationCalendarComponent {
   
   readonly reservations = input<Reservation[]>([]);
   readonly class = input<ClassValue>('');
+  readonly hideReservationsList = input<boolean>(false);
   
   // Input to control the current month/year from parent
   readonly currentMonthInput = input<number | undefined>(undefined);

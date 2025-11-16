@@ -31,6 +31,7 @@ namespace ImmoGest.Application.DTOs
         public bool IsArchived { get; set; }
         public bool IsPublic { get; set; }
         public bool IsPublicAdresse { get; set; }
+        public bool IsReservationShow { get; set; }
         
         // Contact/Owner information
         public string OwnerName { get; set; }
@@ -160,6 +161,7 @@ namespace ImmoGest.Application.DTOs
         public Guid PropertyId { get; set; }
         public bool? IsPublic { get; set; }
         public bool? IsPublicAdresse { get; set; }
+        public bool? IsReservationShow { get; set; }
     }
 
     public class UpdatePropertyArchiveStatusDto
@@ -189,6 +191,7 @@ namespace ImmoGest.Application.DTOs
         public string DefaultAttachmentUrl { get; set; }
         public List<AttachmentDetailsDto> Attachments { get; set; }
         public bool IsAddressPublic { get; set; }
+        public bool IsReservationShow { get; set; }
         public string CompanyName { get; set; }
         public string CompanyEmail { get; set; }
         public string CompanyPhone { get; set; }

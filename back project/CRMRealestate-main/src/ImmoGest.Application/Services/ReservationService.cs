@@ -541,6 +541,36 @@ namespace ImmoGest.Application.Services
             }
         }
 
+        /// <summary>
+        /// Get public reservations for a property (only dates and status, no client information)
+        /// This is used for public property pages where client privacy must be maintained
+        /// </summary>
+        public async Task<Result<List<PublicReservationDto>>> GetPublicReservationsByPropertyIdAsync(Guid propertyId)
+        {
+            try
+            {
+                // Get all reservations and filter by property ID
+                var allReservationsResult = await _reservationRepository.GetAllAsync();
+                if (!allReservationsResult.IsSuccess() || allReservationsResult.Data == null)
+                {
+                    return Result.Failure<List<PublicReservationDto>>();
+                }
+
+                var propertyReservations = allReservationsResult.Data
+                    .Where(r => r.PropertyId == propertyId && !r.IsDeleted)
+                    .ToList();
+
+                // Map to public DTO (only dates and status, no client info)
+                var publicReservations = _mapper.Map<List<PublicReservationDto>>(propertyReservations);
+
+                return Result.Success(publicReservations);
+            }
+            catch (Exception ex)
+            {
+                return Result.Failure<List<PublicReservationDto>>();
+            }
+        }
+
         private string GetBucketName()
         {
             return _configuration["AWS:BucketName"] ?? "immogest-files";

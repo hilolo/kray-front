@@ -304,6 +304,9 @@ namespace ImmoGest.Application.MappingProfiles
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedOn.DateTime))
                 .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => src.LastModifiedOn.HasValue ? src.LastModifiedOn.Value.DateTime : (DateTime?)null));
             
+            // Map Reservation to PublicReservationDto (only dates and status, no client info)
+            CreateMap<Reservation, PublicReservationDto>();
+            
             CreateMap<CreateReservationDto, Reservation>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
                 .ForMember(dest => dest.Contact, opt => opt.Ignore())

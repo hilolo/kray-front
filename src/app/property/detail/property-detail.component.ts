@@ -87,6 +87,7 @@ export class PropertyDetailComponent implements OnInit {
   // Sharing settings
   readonly enableSharing = signal(false);
   readonly enableAddressSharing = signal(false);
+  readonly enableReservationShow = signal(false);
   private isUpdatingSharing = false;
 
   // Computed values
@@ -205,6 +206,7 @@ export class PropertyDetailComponent implements OnInit {
           // Initialize sharing settings from property
           this.enableSharing.set(property.isPublic || false);
           this.enableAddressSharing.set(property.isPublicAdresse || false);
+          this.enableReservationShow.set(property.isReservationShow || false);
           // Load reservations if location vacante
           if (property.category === PropertyCategory.LocationVacances) {
             const now = new Date();
@@ -674,11 +676,14 @@ export class PropertyDetailComponent implements OnInit {
 
     this.enableSharing.set(value);
     
-    // If sharing is disabled, also disable address sharing and send both updates
+    // If sharing is disabled, also disable address sharing and reservation show, and send all updates
     if (!value) {
       this.enableAddressSharing.set(false);
-      // Send both updates: disable isPublic and isPublicAdresse
-      this.updatePropertySharingAndAddress(value, false);
+      if (this.isVacationLocation()) {
+        this.enableReservationShow.set(false);
+      }
+      // Send all updates: disable isPublic, isPublicAdresse, and isReservationShow
+      this.updatePropertySharingAndAddressAndReservation(value, false, false);
     } else {
       // Only update isPublic when enabling
       this.updatePropertySharing(value);
@@ -700,6 +705,23 @@ export class PropertyDetailComponent implements OnInit {
     this.enableAddressSharing.set(value);
     // Update backend for isSharingAdresse
     this.updatePropertySharingAdresse(value);
+  }
+
+  updateEnableReservationShow(value: boolean): void {
+    const property = this.property();
+    if (!property) return;
+
+    // Prevent duplicate updates
+    if (this.isUpdatingSharing) return;
+
+    // Reservation show can only be enabled if sharing is enabled and property is location vacance
+    if (!this.enableSharing() || !this.isVacationLocation()) {
+      return;
+    }
+
+    this.enableReservationShow.set(value);
+    // Update backend for isReservationShow
+    this.updatePropertyReservationShow(value);
   }
 
   private updatePropertySharing(isPublic: boolean): void {
@@ -812,6 +834,119 @@ export class PropertyDetailComponent implements OnInit {
           };
           this.property.set(mergedProperty);
           this.toastService.success('Address sharing settings updated successfully');
+        }
+      });
+  }
+
+  private updatePropertyReservationShow(isReservationShow: boolean): void {
+    const property = this.property();
+    if (!property) return;
+
+    // Prevent duplicate updates
+    if (this.isUpdatingSharing) return;
+    this.isUpdatingSharing = true;
+
+    // Preserve existing related data
+    const existingLeases = property.leases || [];
+    const existingKeys = property.keys || [];
+    const existingMaintenances = property.maintenances || [];
+    const existingAttachments = property.attachments || [];
+
+    this.propertyService
+      .updatePropertyVisibility({
+        propertyId: property.id,
+        isReservationShow: isReservationShow,
+      })
+      .pipe(
+        catchError((error) => {
+          console.error('Error updating property reservation show:', error);
+          this.toastService.error('Failed to update reservation show settings');
+          // Revert to previous value on error
+          this.enableReservationShow.set(property.isReservationShow || false);
+          this.isUpdatingSharing = false;
+          return of(null);
+        }),
+      )
+      .subscribe((updatedProperty) => {
+        this.isUpdatingSharing = false;
+        if (updatedProperty) {
+          // Merge updated property with existing related data
+          const mergedProperty: Property = {
+            ...updatedProperty,
+            leases: (updatedProperty.leases !== undefined && updatedProperty.leases !== null && updatedProperty.leases.length > 0)
+              ? updatedProperty.leases 
+              : (existingLeases.length > 0 ? existingLeases : (updatedProperty.leases || [])),
+            keys: (updatedProperty.keys !== undefined && updatedProperty.keys !== null && updatedProperty.keys.length > 0)
+              ? updatedProperty.keys
+              : (existingKeys.length > 0 ? existingKeys : (updatedProperty.keys || [])),
+            maintenances: (updatedProperty.maintenances !== undefined && updatedProperty.maintenances !== null && updatedProperty.maintenances.length > 0)
+              ? updatedProperty.maintenances
+              : (existingMaintenances.length > 0 ? existingMaintenances : (updatedProperty.maintenances || [])),
+            attachments: (updatedProperty.attachments !== undefined && updatedProperty.attachments !== null && updatedProperty.attachments.length > 0)
+              ? updatedProperty.attachments
+              : (existingAttachments.length > 0 ? existingAttachments : (updatedProperty.attachments || [])),
+          };
+          this.property.set(mergedProperty);
+          this.toastService.success('Reservation show settings updated successfully');
+        }
+      });
+  }
+
+  private updatePropertySharingAndAddressAndReservation(isPublic: boolean, isPublicAdresse: boolean, isReservationShow: boolean): void {
+    const property = this.property();
+    if (!property) return;
+
+    // Prevent duplicate updates
+    if (this.isUpdatingSharing) return;
+    this.isUpdatingSharing = true;
+
+    // Preserve existing related data
+    const existingLeases = property.leases || [];
+    const existingKeys = property.keys || [];
+    const existingMaintenances = property.maintenances || [];
+    const existingAttachments = property.attachments || [];
+
+    // Send all fields in a single request
+    this.propertyService
+      .updatePropertyVisibility({
+        propertyId: property.id,
+        isPublic: isPublic,
+        isPublicAdresse: isPublicAdresse,
+        isReservationShow: isReservationShow,
+      })
+      .pipe(
+        catchError((error) => {
+          console.error('Error updating property sharing settings:', error);
+          this.toastService.error('Failed to update sharing settings');
+          // Revert to previous values on error
+          this.enableSharing.set(property.isPublic || false);
+          this.enableAddressSharing.set(property.isPublicAdresse || false);
+          this.enableReservationShow.set(property.isReservationShow || false);
+          this.isUpdatingSharing = false;
+          return of(null);
+        }),
+      )
+      .subscribe((updatedProperty) => {
+        this.isUpdatingSharing = false;
+        if (updatedProperty) {
+          // Merge updated property with existing related data
+          const mergedProperty: Property = {
+            ...updatedProperty,
+            leases: (updatedProperty.leases !== undefined && updatedProperty.leases !== null && updatedProperty.leases.length > 0)
+              ? updatedProperty.leases 
+              : (existingLeases.length > 0 ? existingLeases : (updatedProperty.leases || [])),
+            keys: (updatedProperty.keys !== undefined && updatedProperty.keys !== null && updatedProperty.keys.length > 0)
+              ? updatedProperty.keys
+              : (existingKeys.length > 0 ? existingKeys : (updatedProperty.keys || [])),
+            maintenances: (updatedProperty.maintenances !== undefined && updatedProperty.maintenances !== null && updatedProperty.maintenances.length > 0)
+              ? updatedProperty.maintenances
+              : (existingMaintenances.length > 0 ? existingMaintenances : (updatedProperty.maintenances || [])),
+            attachments: (updatedProperty.attachments !== undefined && updatedProperty.attachments !== null && updatedProperty.attachments.length > 0)
+              ? updatedProperty.attachments
+              : (existingAttachments.length > 0 ? existingAttachments : (updatedProperty.attachments || [])),
+          };
+          this.property.set(mergedProperty);
+          this.toastService.success('Sharing settings updated successfully');
         }
       });
   }
