@@ -453,9 +453,36 @@ export class ReservationListComponent implements OnInit, OnDestroy {
 
   onCalendarViewToggle(show: boolean): void {
     this.showCalendarView.set(show);
+    
+    // Reset all filters when switching views
+    this.searchInput.set('');
+    this.searchQuery.set('');
+    this.selectedTenant.set(null);
+    this.selectedProperty.set(null);
+    this.currentPage.set(1);
+    
+    // Clear combobox values
+    setTimeout(() => {
+      const tenantCombobox = this.tenantComboboxRef();
+      if (tenantCombobox) {
+        (tenantCombobox as any).writeValue(null);
+      }
+      const propertyCombobox = this.propertyComboboxRef();
+      if (propertyCombobox) {
+        (propertyCombobox as any).writeValue(null);
+      }
+      const propertyComboboxCalendar = this.propertyComboboxCalendarRef();
+      if (propertyComboboxCalendar) {
+        (propertyComboboxCalendar as any).writeValue(null);
+      }
+    }, 0);
+    
     if (show) {
       // Load all reservations for calendar view (only if property is selected)
       this.loadCalendarReservations();
+    } else {
+      // Load list view reservations
+      this.loadReservations();
     }
   }
 

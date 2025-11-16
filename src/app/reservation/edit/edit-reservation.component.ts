@@ -64,6 +64,8 @@ interface ExistingAttachment {
     ZardFormControlComponent,
     ZardFormLabelComponent,
     ZardInputGroupComponent,
+    ZardSelectComponent,
+    ZardSelectItemComponent,
     ZardCardComponent,
     ZardImageHoverPreviewDirective,
     ZardComboboxComponent,
@@ -306,8 +308,9 @@ export class EditReservationComponent implements OnInit, OnDestroy {
     }
   });
 
-  // Status options (Pending removed - cannot be set from frontend)
+  // Status options - all statuses available in both add and edit mode
   readonly statusOptions = [
+    { value: ReservationStatus.Pending, label: 'Pending' },
     { value: ReservationStatus.Approved, label: 'Approved' },
     { value: ReservationStatus.Cancelled, label: 'Cancelled' },
   ];
@@ -802,7 +805,6 @@ export class EditReservationComponent implements OnInit, OnDestroy {
 
     if (this.isEditMode()) {
       const reservationId = this.reservationId()!;
-      // Status is not sent - backend keeps existing status
       const request: UpdateReservationRequest = {
         contactId: this.formData().contactId,
         propertyId: this.formData().propertyId,
@@ -811,6 +813,7 @@ export class EditReservationComponent implements OnInit, OnDestroy {
         totalAmount: this.formData().totalAmount,
         description: this.formData().description,
         privateNote: this.formData().privateNote,
+        status: this.formData().status,
         attachmentsToAdd: attachments,
         attachmentsToDelete: Array.from(this.filesToDelete()),
       };
@@ -883,6 +886,32 @@ export class EditReservationComponent implements OnInit, OnDestroy {
   getPropertyDisplayName(property: Property | null): string {
     if (!property) return 'N/A';
     return property.name || property.identifier || 'N/A';
+  }
+
+  getStatusLabel(status: ReservationStatus): string {
+    switch (status) {
+      case ReservationStatus.Pending:
+        return 'Pending';
+      case ReservationStatus.Approved:
+        return 'Approved';
+      case ReservationStatus.Cancelled:
+        return 'Cancelled';
+      default:
+        return 'Unknown';
+    }
+  }
+
+  getStatusIcon(status: ReservationStatus): 'clock' | 'circle-check' | 'x' {
+    switch (status) {
+      case ReservationStatus.Pending:
+        return 'clock';
+      case ReservationStatus.Approved:
+        return 'circle-check';
+      case ReservationStatus.Cancelled:
+        return 'x';
+      default:
+        return 'clock';
+    }
   }
 
   // Helper methods for form field updates

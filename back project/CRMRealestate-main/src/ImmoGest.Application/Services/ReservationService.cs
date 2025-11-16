@@ -46,19 +46,6 @@ namespace ImmoGest.Application.Services
 
         protected override async Task InUpdate_ValidateEntityAsync<TUpdateModel>(Reservation entity, TUpdateModel updateModel)
         {
-            if (updateModel is UpdateReservationDto dto)
-            {
-                // Block status Approved and Pending when editing
-                if (dto.Status == ReservationStatus.Approved)
-                {
-                    throw new InvalidOperationException("Cannot set reservation status to Approved when editing. Use the status update endpoint instead.");
-                }
-
-                if (dto.Status == ReservationStatus.Pending)
-                {
-                    throw new InvalidOperationException("Cannot set reservation status to Pending when editing.");
-                }
-            }
 
             await base.InUpdate_ValidateEntityAsync(entity, updateModel);
         }
@@ -129,7 +116,7 @@ namespace ImmoGest.Application.Services
                 entity.DurationDays = (normalizedEndDate - normalizedStartDate).Days + 1;
                 entity.NumberOfNights = entity.DurationDays; // Same as duration days
 
-                // Update approval information if status changed to Approved
+                // Update approval information if status changed to Approved (check before updating status)
                 if (dto.Status == ReservationStatus.Approved && entity.Status != ReservationStatus.Approved)
                 {
                     entity.ApprovalDate = DateTime.UtcNow;
@@ -138,6 +125,9 @@ namespace ImmoGest.Application.Services
                         entity.ApprovedBy = dto.ApprovedBy.Value;
                     }
                 }
+
+                // Update status
+                entity.Status = dto.Status;
 
                 // Handle attachments to add
                 if (dto.AttachmentsToAdd != null && dto.AttachmentsToAdd.Any())
