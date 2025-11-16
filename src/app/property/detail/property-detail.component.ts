@@ -76,6 +76,7 @@ export class PropertyDetailComponent implements OnInit {
   // Sharing settings
   readonly enableSharing = signal(false);
   readonly enableAddressSharing = signal(false);
+  private isUpdatingSharing = false;
 
   // Computed values
   readonly propertyName = computed(() => this.property()?.name || '');
@@ -584,6 +585,9 @@ export class PropertyDetailComponent implements OnInit {
     const property = this.property();
     if (!property) return;
 
+    // Prevent duplicate updates
+    if (this.isUpdatingSharing) return;
+
     this.enableSharing.set(value);
     
     // If sharing is disabled, also disable address sharing and send both updates
@@ -601,6 +605,9 @@ export class PropertyDetailComponent implements OnInit {
     const property = this.property();
     if (!property) return;
 
+    // Prevent duplicate updates
+    if (this.isUpdatingSharing) return;
+
     // Address sharing can only be enabled if sharing is enabled
     if (!this.enableSharing()) {
       return;
@@ -614,6 +621,10 @@ export class PropertyDetailComponent implements OnInit {
   private updatePropertySharing(isPublic: boolean): void {
     const property = this.property();
     if (!property) return;
+
+    // Prevent duplicate updates
+    if (this.isUpdatingSharing) return;
+    this.isUpdatingSharing = true;
 
     // Preserve existing related data
     const existingLeases = property.leases || [];
@@ -632,10 +643,12 @@ export class PropertyDetailComponent implements OnInit {
           this.toastService.error('Failed to update sharing settings');
           // Revert to previous value on error
           this.enableSharing.set(property.isPublic || false);
+          this.isUpdatingSharing = false;
           return of(null);
         }),
       )
       .subscribe((updatedProperty) => {
+        this.isUpdatingSharing = false;
         if (updatedProperty) {
           // Merge updated property with existing related data
           // Since visibility updates don't affect related entities, preserve them if backend didn't include them
@@ -666,6 +679,10 @@ export class PropertyDetailComponent implements OnInit {
     const property = this.property();
     if (!property) return;
 
+    // Prevent duplicate updates
+    if (this.isUpdatingSharing) return;
+    this.isUpdatingSharing = true;
+
     // Preserve existing related data
     const existingLeases = property.leases || [];
     const existingKeys = property.keys || [];
@@ -683,10 +700,12 @@ export class PropertyDetailComponent implements OnInit {
           this.toastService.error('Failed to update address sharing settings');
           // Revert to previous value on error
           this.enableAddressSharing.set(property.isPublicAdresse || false);
+          this.isUpdatingSharing = false;
           return of(null);
         }),
       )
       .subscribe((updatedProperty) => {
+        this.isUpdatingSharing = false;
         if (updatedProperty) {
           // Merge updated property with existing related data
           // Since visibility updates don't affect related entities, preserve them if backend didn't include them
@@ -717,6 +736,10 @@ export class PropertyDetailComponent implements OnInit {
     const property = this.property();
     if (!property) return;
 
+    // Prevent duplicate updates
+    if (this.isUpdatingSharing) return;
+    this.isUpdatingSharing = true;
+
     // Preserve existing related data
     const existingLeases = property.leases || [];
     const existingKeys = property.keys || [];
@@ -737,10 +760,12 @@ export class PropertyDetailComponent implements OnInit {
           // Revert to previous values on error
           this.enableSharing.set(property.isPublic || false);
           this.enableAddressSharing.set(property.isPublicAdresse || false);
+          this.isUpdatingSharing = false;
           return of(null);
         }),
       )
       .subscribe((updatedProperty) => {
+        this.isUpdatingSharing = false;
         if (updatedProperty) {
           // Merge updated property with existing related data
           // Since visibility updates don't affect related entities, preserve them if backend didn't include them
