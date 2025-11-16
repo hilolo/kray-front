@@ -267,7 +267,12 @@
                       </div>
                     </div>
                   } @else {
-                    <z-reservation-calendar [reservations]="reservations()" />
+                    <z-reservation-calendar 
+                      [reservations]="reservations()" 
+                      [currentMonthInput]="currentCalendarMonth()"
+                      [currentYearInput]="currentCalendarYear()"
+                      (monthChange)="onMonthChange($event)" 
+                    />
                   }
                 </div>
               </z-tab>
@@ -400,34 +405,6 @@
             <!-- Calendar Link -->
             @if (isVacationLocation()) {
               <div class="space-y-2 pb-4">
-                <div class="flex items-center gap-2">
-                  <span class="text-sm font-medium">Link to calendar with availability</span>
-                  <z-icon zType="info" zSize="sm" class="text-muted-foreground" />
-                </div>
-                <z-input-group [zSuffix]="calendarCopyButtonTemplateRef()">
-                  <input
-                    z-input
-                    type="text"
-                    [ngModel]="calendarLink()"
-                    readonly
-                    class="flex-1"
-                  />
-                </z-input-group>
-                <ng-template #calendarCopyButtonTemplate>
-                  <z-button 
-                    zType="ghost" 
-                    zSize="sm"
-                    type="button"
-                    (click)="copyCalendarLink($event)"
-                    [attr.aria-label]="'Copy calendar link'"
-                    class="!opacity-100 !text-foreground !bg-muted/50 hover:!bg-accent hover:!text-accent-foreground !min-w-0 !h-auto !p-1.5 !rounded"
-                  >
-                    <z-icon zType="copy" zSize="sm" class="!text-foreground" />
-                  </z-button>
-                </ng-template>
-                <p class="text-xs text-muted-foreground">
-                  Use this iCal link to synchronize with external services such as Airbnb and Google Calendar.
-                </p>
                 <div class="flex flex-wrap gap-2 pt-2">
                   <z-button 
                     zType="outline" 
@@ -446,6 +423,9 @@
                     Share via WhatsApp
                   </z-button>
                 </div>
+                <p class="text-xs text-muted-foreground">
+                  Use this iCal link to synchronize with external services such as Airbnb and Google Calendar.
+                </p>
               </div>
             }
 

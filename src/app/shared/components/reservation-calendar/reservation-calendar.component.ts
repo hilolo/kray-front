@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input, signal, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, inject, input, output, signal, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import type { ClassValue } from 'clsx';
 import { ZardButtonComponent } from '../button/button.component';
@@ -39,13 +39,58 @@ export interface CalendarDateInfo {
   templateUrl: './reservation-calendar.component.html',
 })
 export class ZardReservationCalendarComponent {
+  private readonly cdr = inject(ChangeDetectorRef);
+  
   readonly reservations = input<Reservation[]>([]);
   readonly class = input<ClassValue>('');
+  
+  // Input to control the current month/year from parent
+  readonly currentMonthInput = input<number | undefined>(undefined);
+  readonly currentYearInput = input<number | undefined>(undefined);
+
+  // Output event when month changes
+  readonly monthChange = output<{ month: number; year: number }>();
 
   // Current month/year being displayed
   readonly currentDate = signal(new Date());
-  readonly currentMonth = computed(() => this.currentDate().getMonth());
-  readonly currentYear = computed(() => this.currentDate().getFullYear());
+  
+  // Sync internal currentDate with parent inputs
+  constructor() {
+    // Sync currentDate when parent inputs change
+    effect(() => {
+      const inputMonth = this.currentMonthInput();
+      const inputYear = this.currentYearInput();
+      
+      if (inputMonth !== undefined && inputYear !== undefined) {
+        const current = this.currentDate();
+        const currentMonth = current.getMonth();
+        const currentYear = current.getFullYear();
+        
+        // Only update if different to avoid infinite loops
+        if (currentMonth !== inputMonth || currentYear !== inputYear) {
+          const newDate = new Date(inputYear, inputMonth, 1);
+          this.currentDate.set(newDate);
+        }
+      }
+    }, { allowSignalWrites: true });
+  }
+  
+  // Sync with parent inputs
+  readonly currentMonth = computed(() => {
+    const inputMonth = this.currentMonthInput();
+    if (inputMonth !== undefined) {
+      return inputMonth;
+    }
+    return this.currentDate().getMonth();
+  });
+  
+  readonly currentYear = computed(() => {
+    const inputYear = this.currentYearInput();
+    if (inputYear !== undefined) {
+      return inputYear;
+    }
+    return this.currentDate().getFullYear();
+  });
 
   // Month names
   readonly monthNames = [
@@ -191,14 +236,128 @@ export class ZardReservationCalendarComponent {
   }
 
   // Navigation
-  previousMonth(): void {
+  previousMonth(event?: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
     const current = this.currentDate();
-    this.currentDate.set(new Date(current.getFullYear(), current.getMonth() - 1, 1));
+    const currentMonth = current.getMonth();
+    const currentYear = current.getFullYear();
+    
+    // Calculate new month and year
+    let newMonth = currentMonth - 1;
+    let newYear = currentYear;
+    
+    // Handle year rollover
+    if (newMonth < 0) {
+      newMonth = 11;
+      newYear = currentYear - 1;
+    }
+    
+    console.log('Previous month calculation:', { 
+      currentMonth, 
+      currentYear, 
+      calculatedNewMonth: newMonth, 
+      calculatedNewYear: newYear 
+    });
+    
+    // Create a completely new Date object
+    const newDate = new Date(newYear, newMonth, 1);
+    
+    // Update the signal
+    this.currentDate.set(newDate);
+    
+    // Verify the update worked
+    const updated = this.currentDate();
+    const updatedMonth = updated.getMonth();
+    const updatedYear = updated.getFullYear();
+    
+    // Force computed signals to recalculate
+    const month = this.currentMonth();
+    const year = this.currentYear();
+    const display = this.monthYearDisplay();
+    const days = this.calendarDays();
+    
+    console.log('Previous month clicked:', { 
+      newMonth, 
+      newYear, 
+      updatedMonth, 
+      updatedYear,
+      month, 
+      year, 
+      display, 
+      daysCount: days.length 
+    });
+    
+    // Emit the change event with the calculated values
+    this.monthChange.emit({ month: newMonth, year: newYear });
+    
+    // Force change detection
+    this.cdr.detectChanges();
   }
 
-  nextMonth(): void {
+  nextMonth(event?: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
     const current = this.currentDate();
-    this.currentDate.set(new Date(current.getFullYear(), current.getMonth() + 1, 1));
+    const currentMonth = current.getMonth();
+    const currentYear = current.getFullYear();
+    
+    // Calculate new month and year
+    let newMonth = currentMonth + 1;
+    let newYear = currentYear;
+    
+    // Handle year rollover
+    if (newMonth > 11) {
+      newMonth = 0;
+      newYear = currentYear + 1;
+    }
+    
+    console.log('Next month calculation:', { 
+      currentMonth, 
+      currentYear, 
+      calculatedNewMonth: newMonth, 
+      calculatedNewYear: newYear 
+    });
+    
+    // Create a completely new Date object
+    const newDate = new Date(newYear, newMonth, 1);
+    
+    // Update the signal
+    this.currentDate.set(newDate);
+    
+    // Verify the update worked
+    const updated = this.currentDate();
+    const updatedMonth = updated.getMonth();
+    const updatedYear = updated.getFullYear();
+    
+    // Force computed signals to recalculate
+    const month = this.currentMonth();
+    const year = this.currentYear();
+    const display = this.monthYearDisplay();
+    const days = this.calendarDays();
+    
+    console.log('Next month clicked:', { 
+      newMonth, 
+      newYear, 
+      updatedMonth, 
+      updatedYear,
+      month, 
+      year, 
+      display, 
+      daysCount: days.length 
+    });
+    
+    // Emit the change event with the calculated values
+    this.monthChange.emit({ month: newMonth, year: newYear });
+    
+    // Force change detection
+    this.cdr.detectChanges();
   }
 
   // Get month/year display

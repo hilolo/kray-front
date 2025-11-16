@@ -28,7 +28,6 @@ import { ZardAvatarComponent } from '@shared/components/avatar/avatar.component'
 import { ZardReservationCalendarComponent } from '@shared/components/reservation-calendar/reservation-calendar.component';
 import { ReservationService } from '@shared/services/reservation.service';
 import type { Reservation } from '@shared/models/reservation/reservation.model';
-import { UserService } from '@shared/services/user.service';
 
 @Component({
   selector: 'app-property-detail',
@@ -64,7 +63,6 @@ export class PropertyDetailComponent implements OnInit {
   private readonly propertyService = inject(PropertyService);
   private readonly toastService = inject(ToastService);
   private readonly reservationService = inject(ReservationService);
-  private readonly userService = inject(UserService);
 
   // Property data
   readonly property = signal<Property | null>(null);
@@ -74,6 +72,10 @@ export class PropertyDetailComponent implements OnInit {
   readonly imageViewerIndex = signal(0);
   readonly reservations = signal<Reservation[]>([]);
   readonly isLoadingReservations = signal(false);
+  
+  // Current month/year for calendar
+  readonly currentCalendarMonth = signal<number | undefined>(undefined);
+  readonly currentCalendarYear = signal<number | undefined>(undefined);
 
   // Template references
   readonly calendarCopyButtonTemplate = viewChild<TemplateRef<void>>('calendarCopyButtonTemplate');
@@ -205,19 +207,44 @@ export class PropertyDetailComponent implements OnInit {
           this.enableAddressSharing.set(property.isPublicAdresse || false);
           // Load reservations if location vacante
           if (property.category === PropertyCategory.LocationVacances) {
-            this.loadReservations(property.id);
+            const now = new Date();
+            const month = now.getMonth();
+            const year = now.getFullYear();
+            this.currentCalendarMonth.set(month);
+            this.currentCalendarYear.set(year);
+            this.loadReservations(property.id, month, year);
           }
         }
       });
   }
 
-  private loadReservations(propertyId: string): void {
+  private loadReservations(propertyId: string, month?: number, year?: number): void {
     this.isLoadingReservations.set(true);
-    const companyId = this.userService.getCurrentUser()?.companyId;
+
+    // Calculate date range for the selected month
+    let startDateFrom: string | undefined;
+    let startDateTo: string | undefined;
     
-    if (!companyId) {
-      this.isLoadingReservations.set(false);
-      return;
+    if (month !== undefined && year !== undefined) {
+      // Create dates in UTC to avoid timezone issues
+      // First day of the month at 00:00:00 UTC
+      const firstDay = new Date(Date.UTC(year, month, 1, 0, 0, 0, 0));
+      startDateFrom = firstDay.toISOString();
+      
+      // Last day of the month at 23:59:59.999 UTC
+      // month + 1 gives us the next month, day 0 gives us the last day of current month
+      const lastDay = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999));
+      startDateTo = lastDay.toISOString();
+      
+      console.log('Loading reservations for:', {
+        month,
+        year,
+        monthName: new Date(year, month, 1).toLocaleString('en-US', { month: 'long' }),
+        startDateFrom,
+        startDateTo,
+        firstDayUTC: firstDay.toISOString(),
+        lastDayUTC: lastDay.toISOString()
+      });
     }
 
     this.reservationService
@@ -225,8 +252,9 @@ export class PropertyDetailComponent implements OnInit {
         currentPage: 1,
         pageSize: 1000,
         ignore: false,
-        companyId: companyId,
         propertyId: propertyId,
+        startDateFrom: startDateFrom,
+        startDateTo: startDateTo,
       })
       .pipe(
         catchError((error) => {
@@ -239,6 +267,19 @@ export class PropertyDetailComponent implements OnInit {
         this.reservations.set(response.result);
         this.isLoadingReservations.set(false);
       });
+  }
+
+  // Handle month change from calendar
+  onMonthChange(event: { month: number; year: number }): void {
+    const property = this.property();
+    if (!property) return;
+    
+    // Update the calendar month/year signals
+    this.currentCalendarMonth.set(event.month);
+    this.currentCalendarYear.set(event.year);
+    
+    // Load reservations for the new month
+    this.loadReservations(property.id, event.month, event.year);
   }
 
   // Computed signal to get keys from property
