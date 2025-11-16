@@ -13,10 +13,11 @@ import { ZardDividerComponent } from '@shared/components/divider/divider.compone
 import { ZardPaginationComponent } from '@shared/components/pagination/pagination.component';
 import { ZardSelectComponent } from '@shared/components/select/select.component';
 import { ZardSelectItemComponent } from '@shared/components/select/select-item.component';
+import type { ZardIcon } from '@shared/components/icon/icons';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import type { Task } from '@shared/models/task/task.model';
+import type { Task, TaskStatus, TaskPriority } from '@shared/models/task/task.model';
 import type { TaskListRequest } from '@shared/models/task/task-list-request.model';
 import { TaskService } from '@shared/services/task.service';
 import { RoutePreferencesService } from '@shared/services/route-preferences.service';
@@ -58,6 +59,8 @@ export class TaskListComponent implements OnInit, OnDestroy {
 
   readonly searchQuery = signal(''); // Actual search term sent to server
   readonly searchInput = signal(''); // Input field value (for two-way binding)
+  readonly statusFilter = signal<TaskStatus | undefined>(undefined);
+  readonly priorityFilter = signal<TaskPriority | undefined>(undefined);
   readonly selectedRows = signal<Set<string>>(new Set());
   readonly currentPage = signal(1);
   readonly pageSizeOptions = signal([10, 20, 50, 100]);
@@ -77,6 +80,10 @@ export class TaskListComponent implements OnInit, OnDestroy {
   readonly scheduledDateCell = viewChild<TemplateRef<any>>('scheduledDateCell');
   readonly linkToCell = viewChild<TemplateRef<any>>('linkToCell');
   readonly actionsCell = viewChild<TemplateRef<any>>('actionsCell');
+
+  // Template references for filter selects
+  readonly statusSelectRef = viewChild<ZardSelectComponent>('statusSelectRef');
+  readonly prioritySelectRef = viewChild<ZardSelectComponent>('prioritySelectRef');
 
   // Define columns for datatable
   readonly columns = computed<DatatableColumn<Task>[]>(() => [
@@ -181,6 +188,8 @@ export class TaskListComponent implements OnInit, OnDestroy {
       pageSize: this.pageSize(),
       ignore: false,
       ...(this.searchQuery() && this.searchQuery().trim() ? { searchQuery: this.searchQuery().trim() } : {}),
+      ...(this.statusFilter() !== undefined ? { status: this.statusFilter() } : {}),
+      ...(this.priorityFilter() !== undefined ? { priority: this.priorityFilter() } : {}),
     };
     
     this.taskService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
@@ -202,14 +211,35 @@ export class TaskListComponent implements OnInit, OnDestroy {
   }
 
   readonly hasActiveFilters = computed(() => {
-    return this.searchQuery().trim().length > 0;
+    return this.searchQuery().trim().length > 0 || this.statusFilter() !== undefined || this.priorityFilter() !== undefined;
   });
 
   resetFilters(): void {
+    // Clear search
     this.searchQuery.set('');
     this.searchInput.set('');
     this.currentPage.set(1);
     
+    // Clear status filter
+    this.statusFilter.set(undefined);
+    
+    // Clear priority filter
+    this.priorityFilter.set(undefined);
+    
+    // Close any open select dropdowns
+    setTimeout(() => {
+      const statusSelect = this.statusSelectRef();
+      if (statusSelect) {
+        // Access the close method - it's a private method but we can call it via any
+        (statusSelect as any).close?.();
+      }
+      const prioritySelect = this.prioritySelectRef();
+      if (prioritySelect) {
+        (prioritySelect as any).close?.();
+      }
+    }, 0);
+    
+    // Reload tasks
     this.loadTasks();
   }
 
@@ -222,11 +252,70 @@ export class TaskListComponent implements OnInit, OnDestroy {
   });
 
   readonly emptyMessage = computed(() => {
-    if (this.searchQuery()) {
-      return 'No tasks match your search';
+    if (this.searchQuery() || this.statusFilter() !== undefined || this.priorityFilter() !== undefined) {
+      return 'No tasks match your filters';
     }
     return 'No tasks available';
   });
+
+  onStatusFilterChange(status: string): void {
+    const statusValue = status === 'all' ? undefined : (Number.parseInt(status, 10) as TaskStatus);
+    this.statusFilter.set(statusValue);
+    this.currentPage.set(1);
+    this.loadTasks();
+  }
+
+  getStatusFilterValue(): string {
+    const status = this.statusFilter();
+    return status !== undefined ? status.toString() : 'all';
+  }
+
+  getStatusFilterLabel(): string {
+    const status = this.statusFilter();
+    if (status === undefined) return 'All Statuses';
+    return this.getStatusLabel(status);
+  }
+
+  getStatusFilterIcon(): ZardIcon {
+    const status = this.statusFilter();
+    if (status === undefined) return 'settings';
+    switch (status) {
+      case 1: return 'circle';
+      case 2: return 'clock';
+      case 3: return 'circle-check';
+      default: return 'settings';
+    }
+  }
+
+  onPriorityFilterChange(priority: string): void {
+    const priorityValue = priority === 'all' ? undefined : (Number.parseInt(priority, 10) as TaskPriority);
+    this.priorityFilter.set(priorityValue);
+    this.currentPage.set(1);
+    this.loadTasks();
+  }
+
+  getPriorityFilterValue(): string {
+    const priority = this.priorityFilter();
+    return priority !== undefined ? priority.toString() : 'all';
+  }
+
+  getPriorityFilterLabel(): string {
+    const priority = this.priorityFilter();
+    if (priority === undefined) return 'All Priorities';
+    return this.getPriorityLabel(priority);
+  }
+
+  getPriorityFilterIcon(): ZardIcon {
+    const priority = this.priorityFilter();
+    if (priority === undefined) return 'settings';
+    switch (priority) {
+      case 1: return 'circle';
+      case 2: return 'circle-check';
+      case 3: return 'triangle-alert';
+      case 4: return 'triangle-alert';
+      default: return 'settings';
+    }
+  }
 
   readonly hasData = computed(() => {
     return this.filteredTasks().length > 0;

@@ -86,6 +86,18 @@ namespace ImmoGest.Infrastructure.Repositories
                 {
                     query = query.Where(t => t.PropertyId == taskFilter.PropertyId.Value);
                 }
+
+                // Filter by status
+                if (taskFilter.Status.HasValue)
+                {
+                    query = query.Where(t => t.Status == taskFilter.Status.Value);
+                }
+
+                // Filter by priority
+                if (taskFilter.Priority.HasValue)
+                {
+                    query = query.Where(t => t.Priority == taskFilter.Priority.Value);
+                }
             }
 
             query = SetPagedResultFilterOptions(query, filterOption);

@@ -5,7 +5,7 @@
       <!-- Filter and Action Bar -->
       <div class="flex flex-col gap-4">
         <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-          <!-- Search on left -->
+          <!-- Search and Filter on left -->
           <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-1">
             <!-- Search input -->
             <div class="relative flex-1 sm:flex-initial w-full sm:w-[300px]">
@@ -20,6 +20,82 @@
                 (keydown)="onSearchKeyDown($event)"
               />
             </div>
+            <!-- Status filter -->
+            <z-select
+              #statusSelectRef
+              [zValue]="getStatusFilterValue()"
+              [zLabel]="getStatusFilterLabel()"
+              zPlaceholder="All Statuses"
+              class="w-full sm:w-[180px]"
+              (zSelectionChange)="onStatusFilterChange($event)"
+            >
+              <z-icon slot="selected-icon" [zType]="getStatusFilterIcon()" zSize="sm" />
+              <z-select-item zValue="all">
+                <div class="flex items-center gap-2">
+                  <z-icon zType="settings" zSize="sm" />
+                  <span>All Statuses</span>
+                </div>
+              </z-select-item>
+              <z-select-item zValue="1">
+                <div class="flex items-center gap-2">
+                  <z-icon zType="circle" zSize="sm" />
+                  <span>To Do</span>
+                </div>
+              </z-select-item>
+              <z-select-item zValue="2">
+                <div class="flex items-center gap-2">
+                  <z-icon zType="clock" zSize="sm" />
+                  <span>In Progress</span>
+                </div>
+              </z-select-item>
+              <z-select-item zValue="3">
+                <div class="flex items-center gap-2">
+                  <z-icon zType="circle-check" zSize="sm" />
+                  <span>Completed</span>
+                </div>
+              </z-select-item>
+            </z-select>
+            <!-- Priority filter -->
+            <z-select
+              #prioritySelectRef
+              [zValue]="getPriorityFilterValue()"
+              [zLabel]="getPriorityFilterLabel()"
+              zPlaceholder="All Priorities"
+              class="w-full sm:w-[180px]"
+              (zSelectionChange)="onPriorityFilterChange($event)"
+            >
+              <z-icon slot="selected-icon" [zType]="getPriorityFilterIcon()" zSize="sm" />
+              <z-select-item zValue="all">
+                <div class="flex items-center gap-2">
+                  <z-icon zType="settings" zSize="sm" />
+                  <span>All Priorities</span>
+                </div>
+              </z-select-item>
+              <z-select-item zValue="1">
+                <div class="flex items-center gap-2">
+                  <z-icon zType="circle" zSize="sm" />
+                  <span>Low</span>
+                </div>
+              </z-select-item>
+              <z-select-item zValue="2">
+                <div class="flex items-center gap-2">
+                  <z-icon zType="circle-check" zSize="sm" />
+                  <span>Medium</span>
+                </div>
+              </z-select-item>
+              <z-select-item zValue="3">
+                <div class="flex items-center gap-2">
+                  <z-icon zType="triangle-alert" zSize="sm" />
+                  <span>High</span>
+                </div>
+              </z-select-item>
+              <z-select-item zValue="4">
+                <div class="flex items-center gap-2">
+                  <z-icon zType="triangle-alert" zSize="sm" />
+                  <span>Critical</span>
+                </div>
+              </z-select-item>
+            </z-select>
           </div>
           <!-- Buttons on right - Reset, Card View, then Add Task -->
           <div class="flex gap-2 items-center ml-auto">
