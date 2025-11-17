@@ -49,6 +49,9 @@ export class ZardImageHoverPreviewDirective implements OnInit, OnDestroy {
   private showTimeout?: ReturnType<typeof setTimeout>;
   private hideTimeout?: ReturnType<typeof setTimeout>;
   private isMouseOver = false;
+  private lastPositionX = 0;
+  private lastPositionY = 0;
+  private positionUpdateFrame?: number;
   
   readonly zImageHoverPreview = input<string | null>(null);
   readonly zPosition = input<ZardTooltipPositions>('right');
@@ -126,6 +129,9 @@ export class ZardImageHoverPreviewDirective implements OnInit, OnDestroy {
       this.componentRef.instance.state.set('opened');
 
       this.componentRef.instance.onLoad$.pipe(take(1)).subscribe(() => {
+        // Reset position tracking for new preview
+        this.lastPositionX = 0;
+        this.lastPositionY = 0;
         // Track mouse movement to position preview near cursor
         this.trackMousePosition();
         // Set initial position if event provided
@@ -152,6 +158,12 @@ export class ZardImageHoverPreviewDirective implements OnInit, OnDestroy {
       clearTimeout(this.hideTimeout);
     }
 
+    // Cancel any pending position update
+    if (this.positionUpdateFrame) {
+      cancelAnimationFrame(this.positionUpdateFrame);
+      this.positionUpdateFrame = undefined;
+    }
+
     if (!this.componentRef) return;
 
     this.componentRef.instance.state.set('closed');
@@ -165,6 +177,9 @@ export class ZardImageHoverPreviewDirective implements OnInit, OnDestroy {
       this.overlayRef?.detach();
       this.componentRef = undefined;
       this.hideTimeout = undefined;
+      // Reset position tracking
+      this.lastPositionX = 0;
+      this.lastPositionY = 0;
     }, animationDuration);
 
     if (this.scrollListenerRef) {
@@ -203,7 +218,22 @@ export class ZardImageHoverPreviewDirective implements OnInit, OnDestroy {
 
     this.mouseMoveListenerRef = this.renderer.listen(document, 'mousemove', (event: MouseEvent) => {
       if (!this.componentRef || !this.overlayRef) return;
-      this.updatePreviewPosition(event);
+      
+      // Check if mouse is over the overlay element itself - if so, don't update position
+      const overlayElement = this.componentRef.instance.elementRef.nativeElement;
+      if (overlayElement && overlayElement.contains(event.target as Node)) {
+        return;
+      }
+      
+      // Throttle position updates using requestAnimationFrame
+      if (this.positionUpdateFrame) {
+        cancelAnimationFrame(this.positionUpdateFrame);
+      }
+      
+      this.positionUpdateFrame = requestAnimationFrame(() => {
+        this.updatePreviewPosition(event);
+        this.positionUpdateFrame = undefined;
+      });
     });
   }
 
@@ -218,26 +248,38 @@ export class ZardImageHoverPreviewDirective implements OnInit, OnDestroy {
     let x = event.clientX + offset;
     let y = event.clientY + offset;
 
-    // Use requestAnimationFrame for smooth positioning
-    requestAnimationFrame(() => {
-      if (!overlayElement || !this.componentRef) return;
+    // Only update if position changed significantly (more than 5px) to reduce unnecessary updates
+    const positionThreshold = 5;
+    if (
+      Math.abs(x - this.lastPositionX) < positionThreshold &&
+      Math.abs(y - this.lastPositionY) < positionThreshold
+    ) {
+      return;
+    }
 
-      // Get overlay dimensions
-      const rect = overlayElement.getBoundingClientRect();
-      const overlayWidth = rect.width || 300;
-      const overlayHeight = rect.height || 300;
+    // Get overlay dimensions
+    const rect = overlayElement.getBoundingClientRect();
+    const overlayWidth = rect.width || 300;
+    const overlayHeight = rect.height || 300;
 
-      // Keep preview within viewport
-      const maxX = window.innerWidth - overlayWidth - 10;
-      const maxY = window.innerHeight - overlayHeight - 10;
+    // Keep preview within viewport
+    const maxX = window.innerWidth - overlayWidth - 10;
+    const maxY = window.innerHeight - overlayHeight - 10;
 
-      overlayElement.style.position = 'fixed';
-      overlayElement.style.left = `${Math.min(x, Math.max(10, maxX))}px`;
-      overlayElement.style.top = `${Math.min(y, Math.max(10, maxY))}px`;
-      overlayElement.style.transform = 'none';
-      overlayElement.style.margin = '0';
-      overlayElement.style.zIndex = '9999';
-    });
+    const finalX = Math.min(x, Math.max(10, maxX));
+    const finalY = Math.min(y, Math.max(10, maxY));
+
+    // Update position
+    overlayElement.style.position = 'fixed';
+    overlayElement.style.left = `${finalX}px`;
+    overlayElement.style.top = `${finalY}px`;
+    overlayElement.style.transform = 'none';
+    overlayElement.style.margin = '0';
+    overlayElement.style.zIndex = '9999';
+
+    // Store last position
+    this.lastPositionX = finalX;
+    this.lastPositionY = finalY;
   }
 }
 

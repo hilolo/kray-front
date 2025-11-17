@@ -126,7 +126,7 @@
 
         <!-- Owner Information -->
         @if (property()?.contact || property()?.ownerName) {
-          <z-card zBodySpacing="none">
+          <z-card zBodySpacing="none" class="cursor-pointer hover:bg-muted/50 transition-colors" (click)="viewOwnerProfile()">
             <div class="space-y-3">
               <h3 class="text-sm font-semibold">Owner Information</h3>
               <div class="flex items-start justify-between gap-3">
@@ -171,7 +171,7 @@
                   </div>
                 </div>
                 <div class="flex-shrink-0">
-                  <z-button zType="outline" zSize="sm" (click)="viewOwnerProfile()">
+                  <z-button zType="outline" zSize="sm" (click)="viewOwnerProfile(); $event.stopPropagation()">
                     <z-icon zType="user" zSize="sm" class="mr-2" />
                     View Profile
                   </z-button>

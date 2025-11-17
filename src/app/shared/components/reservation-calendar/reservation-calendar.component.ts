@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, inject, input, output, signal, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import type { ClassValue } from 'clsx';
 import { ZardButtonComponent } from '../button/button.component';
 import { ZardIconComponent } from '../icon/icon.component';
@@ -40,6 +41,7 @@ export interface CalendarDateInfo {
 })
 export class ZardReservationCalendarComponent {
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly router = inject(Router);
   
   readonly reservations = input<Reservation[]>([]);
   readonly class = input<ClassValue>('');
@@ -423,6 +425,12 @@ export class ZardReservationCalendarComponent {
       return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
     }
     return name.substring(0, 2).toUpperCase();
+  }
+
+  // Navigate to tenant contact detail
+  viewTenantProfile(reservation: Reservation): void {
+    if (!reservation.contactId) return;
+    this.router.navigate(['/contact/tenants', reservation.contactId, 'detail']);
   }
 
   // Format amount

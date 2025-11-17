@@ -74,7 +74,7 @@
     @if (activeReservations().length > 0) {
       <div class="space-y-3">
         @for (reservation of activeReservations(); track reservation.id) {
-          <z-card class="p-4" zBodySpacing="none">
+          <z-card class="p-4 cursor-pointer hover:bg-muted/50 transition-colors" zBodySpacing="none" (click)="viewTenantProfile(reservation)">
             <div class="space-y-3">
               <!-- Tenant Information -->
               <div class="flex items-start gap-3">
