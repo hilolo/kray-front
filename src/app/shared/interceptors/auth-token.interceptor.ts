@@ -14,6 +14,12 @@ export const authTokenInterceptor: HttpInterceptorFn = (req, next) => {
     return next(req);
   }
 
+  // Skip interceptor for public endpoints (no authentication required)
+  const isPublicEndpoint = url.includes('/public/');
+  if (isPublicEndpoint) {
+    return next(req);
+  }
+
   const authService = inject(AuthService);
   const token = authService.getToken();
 

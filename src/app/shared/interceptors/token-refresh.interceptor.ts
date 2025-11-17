@@ -19,6 +19,12 @@ export const tokenRefreshInterceptor: HttpInterceptorFn = (req, next) => {
     return next(req);
   }
 
+  // Skip interceptor for public endpoints (no authentication required)
+  const isPublicEndpoint = url.includes('/public/');
+  if (isPublicEndpoint) {
+    return next(req);
+  }
+
   // Check if token is empty before making the request
   const currentToken = authService.getToken();
   if (!currentToken || currentToken.trim() === '') {
@@ -54,6 +60,12 @@ export const tokenRefreshInterceptor: HttpInterceptorFn = (req, next) => {
       const url = req.url.toLowerCase();
       const isAssetRequest = url.startsWith('/assets/') || url.includes('/assets/');
       if (isAssetRequest) {
+        return throwError(() => error);
+      }
+
+      // Skip interceptor for public endpoints (no authentication required)
+      const isPublicEndpoint = url.includes('/public/');
+      if (isPublicEndpoint) {
         return throwError(() => error);
       }
 
