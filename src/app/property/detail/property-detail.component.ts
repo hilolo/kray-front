@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal, TemplateRef, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { imageSlideAnimation } from '@shared/animations/image-swap.animations';
 import { ZardPageComponent } from '../../page/page.component';
 import { ZardCardComponent } from '@shared/components/card/card.component';
 import { ZardButtonComponent } from '@shared/components/button/button.component';
@@ -56,6 +57,7 @@ import type { Reservation } from '@shared/models/reservation/reservation.model';
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './property-detail.component.html',
+  animations: [imageSlideAnimation],
 })
 export class PropertyDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
@@ -70,6 +72,7 @@ export class PropertyDetailComponent implements OnInit {
   readonly currentImageIndex = signal(0);
   readonly isImageViewerOpen = signal(false);
   readonly imageViewerIndex = signal(0);
+  readonly imageAnimationDirection = signal<'next' | 'prev' | ''>('');
   readonly reservations = signal<Reservation[]>([]);
   readonly isLoadingReservations = signal(false);
   
@@ -315,7 +318,19 @@ export class PropertyDetailComponent implements OnInit {
     }
     const atts = this.attachments();
     if (atts.length === 0) return;
-    this.currentImageIndex.update((index) => (index + 1) % atts.length);
+    
+    // Update index first
+    const newIndex = (this.currentImageIndex() + 1) % atts.length;
+    this.currentImageIndex.set(newIndex);
+    
+    // Set animation direction - use requestAnimationFrame for smooth state change
+    requestAnimationFrame(() => {
+      this.imageAnimationDirection.set('next');
+      // Reset direction after animation completes (450ms)
+      setTimeout(() => {
+        this.imageAnimationDirection.set('');
+      }, 450);
+    });
   }
 
   previousImage(event?: Event): void {
@@ -329,7 +344,19 @@ export class PropertyDetailComponent implements OnInit {
     }
     const atts = this.attachments();
     if (atts.length === 0) return;
-    this.currentImageIndex.update((index) => (index - 1 + atts.length) % atts.length);
+    
+    // Update index first
+    const newIndex = (this.currentImageIndex() - 1 + atts.length) % atts.length;
+    this.currentImageIndex.set(newIndex);
+    
+    // Set animation direction - use requestAnimationFrame for smooth state change
+    requestAnimationFrame(() => {
+      this.imageAnimationDirection.set('prev');
+      // Reset direction after animation completes (450ms)
+      setTimeout(() => {
+        this.imageAnimationDirection.set('');
+      }, 450);
+    });
   }
 
   getLeaseType(lease: Lease): string {

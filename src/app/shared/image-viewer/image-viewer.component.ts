@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, HostListener, inject, input, output, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, HostListener, inject, input, output, signal, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ZardButtonComponent } from '@shared/components/button/button.component';
 import { ZardIconComponent } from '@shared/components/icon/icon.component';
+import { imageSlideAnimation } from '@shared/animations/image-swap.animations';
 
 export interface ImageItem {
   url: string;
@@ -22,6 +23,7 @@ export interface ImageItem {
   styleUrls: ['./image-viewer.component.scss'],
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  animations: [imageSlideAnimation],
 })
 export class ZardImageViewerComponent {
   readonly imageUrl = input<string>('');
@@ -33,6 +35,14 @@ export class ZardImageViewerComponent {
 
   readonly close = output<void>();
   readonly imageChanged = output<number>();
+
+  // Animation direction for image swap
+  private readonly animationDirection = signal<'next' | 'prev' | ''>('');
+  
+  protected readonly imageAnimationDirection = computed<'next' | 'prev' | ''>(() => {
+    // Return the current animation direction
+    return this.animationDirection();
+  });
 
   // Current image
   protected readonly currentImage = computed<ImageItem>(() => {
@@ -109,7 +119,17 @@ export class ZardImageViewerComponent {
         index--;
       }
       
+      // Emit the new index first
       this.imageChanged.emit(index);
+      
+      // Set animation direction - use requestAnimationFrame for smooth state change
+      requestAnimationFrame(() => {
+        this.animationDirection.set('prev');
+        // Reset direction after animation completes (450ms)
+        setTimeout(() => {
+          this.animationDirection.set('');
+        }, 450);
+      });
     }
   }
 
@@ -132,7 +152,17 @@ export class ZardImageViewerComponent {
         index++;
       }
       
+      // Emit the new index first
       this.imageChanged.emit(index);
+      
+      // Set animation direction - use requestAnimationFrame for smooth state change
+      requestAnimationFrame(() => {
+        this.animationDirection.set('next');
+        // Reset direction after animation completes (450ms)
+        setTimeout(() => {
+          this.animationDirection.set('');
+        }, 450);
+      });
     }
   }
 

@@ -1431,45 +1431,55 @@ namespace ImmoGest.Application.Services
                 }
 
                 // Load attachments and default image
+                // For public properties, load attachments directly using property's CompanyId
+                // instead of using _attachmentService which filters by session CompanyId
                 try
                 {
-                    var attachments = await _attachmentService.GetAllAttachmentsForPropertyAsync(property.Id);
-                    if (attachments != null && attachments.Any())
+                    // Get all attachments for this property using the property's CompanyId
+                    var allAttachmentsResult = await _attachmentRepository.GetAllAsync();
+                    if (allAttachmentsResult.IsSuccess() && allAttachmentsResult.Data != null)
                     {
-                        foreach (var attachment in attachments)
+                        var attachments = allAttachmentsResult.Data
+                            .Where(a => a.PropertyId == property.Id && a.CompanyId == property.CompanyId && !a.IsDeleted)
+                            .ToList();
+
+                        if (attachments != null && attachments.Any())
                         {
-                            try
+                            foreach (var attachment in attachments)
                             {
-                                if (!string.IsNullOrEmpty(attachment.StorageHash))
+                                try
                                 {
-                                    var s3Key = S3PathConstants.BuildAttachmentKey(
-                                        property.CompanyId.ToString(),
-                                        attachment.StorageHash,
-                                        attachment.FileName
-                                    );
-                                    var signedUrl = await _s3StorageService.GetOrGenerateCachedUrlAsync(
-                                        GetBucketName(), 
-                                        s3Key, 
-                                        attachment.Url, 
-                                        attachment.UrlExpiresAt, 
-                                        24);
-                                if (signedUrl != attachment.Url)
-                                {
-                                    attachment.Url = signedUrl;
-                                    attachment.UrlExpiresAt = DateTimeOffset.UtcNow.AddHours(24);
-                                    await _attachmentRepository.Update(attachment);
+                                    if (!string.IsNullOrEmpty(attachment.StorageHash))
+                                    {
+                                        var s3Key = S3PathConstants.BuildAttachmentKey(
+                                            property.CompanyId.ToString(),
+                                            attachment.StorageHash,
+                                            attachment.FileName
+                                        );
+                                        var signedUrl = await _s3StorageService.GetOrGenerateCachedUrlAsync(
+                                            GetBucketName(), 
+                                            s3Key, 
+                                            attachment.Url, 
+                                            attachment.UrlExpiresAt, 
+                                            24);
+                                    if (signedUrl != attachment.Url)
+                                    {
+                                        attachment.Url = signedUrl;
+                                        attachment.UrlExpiresAt = DateTimeOffset.UtcNow.AddHours(24);
+                                        await _attachmentRepository.Update(attachment);
+                                    }
+                                    dto.Attachments.Add(new AttachmentDetailsDto
+                                    {
+                                        Id = attachment.Id,
+                                        Url = signedUrl,
+                                        FileName = attachment.FileName
+                                    });
+                                    }
                                 }
-                                dto.Attachments.Add(new AttachmentDetailsDto
+                                catch
                                 {
-                                    Id = attachment.Id,
-                                    Url = signedUrl,
-                                    FileName = attachment.FileName
-                                });
+                                    // Ignore individual attachment errors
                                 }
-                            }
-                            catch
-                            {
-                                // Ignore individual attachment errors
                             }
                         }
                     }

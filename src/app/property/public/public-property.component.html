@@ -62,49 +62,46 @@
 
             <!-- Property Media -->
             <z-card class="p-0 overflow-hidden" zBodySpacing="none">
-              <div class="relative w-full aspect-[4/3] bg-muted flex items-center justify-center overflow-hidden rounded-lg">
+              <div class="relative w-full aspect-[4/3] bg-muted flex items-center justify-center overflow-hidden">
                 @if (currentImage()) {
-                  <img [src]="currentImage()!" [alt]="propertyName()" class="w-full h-full object-cover" />
+                  <img 
+                    [src]="currentImage()!" 
+                    [alt]="propertyName()" 
+                    [@imageSlide]="imageAnimationDirection()"
+                    class="w-full h-full object-cover absolute inset-0 transition-none cursor-pointer"
+                    style="will-change: transform, opacity; transform-origin: center center; backface-visibility: hidden;"
+                    (click)="openImageViewer($event)"
+                  />
                 } @else {
-                  <z-icon zType="image" class="w-16 h-16 text-muted-foreground" />
+                  <z-icon zType="image" class="w-12 h-12 text-muted-foreground" />
                 }
                 @if (attachments().length > 0) {
-                  <div class="absolute top-4 left-4">
-                    <z-button 
-                      zType="ghost" 
-                      zSize="sm" 
-                      type="button"
-                      class="rounded-full bg-background/90 backdrop-blur-sm hover:bg-background" 
-                      (click)="openImageViewer($event)"
-                    >
-                      <z-icon zType="image" />
-                      <span class="ml-2">{{ attachments().length }} photos</span>
+                  <div class="absolute top-2 right-2 z-20 pointer-events-auto">
+                    <z-button zType="ghost" zSize="sm" class="text-xs bg-background/80 hover:bg-background/90 shadow-lg">
+                      {{ currentImageIndex() + 1 }} / {{ attachments().length }}
                     </z-button>
                   </div>
                   @if (attachments().length > 1) {
-                    <div class="absolute top-4 right-4">
-                      <z-badge zType="default" class="bg-background/90 backdrop-blur-sm text-foreground">
-                        {{ currentImageIndex() + 1 }} / {{ attachments().length }}
-                      </z-badge>
-                    </div>
-                    <div class="absolute left-4 top-1/2 -translate-y-1/2">
+                    <div class="absolute left-2 top-1/2 -translate-y-1/2 z-20 pointer-events-auto">
                       <z-button 
                         zType="ghost" 
                         zSize="sm" 
                         type="button"
-                        class="rounded-full bg-background/90 backdrop-blur-sm hover:bg-background select-none" 
-                        (click)="previousImage($event)"
+                        class="rounded-full bg-background/80 hover:bg-background/90 select-none shadow-lg" 
+                        (click)="previousImage($event); $event.stopPropagation()"
+                        (mousedown)="$event.preventDefault(); $event.stopPropagation()"
                       >
                         <z-icon zType="chevron-left" />
                       </z-button>
                     </div>
-                    <div class="absolute right-4 top-1/2 -translate-y-1/2">
+                    <div class="absolute right-2 top-1/2 -translate-y-1/2 z-20 pointer-events-auto">
                       <z-button 
                         zType="ghost" 
                         zSize="sm" 
                         type="button"
-                        class="rounded-full bg-background/90 backdrop-blur-sm hover:bg-background select-none" 
-                        (click)="nextImage($event)"
+                        class="rounded-full bg-background/80 hover:bg-background/90 select-none shadow-lg" 
+                        (click)="nextImage($event); $event.stopPropagation()"
+                        (mousedown)="$event.preventDefault(); $event.stopPropagation()"
                       >
                         <z-icon zType="chevron-right" />
                       </z-button>
@@ -141,9 +138,6 @@
               <div class="flex items-center justify-between">
                 <div>
                   <div class="text-3xl font-bold">{{ price() | propertyPrice: typePaiment() }}</div>
-                  <div class="text-sm text-muted-foreground mt-1">
-                    {{ getPaymentTypeLabel(typePaiment()) }}
-                  </div>
                   @if (property()?.furnished) {
                     <div class="mt-1">
                       <z-badge zType="secondary" class="flex items-center gap-1 w-fit">

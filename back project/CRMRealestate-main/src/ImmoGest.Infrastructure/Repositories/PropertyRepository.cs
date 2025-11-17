@@ -225,10 +225,19 @@ namespace ImmoGest.Infrastructure.Repositories
 
         public async Task<Property> GetPublicPropertyByIdAsync(Guid propertyId)
         {
-            return await DbSet
+            // Load property with Company and DefaultAttachment
+            var property = await DbSet
                 .AsNoTracking()
-                .Include(property => property.Company)
-                .FirstOrDefaultAsync(property => property.IsPublic && property.Id == propertyId);
+                .Include(p => p.Company)
+                .Include(p => p.DefaultAttachment)
+                .FirstOrDefaultAsync(p => p.IsPublic && p.Id == propertyId);
+
+            // Note: Attachments are loaded separately in PropertyService.GetPublicPropertyByIdAsync
+            // via _attachmentService.GetAllAttachmentsForPropertyAsync(property.Id)
+            // This ensures all attachments are returned regardless of any includeRelated parameter
+            // since the public property endpoint doesn't use includeRelated
+
+            return property;
         }
     }
 } 

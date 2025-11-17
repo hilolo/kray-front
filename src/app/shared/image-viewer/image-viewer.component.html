@@ -70,7 +70,9 @@
         <img
           [src]="currentImageUrl()"
           [alt]="currentImageName() || 'Full size image'"
-          class="full-size-image">
+          [@imageSlide]="imageAnimationDirection()"
+          class="full-size-image"
+          style="will-change: transform, opacity; transform-origin: center center; backface-visibility: hidden;">
       </div>
     </div>
   </div>

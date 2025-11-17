@@ -32,7 +32,13 @@
         <z-card class="p-0 overflow-hidden" zBodySpacing="none">
           <div class="relative w-full aspect-[4/3] bg-muted flex items-center justify-center overflow-hidden">
             @if (currentImage()) {
-              <img [src]="currentImage()!" [alt]="propertyName()" class="w-full h-full object-cover" />
+              <img 
+                [src]="currentImage()!" 
+                [alt]="propertyName()" 
+                [@imageSlide]="imageAnimationDirection()"
+                class="w-full h-full object-cover absolute inset-0 transition-none"
+                style="will-change: transform, opacity; transform-origin: center center; backface-visibility: hidden;"
+              />
             } @else {
               <z-icon zType="image" class="w-12 h-12 text-muted-foreground" />
             }
