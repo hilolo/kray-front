@@ -31,7 +31,6 @@ import { PropertyPricePipe } from '@shared/pipes/property-price.pipe';
   standalone: true,
   imports: [
     CommonModule,
-    RouterLink,
     ZardPageComponent,
     ZardCardComponent,
     ZardButtonComponent,
