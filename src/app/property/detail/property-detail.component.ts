@@ -420,6 +420,11 @@ export class PropertyDetailComponent implements OnInit {
     this.router.navigate(['/contact/owners', prop.contactId, 'detail']);
   }
 
+  viewTenantProfile(lease: Lease): void {
+    if (!lease.contactId) return;
+    this.router.navigate(['/contact/tenants', lease.contactId, 'detail']);
+  }
+
   getTenantInitials(lease: Lease): string {
     const name = lease.tenantName || '';
     if (!name) return 'TN';
