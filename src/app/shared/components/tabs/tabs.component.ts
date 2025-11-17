@@ -56,7 +56,7 @@ export class ZardTabComponent {
       <ng-container [ngTemplateOutlet]="navigationBlock"></ng-container>
     }
 
-    <div class="tab-content flex-1">
+    <div class="tab-content">
       @for (tab of tabs(); track $index; let index = $index) {
         <div
           role="tabpanel"
@@ -141,6 +141,9 @@ export class ZardTabComponent {
         &::-webkit-scrollbar-button {
           display: none;
         }
+      }
+      nav[role="tablist"] button {
+        margin: 0;
       }
     `,
   ],

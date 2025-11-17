@@ -52,8 +52,8 @@ export class ZardImageHoverPreviewDirective implements OnInit, OnDestroy {
   
   readonly zImageHoverPreview = input<string | null>(null);
   readonly zPosition = input<ZardTooltipPositions>('right');
-  readonly zMaxWidth = input<string>('300px');
-  readonly zMaxHeight = input<string>('300px');
+  readonly zMaxWidth = input<string>('800px');
+  readonly zMaxHeight = input<string>('800px');
   readonly zAlt = input<string>('');
 
   get nativeElement() {
@@ -261,8 +261,8 @@ export class ZardImageHoverPreviewComponent implements OnInit, OnDestroy {
 
   protected position = signal<ZardTooltipPositions>('right');
   protected imageUrl = signal<string>('');
-  protected maxWidth = signal<string>('300px');
-  protected maxHeight = signal<string>('300px');
+  protected maxWidth = signal<string>('800px');
+  protected maxHeight = signal<string>('800px');
   protected alt = signal<string>('');
   protected isLoading = signal(false);
   protected hasError = signal(false);

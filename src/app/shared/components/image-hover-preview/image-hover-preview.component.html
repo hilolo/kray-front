@@ -1,19 +1,21 @@
 <div class="relative">
   @if (imageUrl()) {
-    <div class="max-w-xs max-h-64 overflow-hidden rounded-lg">
+    <div class="overflow-hidden rounded-lg" [style.max-width]="maxWidth()" [style.max-height]="maxHeight()">
       <img
         [src]="imageUrl()"
         [alt]="alt() || 'Image preview'"
         class="w-full h-full object-contain"
+        [style.max-width]="maxWidth()"
+        [style.max-height]="maxHeight()"
         (error)="onImageError()"
       />
     </div>
   } @else if (isLoading()) {
-    <div class="w-48 h-48 flex items-center justify-center bg-muted rounded-lg">
+    <div class="w-64 h-64 flex items-center justify-center bg-muted rounded-lg">
       <z-icon zType="loader-circle" zSize="lg" class="animate-spin text-muted-foreground" />
     </div>
   } @else if (hasError()) {
-    <div class="w-48 h-32 flex items-center justify-center bg-muted rounded-lg">
+    <div class="w-64 h-48 flex items-center justify-center bg-muted rounded-lg">
       <div class="text-center text-muted-foreground text-sm">
         <z-icon zType="circle-x" zSize="sm" class="mx-auto mb-1" />
         <p>Failed to load image</p>

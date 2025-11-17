@@ -12,6 +12,7 @@ import { ZardInputGroupComponent } from '@shared/components/input-group/input-gr
 import { ZardSelectComponent } from '@shared/components/select/select.component';
 import { ZardSelectItemComponent } from '@shared/components/select/select-item.component';
 import { ZardCardComponent } from '@shared/components/card/card.component';
+import { ZardBadgeComponent } from '@shared/components/badge/badge.component';
 import { ZardImageHoverPreviewDirective } from '@shared/components/image-hover-preview/image-hover-preview.component';
 import { ZardComboboxComponent, ZardComboboxOption } from '@shared/components/combobox/combobox.component';
 import { ZardDatePickerComponent } from '@shared/components/date-picker/date-picker.component';
@@ -30,8 +31,10 @@ import { PropertyService } from '@shared/services/property.service';
 import { ContactService } from '@shared/services/contact.service';
 import type { Property } from '@shared/models/property/property.model';
 import { PropertyCategory } from '@shared/models/property/property.model';
+import type { Lease } from '@shared/models/property/property.model';
 import type { Contact } from '@shared/models/contact/contact.model';
 import { ContactType } from '@shared/models/contact/contact.model';
+import { LeasingStatus } from '@shared/models/lease/lease.model';
 
 interface UploadedFile {
   id: string;
@@ -67,6 +70,7 @@ interface ExistingAttachment {
     ZardSelectComponent,
     ZardSelectItemComponent,
     ZardCardComponent,
+    ZardBadgeComponent,
     ZardImageHoverPreviewDirective,
     ZardComboboxComponent,
     ZardDatePickerComponent,
@@ -98,6 +102,11 @@ export class EditReservationComponent implements OnInit, OnDestroy {
   readonly reservation = signal<Reservation | null>(null);
   readonly property = signal<Property | null>(null);
   readonly contact = signal<Contact | null>(null);
+  
+  // Leases from property
+  readonly leases = computed(() => {
+    return this.property()?.leases || [];
+  });
 
   // Form data
   readonly formData = signal({
@@ -389,7 +398,7 @@ export class EditReservationComponent implements OnInit, OnDestroy {
   }
 
   loadProperty(id: string): void {
-    this.propertyService.getById(id, false).pipe(takeUntil(this.destroy$)).subscribe({
+    this.propertyService.getById(id, true).pipe(takeUntil(this.destroy$)).subscribe({
       next: (property) => {
         this.property.set(property);
         this.cdr.markForCheck();
@@ -907,6 +916,12 @@ export class EditReservationComponent implements OnInit, OnDestroy {
   // Helper methods for form field updates
   updatePropertyId(value: string): void {
     this.formData.update((data) => ({ ...data, propertyId: value }));
+    // Load property details when property changes
+    if (value) {
+      this.loadProperty(value);
+    } else {
+      this.property.set(null);
+    }
     // Check for overlaps when property changes
     this.checkForOverlaps();
   }
@@ -988,16 +1003,53 @@ export class EditReservationComponent implements OnInit, OnDestroy {
     this.formData.update((data) => ({ ...data, totalAmount: +value }));
   }
 
-  updateDescription(value: string): void {
-    this.formData.update((data) => ({ ...data, description: value }));
-  }
-
   updatePrivateNote(value: string): void {
     this.formData.update((data) => ({ ...data, privateNote: value }));
   }
 
   updateStatus(value: string): void {
     this.formData.update((data) => ({ ...data, status: +value }));
+  }
+
+  // Lease status helpers
+  getLeaseStatusLabel(status: number): string {
+    switch (status) {
+      case LeasingStatus.Active:
+        return 'Active';
+      case LeasingStatus.Expired:
+        return 'Expired';
+      case LeasingStatus.Terminated:
+        return 'Terminated';
+      case LeasingStatus.Pending:
+        return 'Pending';
+      default:
+        return 'Unknown';
+    }
+  }
+
+  getLeaseStatusBadgeType(status: number): 'default' | 'secondary' | 'destructive' | 'outline' {
+    switch (status) {
+      case LeasingStatus.Active:
+        return 'default';
+      case LeasingStatus.Expired:
+        return 'secondary';
+      case LeasingStatus.Terminated:
+        return 'destructive';
+      case LeasingStatus.Pending:
+        return 'outline';
+      default:
+        return 'outline';
+    }
+  }
+
+  formatLeaseDate(date: Date | string): string {
+    if (!date) return '';
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return new Intl.DateTimeFormat('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    }).format(dateObj);
   }
 }
 

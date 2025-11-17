@@ -201,6 +201,11 @@ export class PropertyDetailComponent implements OnInit {
         this.isLoading.set(false);
         if (property) {
           this.property.set(property);
+          // Debug: Log leases to check if they're being returned
+          console.log('Property loaded:', property);
+          console.log('Leases from property:', property.leases);
+          console.log('Leases count:', property.leases?.length || 0);
+          
           // Reset image index to 0 when property loads (default image will be first after sorting)
           this.currentImageIndex.set(0);
           // Initialize sharing settings from property
@@ -281,7 +286,12 @@ export class PropertyDetailComponent implements OnInit {
 
   // Computed signal to get leases from property
   readonly leases = computed(() => {
-    return this.property()?.leases || [];
+    const prop = this.property();
+    if (!prop) return [];
+    // Ensure leases array exists and is not null/undefined
+    const leasesArray = Array.isArray(prop.leases) ? prop.leases : [];
+    console.log('Computed leases:', leasesArray);
+    return leasesArray;
   });
 
   // Methods

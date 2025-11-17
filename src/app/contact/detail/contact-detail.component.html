@@ -95,16 +95,26 @@
                   <h4 class="text-sm font-semibold">Bank Accounts</h4>
                   @for (bank of banks(); track bank.id) {
                     <div class="p-3 rounded-md border border-border bg-muted/50">
-                      <div class="flex items-center justify-between mb-2">
+                      <div class="flex items-center gap-2 mb-2">
+                        <z-icon zType="credit-card" zSize="sm" class="text-primary flex-shrink-0" />
                         <span class="text-sm font-medium">{{ bank.bankName }}</span>
                       </div>
-                      <div class="space-y-1 text-sm text-muted-foreground">
-                        <div>RIB: {{ bank.rib }}</div>
+                      <div class="space-y-1.5 text-sm text-muted-foreground ml-6">
+                        <div class="flex items-center gap-2">
+                          <z-icon zType="file-text" zSize="sm" class="text-muted-foreground/70" />
+                          <span>RIB: {{ bank.rib }}</span>
+                        </div>
                         @if (bank.iban) {
-                          <div>IBAN: {{ bank.iban }}</div>
+                          <div class="flex items-center gap-2">
+                            <z-icon zType="globe" zSize="sm" class="text-muted-foreground/70" />
+                            <span>IBAN: {{ bank.iban }}</span>
+                          </div>
                         }
                         @if (bank.swift) {
-                          <div>SWIFT: {{ bank.swift }}</div>
+                          <div class="flex items-center gap-2">
+                            <z-icon zType="building" zSize="sm" class="text-muted-foreground/70" />
+                            <span>SWIFT: {{ bank.swift }}</span>
+                          </div>
                         }
                       </div>
                     </div>
@@ -152,18 +162,18 @@
 
         <!-- Right Section: Related Information -->
         <div class="w-full lg:w-[70%] space-y-2 min-w-0">
-          <z-card zBodySpacing="none" class="h-full">
-            <z-tab-group zTabsPosition="top" zActivePosition="bottom" class="h-full flex flex-col">
+          <z-card zBodySpacing="none" class="mt-4">
+            <z-tab-group zTabsPosition="top" zActivePosition="bottom" class="flex flex-col">
               <!-- Finance Tab (always shown) -->
               <z-tab label="FINANCE">
-                <div class="pt-4 max-h-[calc(100vh-300px)] overflow-y-auto">
+                <div class="pt-4">
                   <p class="text-sm text-muted-foreground">Finance content coming soon</p>
                 </div>
               </z-tab>
 
               <!-- Properties Tab (always shown) -->
               <z-tab label="PROPERTIES">
-                <div class="pt-4 space-y-3 max-h-[calc(100vh-300px)] overflow-y-auto">
+                <div class="pt-4 space-y-3">
                   @if (properties().length > 0) {
                     @for (property of properties(); track property.id) {
                       <z-card class="p-4 cursor-pointer hover:bg-muted/50 transition-colors" zBodySpacing="none" (click)="viewProperty(property.id)">
@@ -222,7 +232,7 @@
 
               <!-- Reservations Tab (always shown) -->
               <z-tab label="RESERVATIONS">
-                <div class="pt-4 space-y-3 max-h-[calc(100vh-300px)] overflow-y-auto">
+                <div class="pt-4 space-y-3">
                   @if (isLoadingReservations()) {
                     <div class="flex items-center justify-center py-8">
                       <div class="text-center space-y-4">
@@ -232,25 +242,50 @@
                     </div>
                   } @else if (reservations().length > 0) {
                     @for (reservation of reservations(); track reservation.id) {
-                      <z-card class="p-4 cursor-pointer hover:bg-muted/50 transition-colors" zBodySpacing="none" (click)="viewReservation(reservation.id)">
+                      <z-card class="p-4" zBodySpacing="none">
                         <div class="space-y-2">
                           <div class="flex items-start justify-between gap-2">
                             <div class="flex-1 min-w-0">
-                              <h4 class="text-sm font-semibold mb-1">{{ reservation.propertyName }}</h4>
+                              <div class="flex items-center gap-2 mb-1">
+                                <h4 class="text-sm font-semibold">{{ reservation.propertyName }}</h4>
+                                @if (reservation.propertyIdentifier) {
+                                  <z-badge zType="outline" zSize="sm">{{ reservation.propertyIdentifier }}</z-badge>
+                                }
+                              </div>
                               <p class="text-xs text-muted-foreground">{{ reservation.propertyAddress }}</p>
                             </div>
-                            <z-badge [zType]="getReservationStatusBadgeType(reservation.status)">
-                              {{ getReservationStatusLabel(reservation.status) }}
-                            </z-badge>
+                            @if (reservation.propertyImageUrl) {
+                              <img
+                                [src]="reservation.propertyImageUrl"
+                                [alt]="reservation.propertyName"
+                                [zImageHoverPreview]="reservation.propertyImageUrl"
+                                class="w-16 h-16 rounded-md object-cover border border-border flex-shrink-0"
+                              />
+                            } @else {
+                              <div class="w-16 h-16 rounded-md border border-border bg-muted flex items-center justify-center flex-shrink-0">
+                                <z-icon zType="house" zSize="sm" class="text-muted-foreground" />
+                              </div>
+                            }
                           </div>
-                          <div class="space-y-1 text-sm text-muted-foreground pt-2 border-t border-border">
-                            <div class="flex items-center gap-2">
-                              <z-icon zType="calendar" zSize="sm" />
-                              <span>{{ formatDate(reservation.startDate) }} - {{ formatDate(reservation.endDate) }}</span>
+                          <div class="flex items-center justify-between pt-2 border-t border-border">
+                            <div class="flex flex-col gap-1">
+                              <div class="flex items-center gap-2 text-sm text-muted-foreground">
+                                <z-icon zType="calendar" zSize="sm" />
+                                <span>{{ formatDate(reservation.startDate) }} - {{ formatDate(reservation.endDate) }}</span>
+                              </div>
+                              <div class="flex items-center gap-2">
+                                <z-icon zType="circle-dollar-sign" zSize="sm" class="text-muted-foreground" />
+                                <span class="text-sm font-semibold">{{ reservation.totalAmount }} MAD</span>
+                              </div>
                             </div>
                             <div class="flex items-center gap-2">
-                              <z-icon zType="circle-dollar-sign" zSize="sm" />
-                              <span>{{ reservation.totalAmount }} MAD</span>
+                              <z-badge [zType]="getReservationStatusBadgeType(reservation.status)">
+                                {{ getReservationStatusLabel(reservation.status) }}
+                              </z-badge>
+                              <z-button zType="ghost" zSize="sm" (click)="viewReservation(reservation.id)">
+                                <z-icon zType="eye" zSize="sm" />
+                                View
+                              </z-button>
                             </div>
                           </div>
                         </div>
@@ -267,7 +302,7 @@
               <!-- Leases Tab (shown for Owners and Tenants) -->
               @if ((isOwner() || isTenant()) && leases().length > 0) {
                 <z-tab label="LEASES">
-                  <div class="pt-4 space-y-3 max-h-[calc(100vh-300px)] overflow-y-auto">
+                  <div class="pt-4 space-y-3">
                     @for (lease of leases(); track lease.id) {
                       <z-card class="p-4" zBodySpacing="none">
                         <div class="space-y-2">
@@ -305,7 +340,7 @@
 
               <!-- Maintenance Tab (always shown) -->
               <z-tab label="MAINTENANCE">
-                <div class="pt-4 space-y-3 max-h-[calc(100vh-300px)] overflow-y-auto">
+                <div class="pt-4 space-y-3">
                   @if (maintenances().length > 0) {
                     @for (maintenance of maintenances(); track maintenance.id) {
                       <z-card class="p-4 cursor-pointer hover:bg-muted/50 transition-colors" zBodySpacing="none" (click)="viewMaintenance(maintenance.id)">

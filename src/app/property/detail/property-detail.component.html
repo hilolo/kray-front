@@ -212,7 +212,7 @@
         }
 
         <!-- Information Sections -->
-        <z-accordion zType="multiple" [zDefaultValue]="['equipments', 'features', 'description']">
+        <z-accordion zType="multiple" [zDefaultValue]="['equipments', 'features']">
           <z-accordion-item zValue="equipments" zTitle="Equipments">
             @if (equipment().length > 0) {
               <div class="flex flex-wrap gap-2">
@@ -237,20 +237,14 @@
             }
           </z-accordion-item>
 
-          <z-accordion-item zValue="description" zTitle="Description">
-            <div class="text-sm text-muted-foreground">
-              {{ description() || 'No description available' }}
-            </div>
-          </z-accordion-item>
-
         </z-accordion>
 
       </div>
 
       <!-- Right Section: Tenancy Management -->
       <div class="w-full lg:w-1/2 space-y-2 min-w-0">
-        <z-card zBodySpacing="none">
-          <z-tab-group zTabsPosition="top" zActivePosition="bottom">
+        <z-card zBodySpacing="none" class="flex flex-col">
+          <z-tab-group zTabsPosition="top" zActivePosition="bottom" class="flex flex-col">
             <z-tab label="FINANCE">
               <div class="pt-4">
                 <p class="text-sm text-muted-foreground">Finance content coming soon</p>
@@ -276,7 +270,8 @@
                   }
                 </div>
               </z-tab>
-            } @else {
+            }
+            @if (!isVacationLocation()) {
               <z-tab label="LEASING">
                 <div class="pt-2 space-y-2">
                   <h3 class="text-sm font-semibold">Leasing</h3>

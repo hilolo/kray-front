@@ -173,6 +173,53 @@
                   </z-form-field>
                 }
               </div>
+
+              <!-- Leases Section -->
+              @if (property() && leases().length > 0) {
+                <div class="mt-6 pt-6 border-t">
+                  <div class="mb-4">
+                    <h4 class="text-sm font-semibold mb-1">Property Leases</h4>
+                    <p class="text-xs text-muted-foreground">All leases associated with this property</p>
+                  </div>
+                  <div class="space-y-2">
+                    @for (lease of leases(); track lease.id) {
+                      <z-card class="p-3" zBodySpacing="none">
+                        <div class="space-y-2">
+                          <div class="flex items-start justify-between gap-2">
+                            <div class="flex-1 min-w-0">
+                              <div class="flex items-center gap-2 mb-1">
+                                <z-icon zType="file-text" zSize="sm" class="text-muted-foreground" />
+                                <span class="text-sm font-semibold">{{ lease.tenantName || 'Unnamed Tenant' }}</span>
+                              </div>
+                              @if (lease.tenantIdentifier) {
+                                <div class="flex items-center gap-2 text-xs text-muted-foreground mb-1 ml-6">
+                                  <z-icon zType="id-card" zSize="sm" />
+                                  <span>Ref: {{ lease.tenantIdentifier }}</span>
+                                </div>
+                              }
+                            </div>
+                            <z-badge [zType]="getLeaseStatusBadgeType(lease.status)">
+                              {{ getLeaseStatusLabel(lease.status) }}
+                            </z-badge>
+                          </div>
+                          <div class="space-y-1 text-xs text-muted-foreground pt-2 border-t border-border ml-6">
+                            <div class="flex items-center gap-2">
+                              <z-icon zType="calendar" zSize="sm" />
+                              <span>{{ formatLeaseDate(lease.tenancyStart) }} - {{ formatLeaseDate(lease.tenancyEnd) }}</span>
+                            </div>
+                            @if (lease.rentPrice) {
+                              <div class="flex items-center gap-2">
+                                <z-icon zType="circle-dollar-sign" zSize="sm" />
+                                <span>{{ lease.rentPrice }} MAD</span>
+                              </div>
+                            }
+                          </div>
+                        </div>
+                      </z-card>
+                    }
+                  </div>
+                </div>
+              }
             </div>
 
             <!-- Reservation Period Section -->
@@ -289,19 +336,6 @@
                 </z-form-field>
               </div>
 
-              <z-form-field>
-                <z-form-label>Description</z-form-label>
-                <z-form-control>
-                  <textarea
-                    z-input
-                    rows="4"
-                    [ngModel]="formData().description"
-                    (ngModelChange)="updateDescription($event)"
-                    placeholder="Enter description..."
-                    class="w-full resize-none"
-                  ></textarea>
-                </z-form-control>
-              </z-form-field>
             </div>
 
             <!-- Additional Information Section -->
