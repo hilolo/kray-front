@@ -46,7 +46,10 @@ export class ZardImageHoverPreviewDirective implements OnInit, OnDestroy {
   private componentRef?: ComponentRef<ZardImageHoverPreviewComponent>;
   private scrollListenerRef?: () => void;
   private mouseMoveListenerRef?: () => void;
-
+  private showTimeout?: ReturnType<typeof setTimeout>;
+  private hideTimeout?: ReturnType<typeof setTimeout>;
+  private isMouseOver = false;
+  
   readonly zImageHoverPreview = input<string | null>(null);
   readonly zPosition = input<ZardTooltipPositions>('right');
   readonly zMaxWidth = input<string>('300px');
@@ -65,45 +68,90 @@ export class ZardImageHoverPreviewDirective implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.clearTimeouts();
     this.hide();
     this.destroy$.next();
     this.destroy$.complete();
   }
 
+  private clearTimeouts(): void {
+    if (this.showTimeout) {
+      clearTimeout(this.showTimeout);
+      this.showTimeout = undefined;
+    }
+    if (this.hideTimeout) {
+      clearTimeout(this.hideTimeout);
+      this.hideTimeout = undefined;
+    }
+  }
+
   show(event?: MouseEvent) {
-    if (this.componentRef) return;
+    // Clear any pending hide timeout
+    if (this.hideTimeout) {
+      clearTimeout(this.hideTimeout);
+      this.hideTimeout = undefined;
+    }
+
+    // If already showing, just update the position if event provided
+    if (this.componentRef) {
+      if (event) {
+        this.updatePreviewPosition(event);
+      }
+      return;
+    }
 
     const imageUrl = this.zImageHoverPreview();
     if (!imageUrl || imageUrl.trim() === '') return;
 
-    const previewPortal = new ComponentPortal(ZardImageHoverPreviewComponent);
-    this.componentRef = this.overlayRef?.attach(previewPortal);
-    if (!this.componentRef) return;
+    // Clear any pending show timeout
+    this.clearTimeouts();
 
-    this.componentRef.instance.setProps(
-      imageUrl,
-      this.zPosition(),
-      this.zMaxWidth(),
-      this.zMaxHeight(),
-      this.zAlt(),
-    );
-    this.componentRef.instance.state.set('opened');
+    // Small delay to prevent flickering when moving quickly between images
+    // Reduced delay for better responsiveness
+    this.showTimeout = setTimeout(() => {
+      // Double-check mouse is still over element
+      if (!this.isMouseOver) return;
 
-    this.componentRef.instance.onLoad$.pipe(take(1)).subscribe(() => {
-      // Track mouse movement to position preview near cursor
-      this.trackMousePosition();
-      // Set initial position if event provided
-      if (event) {
-        this.updatePreviewPosition(event);
-      }
-    });
+      const previewPortal = new ComponentPortal(ZardImageHoverPreviewComponent);
+      this.componentRef = this.overlayRef?.attach(previewPortal);
+      if (!this.componentRef) return;
 
-    this.scrollListenerRef = this.renderer.listen(window, 'scroll', () => {
-      this.hide(0);
-    });
+      this.componentRef.instance.setProps(
+        imageUrl,
+        this.zPosition(),
+        this.zMaxWidth(),
+        this.zMaxHeight(),
+        this.zAlt(),
+      );
+      this.componentRef.instance.state.set('opened');
+
+      this.componentRef.instance.onLoad$.pipe(take(1)).subscribe(() => {
+        // Track mouse movement to position preview near cursor
+        this.trackMousePosition();
+        // Set initial position if event provided
+        if (event) {
+          this.updatePreviewPosition(event);
+        }
+      });
+
+      this.scrollListenerRef = this.renderer.listen(window, 'scroll', () => {
+        this.hide(0);
+      });
+    }, 50);
   }
 
   hide(animationDuration = 150) {
+    // Clear any pending show timeout
+    if (this.showTimeout) {
+      clearTimeout(this.showTimeout);
+      this.showTimeout = undefined;
+    }
+
+    // Clear any existing hide timeout
+    if (this.hideTimeout) {
+      clearTimeout(this.hideTimeout);
+    }
+
     if (!this.componentRef) return;
 
     this.componentRef.instance.state.set('closed');
@@ -113,9 +161,10 @@ export class ZardImageHoverPreviewDirective implements OnInit, OnDestroy {
       this.mouseMoveListenerRef = undefined;
     }
 
-    setTimeout(() => {
+    this.hideTimeout = setTimeout(() => {
       this.overlayRef?.detach();
       this.componentRef = undefined;
+      this.hideTimeout = undefined;
     }, animationDuration);
 
     if (this.scrollListenerRef) {
@@ -127,11 +176,13 @@ export class ZardImageHoverPreviewDirective implements OnInit, OnDestroy {
   private setupTriggers() {
     this.renderer.listen(this.elementRef.nativeElement, 'mouseenter', (event: MouseEvent) => {
       event.preventDefault();
+      this.isMouseOver = true;
       this.show(event);
     });
 
     this.renderer.listen(this.elementRef.nativeElement, 'mouseleave', (event: Event) => {
       event.preventDefault();
+      this.isMouseOver = false;
       this.hide();
     });
   }
