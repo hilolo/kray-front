@@ -118,19 +118,20 @@
               <img
                 [src]="row.propertyImageUrl"
                 [alt]="row.propertyName"
-                class="w-20 h-20 object-cover rounded-md border border-border"
+                class="w-20 h-20 object-cover rounded-md border border-border cursor-pointer hover:opacity-80 transition-opacity"
                 [zImageHoverPreview]="row.propertyImageUrl"
                 [zAlt]="row.propertyName"
                 [zPosition]="'right'"
                 [zMaxWidth]="'400px'"
                 [zMaxHeight]="'400px'"
+                (click)="onViewProperty(row)"
               />
             } @else {
-              <div class="w-20 h-20 rounded-md border border-border bg-muted flex items-center justify-center">
+              <div class="w-20 h-20 rounded-md border border-border bg-muted flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity" (click)="onViewProperty(row)">
                 <z-icon zType="house" zSize="lg" class="text-muted-foreground" />
               </div>
             }
-            <div class="flex flex-col gap-1">
+            <div class="flex flex-col gap-1 cursor-pointer hover:opacity-80 transition-opacity" (click)="onViewProperty(row)">
               <span class="font-semibold text-base">{{ row.propertyName || 'N/A' }}</span>
               @if (row.propertyAddress) {
                 <span class="text-sm text-muted-foreground">{{ row.propertyAddress }}</span>
@@ -146,12 +147,13 @@
               <img
                 [src]="getTenantAvatarUrl(row)!"
                 [alt]="row.tenantName"
-                class="w-12 h-12 rounded-full object-cover border border-border"
+                class="w-12 h-12 rounded-full object-cover border border-border cursor-pointer hover:opacity-80 transition-opacity"
                 [zImageHoverPreview]="getTenantAvatarUrl(row)!"
                 [zAlt]="row.tenantName"
                 [zPosition]="'right'"
                 [zMaxWidth]="'200px'"
                 [zMaxHeight]="'200px'"
+                (click)="onViewContact(row)"
               />
             } @else {
               <z-avatar
@@ -159,10 +161,11 @@
                 zType="default"
                 zSize="default"
                 zShape="circle"
-                class="w-12 h-12"
+                class="w-12 h-12 cursor-pointer hover:opacity-80 transition-opacity"
+                (click)="onViewContact(row)"
               />
             }
-            <div class="flex flex-col gap-1">
+            <div class="flex flex-col gap-1 cursor-pointer hover:opacity-80 transition-opacity" (click)="onViewContact(row)">
               <span class="font-medium text-base">{{ row.tenantName || 'N/A' }}</span>
               @if (getTenantIdentifier(row)) {
                 <span class="text-sm text-muted-foreground">Ref: {{ getTenantIdentifier(row) }}</span>
@@ -255,7 +258,7 @@
             <!-- Property and Tenant Section -->
             <div class="flex gap-2 mb-3">
               <!-- Property -->
-              <div class="flex flex-col items-center gap-1.5 flex-1">
+              <div class="flex flex-col items-center gap-1.5 flex-1 cursor-pointer hover:opacity-80 transition-opacity" (click)="onViewProperty(row)">
                 @if (row.propertyImageUrl) {
                   <img
                     [src]="row.propertyImageUrl"
@@ -279,7 +282,7 @@
               </div>
               
               <!-- Tenant -->
-              <div class="flex flex-col items-center gap-1.5 flex-1">
+              <div class="flex flex-col items-center gap-1.5 flex-1 cursor-pointer hover:opacity-80 transition-opacity" (click)="onViewContact(row)">
                 @if (getTenantAvatarUrl(row)) {
                   <img
                     [src]="getTenantAvatarUrl(row)!"

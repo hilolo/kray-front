@@ -125,13 +125,15 @@
               zType="default"
               zSize="default"
               zShape="circle"
+              class="cursor-pointer hover:opacity-80 transition-opacity"
+              (click)="onViewContact(row)"
             />
           </div>
         </ng-template>
 
         <!-- Name Column Template -->
         <ng-template #nameCell let-value let-row="row">
-          <div class="flex flex-col gap-1">
+          <div class="flex flex-col gap-1 cursor-pointer hover:opacity-80 transition-opacity" (click)="onViewContact(row)">
             <span class="font-medium">{{ getContactName(row) }}</span>
             @if (row.identifier) {
               <span class="text-sm text-muted-foreground">{{ row.identifier }}</span>
@@ -230,7 +232,8 @@
                   zType="default"
                   zSize="lg"
                   zShape="circle"
-                  class="w-16 h-16"
+                  class="w-16 h-16 cursor-pointer hover:opacity-80 transition-opacity"
+                  (click)="onViewContact(row)"
                 />
                 <z-badge zType="secondary" zShape="default" class="w-fit text-xs">
                   {{ row.isACompany ? 'Company' : 'Individual' }}
@@ -238,7 +241,7 @@
               </div>
               
               <!-- Right side: Name and Contact details -->
-              <div class="flex flex-col gap-2.5 flex-1 min-w-0">
+              <div class="flex flex-col gap-2.5 flex-1 min-w-0 cursor-pointer hover:opacity-80 transition-opacity" (click)="onViewContact(row)">
                 <h3 class="font-semibold text-sm leading-tight">{{ getContactName(row) }}</h3>
                 
                 <!-- Contact details -->

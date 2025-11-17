@@ -142,15 +142,16 @@
               <img
                 [src]="row.defaultAttachmentUrl"
                 [alt]="getPropertyDisplayName(row)"
-                class="w-20 h-20 object-cover rounded-md border border-border"
+                class="w-20 h-20 object-cover rounded-md border border-border cursor-pointer hover:opacity-80 transition-opacity"
                 [zImageHoverPreview]="row.defaultAttachmentUrl"
                 [zAlt]="getPropertyDisplayName(row)"
                 [zPosition]="'right'"
                 [zMaxWidth]="'400px'"
                 [zMaxHeight]="'400px'"
+                (click)="onViewProperty(row)"
               />
             } @else {
-              <div class="w-20 h-20 rounded-md border border-border bg-muted flex items-center justify-center">
+              <div class="w-20 h-20 rounded-md border border-border bg-muted flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity" (click)="onViewProperty(row)">
                 <span class="text-2xl font-semibold text-muted-foreground">{{ getInitials(row) }}</span>
               </div>
             }
@@ -159,7 +160,7 @@
 
         <!-- Reference Column Template -->
         <ng-template #referenceCell let-value let-row="row">
-          <div class="flex flex-col gap-1">
+          <div class="flex flex-col gap-1 cursor-pointer hover:opacity-80 transition-opacity" (click)="onViewProperty(row)">
             @if (row.identifier) {
               <span class="font-bold text-base">{{ row.identifier }}</span>
             } @else {
@@ -265,7 +266,7 @@
             <!-- Main content: Large Image with Name/Reference below -->
             <div class="flex flex-col gap-3">
               <!-- Large Image -->
-              <div class="w-full aspect-[4/3] rounded-md overflow-hidden border border-border bg-muted">
+              <div class="w-full aspect-[4/3] rounded-md overflow-hidden border border-border bg-muted cursor-pointer hover:opacity-80 transition-opacity" (click)="onViewProperty(row)">
                 @if (row.defaultAttachmentUrl) {
                   <img
                     [src]="row.defaultAttachmentUrl"
@@ -285,7 +286,7 @@
               </div>
               
               <!-- Name/Reference, Address, and Owner below image -->
-              <div class="flex flex-col gap-2">
+              <div class="flex flex-col gap-2 cursor-pointer hover:opacity-80 transition-opacity" (click)="onViewProperty(row)">
                 <!-- Name/Reference -->
                 <div class="text-center">
                   @if (row.identifier) {

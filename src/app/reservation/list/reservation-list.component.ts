@@ -600,6 +600,19 @@ export class ReservationListComponent implements OnInit, OnDestroy {
     this.router.navigate(['/reservation', reservation.id, 'edit']);
   }
 
+  onViewProperty(reservation: Reservation): void {
+    if (reservation.propertyId) {
+      this.router.navigate(['/property/detail', reservation.propertyId]);
+    }
+  }
+
+  onViewContact(reservation: Reservation): void {
+    if (reservation.contactId) {
+      // Reservations use tenants, so navigate to tenant detail
+      this.router.navigate(['/contact/tenants', reservation.contactId, 'detail']);
+    }
+  }
+
   onDeleteReservation(reservation: Reservation): void {
     const dialogRef = this.alertDialogService.confirm({
       zTitle: 'Delete Reservation',

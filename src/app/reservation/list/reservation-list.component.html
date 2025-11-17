@@ -151,19 +151,20 @@
               <img
                 [src]="row.propertyImageUrl"
                 [alt]="row.propertyName"
-                class="w-20 h-20 object-cover rounded-md border border-border"
+                class="w-20 h-20 object-cover rounded-md border border-border cursor-pointer hover:opacity-80 transition-opacity"
                 [zImageHoverPreview]="row.propertyImageUrl"
                 [zAlt]="row.propertyName"
                 [zPosition]="'right'"
                 [zMaxWidth]="'400px'"
                 [zMaxHeight]="'400px'"
+                (click)="onViewProperty(row)"
               />
             } @else {
-              <div class="w-20 h-20 rounded-md border border-border bg-muted flex items-center justify-center">
+              <div class="w-20 h-20 rounded-md border border-border bg-muted flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity" (click)="onViewProperty(row)">
                 <z-icon zType="house" zSize="lg" class="text-muted-foreground" />
               </div>
             }
-            <div class="flex flex-col gap-1">
+            <div class="flex flex-col gap-1 cursor-pointer hover:opacity-80 transition-opacity" (click)="onViewProperty(row)">
               @if (row.propertyIdentifier) {
                 <span class="font-semibold text-base">{{ row.propertyIdentifier }}</span>
               }
@@ -184,12 +185,13 @@
               <img
                 [src]="row.contactAvatarUrl"
                 [alt]="row.contactName"
-                class="w-12 h-12 rounded-full object-cover border border-border"
+                class="w-12 h-12 rounded-full object-cover border border-border cursor-pointer hover:opacity-80 transition-opacity"
                 [zImageHoverPreview]="row.contactAvatarUrl"
                 [zAlt]="row.contactName"
                 [zPosition]="'right'"
                 [zMaxWidth]="'200px'"
                 [zMaxHeight]="'200px'"
+                (click)="onViewContact(row)"
               />
             } @else {
               <z-avatar
@@ -197,10 +199,11 @@
                 zType="default"
                 zSize="default"
                 zShape="circle"
-                class="w-12 h-12"
+                class="w-12 h-12 cursor-pointer hover:opacity-80 transition-opacity"
+                (click)="onViewContact(row)"
               />
             }
-            <div class="flex flex-col gap-1">
+            <div class="flex flex-col gap-1 cursor-pointer hover:opacity-80 transition-opacity" (click)="onViewContact(row)">
               <span class="font-medium text-base">{{ row.contactName || 'N/A' }}</span>
               @if (row.contactEmail) {
                 <span class="text-sm text-muted-foreground">{{ row.contactEmail }}</span>
@@ -299,7 +302,7 @@
             <!-- Property and Contact Section -->
             <div class="flex gap-4 mb-5">
               <!-- Property -->
-              <div class="flex flex-col items-center gap-2.5 flex-1">
+              <div class="flex flex-col items-center gap-2.5 flex-1 cursor-pointer hover:opacity-80 transition-opacity" (click)="onViewProperty(row)">
                 @if (row.propertyImageUrl) {
                   <img
                     [src]="row.propertyImageUrl"
@@ -327,7 +330,7 @@
               </div>
               
               <!-- Contact -->
-              <div class="flex flex-col items-center gap-2.5 flex-1">
+              <div class="flex flex-col items-center gap-2.5 flex-1 cursor-pointer hover:opacity-80 transition-opacity" (click)="onViewContact(row)">
                 @if (row.contactAvatarUrl) {
                   <img
                     [src]="row.contactAvatarUrl"

@@ -400,6 +400,19 @@ export class LeasingListComponent implements OnInit, OnDestroy {
     this.router.navigate(['/leasing', lease.id, 'edit']);
   }
 
+  onViewProperty(lease: Lease): void {
+    if (lease.propertyId) {
+      this.router.navigate(['/property/detail', lease.propertyId]);
+    }
+  }
+
+  onViewContact(lease: Lease): void {
+    if (lease.contactId) {
+      // Leases use tenants, so navigate to tenant detail
+      this.router.navigate(['/contact/tenants', lease.contactId, 'detail']);
+    }
+  }
+
   onDeleteLease(lease: Lease): void {
     const dialogRef = this.alertDialogService.confirm({
       zTitle: 'Delete Lease',
