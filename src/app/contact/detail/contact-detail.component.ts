@@ -23,6 +23,7 @@ import { catchError, of } from 'rxjs';
 import { LeasingStatus } from '@shared/models/lease/lease.model';
 import { ReservationStatus } from '@shared/models/reservation/reservation.model';
 import { MaintenanceStatus, MaintenancePriority } from '@shared/models/maintenance/maintenance.model';
+import { PropertyPricePipe } from '@shared/pipes/property-price.pipe';
 
 @Component({
   selector: 'app-contact-detail',
@@ -40,6 +41,7 @@ import { MaintenanceStatus, MaintenancePriority } from '@shared/models/maintenan
     ZardAvatarComponent,
     ZardFileViewerComponent,
     ZardImageHoverPreviewDirective,
+    PropertyPricePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './contact-detail.component.html',
