@@ -27,6 +27,7 @@ namespace ImmoGest.Application.Services
         private readonly IPropertyRepository _propertyRepository;
         private readonly ILeaseRepository _leaseRepository;
         private readonly IBankRepository _bankRepository;
+        private readonly IMaintenanceRepository _maintenanceRepository;
         private readonly IMapper _mapper;
         private readonly ISession _session;
         private readonly IS3StorageService _s3StorageService;
@@ -40,6 +41,7 @@ namespace ImmoGest.Application.Services
             IPropertyRepository propertyRepository,
             ILeaseRepository leaseRepository,
             IBankRepository bankRepository,
+            IMaintenanceRepository maintenanceRepository,
             ISession session,
             IS3StorageService s3StorageService,
             IConfiguration configuration,
@@ -51,6 +53,7 @@ namespace ImmoGest.Application.Services
             _propertyRepository = propertyRepository;
             _leaseRepository = leaseRepository;
             _bankRepository = bankRepository;
+            _maintenanceRepository = maintenanceRepository;
             _mapper = mapper;
             _session = session;
             _s3StorageService = s3StorageService;
@@ -861,6 +864,25 @@ namespace ImmoGest.Application.Services
                     {
                         dto.Banks = new List<BankDto>();
                     }
+
+                    // Load related Maintenances
+                    var maintenancesFilter = new GetMaintenancesFilter
+                    {
+                        ContactId = entity.Id,
+                        Ignore = true,
+                        CompanyId = entity.CompanyId
+                    };
+                    var maintenancesQueryResult = _maintenanceRepository.GetAllFilter(maintenancesFilter);
+                    if (maintenancesQueryResult.IsSuccess())
+                    {
+                        var maintenances = await maintenancesQueryResult.Data
+                            .ToListAsync();
+                        dto.Maintenances = _mapper.Map<List<MaintenanceDto>>(maintenances);
+                    }
+                    else
+                    {
+                        dto.Maintenances = new List<MaintenanceDto>();
+                    }
                 }
                 else
                 {
@@ -868,6 +890,7 @@ namespace ImmoGest.Application.Services
                     dto.Properties = new List<PropertyDto>();
                     dto.Leases = new List<LeaseDto>();
                     dto.Banks = new List<BankDto>();
+                    dto.Maintenances = new List<MaintenanceDto>();
                 }
             }
             await base.InGet_AfterMappingAsync(entity, mappedEntity);

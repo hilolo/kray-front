@@ -1,0 +1,374 @@
+<z-page zTitle="Contact Details">
+  <div class="container mx-auto max-w-6xl px-2 py-2">
+    @if (isLoading()) {
+      <div class="flex items-center justify-center min-h-[400px]">
+        <div class="text-center space-y-4">
+          <z-icon zType="loader-circle" class="w-8 h-8 animate-spin mx-auto" />
+          <p class="text-sm text-muted-foreground">Loading contact details...</p>
+        </div>
+      </div>
+    } @else if (contact()) {
+      <!-- Header with Edit Button -->
+      <div class="flex items-center justify-between mb-4 gap-4">
+        <div class="flex items-center gap-2">
+          @if (contact()?.identifier) {
+            <z-badge zType="outline" class="flex items-center gap-2 px-4 py-2">
+              <z-icon zType="id-card" zSize="default" class="text-muted-foreground" />
+              <span class="text-sm font-medium text-muted-foreground">Reference:</span>
+              <span class="text-sm font-semibold text-foreground">{{ contact()?.identifier }}</span>
+            </z-badge>
+          }
+          @if (contact()?.type) {
+            <z-badge zType="secondary" class="px-4 py-2">
+              <span class="text-sm font-medium">{{ contact()?.type }}</span>
+            </z-badge>
+          }
+        </div>
+        <z-button zType="default" [routerLink]="editContactRoute()">
+          <z-icon zType="pencil" zSize="sm" />
+          Edit Contact
+        </z-button>
+      </div>
+
+      <div class="flex flex-col lg:flex-row gap-2 h-full">
+        <!-- Left Section: Contact Information -->
+        <div class="w-full lg:w-[30%] space-y-2 min-w-0">
+          <!-- Contact Profile Card -->
+          <z-card zBodySpacing="none">
+            <div class="space-y-3">
+              <h3 class="text-sm font-semibold">Contact Information</h3>
+              <div class="flex items-start gap-3">
+                @if (contact()?.avatar) {
+                  <img
+                    [src]="contact()?.avatar!"
+                    [alt]="contactName()"
+                    class="w-20 h-20 rounded-full object-cover border border-border flex-shrink-0"
+                  />
+                } @else {
+                  <z-avatar
+                    [zImage]="{ fallback: contactInitials() }"
+                    zType="default"
+                    zSize="lg"
+                    zShape="circle"
+                    class="w-20 h-20 flex-shrink-0"
+                  />
+                }
+                <div class="flex-1 min-w-0">
+                  <h1 class="text-lg font-semibold mb-1">{{ contactName() }}</h1>
+                  @if (contact()?.email) {
+                    <div class="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                      <z-icon zType="mail" zSize="sm" />
+                      <span>{{ contact()?.email }}</span>
+                    </div>
+                  }
+                  @if (contact()?.phones && contact()!.phones.length > 0) {
+                    <div class="flex items-center gap-2 text-sm text-muted-foreground">
+                      <z-icon zType="smartphone" zSize="sm" />
+                      <span>{{ contact()!.phones.join(', ') }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <!-- Company Information -->
+              @if (contact()?.isACompany) {
+                <div class="border-t border-border pt-3 mt-3 space-y-2">
+                  <h4 class="text-sm font-semibold">Company Details</h4>
+                  @if (contact()?.ice) {
+                    <div class="flex items-center gap-2 text-sm text-muted-foreground">
+                      <z-icon zType="building" zSize="sm" />
+                      <span>ICE: {{ contact()?.ice }}</span>
+                    </div>
+                  }
+                  @if (contact()?.rc) {
+                    <div class="flex items-center gap-2 text-sm text-muted-foreground">
+                      <z-icon zType="file-text" zSize="sm" />
+                      <span>RC: {{ contact()?.rc }}</span>
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- Bank Information -->
+              @if (hasBanks()) {
+                <div class="border-t border-border pt-3 mt-3 space-y-2">
+                  <h4 class="text-sm font-semibold">Bank Accounts</h4>
+                  @for (bank of banks(); track bank.id) {
+                    <div class="p-3 rounded-md border border-border bg-muted/50">
+                      <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium">{{ bank.bankName }}</span>
+                      </div>
+                      <div class="space-y-1 text-sm text-muted-foreground">
+                        <div>RIB: {{ bank.rib }}</div>
+                        @if (bank.iban) {
+                          <div>IBAN: {{ bank.iban }}</div>
+                        }
+                        @if (bank.swift) {
+                          <div>SWIFT: {{ bank.swift }}</div>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- Attachments -->
+              @if (hasAttachments()) {
+                <div class="border-t border-border pt-3 mt-3 space-y-2">
+                  <h4 class="text-sm font-semibold">Attachments</h4>
+                  <div class="space-y-2">
+                    @for (attachment of attachments(); track attachment.id) {
+                      <div 
+                        class="flex items-center gap-3 p-2 rounded-md border border-border bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer group"
+                        (click)="isFileFormatSupported(attachment.url) && openFile(attachment.url, attachment.fileName || attachment.originalFileName, attachment.fileSize)"
+                        [zImageHoverPreview]="getFileViewerType(attachment.url) === 'image' ? attachment.url : null"
+                        [zAlt]="attachment.fileName || attachment.originalFileName"
+                        [zPosition]="'right'"
+                        [zMaxWidth]="'400px'"
+                        [zMaxHeight]="'400px'"
+                      >
+                        <div class="flex-shrink-0 w-10 h-10 rounded bg-primary/10 flex items-center justify-center">
+                          <z-icon 
+                            [zType]="getFileViewerType(attachment.url) === 'image' ? 'image' : 'file'" 
+                            class="text-primary" 
+                            zSize="sm" 
+                          />
+                        </div>
+                        <div class="flex-1 min-w-0">
+                          <p class="font-medium text-sm truncate">{{ attachment.fileName || attachment.originalFileName }}</p>
+                          <p class="text-xs text-muted-foreground">{{ formatFileSize(attachment.fileSize) }}</p>
+                        </div>
+                        @if (isFileFormatSupported(attachment.url)) {
+                          <z-icon zType="eye" zSize="sm" class="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </z-card>
+        </div>
+
+        <!-- Right Section: Related Information -->
+        <div class="w-full lg:w-[70%] space-y-2 min-w-0">
+          <z-card zBodySpacing="none" class="h-full">
+            <z-tab-group zTabsPosition="top" zActivePosition="bottom" class="h-full flex flex-col">
+              <!-- Finance Tab (always shown) -->
+              <z-tab label="FINANCE">
+                <div class="pt-4 max-h-[calc(100vh-300px)] overflow-y-auto">
+                  <p class="text-sm text-muted-foreground">Finance content coming soon</p>
+                </div>
+              </z-tab>
+
+              <!-- Properties Tab (always shown) -->
+              <z-tab label="PROPERTIES">
+                <div class="pt-4 space-y-3 max-h-[calc(100vh-300px)] overflow-y-auto">
+                  @if (properties().length > 0) {
+                    @for (property of properties(); track property.id) {
+                      <z-card class="p-4 cursor-pointer hover:bg-muted/50 transition-colors" zBodySpacing="none" (click)="viewProperty(property.id)">
+                        <div class="space-y-2">
+                          <div class="flex items-start justify-between gap-2">
+                            <div class="flex-1 min-w-0">
+                              <div class="flex items-center gap-2 mb-1">
+                                <h4 class="text-sm font-semibold">{{ property.name || property.identifier || 'Unnamed Property' }}</h4>
+                                @if (property.identifier) {
+                                  <z-badge zType="outline" zSize="sm">{{ property.identifier }}</z-badge>
+                                }
+                              </div>
+                              <p class="text-xs text-muted-foreground">{{ property.typeProperty || 'N/A' }}</p>
+                              <div class="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                                <z-icon zType="map-pin" zSize="sm" />
+                                <span>{{ property.address || 'No address' }}{{ property.city ? ', ' + property.city : '' }}</span>
+                              </div>
+                              @if (property.description) {
+                                <p class="text-xs text-muted-foreground mt-1 line-clamp-2">{{ property.description }}</p>
+                              }
+                            </div>
+                            @if (property.defaultAttachmentUrl) {
+                              <img
+                                [src]="property.defaultAttachmentUrl"
+                                [alt]="property.name || property.identifier"
+                                class="w-16 h-16 rounded-md object-cover border border-border flex-shrink-0"
+                              />
+                            } @else {
+                              <div class="w-16 h-16 rounded-md border border-border bg-muted flex items-center justify-center flex-shrink-0">
+                                <z-icon zType="house" zSize="sm" class="text-muted-foreground" />
+                              </div>
+                            }
+                          </div>
+                          <div class="flex items-center justify-between pt-2 border-t border-border">
+                            <div class="flex flex-col">
+                              <span class="text-sm font-semibold">{{ property.price || 0 }} MAD</span>
+                              @if (property.area) {
+                                <span class="text-xs text-muted-foreground">{{ property.area }} m²</span>
+                              }
+                            </div>
+                            <z-button zType="ghost" zSize="sm" (click)="viewProperty(property.id); $event.stopPropagation()">
+                              <z-icon zType="eye" zSize="sm" />
+                              View
+                            </z-button>
+                          </div>
+                        </div>
+                      </z-card>
+                    }
+                  } @else {
+                    <div class="text-center py-8 text-sm text-muted-foreground">
+                      No properties found
+                    </div>
+                  }
+                </div>
+              </z-tab>
+
+              <!-- Reservations Tab (always shown) -->
+              <z-tab label="RESERVATIONS">
+                <div class="pt-4 space-y-3 max-h-[calc(100vh-300px)] overflow-y-auto">
+                  @if (isLoadingReservations()) {
+                    <div class="flex items-center justify-center py-8">
+                      <div class="text-center space-y-4">
+                        <z-icon zType="loader-circle" class="w-8 h-8 animate-spin mx-auto" />
+                        <p class="text-sm text-muted-foreground">Loading reservations...</p>
+                      </div>
+                    </div>
+                  } @else if (reservations().length > 0) {
+                    @for (reservation of reservations(); track reservation.id) {
+                      <z-card class="p-4 cursor-pointer hover:bg-muted/50 transition-colors" zBodySpacing="none" (click)="viewReservation(reservation.id)">
+                        <div class="space-y-2">
+                          <div class="flex items-start justify-between gap-2">
+                            <div class="flex-1 min-w-0">
+                              <h4 class="text-sm font-semibold mb-1">{{ reservation.propertyName }}</h4>
+                              <p class="text-xs text-muted-foreground">{{ reservation.propertyAddress }}</p>
+                            </div>
+                            <z-badge [zType]="getReservationStatusBadgeType(reservation.status)">
+                              {{ getReservationStatusLabel(reservation.status) }}
+                            </z-badge>
+                          </div>
+                          <div class="space-y-1 text-sm text-muted-foreground pt-2 border-t border-border">
+                            <div class="flex items-center gap-2">
+                              <z-icon zType="calendar" zSize="sm" />
+                              <span>{{ formatDate(reservation.startDate) }} - {{ formatDate(reservation.endDate) }}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                              <z-icon zType="circle-dollar-sign" zSize="sm" />
+                              <span>{{ reservation.totalAmount }} MAD</span>
+                            </div>
+                          </div>
+                        </div>
+                      </z-card>
+                    }
+                  } @else {
+                    <div class="text-center py-8 text-sm text-muted-foreground">
+                      No reservations found
+                    </div>
+                  }
+                </div>
+              </z-tab>
+
+              <!-- Leases Tab (shown for Owners and Tenants) -->
+              @if ((isOwner() || isTenant()) && leases().length > 0) {
+                <z-tab label="LEASES">
+                  <div class="pt-4 space-y-3 max-h-[calc(100vh-300px)] overflow-y-auto">
+                    @for (lease of leases(); track lease.id) {
+                      <z-card class="p-4" zBodySpacing="none">
+                        <div class="space-y-2">
+                          <div class="flex items-start justify-between gap-2">
+                            <div class="flex-1 min-w-0">
+                              <h4 class="text-sm font-semibold mb-1">{{ lease.propertyName || 'Unnamed Property' }}</h4>
+                              <p class="text-xs text-muted-foreground">{{ lease.propertyAddress || 'No address' }}</p>
+                            </div>
+                            <z-badge [zType]="getLeaseStatusBadgeType(lease.status)">
+                              {{ getLeaseStatusLabel(lease.status) }}
+                            </z-badge>
+                          </div>
+                          <div class="space-y-1 text-sm text-muted-foreground pt-2 border-t border-border">
+                            @if (lease.tenantName) {
+                              <div class="flex items-center gap-2">
+                                <z-icon zType="user" zSize="sm" />
+                                <span>Tenant: {{ lease.tenantName }}</span>
+                              </div>
+                            }
+                            <div class="flex items-center gap-2">
+                              <z-icon zType="calendar" zSize="sm" />
+                              <span>{{ formatDate(lease.tenancyStart) }} - {{ formatDate(lease.tenancyEnd) }}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                              <z-icon zType="circle-dollar-sign" zSize="sm" />
+                              <span>{{ lease.rentPrice || 0 }} MAD</span>
+                            </div>
+                          </div>
+                        </div>
+                      </z-card>
+                    }
+                  </div>
+                </z-tab>
+              }
+
+              <!-- Maintenance Tab (always shown) -->
+              <z-tab label="MAINTENANCE">
+                <div class="pt-4 space-y-3 max-h-[calc(100vh-300px)] overflow-y-auto">
+                  @if (maintenances().length > 0) {
+                    @for (maintenance of maintenances(); track maintenance.id) {
+                      <z-card class="p-4 cursor-pointer hover:bg-muted/50 transition-colors" zBodySpacing="none" (click)="viewMaintenance(maintenance.id)">
+                        <div class="space-y-2">
+                          <div class="flex items-start justify-between gap-2">
+                            <div class="flex-1 min-w-0">
+                              <h4 class="text-sm font-semibold mb-1">{{ maintenance.subject }}</h4>
+                              <p class="text-xs text-muted-foreground">{{ maintenance.propertyName }}</p>
+                            </div>
+                            <div class="flex flex-col gap-1 items-end">
+                              <z-badge [zType]="getMaintenanceStatusBadgeType(maintenance.status)">
+                                {{ getMaintenanceStatusLabel(maintenance.status) }}
+                              </z-badge>
+                              <z-badge [zType]="getMaintenancePriorityBadgeType(maintenance.priority)" zSize="sm">
+                                {{ getMaintenancePriorityLabel(maintenance.priority) }}
+                              </z-badge>
+                            </div>
+                          </div>
+                          <div class="space-y-1 text-sm text-muted-foreground pt-2 border-t border-border">
+                            <div class="flex items-center gap-2">
+                              <z-icon zType="calendar" zSize="sm" />
+                              <span>{{ formatDate(maintenance.scheduledDateTime) }}</span>
+                            </div>
+                            @if (maintenance.description) {
+                              <p class="text-xs line-clamp-2">{{ maintenance.description }}</p>
+                            }
+                          </div>
+                        </div>
+                      </z-card>
+                    }
+                  } @else {
+                    <div class="text-center py-8 text-sm text-muted-foreground">
+                      No maintenance requests found
+                    </div>
+                  }
+                </div>
+              </z-tab>
+            </z-tab-group>
+          </z-card>
+        </div>
+      </div>
+    } @else {
+      <div class="flex items-center justify-center min-h-[400px]">
+        <div class="text-center space-y-4">
+          <p class="text-sm text-muted-foreground">Contact not found</p>
+          <z-button zType="default" (click)="router.navigate(['/contact'])">
+            Back to Contacts
+          </z-button>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- File Viewer -->
+  <z-file-viewer
+    [fileUrl]="fileViewerUrl()"
+    [fileName]="fileViewerName()"
+    [fileSize]="fileViewerSize()"
+    [isOpen]="fileViewerOpen()"
+    [images]="fileViewerImages()"
+    [currentIndex]="fileViewerCurrentIndex()"
+    (close)="closeFileViewer()"
+    (imageChanged)="onImageChanged($event)"
+  />
+</z-page>
+

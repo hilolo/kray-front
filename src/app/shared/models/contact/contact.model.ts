@@ -55,6 +55,12 @@ export interface Contact {
   createdAt: string;
   updatedAt: string;
   list?: ContactList; // Client-side only: list preferences
+  
+  // Related entities (when includeRelated=true)
+  properties?: import('../property/property.model').Property[];
+  leases?: import('../lease/lease.model').Lease[];
+  banks?: import('../bank/bank.model').Bank[];
+  maintenances?: import('../maintenance/maintenance.model').Maintenance[];
 }
 
 /**

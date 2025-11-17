@@ -434,7 +434,8 @@ export class ContactListComponent implements OnInit, OnDestroy {
   }
 
   onViewContact(contact: Contact): void {
-    // TODO: Implement view functionality
+    const route = `/contact/${contactTypeToRouteParam(this.contactType())}/${contact.id}/detail`;
+    this.router.navigate([route]);
   }
 
   onEditContact(contact: Contact): void {
