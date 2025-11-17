@@ -19,7 +19,7 @@
             </z-badge>
           }
         </div>
-        <z-button zType="default" [routerLink]="editContactRoute()">
+        <z-button zType="default" (click)="console.log('Button clicked'); onEditContact()">
           <z-icon zType="pencil" zSize="sm" />
           Edit Contact
         </z-button>

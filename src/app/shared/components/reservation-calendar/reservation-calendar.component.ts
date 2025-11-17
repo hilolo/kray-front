@@ -725,7 +725,7 @@ export class ZardReservationCalendarComponent {
               </div>
               <div>
                 <div style="font-weight: 500; font-size: 14px; color: #1f2937;">${this.escapeHtml(res.contactName || 'Unnamed tenant')}</div>
-                <div style="font-size: 12px; color: #6b7280; text-transform: uppercase;">${this.escapeHtml(dateRange)}</div>
+                ${res.contactIdentifier ? `<div style="font-size: 12px; color: #6b7280; text-transform: uppercase;">Ref: ${this.escapeHtml(res.contactIdentifier)}</div>` : ''}
               </div>
             </div>
           </td>

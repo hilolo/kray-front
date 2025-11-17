@@ -97,9 +97,11 @@
                   <div class="flex items-center gap-2 mb-1">
                     <span class="text-sm font-semibold">{{ reservation.contactName || 'Unnamed tenant' }}</span>
                   </div>
-                  <div class="text-sm text-muted-foreground uppercase">
-                    {{ formatDateRange(reservation.startDate, reservation.endDate) }}
-                  </div>
+                  @if (reservation.contactIdentifier) {
+                    <div class="text-sm text-muted-foreground uppercase">
+                      Ref: {{ reservation.contactIdentifier }}
+                    </div>
+                  }
                 </div>
                 <z-badge [zType]="getStatusBadgeType(reservation.status)" class="ml-auto">
                   {{ getStatusLabel(reservation.status) }}

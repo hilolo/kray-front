@@ -14,6 +14,7 @@ import { ZardImageHoverPreviewDirective } from '@shared/components/image-hover-p
 import { ContactService } from '@shared/services/contact.service';
 import { ReservationService } from '@shared/services/reservation.service';
 import type { Contact } from '@shared/models/contact/contact.model';
+import { ContactType, contactTypeToString } from '@shared/models/contact/contact.model';
 import type { Property } from '@shared/models/property/property.model';
 import type { Lease } from '@shared/models/lease/lease.model';
 import type { Reservation } from '@shared/models/reservation/reservation.model';
@@ -86,11 +87,31 @@ export class ContactDetailComponent implements OnInit {
   });
 
   readonly contactType = computed(() => {
-    const type = this.contact()?.type;
-    if (!type || typeof type !== 'string') {
+    const contact = this.contact();
+    const type = contact?.type;
+    console.log('[contactType computed] Contact:', contact);
+    console.log('[contactType computed] Raw type:', type, 'Type of:', typeof type);
+    
+    if (!contact || type === undefined || type === null) {
+      console.log('[contactType computed] Returning empty string - missing contact or type');
       return '';
     }
-    return type;
+    
+    // Handle numeric type (enum from backend)
+    if (typeof type === 'number') {
+      const typeString = contactTypeToString(type as ContactType);
+      console.log('[contactType computed] Converted number', type, 'to string:', typeString);
+      return typeString;
+    }
+    
+    // Handle string type
+    if (typeof type === 'string') {
+      console.log('[contactType computed] Returning string type:', type);
+      return type;
+    }
+    
+    console.log('[contactType computed] Returning empty string - invalid type format');
+    return '';
   });
 
   readonly isOwner = computed(() => {
@@ -160,11 +181,41 @@ export class ContactDetailComponent implements OnInit {
   readonly editContactRoute = computed(() => {
     const contact = this.contact();
     const type = this.contactType();
+    console.log('[editContactRoute computed] Contact:', contact);
+    console.log('[editContactRoute computed] Type:', type);
     if (!contact || !type) {
+      console.log('[editContactRoute computed] Returning empty array - missing contact or type');
       return [];
     }
-    return ['/contact', type.toLowerCase() + 's', contact.id];
+    const route = ['/contact', type.toLowerCase() + 's', contact.id];
+    console.log('[editContactRoute computed] Generated route:', route);
+    return route;
   });
+
+  onEditContact(): void {
+    console.log('onEditContact() called');
+    const contact = this.contact();
+    const type = this.contactType();
+    console.log('Contact:', contact);
+    console.log('Contact Type:', type);
+    
+    const route = this.editContactRoute();
+    console.log('Edit Contact Route:', route);
+    
+    if (route.length > 0) {
+      console.log('Navigating to:', route);
+      this.router.navigate(route).then(
+        (success) => {
+          console.log('Navigation successful:', success);
+        },
+        (error) => {
+          console.error('Navigation error:', error);
+        }
+      );
+    } else {
+      console.warn('Route is empty, cannot navigate');
+    }
+  }
 
   ngOnInit(): void {
     const contactId = this.route.snapshot.paramMap.get('id');
@@ -190,6 +241,8 @@ export class ContactDetailComponent implements OnInit {
       .subscribe((contact) => {
         this.isLoading.set(false);
         if (contact) {
+          console.log('[loadContact] Contact loaded:', contact);
+          console.log('[loadContact] Contact type:', contact.type);
           this.contact.set(contact);
           
           // Always load reservations for all contact types
@@ -421,5 +474,8 @@ export class ContactDetailComponent implements OnInit {
 
   // Expose getFileViewerType to template
   getFileViewerType = getFileViewerType;
+
+  // Expose console to template for debugging
+  readonly console = console;
 }
 

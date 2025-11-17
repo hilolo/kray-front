@@ -30,6 +30,7 @@ export interface Reservation {
   contactEmail: string;
   contactPhone: string;
   contactAvatarUrl: string;
+  contactIdentifier?: string; // Contact reference/identifier
   propertyId: string;
   propertyIdentifier: string;
   propertyName: string;
