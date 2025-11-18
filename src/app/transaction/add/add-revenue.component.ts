@@ -18,6 +18,7 @@ import { ZardImageHoverPreviewDirective } from '@shared/components/image-hover-p
 import { ImageItem } from '@shared/image-viewer/image-viewer.component';
 import { getFileViewerType } from '@shared/utils/file-type.util';
 import { AttachmentInput } from '@shared/models/contact/create-contact-request.model';
+import type { Attachment } from '@shared/models/transaction/transaction.model';
 import { TransactionService } from '@shared/services/transaction.service';
 import { PropertyService } from '@shared/services/property.service';
 import { LeaseService } from '@shared/services/lease.service';
@@ -43,6 +44,14 @@ interface UploadedFile {
   file: File;
 }
 
+interface ExistingAttachment {
+  id: string;
+  url: string;
+  fileName: string;
+  size: number;
+  createdAt: string;
+}
+
 @Component({
   selector: 'app-add-revenue',
   standalone: true,
@@ -61,6 +70,8 @@ interface UploadedFile {
     ZardCardComponent,
     ZardDatePickerComponent,
     ZardCheckboxComponent,
+    ZardFileViewerComponent,
+    ZardImageHoverPreviewDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './add-revenue.component.html',
@@ -118,6 +129,8 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
 
   // File upload
   readonly uploadedFiles = signal<UploadedFile[]>([]);
+  readonly existingAttachments = signal<ExistingAttachment[]>([]);
+  readonly filesToDelete = signal<Set<string>>(new Set());
   readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
 
   // File viewer
@@ -421,17 +434,26 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
           this.payments.set(transaction.payments);
         }
 
-        // Load properties and contacts first, then set selected values
-        const contactTypes = [ContactType.Owner, ContactType.Tenant, ContactType.Service];
-        const contactRequests = contactTypes.map(type => 
-          this.contactService.list({
-            currentPage: 1,
-            pageSize: 1000,
-            ignore: true,
-            type: type,
-          }).pipe(takeUntil(this.destroy$))
-        );
+        // Load attachments
+        if (transaction.attachments && transaction.attachments.length > 0) {
+          this.existingAttachments.set(
+            transaction.attachments.map((att) => ({
+              id: att.id,
+              url: att.url,
+              fileName: att.fileName || att.originalFileName || 'Unknown',
+              size: att.fileSize || 0,
+              createdAt: att.createdAt || '',
+            }))
+          );
+        } else {
+          this.existingAttachments.set([]);
+        }
 
+        // Reset files to delete
+        this.filesToDelete.set(new Set());
+
+        // Load properties and contacts first, then set selected values
+        // Load all contacts with a single call (like in list component)
         forkJoin({
           properties: this.propertyService.list({
             currentPage: 1,
@@ -440,7 +462,13 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
             companyId: this.userService.getCurrentUser()?.companyId,
             isArchived: false,
           }),
-          contacts: forkJoin(contactRequests),
+          contacts: this.contactService.list({
+            currentPage: 1,
+            pageSize: 10000,
+            ignore: true,
+            type: ContactType.Tenant, // Default type, but ignore:true should return all types
+            isArchived: false,
+          }),
         }).pipe(takeUntil(this.destroy$)).subscribe({
           next: ({ properties, contacts }) => {
             // Set properties
@@ -466,13 +494,14 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
               }
             }
 
-            // Combine all contacts from all types
-            const allContacts: Contact[] = [];
-            contacts.forEach(response => {
-              allContacts.push(...response.result);
-            });
-            this.contacts.set(allContacts);
-            const contactOptions: ZardComboboxOption[] = allContacts.map((contact) => {
+            // Filter contacts by companyId if available (contacts that belong to current company, not shared)
+            const companyId = this.userService.getCurrentUser()?.companyId;
+            const filteredContacts = companyId 
+              ? (contacts.result || []).filter(contact => contact.companyId === companyId)
+              : (contacts.result || []);
+            
+            this.contacts.set(filteredContacts);
+            const contactOptions: ZardComboboxOption[] = filteredContacts.map((contact) => {
               let name = '';
               if (contact.isACompany) {
                 name = contact.companyName || '';
@@ -593,6 +622,32 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
         const normalizedDate = normalizeDateToUTCMidnight(data.date);
         const isAutreType = data.revenueType === RevenueType.Autre;
         const useOtherContact = data.isOtherContact || isAutreType;
+        // Convert uploaded files to AttachmentInput (async)
+        const filePromises = this.uploadedFiles().map((file) => {
+          return new Promise<AttachmentInput>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+              const result = reader.result as string;
+              const base64 = result.split(',')[1] || '';
+              resolve({
+                fileName: file.name,
+                base64Content: base64,
+                root: 'transaction',
+              });
+            };
+            reader.onerror = () => {
+              resolve({
+                fileName: file.name,
+                base64Content: '',
+                root: 'transaction',
+              });
+            };
+            reader.readAsDataURL(file.file);
+          });
+        });
+
+        const attachmentsToAdd = await Promise.all(filePromises);
+
         const updateRequest: UpdateTransactionRequest = {
           category: TransactionType.Revenue, // Ensure category is set to Revenue
           revenueType: data.revenueType,
@@ -602,6 +657,8 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
           date: normalizedDate || data.date,
           payments: this.payments(),
           description: data.description,
+          attachmentsToAdd: attachmentsToAdd.length > 0 ? attachmentsToAdd : undefined,
+          attachmentsToDelete: Array.from(this.filesToDelete()).length > 0 ? Array.from(this.filesToDelete()) : undefined,
         };
 
         console.log('[Frontend] Update Request:', {
@@ -739,6 +796,148 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
     if (type.includes('excel') || type.includes('spreadsheet')) return 'file-spreadsheet';
     return 'file';
   }
+
+  onDeleteAttachment(attachmentId: string): void {
+    this.filesToDelete.update(set => {
+      const newSet = new Set(set);
+      newSet.add(attachmentId);
+      return newSet;
+    });
+  }
+
+  onRestoreAttachment(attachmentId: string): void {
+    this.filesToDelete.update(set => {
+      const newSet = new Set(set);
+      newSet.delete(attachmentId);
+      return newSet;
+    });
+  }
+
+  isAttachmentMarkedForDeletion(attachmentId: string): boolean {
+    return this.filesToDelete().has(attachmentId);
+  }
+
+  readonly hasExistingAttachments = computed(() => {
+    return this.existingAttachments().length > 0;
+  });
+
+  readonly existingAttachmentsCount = computed(() => {
+    const toDelete = this.filesToDelete();
+    return this.existingAttachments().filter(att => !toDelete.has(att.id)).length;
+  });
+
+  readonly hasAnyAttachments = computed(() => {
+    return this.hasExistingAttachments() || this.hasUploadedFiles();
+  });
+
+  readonly totalFileSize = computed(() => {
+    const existingSize = this.existingAttachments()
+      .filter(att => !this.filesToDelete().has(att.id))
+      .reduce((total, att) => total + (att.size || 0), 0);
+    return existingSize + this.uploadedFilesSize();
+  });
+
+  openFile(url: string, name: string, size: number): void {
+    // Check if this is an uploaded file (no URL yet)
+    const uploadedFile = this.uploadedFiles().find(f => f.name === name);
+    
+    if (uploadedFile && uploadedFile.type.startsWith('image/')) {
+      // Create data URL for uploaded image
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result as string;
+        this.fileViewerUrl.set(dataUrl);
+        this.fileViewerName.set(name);
+        this.fileViewerSize.set(size);
+        
+        // Set up image navigation
+        const allImages = this.allImages();
+        const uploadedImages = this.uploadedFiles()
+          .filter(f => f.type.startsWith('image/'))
+          .map(f => {
+            if (f.id === uploadedFile.id) {
+              return { url: dataUrl, name: f.name, size: f.size };
+            }
+            return null;
+          })
+          .filter((img): img is ImageItem => img !== null);
+        
+        const combinedImages = [...allImages, ...uploadedImages];
+        const currentIndex = combinedImages.findIndex(img => img.url === dataUrl || img.name === name);
+        this.fileViewerCurrentIndex.set(currentIndex >= 0 ? currentIndex : 0);
+        this.fileViewerImages.set(combinedImages);
+        this.fileViewerOpen.set(true);
+      };
+      reader.readAsDataURL(uploadedFile.file);
+      return;
+    }
+    
+    // For existing files with URLs
+    this.fileViewerUrl.set(url);
+    this.fileViewerName.set(name);
+    this.fileViewerSize.set(size);
+    
+    // If it's an image, set up image navigation
+    if (getFileViewerType(url) === 'image') {
+      const allImages = this.allImages();
+      const currentIndex = allImages.findIndex(img => img.url === url || img.name === name);
+      this.fileViewerCurrentIndex.set(currentIndex >= 0 ? currentIndex : 0);
+      this.fileViewerImages.set(allImages);
+    } else {
+      this.fileViewerImages.set([]);
+      this.fileViewerCurrentIndex.set(0);
+    }
+    
+    this.fileViewerOpen.set(true);
+  }
+
+  onImageChanged(index: number): void {
+    this.fileViewerCurrentIndex.set(index);
+    const images = this.fileViewerImages();
+    if (images && images.length > 0 && index >= 0 && index < images.length) {
+      const image = images[index];
+      this.fileViewerUrl.set(image.url);
+      this.fileViewerName.set(image.name);
+      this.fileViewerSize.set(image.size);
+    }
+  }
+
+  isFileFormatSupported(url: string): boolean {
+    const viewerType = getFileViewerType(url);
+    return viewerType !== 'unknown';
+  }
+
+  getFileViewerType(url: string): ReturnType<typeof getFileViewerType> {
+    return getFileViewerType(url);
+  }
+
+  downloadFile(url: string, name: string): void {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = name;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  readonly allImages = computed(() => {
+    const images: ImageItem[] = [];
+    
+    // Add existing attachments (not marked for deletion) that are images
+    const toDelete = this.filesToDelete();
+    this.existingAttachments().forEach(att => {
+      if (!toDelete.has(att.id) && getFileViewerType(att.url) === 'image') {
+        images.push({
+          url: att.url,
+          name: att.fileName,
+          size: att.size || 0,
+        });
+      }
+    });
+    
+    return images;
+  });
 
   /**
    * Convert File to base64 string

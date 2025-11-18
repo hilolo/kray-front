@@ -49,6 +49,19 @@ export interface Payment {
 }
 
 /**
+ * Attachment model from backend
+ */
+export interface Attachment {
+  id: string;
+  fileName: string;
+  originalFileName: string;
+  fileExtension: string;
+  fileSize: number;
+  url: string;
+  createdAt: string;
+}
+
+/**
  * Transaction model from backend
  */
 export interface Transaction {
@@ -75,6 +88,8 @@ export interface Transaction {
   date: string; // Transaction date (separate from createdAt)
   createdAt: string; // Record creation timestamp
   updatedAt: string | null;
+  attachments?: Attachment[];
+  attachmentCount?: number;
 }
 
 

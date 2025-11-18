@@ -329,7 +329,7 @@
                 @if (hasUploadedFiles()) {
                   <div class="space-y-3">
                     <div class="flex items-center justify-between">
-                      <h4 class="text-sm font-medium">Files to Upload</h4>
+                      <h4 class="text-sm font-medium">New Files to Upload</h4>
                       <span class="text-xs text-muted-foreground">
                         {{ uploadedFiles().length }} file{{ uploadedFiles().length > 1 ? 's' : '' }} · {{ formatFileSize(uploadedFilesSize()) }}
                       </span>
@@ -357,10 +357,120 @@
                     </div>
                   </div>
                 }
+
+                <!-- Existing Attachments List -->
+                @if (hasExistingAttachments()) {
+                  <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                      <h4 class="text-sm font-medium">Existing Attachments</h4>
+                      <span class="text-xs text-muted-foreground">
+                        {{ existingAttachmentsCount() }} file{{ existingAttachmentsCount() > 1 ? 's' : '' }}
+                      </span>
+                    </div>
+                    <div class="space-y-2">
+                      @for (attachment of existingAttachments(); track attachment.id) {
+                        @if (!isAttachmentMarkedForDeletion(attachment.id)) {
+                          <div 
+                            class="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/30 transition-colors group" 
+                            [class.cursor-pointer]="isFileFormatSupported(attachment.url)" 
+                            (click)="isFileFormatSupported(attachment.url) && openFile(attachment.url, attachment.fileName, attachment.size || 0)"
+                            [zImageHoverPreview]="getFileViewerType(attachment.url) === 'image' ? attachment.url : null"
+                            [zAlt]="attachment.fileName"
+                            [zPosition]="'right'"
+                            [zMaxWidth]="'800px'"
+                            [zMaxHeight]="'800px'"
+                          >
+                            <div class="flex-shrink-0 w-10 h-10 rounded bg-primary/10 flex items-center justify-center">
+                              <z-icon [zType]="getFileViewerType(attachment.url) === 'image' ? 'image' : 'file'" class="text-primary" zSize="sm" />
+                            </div>
+                            <div class="flex-1 min-w-0">
+                              <p class="font-medium text-sm truncate">{{ attachment.fileName }}</p>
+                              <p class="text-xs text-muted-foreground">{{ formatFileSize(attachment.size || 0) }}</p>
+                            </div>
+                            <div class="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                              @if (isFileFormatSupported(attachment.url)) {
+                                <z-button
+                                  zType="ghost"
+                                  zSize="icon"
+                                  class="text-muted-foreground hover:text-primary"
+                                  (click)="$event.stopPropagation(); openFile(attachment.url, attachment.fileName, attachment.size || 0)"
+                                  [attr.aria-label]="'Open file'"
+                                >
+                                  <z-icon zType="arrow-right" zSize="sm" />
+                                </z-button>
+                              } @else {
+                                <z-button
+                                  zType="ghost"
+                                  zSize="icon"
+                                  class="text-muted-foreground hover:text-primary"
+                                  (click)="$event.stopPropagation(); downloadFile(attachment.url, attachment.fileName)"
+                                  [attr.aria-label]="'Download file'"
+                                >
+                                  <z-icon zType="download" zSize="sm" />
+                                </z-button>
+                              }
+                              <z-button
+                                zType="ghost"
+                                zSize="icon"
+                                class="text-muted-foreground hover:text-destructive"
+                                (click)="$event.stopPropagation(); onDeleteAttachment(attachment.id)"
+                                [attr.aria-label]="'Delete file'"
+                              >
+                                <z-icon zType="x" zSize="sm" />
+                              </z-button>
+                            </div>
+                          </div>
+                        } @else {
+                          <div class="flex items-center gap-3 p-3 rounded-lg border border-destructive/50 bg-destructive/5 opacity-60 group">
+                            <div class="flex-shrink-0 w-10 h-10 rounded bg-destructive/10 flex items-center justify-center">
+                              <z-icon zType="file" class="text-destructive" zSize="sm" />
+                            </div>
+                            <div class="flex-1 min-w-0">
+                              <p class="font-medium text-sm truncate line-through">{{ attachment.fileName }}</p>
+                              <p class="text-xs text-muted-foreground">{{ formatFileSize(attachment.size || 0) }}</p>
+                            </div>
+                            <div class="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <z-button
+                                zType="ghost"
+                                zSize="icon"
+                                class="text-muted-foreground hover:text-primary"
+                                (click)="onRestoreAttachment(attachment.id)"
+                                [attr.aria-label]="'Restore file'"
+                              >
+                                <z-icon zType="refresh-cw" zSize="sm" />
+                              </z-button>
+                            </div>
+                          </div>
+                        }
+                      }
+                    </div>
+                  </div>
+                }
+
+                <!-- Total Files Summary -->
+                @if (hasAnyAttachments()) {
+                  <div class="pt-2 border-t">
+                    <p class="text-xs text-muted-foreground text-center">
+                      Total: {{ (existingAttachmentsCount() + uploadedFiles().length) }} file{{ (existingAttachmentsCount() + uploadedFiles().length) > 1 ? 's' : '' }} · {{ formatFileSize(totalFileSize()) }}
+                    </p>
+                  </div>
+                }
               </div>
             </div>
           </z-card>
         </div>
       </div>
 </z-page>
+
+<!-- File Viewer -->
+<z-file-viewer
+  [isOpen]="fileViewerOpen()"
+  [fileUrl]="fileViewerUrl()"
+  [fileName]="fileViewerName()"
+  [fileSize]="fileViewerSize()"
+  [images]="fileViewerImages()"
+  [currentIndex]="fileViewerCurrentIndex()"
+  (close)="fileViewerOpen.set(false)"
+  (imageChanged)="onImageChanged($event)"
+/>
 

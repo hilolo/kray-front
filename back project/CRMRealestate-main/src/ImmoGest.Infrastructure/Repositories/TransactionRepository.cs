@@ -25,7 +25,33 @@ namespace ImmoGest.Infrastructure.Repositories
         public override async Task<Result<Transaction>> GetById(Guid id)
         {
             // Return tracked entity (without AsNoTracking) for updates
+            // Include all related entities like in list queries
             var entity = await DbSet
+                .Include(t => t.Property)
+                .Include(t => t.Contact)
+                .Include(t => t.Lease)
+                    .ThenInclude(l => l.Contact)
+                .Include(t => t.Attachments)
+                .FirstOrDefaultAsync(e => e.Id == id);
+
+            return entity != null
+                ? Result.Success<Transaction>(entity)
+                : Result.Failure<Transaction>();
+        }
+
+        /// <summary>
+        /// Override GetByIdAsync to include attachments (for read operations)
+        /// </summary>
+        public override async Task<Result<Transaction>> GetByIdAsync(Guid id)
+        {
+            // Load transaction with all related entities including attachments (using AsNoTracking for read operations)
+            var entity = await DbSet
+                .AsNoTracking()
+                .Include(t => t.Property)
+                .Include(t => t.Contact)
+                .Include(t => t.Lease)
+                    .ThenInclude(l => l.Contact)
+                .Include(t => t.Attachments)
                 .FirstOrDefaultAsync(e => e.Id == id);
 
             return entity != null
@@ -40,7 +66,8 @@ namespace ImmoGest.Infrastructure.Repositories
                 .Include(t => t.Property)
                 .Include(t => t.Contact)
                 .Include(t => t.Lease)
-                    .ThenInclude(l => l.Contact);
+                    .ThenInclude(l => l.Contact)
+                .Include(t => t.Attachments);
 
             if (filterOption is GetTransactionsFilter filter)
             {

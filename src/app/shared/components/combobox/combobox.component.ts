@@ -84,7 +84,19 @@ export interface ZardComboboxGroup {
       <span class="flex-1 text-left truncate">
         {{ displayValue() || placeholder() }}
       </span>
-      <z-icon zType="chevrons-up-down" class="ml-2 shrink-0 opacity-50" />
+      <div class="flex items-center gap-1 shrink-0">
+        @if (getCurrentValue()) {
+          <button
+            type="button"
+            class="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-accent-foreground"
+            (click)="clearSelection($event)"
+            [attr.aria-label]="'Clear selection'"
+          >
+            <z-icon zType="x" class="h-4 w-4" />
+          </button>
+        }
+        <z-icon zType="chevrons-up-down" class="opacity-50" />
+      </div>
     </button>
 
     <ng-template #popoverContent>
@@ -299,6 +311,23 @@ export class ZardComboboxComponent implements ControlValueAccessor {
     this.popoverDirective().hide();
 
     // Return focus to the combobox button after selection
+    this.buttonRef().nativeElement.focus();
+  }
+
+  clearSelection(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    this.internalValue.set(null);
+    this.onChange(null);
+    this.zValueChange.emit(null);
+    
+    // Close popover if open
+    if (this.open()) {
+      this.popoverDirective().hide();
+    }
+    
+    // Return focus to the button
     this.buttonRef().nativeElement.focus();
   }
 
