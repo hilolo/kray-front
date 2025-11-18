@@ -26,6 +26,7 @@ import { UserService } from '@shared/services/user.service';
 import { TransactionType, RevenueType, Payment, type Transaction } from '@shared/models/transaction/transaction.model';
 import { CreateTransactionRequest } from '@shared/models/transaction/create-transaction-request.model';
 import { UpdateTransactionRequest } from '@shared/models/transaction/update-transaction-request.model';
+import { normalizeDateToUTCMidnight } from '@shared/utils/date.util';
 import type { Property } from '@shared/models/property/property.model';
 import { PropertyCategory } from '@shared/models/property/property.model';
 import type { Lease } from '@shared/models/lease/lease.model';
@@ -543,12 +544,14 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
       
       if (transactionId) {
         // Update existing transaction
+        // Normalize date to UTC midnight to avoid timezone shifts
+        const normalizedDate = normalizeDateToUTCMidnight(data.date);
         const updateRequest: UpdateTransactionRequest = {
           category: TransactionType.Revenue, // Ensure category is set to Revenue
           revenueType: data.revenueType,
           leaseId: data.leaseId && data.leaseId.trim() !== '' ? data.leaseId : null,
           contactId: data.contactId,
-          date: data.date,
+          date: normalizedDate || data.date,
           payments: this.payments(),
           description: data.description,
         };
@@ -578,13 +581,15 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
         });
       } else {
         // Create new transaction
+        // Normalize date to UTC midnight to avoid timezone shifts
+        const normalizedDate = normalizeDateToUTCMidnight(data.date);
         const createRequest: CreateTransactionRequest = {
           category: TransactionType.Revenue, // Maps to TransactionCategory.Revenue (0) in backend
           revenueType: data.revenueType,
           propertyId: data.propertyId && data.propertyId.trim() !== '' ? data.propertyId : null,
           leaseId: data.leaseId && data.leaseId.trim() !== '' ? data.leaseId : null,
           contactId: data.contactId,
-          date: data.date,
+          date: normalizedDate || data.date,
           payments: this.payments(),
           description: data.description,
           attachments: attachments,

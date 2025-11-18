@@ -63,7 +63,7 @@
                   [searchable]="true"
                   [disabled]="isLoadingProperties()"
                   (zValueChange)="onPropertyChange($event)"
-                  class="w-full"
+                  class="w-full text-sm"
                 />
               </div>
               
@@ -79,18 +79,18 @@
                   [searchable]="true"
                   [disabled]="isLoadingContacts()"
                   (zValueChange)="onContactChange($event)"
-                  class="w-full"
+                  class="w-full text-sm"
                 />
               </div>
               
-              <!-- Revenue Types Multi-Select (same pattern as expense types) -->
+              <!-- Revenue Types Multi-Select -->
               @if (selectedType() === TransactionType.Revenue) {
                 <div class="w-full sm:w-[200px]">
                   <z-select
                     [zValue]="selectedRevenueTypes().length > 0 ? selectedRevenueTypes()[0].toString() : ''"
                     [zLabel]="selectedRevenueTypesDisplay() || 'Select revenue types...'"
                     [zPlaceholder]="'Select revenue types...'"
-                    [zSize]="'sm'"
+                    [zSize]="'default'"
                     class="w-full"
                     (zSelectionChange)="onRevenueSelectChange($event)"
                   >
@@ -118,7 +118,7 @@
                     [zValue]="selectedExpenseTypes().length > 0 ? selectedExpenseTypes()[0].toString() : ''"
                     [zLabel]="selectedExpenseTypesDisplay() || 'Select expense types...'"
                     [zPlaceholder]="'Select expense types...'"
-                    [zSize]="'sm'"
+                    [zSize]="'default'"
                     class="w-full"
                     (zSelectionChange)="onExpenseSelectChange($event)"
                   >
