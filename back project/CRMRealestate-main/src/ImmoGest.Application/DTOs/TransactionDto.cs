@@ -29,6 +29,7 @@ namespace ImmoGest.Application.DTOs
         public DateTime Date { get; set; }
         public List<PaymentDto> Payments { get; set; }
         public decimal TotalAmount { get; set; }
+        public decimal? DepositPrice { get; set; }
         public string Description { get; set; }
         
         // Property information
@@ -98,6 +99,7 @@ namespace ImmoGest.Application.DTOs
         public string OtherContactName { get; set; }
         public DateTime Date { get; set; }
         public List<PaymentDto> Payments { get; set; }
+        public decimal? DepositPrice { get; set; }
         public string Description { get; set; }
         public List<AttachmentInput> Attachments { get; set; }
     }
@@ -117,6 +119,7 @@ namespace ImmoGest.Application.DTOs
         public string OtherContactName { get; set; }
         public DateTime? Date { get; set; }
         public List<PaymentDto> Payments { get; set; }
+        public decimal? DepositPrice { get; set; }
         public string Description { get; set; }
         public TransactionStatus? Status { get; set; }
         public List<AttachmentInput> AttachmentsToAdd { get; set; }

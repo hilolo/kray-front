@@ -137,7 +137,7 @@
 
         <!-- Owner Information -->
         @if (property()?.contact || property()?.ownerName) {
-          <z-card zBodySpacing="none" class="cursor-pointer hover:bg-muted/50 transition-colors" (click)="viewOwnerProfile()">
+          <z-card zBodySpacing="none">
             <div class="space-y-3">
               <h3 class="text-sm font-semibold">Owner Information</h3>
               <div class="flex items-start justify-between gap-3">
@@ -182,7 +182,7 @@
                   </div>
                 </div>
                 <div class="flex-shrink-0">
-                  <z-button zType="outline" zSize="sm" (click)="viewOwnerProfile(); $event.stopPropagation()">
+                  <z-button zType="outline" zSize="sm" (click)="viewOwnerProfile()">
                     <z-icon zType="user" zSize="sm" class="mr-2" />
                     View Profile
                   </z-button>
@@ -200,13 +200,17 @@
                       <div class="flex items-start gap-3 p-2 rounded-md border border-border hover:bg-muted/50 transition-colors">
                         @if (hasKeyImages(key) && getKeyImageUrl(key)) {
                           <div 
-                            class="w-10 h-10 rounded-md border border-border overflow-hidden cursor-pointer flex-shrink-0"
-                            (click)="openKeyImageViewer(key, $event)"
+                            class="w-10 h-10 rounded-md border border-border overflow-hidden flex-shrink-0"
                           >
                             <img 
                               [src]="getKeyImageUrl(key)!" 
                               [alt]="key.name" 
                               class="w-full h-full object-cover"
+                              [zImageHoverPreview]="getKeyImageUrl(key)!"
+                              [zAlt]="key.name"
+                              [zPosition]="'right'"
+                              [zMaxWidth]="'600px'"
+                              [zMaxHeight]="'600px'"
                             />
                           </div>
                         } @else {

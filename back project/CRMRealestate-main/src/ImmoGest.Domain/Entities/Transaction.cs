@@ -43,6 +43,9 @@ namespace ImmoGest.Domain.Entities
         // Total amount (calculated from payments)
         public decimal TotalAmount { get; set; }
 
+        // Deposit price
+        public decimal? DepositPrice { get; set; }
+
         // Description
         public string Description { get; set; }
 

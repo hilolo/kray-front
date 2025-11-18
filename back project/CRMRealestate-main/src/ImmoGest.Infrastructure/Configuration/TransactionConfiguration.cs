@@ -86,6 +86,10 @@ namespace ImmoGest.Infrastructure.Configuration
                 .IsRequired()
                 .HasColumnType("decimal(18,2)");
 
+            builder.Property(t => t.DepositPrice)
+                .IsRequired(false)
+                .HasColumnType("decimal(18,2)");
+
             builder.Property(t => t.Description)
                 .HasMaxLength(1000);
 

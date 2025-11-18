@@ -30,6 +30,7 @@ import { ZardAvatarComponent } from '@shared/components/avatar/avatar.component'
 import { ZardReservationCalendarComponent } from '@shared/components/reservation-calendar/reservation-calendar.component';
 import { ReservationService } from '@shared/services/reservation.service';
 import type { Reservation } from '@shared/models/reservation/reservation.model';
+import { ZardImageHoverPreviewDirective } from '@shared/components/image-hover-preview/image-hover-preview.component';
 
 @Component({
   selector: 'app-property-detail',
@@ -55,6 +56,7 @@ import type { Reservation } from '@shared/models/reservation/reservation.model';
     ZardSwitchComponent,
     ZardAvatarComponent,
     ZardReservationCalendarComponent,
+    ZardImageHoverPreviewDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './property-detail.component.html',

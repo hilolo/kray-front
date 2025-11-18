@@ -16,6 +16,7 @@ export interface CreateTransactionRequest {
   otherContactName?: string | null; // For contacts not in the system
   date: Date | string; // Transaction date
   payments: Payment[];
+  depositPrice?: number;
   description: string;
   attachments?: AttachmentInput[];
 }
