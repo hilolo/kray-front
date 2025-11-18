@@ -189,44 +189,92 @@ export class ZardImageHoverPreviewDirective implements OnInit, OnDestroy {
   }
 
   private setupTriggers() {
+    // Use event delegation on the host element to catch all mouse events
     this.renderer.listen(this.elementRef.nativeElement, 'mouseenter', (event: MouseEvent) => {
-      // Don't show preview if hovering over a button or interactive element
-      if (this.isInteractiveElement(event.target as HTMLElement)) {
+      const target = event.target as HTMLElement;
+      
+      // Always check if we're hovering over an interactive element
+      if (this.isInteractiveElement(target)) {
+        this.isMouseOver = false;
+        // If preview is already showing, hide it immediately
+        if (this.componentRef) {
+          this.hide(0);
+        }
         return;
       }
+      
       event.preventDefault();
       this.isMouseOver = true;
       this.show(event);
     });
 
     this.renderer.listen(this.elementRef.nativeElement, 'mouseleave', (event: Event) => {
+      const relatedTarget = (event as any).relatedTarget as HTMLElement;
+      
+      // Don't hide if we're leaving to a button (it will handle its own hide)
+      if (this.isInteractiveElement(relatedTarget)) {
+        return;
+      }
+      
       event.preventDefault();
       this.isMouseOver = false;
       this.hide();
+    });
+
+    // Also listen for mousemove to continuously check if we're over a button
+    // This catches cases where buttons appear dynamically (like group-hover)
+    this.renderer.listen(this.elementRef.nativeElement, 'mousemove', (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      
+      // If we're over an interactive element and preview is showing, hide it
+      if (this.isInteractiveElement(target)) {
+        if (this.componentRef && this.isMouseOver) {
+          this.isMouseOver = false;
+          this.hide(0);
+        }
+      }
     });
   }
 
   private isInteractiveElement(element: HTMLElement | null): boolean {
     if (!element) return false;
     
-    // Check if the element or any parent is a button, link, or other interactive element
+    // Don't check beyond the directive's host element
+    if (!this.elementRef.nativeElement.contains(element)) {
+      return false;
+    }
+    
+    // Use closest() first as it's more efficient and catches Angular component elements
+    const closestInteractive = element.closest(
+      'z-button, button[z-button], a[z-button], button, [role="button"], a[href], input, select, textarea'
+    );
+    
+    if (closestInteractive && this.elementRef.nativeElement.contains(closestInteractive)) {
+      return true;
+    }
+    
+    // Also check the element itself and its direct parents
     let current: HTMLElement | null = element;
     while (current && current !== this.elementRef.nativeElement) {
       const tagName = current.tagName.toLowerCase();
       const role = current.getAttribute('role');
       
-      // Check for button elements (native buttons, z-button components, or elements with button role)
+      // Check for z-button component (can be z-button tag, button[z-button], or a[z-button])
       if (
-        tagName === 'button' ||
         tagName === 'z-button' ||
-        role === 'button' ||
-        current.closest('button') !== null ||
-        current.closest('z-button') !== null ||
-        current.closest('[role="button"]') !== null ||
-        current.hasAttribute('zbutton') ||
-        current.classList.contains('z-button') ||
-        current.closest('.z-button') !== null
+        (tagName === 'button' && current.hasAttribute('z-button')) ||
+        (tagName === 'a' && current.hasAttribute('z-button'))
       ) {
+        return true;
+      }
+      
+      // Check for native button elements
+      if (tagName === 'button') {
+        return true;
+      }
+      
+      // Check for elements with button role
+      if (role === 'button') {
         return true;
       }
       
@@ -240,6 +288,7 @@ export class ZardImageHoverPreviewDirective implements OnInit, OnDestroy {
         return true;
       }
       
+      // Move to parent
       current = current.parentElement;
     }
     
