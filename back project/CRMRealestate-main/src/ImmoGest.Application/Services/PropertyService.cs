@@ -78,8 +78,6 @@ namespace ImmoGest.Application.Services
         {
             if (_currentPropertyDto != null && _currentPropertyDto.Images != null && _currentPropertyDto.Images.Count > 0)
             {
-                _logger.LogInformation("[Property Create - Attachments] Starting attachment processing for PropertyId: {PropertyId}, Total images: {ImageCount}", entity.Id, _currentPropertyDto.Images.Count);
-                
                 var dto = _currentPropertyDto;
                 Guid? defaultAttachmentId = null;
                 
@@ -87,12 +85,9 @@ namespace ImmoGest.Application.Services
                 var ownerName = await GetOwnerNameAsync(entity.ContactId);
                 var propertyReference = SanitizeFolderName(entity.Identifier);
                 
-                _logger.LogInformation("[Property Create - Attachments] Property reference: {PropertyReference}, Owner: {OwnerName}", propertyReference, ownerName);
-                
                 for (int i = 0; i < dto.Images.Count; i++)
                 {
                     var image = dto.Images[i];
-                    _logger.LogInformation("[Property Create - Attachments] Processing image {ImageIndex}/{TotalImages}", i + 1, dto.Images.Count);
                     
                     if (!string.IsNullOrEmpty(image.Base64Content) && IsValidBase64String(image.Base64Content))
                     {
@@ -111,16 +106,13 @@ namespace ImmoGest.Application.Services
 
                             // Sanitize the filename to remove spaces and invalid characters
                             originalFileName = SanitizeFileName(originalFileName);
-                            _logger.LogInformation("[Property Create - Attachments] Image {ImageIndex}: FileName={FileName}, Extension={Extension}", i + 1, originalFileName, fileExtension);
 
                             // Convert base64 to bytes first
                             var fileBytes = Convert.FromBase64String(image.Base64Content);
-                            _logger.LogInformation("[Property Create - Attachments] Image {ImageIndex}: FileSize={FileSize} bytes", i + 1, fileBytes.Length);
 
                             // Generate immutable storage hash based on CompanyId and file content
                             // This ensures same file + same company = same hash (works even when name changes)
                             var storageHash = GenerateStorageHash(entity.CompanyId, fileBytes);
-                            _logger.LogInformation("[Property Create - Attachments] Image {ImageIndex}: StorageHash={StorageHash}", i + 1, storageHash);
 
                             // Upload to S3 using StorageHash
                             var s3Key = S3PathConstants.BuildAttachmentKey(
@@ -128,13 +120,11 @@ namespace ImmoGest.Application.Services
                                 storageHash,
                                 originalFileName
                             );
-                            _logger.LogInformation("[Property Create - Attachments] Image {ImageIndex}: Uploading to S3, Key={S3Key}", i + 1, s3Key);
                             
                             using (var stream = new System.IO.MemoryStream(fileBytes))
                             {
                                 await _s3StorageService.UploadFileAsync(GetBucketName(), s3Key, stream);
                             }
-                            _logger.LogInformation("[Property Create - Attachments] Image {ImageIndex}: Successfully uploaded to S3", i + 1);
                             
                             // Create attachment record in database
                             var attachment = new Attachment
@@ -151,19 +141,8 @@ namespace ImmoGest.Application.Services
                             };
                             attachment.BuildSearchTerms();
                             
-                            _logger.LogInformation("[Property Create - Attachments] Image {ImageIndex}: Creating attachment record, AttachmentId={AttachmentId}", i + 1, attachment.Id);
-                            
                             // Use repository directly to save the attachment
                             var createdAttachmentResult = await _attachmentRepository.Create(attachment);
-                            
-                            if (createdAttachmentResult.IsSuccess() && createdAttachmentResult.Data != null)
-                            {
-                                _logger.LogInformation("[Property Create - Attachments] Image {ImageIndex}: Attachment created successfully, AttachmentId={AttachmentId}", i + 1, createdAttachmentResult.Data.Id);
-                            }
-                            else
-                            {
-                                _logger.LogWarning("[Property Create - Attachments] Image {ImageIndex}: Failed to create attachment record", i + 1);
-                            }
                             
                             // Set as default image if this is the default index (store for later)
                             if (i == 0 || (dto.DefaultImageId != null && dto.DefaultImageId == i.ToString()))
@@ -171,19 +150,13 @@ namespace ImmoGest.Application.Services
                                 if (createdAttachmentResult.IsSuccess() && createdAttachmentResult.Data != null)
                                 {
                                     defaultAttachmentId = createdAttachmentResult.Data.Id;
-                                    _logger.LogInformation("[Property Create - Attachments] Image {ImageIndex}: Set as default attachment, DefaultAttachmentId={DefaultAttachmentId}", i + 1, defaultAttachmentId);
                                 }
                             }
                         }
                         catch (Exception ex)
                         {
-                            _logger.LogError(ex, "[Property Create - Attachments] Image {ImageIndex}: Error processing attachment", i + 1);
                             // Continue with other images if one fails
                         }
-                    }
-                    else
-                    {
-                        _logger.LogWarning("[Property Create - Attachments] Image {ImageIndex}: Skipped - Invalid or empty base64 content", i + 1);
                     }
                 }
                 
@@ -193,24 +166,15 @@ namespace ImmoGest.Application.Services
                 {
                     try
                     {
-                        _logger.LogInformation("[Property Create - Attachments] Updating property default attachment, PropertyId={PropertyId}, DefaultAttachmentId={DefaultAttachmentId}", entity.Id, defaultAttachmentId.Value);
                         await _propertyRepository.UpdateDefaultAttachmentIdAsync(entity.Id, defaultAttachmentId.Value);
                         // Update the entity reference to reflect the change
                         entity.DefaultAttachmentId = defaultAttachmentId.Value;
-                        _logger.LogInformation("[Property Create - Attachments] Successfully updated property default attachment");
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "[Property Create - Attachments] Error updating default attachment");
                         // Continue processing
                     }
                 }
-                else
-                {
-                    _logger.LogInformation("[Property Create - Attachments] No default attachment set");
-                }
-                
-                _logger.LogInformation("[Property Create - Attachments] Completed attachment processing for PropertyId: {PropertyId}", entity.Id);
                 
                 // Clear the temporary DTO
                 _currentPropertyDto = null;
@@ -235,8 +199,6 @@ namespace ImmoGest.Application.Services
         {
             if (_currentUpdatePropertyDto != null)
             {
-                _logger.LogInformation("[Property Update - Attachments] Starting attachment processing for PropertyId: {PropertyId}", entity.Id);
-                
                 var dto = _currentUpdatePropertyDto;
                 Guid? newDefaultAttachmentId = null;
                 bool defaultAttachmentChanged = false;
@@ -245,19 +207,13 @@ namespace ImmoGest.Application.Services
                 var ownerName = await GetOwnerNameAsync(entity.ContactId);
                 var propertyReference = SanitizeFolderName(entity.Identifier);
                 
-                _logger.LogInformation("[Property Update - Attachments] Property reference: {PropertyReference}, Owner: {OwnerName}", propertyReference, ownerName);
-                
                 // Handle attachments to delete
                 if (dto.AttachmentsToDelete != null && dto.AttachmentsToDelete.Count > 0)
                 {
-                    _logger.LogInformation("[Property Update - Attachments] Processing {DeleteCount} attachments to delete", dto.AttachmentsToDelete.Count);
-                    
                     foreach (var attachmentId in dto.AttachmentsToDelete)
                     {
                         try
                         {
-                            _logger.LogInformation("[Property Update - Attachments] Deleting attachment, AttachmentId={AttachmentId}", attachmentId);
-                            
                             // Get attachment to find its S3 key
                             var attachmentResult = await _attachmentService.GetByIdAsync<AttachmentDto>(attachmentId);
                             if (attachmentResult.IsSuccess() && attachmentResult.Data != null)
@@ -272,31 +228,22 @@ namespace ImmoGest.Application.Services
                                         attachment.StorageHash,
                                         attachment.FileName
                                     );
-                                    _logger.LogInformation("[Property Update - Attachments] Deleting from S3, Key={S3Key}", s3Key);
                                     await _s3StorageService.DeleteAsync(GetBucketName(), s3Key);
-                                    _logger.LogInformation("[Property Update - Attachments] Successfully deleted from S3");
                                 }
                                 
                                 // Delete from database (calls SaveChangesAsync internally)
                                 await _attachmentService.DeleteAsync(attachmentId);
-                                _logger.LogInformation("[Property Update - Attachments] Successfully deleted attachment from database");
                                 
                                 // If this was the default attachment, clear it
                                 if (entity.DefaultAttachmentId == attachmentId)
                                 {
                                     newDefaultAttachmentId = null;
                                     defaultAttachmentChanged = true;
-                                    _logger.LogInformation("[Property Update - Attachments] Deleted attachment was default, clearing default attachment");
                                 }
-                            }
-                            else
-                            {
-                                _logger.LogWarning("[Property Update - Attachments] Attachment not found, AttachmentId={AttachmentId}", attachmentId);
                             }
                         }
                         catch (Exception ex)
                         {
-                            _logger.LogError(ex, "[Property Update - Attachments] Error deleting attachment {AttachmentId}", attachmentId);
                             // Continue with other attachments
                         }
                     }
@@ -305,12 +252,9 @@ namespace ImmoGest.Application.Services
                 // Handle new images to add
                 if (dto.ImagesToAdd != null && dto.ImagesToAdd.Count > 0)
                 {
-                    _logger.LogInformation("[Property Update - Attachments] Processing {ImageCount} new images to add", dto.ImagesToAdd.Count);
-                    
                     for (int i = 0; i < dto.ImagesToAdd.Count; i++)
                     {
                         var image = dto.ImagesToAdd[i];
-                        _logger.LogInformation("[Property Update - Attachments] Processing new image {ImageIndex}/{TotalImages}, IsDefault={IsDefault}", i + 1, dto.ImagesToAdd.Count, image.IsDefault);
                         
                         if (!string.IsNullOrEmpty(image.Base64Content) && IsValidBase64String(image.Base64Content))
                         {
@@ -329,16 +273,13 @@ namespace ImmoGest.Application.Services
 
                                 // Sanitize the filename to remove spaces and invalid characters
                                 originalFileName = SanitizeFileName(originalFileName);
-                                _logger.LogInformation("[Property Update - Attachments] New image {ImageIndex}: FileName={FileName}, Extension={Extension}", i + 1, originalFileName, fileExtension);
 
                                 // Convert base64 to bytes first
                                 var fileBytes = Convert.FromBase64String(image.Base64Content);
-                                _logger.LogInformation("[Property Update - Attachments] New image {ImageIndex}: FileSize={FileSize} bytes", i + 1, fileBytes.Length);
 
                                 // Generate immutable storage hash based on CompanyId and file content
                                 // This ensures same file + same company = same hash (works even when name changes)
                                 var storageHash = GenerateStorageHash(entity.CompanyId, fileBytes);
-                                _logger.LogInformation("[Property Update - Attachments] New image {ImageIndex}: StorageHash={StorageHash}", i + 1, storageHash);
                                 
                                 // Upload to S3 using StorageHash
                                 var s3Key = S3PathConstants.BuildAttachmentKey(
@@ -346,13 +287,11 @@ namespace ImmoGest.Application.Services
                                     storageHash,
                                     originalFileName
                                 );
-                                _logger.LogInformation("[Property Update - Attachments] New image {ImageIndex}: Uploading to S3, Key={S3Key}", i + 1, s3Key);
                                 
                                 using (var stream = new System.IO.MemoryStream(fileBytes))
                                 {
                                     await _s3StorageService.UploadFileAsync(GetBucketName(), s3Key, stream);
                                 }
-                                _logger.LogInformation("[Property Update - Attachments] New image {ImageIndex}: Successfully uploaded to S3", i + 1);
                                 
                                 // Create attachment record in database
                                 var attachment = new Attachment
@@ -369,19 +308,8 @@ namespace ImmoGest.Application.Services
                                 };
                                 attachment.BuildSearchTerms();
                                 
-                                _logger.LogInformation("[Property Update - Attachments] New image {ImageIndex}: Creating attachment record, AttachmentId={AttachmentId}", i + 1, attachment.Id);
-                                
                                 // Use repository directly to save the attachment
                                 var createdAttachmentResult = await _attachmentRepository.Create(attachment);
-                                
-                                if (createdAttachmentResult.IsSuccess() && createdAttachmentResult.Data != null)
-                                {
-                                    _logger.LogInformation("[Property Update - Attachments] New image {ImageIndex}: Attachment created successfully, AttachmentId={AttachmentId}", i + 1, createdAttachmentResult.Data.Id);
-                                }
-                                else
-                                {
-                                    _logger.LogWarning("[Property Update - Attachments] New image {ImageIndex}: Failed to create attachment record", i + 1);
-                                }
                                 
                                 // If this image is marked as default, set it as the property's default attachment
                                 // This takes precedence over dto.DefaultAttachmentId
@@ -389,18 +317,12 @@ namespace ImmoGest.Application.Services
                                 {
                                     newDefaultAttachmentId = createdAttachmentResult.Data.Id;
                                     defaultAttachmentChanged = true;
-                                    _logger.LogInformation("[Property Update - Attachments] New image {ImageIndex}: Set as default attachment, DefaultAttachmentId={DefaultAttachmentId}", i + 1, newDefaultAttachmentId);
                                 }
                             }
                             catch (Exception ex)
                             {
-                                _logger.LogError(ex, "[Property Update - Attachments] New image {ImageIndex}: Error processing attachment", i + 1);
                                 // Continue processing
                             }
-                        }
-                        else
-                        {
-                            _logger.LogWarning("[Property Update - Attachments] New image {ImageIndex}: Skipped - Invalid or empty base64 content", i + 1);
                         }
                     }
                 }
@@ -411,7 +333,6 @@ namespace ImmoGest.Application.Services
                 {
                     newDefaultAttachmentId = dto.DefaultAttachmentId;
                     defaultAttachmentChanged = true;
-                    _logger.LogInformation("[Property Update - Attachments] Default attachment changed via DTO, NewDefaultAttachmentId={NewDefaultAttachmentId}", newDefaultAttachmentId);
                 }
                 
                 // Update the property's default attachment using repository method to avoid concurrency issues
@@ -420,24 +341,15 @@ namespace ImmoGest.Application.Services
                 {
                     try
                     {
-                        _logger.LogInformation("[Property Update - Attachments] Updating property default attachment, PropertyId={PropertyId}, DefaultAttachmentId={DefaultAttachmentId}", entity.Id, newDefaultAttachmentId);
                         await _propertyRepository.UpdateDefaultAttachmentIdAsync(entity.Id, newDefaultAttachmentId);
                         // Update the entity reference to reflect the change
                         entity.DefaultAttachmentId = newDefaultAttachmentId;
-                        _logger.LogInformation("[Property Update - Attachments] Successfully updated property default attachment");
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "[Property Update - Attachments] Error updating default attachment");
                         // Continue processing
                     }
                 }
-                else
-                {
-                    _logger.LogInformation("[Property Update - Attachments] No default attachment change needed");
-                }
-                
-                _logger.LogInformation("[Property Update - Attachments] Completed attachment processing for PropertyId: {PropertyId}", entity.Id);
                 
                 // Clear the temporary DTO
                 _currentUpdatePropertyDto = null;
@@ -812,7 +724,6 @@ namespace ImmoGest.Application.Services
                                     catch (Exception ex)
                                     {
                                         keyDto.DefaultAttachmentUrl = null;
-                                        _logger.LogWarning(ex, "Failed to generate default attachment URL for key {KeyId}", keyDto.Id);
                                     }
                                 }
 
@@ -867,7 +778,6 @@ namespace ImmoGest.Application.Services
                                                 catch (Exception ex)
                                                 {
                                                     // Continue with other attachments
-                                                    _logger.LogWarning(ex, "Failed to generate attachment URL for key {KeyId}, attachment {AttachmentId}", keyDto.Id, attachment.Id);
                                                 }
                                             }
                                         }
@@ -876,7 +786,6 @@ namespace ImmoGest.Application.Services
                                 catch (Exception ex)
                                 {
                                     keyDto.Attachments = new List<AttachmentDetailsDto>();
-                                    _logger.LogWarning(ex, "Failed to load attachments for key {KeyId}", keyDto.Id);
                                 }
                             }
                         }

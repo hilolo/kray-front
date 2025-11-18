@@ -223,7 +223,6 @@ export class KeysListComponent implements OnInit, OnDestroy {
         this.selectedRows.set(new Set());
       },
       error: (error) => {
-        console.error('Error loading keys:', error);
         this.isLoading.set(false);
         // Clear selection on error too
         this.selectedRows.set(new Set());
@@ -251,7 +250,6 @@ export class KeysListComponent implements OnInit, OnDestroy {
         this.isLoadingProperties.set(false);
       },
       error: (error) => {
-        console.error('Error loading properties:', error);
         this.isLoadingProperties.set(false);
       },
     });
@@ -405,7 +403,6 @@ export class KeysListComponent implements OnInit, OnDestroy {
             this.isDeleting.set(false);
           },
           error: (error) => {
-            console.error('Error deleting key:', error);
             this.isDeleting.set(false);
             // Error is already handled by ApiService (toast notification)
           },

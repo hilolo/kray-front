@@ -15,7 +15,6 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 
 namespace ImmoGest.Application.Services
 {
@@ -29,7 +28,6 @@ namespace ImmoGest.Application.Services
         private readonly ISession _session;
         private readonly IMapper _mapper;
         private readonly IConfiguration _configuration;
-        private readonly ILogger<KeyService> _logger;
 
         // Store DTOs temporarily for after insert/update processing
         private CreateKeyDto _currentKeyDto;
@@ -45,8 +43,7 @@ namespace ImmoGest.Application.Services
             IAttachmentRepository attachmentRepository,
             IS3StorageService s3StorageService,
             ISession session,
-            IConfiguration configuration,
-            ILogger<KeyService> logger)
+            IConfiguration configuration)
             : base(mapper, keyRepository)
         {
             _mapper = mapper;
@@ -57,7 +54,6 @@ namespace ImmoGest.Application.Services
             _s3StorageService = s3StorageService;
             _session = session;
             _configuration = configuration;
-            _logger = logger;
         }
 
         protected override async Task InCreate_BeforInsertAsync<TCreateModel>(Key entity, TCreateModel createModel)
@@ -79,35 +75,28 @@ namespace ImmoGest.Application.Services
                 
                 try
                 {
-                    _logger.LogInformation("[Key Create - Image] Starting image upload for KeyId: {KeyId}, PropertyId: {PropertyId}", entity.Id, entity.PropertyId);
-                    
                     // Get company ID from property - load Property if not already loaded
                     Guid companyId;
                     if (entity.Property != null)
                     {
                         companyId = entity.Property.CompanyId;
-                        _logger.LogInformation("[Key Create - Image] Using CompanyId from loaded Property: {CompanyId}", companyId);
                     }
                     else
                     {
-                        _logger.LogInformation("[Key Create - Image] Property not loaded, loading Property {PropertyId} to get CompanyId", entity.PropertyId);
                         // Load Property to get CompanyId
                         var propertyResult = await _propertyRepository.GetByIdAsync(entity.PropertyId);
                         if (propertyResult.IsSuccess() && propertyResult.Data != null)
                         {
                             companyId = propertyResult.Data.CompanyId;
-                            _logger.LogInformation("[Key Create - Image] Loaded Property, CompanyId: {CompanyId}", companyId);
                         }
                         else
                         {
                             // Fallback to session CompanyId if Property not found
                             companyId = _session.CompanyId;
-                            _logger.LogWarning("[Key Create - Image] Property {PropertyId} not found, using session CompanyId {CompanyId}", entity.PropertyId, companyId);
                         }
                     }
                     
                     var fileExtension = GetImageExtensionFromBase64(dto.Image.Base64Content);
-                    _logger.LogInformation("[Key Create - Image] Detected file extension: {Extension}", fileExtension);
                     
                     var originalFileName = string.IsNullOrEmpty(dto.Image.FileName) 
                         ? $"key_{Guid.NewGuid()}{fileExtension}" 
@@ -119,15 +108,12 @@ namespace ImmoGest.Application.Services
                     }
 
                     originalFileName = SanitizeFileName(originalFileName);
-                    _logger.LogInformation("[Key Create - Image] Processed filename: {FileName}", originalFileName);
 
                     // Convert base64 to bytes first
                     var fileBytes = Convert.FromBase64String(dto.Image.Base64Content);
-                    _logger.LogInformation("[Key Create - Image] File size: {FileSize} bytes", fileBytes.Length);
 
                     // Generate immutable storage hash based on CompanyId and file content
                     var storageHash = GenerateStorageHash(companyId, fileBytes);
-                    _logger.LogInformation("[Key Create - Image] Generated storage hash: {StorageHash}", storageHash);
                     
                     // Upload to S3 using StorageHash
                     var s3Key = S3PathConstants.BuildAttachmentKey(
@@ -136,14 +122,12 @@ namespace ImmoGest.Application.Services
                         originalFileName
                     );
                     var bucketName = GetBucketName();
-                    _logger.LogInformation("[Key Create - Image] Uploading to S3 - Bucket: {BucketName}, Key: {S3Key}", bucketName, s3Key);
                     
                     // Upload to S3 - match BuildingService exactly (no contentType parameter)
                     using (var stream = new MemoryStream(fileBytes))
                     {
                         await _s3StorageService.UploadFileAsync(bucketName, s3Key, stream);
                     }
-                    _logger.LogInformation("[Key Create - Image] Successfully uploaded to S3");
                     
                     // Create attachment record
                     var attachment = new Attachment
@@ -159,25 +143,16 @@ namespace ImmoGest.Application.Services
                     };
                     attachment.BuildSearchTerms();
                     
-                    _logger.LogInformation("[Key Create - Image] Creating attachment record - AttachmentId: {AttachmentId}", attachment.Id);
                     var createdAttachment = await _attachmentService.CreateAsync<Attachment, Attachment>(attachment);
                     
                     if (createdAttachment.IsSuccess() && createdAttachment.Data != null)
                     {
-                        _logger.LogInformation("[Key Create - Image] Attachment created successfully - AttachmentId: {AttachmentId}", createdAttachment.Data.Id);
                         entity.DefaultAttachmentId = createdAttachment.Data.Id;
                         await _keyRepository.Update(entity);
-                        _logger.LogInformation("[Key Create - Image] Updated Key with DefaultAttachmentId: {DefaultAttachmentId}", entity.DefaultAttachmentId);
-                    }
-                    else
-                    {
-                        _logger.LogWarning("[Key Create - Image] Failed to create attachment record");
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "[Key Create - Image] Error processing image for KeyId: {KeyId}. Error details: {ErrorMessage}. StackTrace: {StackTrace}", 
-                        entity.Id, ex.Message, ex.StackTrace);
                     // Continue processing
                 }
                 
@@ -215,37 +190,30 @@ namespace ImmoGest.Application.Services
                 
                 try
                 {
-                    _logger.LogInformation("[Key Update - Image] Starting image upload for KeyId: {KeyId}, PropertyId: {PropertyId}", entity.Id, entity.PropertyId);
-                    
                     // Get company ID from property - load Property if not already loaded
                     Guid companyId;
                     if (entity.Property != null)
                     {
                         companyId = entity.Property.CompanyId;
-                        _logger.LogInformation("[Key Update - Image] Using CompanyId from loaded Property: {CompanyId}", companyId);
                     }
                     else
                     {
-                        _logger.LogInformation("[Key Update - Image] Property not loaded, loading Property {PropertyId} to get CompanyId", entity.PropertyId);
                         // Load Property to get CompanyId
                         var propertyResult = await _propertyRepository.GetByIdAsync(entity.PropertyId);
                         if (propertyResult.IsSuccess() && propertyResult.Data != null)
                         {
                             companyId = propertyResult.Data.CompanyId;
-                            _logger.LogInformation("[Key Update - Image] Loaded Property, CompanyId: {CompanyId}", companyId);
                         }
                         else
                         {
                             // Fallback to session CompanyId if Property not found
                             companyId = _session.CompanyId;
-                            _logger.LogWarning("[Key Update - Image] Property {PropertyId} not found, using session CompanyId {CompanyId}", entity.PropertyId, companyId);
                         }
                     }
                     
                     // Delete old image if exists (use the stored old ID, not the entity's current ID)
                     if (_oldDefaultAttachmentId.HasValue)
                     {
-                        _logger.LogInformation("[Key Update - Image] Deleting old attachment: {OldAttachmentId}", _oldDefaultAttachmentId.Value);
                         var oldAttachment = await _attachmentService.GetByIdAsync<AttachmentDto>(_oldDefaultAttachmentId.Value);
                         if (oldAttachment.IsSuccess() && oldAttachment.Data != null)
                         {
@@ -256,16 +224,13 @@ namespace ImmoGest.Application.Services
                                     oldAttachment.Data.StorageHash,
                                     oldAttachment.Data.FileName
                                 );
-                                _logger.LogInformation("[Key Update - Image] Deleting from S3 - Key: {OldS3Key}", oldS3Key);
                                 await _s3StorageService.DeleteAsync(GetBucketName(), oldS3Key);
                             }
                             await _attachmentService.DeleteAsync(_oldDefaultAttachmentId.Value);
-                            _logger.LogInformation("[Key Update - Image] Old attachment deleted successfully");
                         }
                     }
                     
                     var fileExtension = GetImageExtensionFromBase64(dto.Image.Base64Content);
-                    _logger.LogInformation("[Key Update - Image] Detected file extension: {Extension}", fileExtension);
                     
                     var originalFileName = string.IsNullOrEmpty(dto.Image.FileName) 
                         ? $"key_{Guid.NewGuid()}{fileExtension}" 
@@ -277,15 +242,12 @@ namespace ImmoGest.Application.Services
                     }
 
                     originalFileName = SanitizeFileName(originalFileName);
-                    _logger.LogInformation("[Key Update - Image] Processed filename: {FileName}", originalFileName);
 
                     // Convert base64 to bytes first
                     var fileBytes = Convert.FromBase64String(dto.Image.Base64Content);
-                    _logger.LogInformation("[Key Update - Image] File size: {FileSize} bytes", fileBytes.Length);
 
                     // Generate immutable storage hash based on CompanyId and file content
                     var storageHash = GenerateStorageHash(companyId, fileBytes);
-                    _logger.LogInformation("[Key Update - Image] Generated storage hash: {StorageHash}", storageHash);
                     
                     // Upload to S3 using StorageHash
                     var s3Key = S3PathConstants.BuildAttachmentKey(
@@ -294,14 +256,12 @@ namespace ImmoGest.Application.Services
                         originalFileName
                     );
                     var bucketName = GetBucketName();
-                    _logger.LogInformation("[Key Update - Image] Uploading to S3 - Bucket: {BucketName}, Key: {S3Key}", bucketName, s3Key);
                     
                     // Upload to S3 - match BuildingService exactly (no contentType parameter)
                     using (var stream = new MemoryStream(fileBytes))
                     {
                         await _s3StorageService.UploadFileAsync(bucketName, s3Key, stream);
                     }
-                    _logger.LogInformation("[Key Update - Image] Successfully uploaded to S3");
                     
                     // Create attachment record in database - same structure as CREATE
                     var attachment = new Attachment
@@ -317,28 +277,19 @@ namespace ImmoGest.Application.Services
                     };
                     attachment.BuildSearchTerms();
                     
-                    _logger.LogInformation("[Key Update - Image] Creating attachment record - AttachmentId: {AttachmentId}", attachment.Id);
                     var createdAttachment = await _attachmentService.CreateAsync<Attachment, Attachment>(attachment);
                     
                     if (createdAttachment.IsSuccess() && createdAttachment.Data != null)
                     {
-                        _logger.LogInformation("[Key Update - Image] Attachment created successfully - AttachmentId: {AttachmentId}", createdAttachment.Data.Id);
                         entity.DefaultAttachmentId = createdAttachment.Data.Id;
                         await _keyRepository.Update(entity);
-                        _logger.LogInformation("[Key Update - Image] Updated Key with DefaultAttachmentId: {DefaultAttachmentId}", entity.DefaultAttachmentId);
                         
                         // Set flag to indicate image was uploaded
                         _imageWasUploaded = true;
                     }
-                    else
-                    {
-                        _logger.LogWarning("[Key Update - Image] Failed to create attachment record");
-                    }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "[Key Update - Image] Error processing image for KeyId: {KeyId}. Error details: {ErrorMessage}. StackTrace: {StackTrace}", 
-                        entity.Id, ex.Message, ex.StackTrace);
                     // Continue processing
                 }
                 
@@ -462,7 +413,6 @@ namespace ImmoGest.Application.Services
                         }
                         catch (Exception ex)
                         {
-                            _logger.LogError(ex, "[Key Update - URL Generation] Error generating image URL for KeyId: {KeyId}", id);
                             // Continue processing
                         }
                     }

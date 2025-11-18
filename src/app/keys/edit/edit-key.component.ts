@@ -218,7 +218,6 @@ export class EditKeyComponent implements OnInit, OnDestroy {
           this.isLoading.set(false);
         },
         error: (error) => {
-          console.error('Error loading key:', error);
           this.isLoading.set(false);
         },
       });
@@ -276,7 +275,6 @@ export class EditKeyComponent implements OnInit, OnDestroy {
         this.isLoadingProperties.set(false);
       },
       error: (error) => {
-        console.error('Error loading properties:', error);
         this.isLoadingProperties.set(false);
       },
     });
@@ -498,7 +496,6 @@ export class EditKeyComponent implements OnInit, OnDestroy {
             }
           },
           error: (error) => {
-            console.error('Error updating key:', error);
             this.isSaving.set(false);
             // Error is already handled by ApiService (toast notification)
           },
@@ -543,7 +540,6 @@ export class EditKeyComponent implements OnInit, OnDestroy {
             }
           },
           error: (error) => {
-            console.error('Error creating key:', error);
             this.isSaving.set(false);
             // Error is already handled by ApiService (toast notification)
           },
