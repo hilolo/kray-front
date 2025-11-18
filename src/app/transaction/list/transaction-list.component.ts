@@ -14,19 +14,22 @@ import { ZardSelectComponent } from '@shared/components/select/select.component'
 import { ZardSelectItemComponent } from '@shared/components/select/select-item.component';
 import { ZardCheckboxComponent } from '@shared/components/checkbox/checkbox.component';
 import { ZardComboboxComponent, ZardComboboxOption } from '@shared/components/combobox/combobox.component';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, forkJoin } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import type { Transaction } from '@shared/models/transaction/transaction.model';
 import { TransactionType, TransactionStatus, RevenueType, ExpenseType } from '@shared/models/transaction/transaction.model';
 import type { TransactionListRequest } from '@shared/models/transaction/transaction-list-request.model';
 import { TransactionService } from '@shared/services/transaction.service';
 import { PropertyService } from '@shared/services/property.service';
+import { ContactService } from '@shared/services/contact.service';
 import { ToastService } from '@shared/services/toast.service';
 import { UserService } from '@shared/services/user.service';
 import { ZardAlertDialogService } from '@shared/components/alert-dialog/alert-dialog.service';
 import { RoutePreferencesService } from '@shared/services/route-preferences.service';
 import { FormsModule } from '@angular/forms';
 import type { Property } from '@shared/models/property/property.model';
+import type { Contact } from '@shared/models/contact/contact.model';
+import { ContactType } from '@shared/models/contact/contact.model';
 
 @Component({
   selector: 'app-transaction-list',
@@ -57,6 +60,7 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
   private readonly router = inject(Router);
   private readonly transactionService = inject(TransactionService);
   private readonly propertyService = inject(PropertyService);
+  private readonly contactService = inject(ContactService);
   private readonly toastService = inject(ToastService);
   private readonly userService = inject(UserService);
   private readonly preferencesService = inject(RoutePreferencesService);
@@ -138,11 +142,20 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
   readonly propertyComboboxRef = viewChild<ZardComboboxComponent>('propertyCombobox');
 
 
+  // Contact filter
+  readonly contacts = signal<Contact[]>([]);
+  readonly contactOptions = signal<ZardComboboxOption[]>([]);
+  readonly selectedContactId = signal<string | null>(null);
+  readonly isLoadingContacts = signal(false);
+  readonly contactComboboxRef = viewChild<ZardComboboxComponent>('contactCombobox');
+
+
   // Check if any filters are active (excluding the default selectedType)
   readonly hasActiveFilters = computed(() => {
     return this.selectedRevenueTypes().length > 0 ||
            this.selectedExpenseTypes().length > 0 ||
-           this.selectedPropertyId() !== null;
+           this.selectedPropertyId() !== null ||
+           this.selectedContactId() !== null;
   });
 
   // Template references for custom cells
@@ -248,6 +261,7 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
     
     this.loadTransactions();
     this.loadProperties();
+    this.loadContacts();
   }
 
   ngAfterViewInit(): void {
@@ -279,6 +293,7 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
       revenueTypes: this.selectedRevenueTypes().length > 0 ? this.selectedRevenueTypes() : undefined,
       expenseTypes: this.selectedExpenseTypes().length > 0 ? this.selectedExpenseTypes() : undefined,
       propertyId: this.selectedPropertyId() || undefined,
+      contactId: this.selectedContactId() || undefined,
     };
 
     this.transactionService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
@@ -326,9 +341,82 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
     });
   }
 
+  loadContacts(): void {
+    this.isLoadingContacts.set(true);
+    const companyId = this.userService.getCurrentUser()?.companyId;
+    
+    // Load all contacts that are not shared (belong to current company)
+    // Using ignore: true to get all contacts without pagination
+    const request = {
+      currentPage: 1,
+      pageSize: 10000, // Very large page size since ignore might not be fully supported
+      ignore: true,
+      type: ContactType.Tenant, // We'll load all types, but start with Tenant
+      isArchived: false,
+    };
+    
+    // Load all contact types
+    const contactTypes = [ContactType.Owner, ContactType.Tenant, ContactType.Service];
+    const allRequests = contactTypes.map(type => ({
+      ...request,
+      type,
+    }));
+    
+    // Combine all requests
+    const allContacts$ = allRequests.map(req => 
+      this.contactService.list(req).pipe(takeUntil(this.destroy$))
+    );
+    
+    // Use forkJoin to load all types in parallel, then combine
+    forkJoin(allContacts$).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (responses) => {
+        // Combine all contacts from all types
+        const allContacts: Contact[] = [];
+        responses.forEach(response => {
+          if (response.result) {
+            allContacts.push(...response.result);
+          }
+        });
+        
+        // Filter by companyId if available (contacts that belong to current company, not shared)
+        const filteredContacts = companyId 
+          ? allContacts.filter(contact => contact.companyId === companyId)
+          : allContacts;
+        
+        this.contacts.set(filteredContacts);
+        
+        // Convert contacts to combobox options
+        const options: ZardComboboxOption[] = filteredContacts.map(contact => {
+          const displayName = contact.isACompany 
+            ? contact.companyName || contact.identifier || 'Unnamed Company'
+            : `${contact.firstName} ${contact.lastName}`.trim() || contact.identifier || 'Unnamed Contact';
+          return {
+            value: contact.id,
+            label: displayName,
+          };
+        });
+        this.contactOptions.set(options);
+        this.isLoadingContacts.set(false);
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        console.error('Error loading contacts:', error);
+        this.isLoadingContacts.set(false);
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
 
   onPropertyChange(propertyId: string | null): void {
     this.selectedPropertyId.set(propertyId);
+    this.currentPage.set(1);
+    this.loadTransactions();
+  }
+
+
+  onContactChange(contactId: string | null): void {
+    this.selectedContactId.set(contactId);
     this.currentPage.set(1);
     this.loadTransactions();
   }
@@ -557,12 +645,17 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
     this.selectedRevenueTypes.set([]);
     this.selectedExpenseTypes.set([]);
     this.selectedPropertyId.set(null);
+    this.selectedContactId.set(null);
     
     // Clear combobox internal values using ControlValueAccessor
     setTimeout(() => {
       const propertyCombobox = this.propertyComboboxRef();
       if (propertyCombobox) {
         (propertyCombobox as any).writeValue(null);
+      }
+      const contactCombobox = this.contactComboboxRef();
+      if (contactCombobox) {
+        (contactCombobox as any).writeValue(null);
       }
     }, 0);
     

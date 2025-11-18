@@ -174,11 +174,8 @@ namespace ImmoGest.Application.Services
                     entity.TotalAmount = dto.Payments.Sum(p => p.Amount * (1 + p.VatPercent / 100));
                 }
 
-                // Update status if provided
-                if (dto.Status.HasValue)
-                {
-                    entity.Status = dto.Status.Value;
-                }
+                // Status is not updated through edit - use the dedicated status update endpoint instead
+                // This ensures status can only be changed via the /status endpoint
 
                 // Build search terms
                 entity.BuildSearchTerms();

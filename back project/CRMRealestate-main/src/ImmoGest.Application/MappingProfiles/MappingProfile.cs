@@ -551,6 +551,7 @@ namespace ImmoGest.Application.MappingProfiles
                 .ForMember(dest => dest.Company, opt => opt.Ignore())
                 .ForMember(dest => dest.Attachments, opt => opt.Ignore()) // Handled in service
                 .ForMember(dest => dest.TransactionType, opt => opt.Ignore()) // Don't update transaction type
+                .ForMember(dest => dest.Status, opt => opt.Ignore()) // Don't update status through edit - use status endpoint
                 .ForMember(dest => dest.TotalAmount, opt => opt.Ignore()) // Calculated in service
                 .ForMember(dest => dest.IsDeleted, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedOn, opt => opt.Ignore())

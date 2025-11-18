@@ -49,7 +49,7 @@
         <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
           <!-- Filters on left -->
           <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-1 w-full">
-            <!-- Filters group: Property -->
+            <!-- Filters group: Property, Contact, and Revenue Types -->
             <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-shrink-0 w-full sm:w-auto">
               <!-- Property select -->
               <div class="w-full sm:w-[200px]">
@@ -66,65 +66,78 @@
                   class="w-full"
                 />
               </div>
-              <!-- Type filter -->
-              <div class="flex gap-2 items-center">
-                
-                <!-- Revenue Types Multi-Select -->
-                @if (selectedType() === TransactionType.Revenue) {
-                  <div class="w-full sm:w-[200px]">
-                    <z-select
-                      [zValue]="selectedRevenueTypes().length > 0 ? selectedRevenueTypes()[0].toString() : ''"
-                      [zLabel]="selectedRevenueTypesDisplay() || 'Select revenue types...'"
-                      [zPlaceholder]="'Select revenue types...'"
-                      [zSize]="'sm'"
-                      class="w-full"
-                      (zSelectionChange)="onRevenueSelectChange($event)"
-                    >
-                      @for (option of revenueTypeOptions; track option.value) {
-                        <z-select-item [zValue]="option.value.toString()" [class]="'cursor-default'" (click)="$event.preventDefault(); $event.stopPropagation(); toggleRevenueType(option.value)">
-                          <div class="flex items-center gap-2 w-full pointer-events-none">
-                            <z-checkbox
-                              [ngModel]="selectedRevenueTypes().includes(option.value)"
-                              (checkChange)="toggleRevenueType(option.value)"
-                              (click)="$event.preventDefault(); $event.stopPropagation()"
-                              class="pointer-events-auto"
-                            />
-                            <span class="flex-1">{{ option.label }}</span>
-                          </div>
-                        </z-select-item>
-                      }
-                    </z-select>
-                  </div>
-                }
-                
-                <!-- Expense Types Multi-Select -->
-                @if (selectedType() === TransactionType.Expense) {
-                  <div class="w-full sm:w-[200px]">
-                    <z-select
-                      [zValue]="selectedExpenseTypes().length > 0 ? selectedExpenseTypes()[0].toString() : ''"
-                      [zLabel]="selectedExpenseTypesDisplay() || 'Select expense types...'"
-                      [zPlaceholder]="'Select expense types...'"
-                      [zSize]="'sm'"
-                      class="w-full"
-                      (zSelectionChange)="onExpenseSelectChange($event)"
-                    >
-                      @for (option of expenseTypeOptions; track option.value) {
-                        <z-select-item [zValue]="option.value.toString()" [class]="'cursor-default'" (click)="$event.preventDefault(); $event.stopPropagation(); toggleExpenseType(option.value)">
-                          <div class="flex items-center gap-2 w-full pointer-events-none">
-                            <z-checkbox
-                              [ngModel]="selectedExpenseTypes().includes(option.value)"
-                              (checkChange)="toggleExpenseType(option.value)"
-                              (click)="$event.preventDefault(); $event.stopPropagation()"
-                              class="pointer-events-auto"
-                            />
-                            <span class="flex-1">{{ option.label }}</span>
-                          </div>
-                        </z-select-item>
-                      }
-                    </z-select>
-                  </div>
-                }
+              
+              <!-- Contact select -->
+              <div class="w-full sm:w-[200px]">
+                <z-combobox
+                  #contactCombobox
+                  [options]="contactOptions()"
+                  [value]="selectedContactId()"
+                  [placeholder]="'Select contact...'"
+                  [searchPlaceholder]="'Search contacts...'"
+                  [emptyText]="'No contacts found'"
+                  [searchable]="true"
+                  [disabled]="isLoadingContacts()"
+                  (zValueChange)="onContactChange($event)"
+                  class="w-full"
+                />
               </div>
+              
+              <!-- Revenue Types Multi-Select (same pattern as expense types) -->
+              @if (selectedType() === TransactionType.Revenue) {
+                <div class="w-full sm:w-[200px]">
+                  <z-select
+                    [zValue]="selectedRevenueTypes().length > 0 ? selectedRevenueTypes()[0].toString() : ''"
+                    [zLabel]="selectedRevenueTypesDisplay() || 'Select revenue types...'"
+                    [zPlaceholder]="'Select revenue types...'"
+                    [zSize]="'sm'"
+                    class="w-full"
+                    (zSelectionChange)="onRevenueSelectChange($event)"
+                  >
+                    @for (option of revenueTypeOptions; track option.value) {
+                      <z-select-item [zValue]="option.value.toString()" [class]="'cursor-default'" (click)="$event.preventDefault(); $event.stopPropagation(); toggleRevenueType(option.value)">
+                        <div class="flex items-center gap-2 w-full pointer-events-none">
+                          <z-checkbox
+                            [ngModel]="selectedRevenueTypes().includes(option.value)"
+                            (checkChange)="toggleRevenueType(option.value)"
+                            (click)="$event.preventDefault(); $event.stopPropagation()"
+                            class="pointer-events-auto"
+                          />
+                          <span class="flex-1">{{ option.label }}</span>
+                        </div>
+                      </z-select-item>
+                    }
+                  </z-select>
+                </div>
+              }
+              
+              <!-- Expense Types Multi-Select -->
+              @if (selectedType() === TransactionType.Expense) {
+                <div class="w-full sm:w-[200px]">
+                  <z-select
+                    [zValue]="selectedExpenseTypes().length > 0 ? selectedExpenseTypes()[0].toString() : ''"
+                    [zLabel]="selectedExpenseTypesDisplay() || 'Select expense types...'"
+                    [zPlaceholder]="'Select expense types...'"
+                    [zSize]="'sm'"
+                    class="w-full"
+                    (zSelectionChange)="onExpenseSelectChange($event)"
+                  >
+                    @for (option of expenseTypeOptions; track option.value) {
+                      <z-select-item [zValue]="option.value.toString()" [class]="'cursor-default'" (click)="$event.preventDefault(); $event.stopPropagation(); toggleExpenseType(option.value)">
+                        <div class="flex items-center gap-2 w-full pointer-events-none">
+                          <z-checkbox
+                            [ngModel]="selectedExpenseTypes().includes(option.value)"
+                            (checkChange)="toggleExpenseType(option.value)"
+                            (click)="$event.preventDefault(); $event.stopPropagation()"
+                            class="pointer-events-auto"
+                          />
+                          <span class="flex-1">{{ option.label }}</span>
+                        </div>
+                      </z-select-item>
+                    }
+                  </z-select>
+                </div>
+              }
             </div>
             @if (hasActiveFilters()) {
               <z-button zType="ghost" zSize="sm" (click)="onClearFilters()">
