@@ -295,11 +295,12 @@
             <span>{{ row.otherContactName || 'N/A' }}</span>
           } @else if (row.contactName || row.contactIdentifier) {
             <div class="flex flex-col gap-1">
-              @if (row.contactName) {
+              @if (row.contactName && row.contactIdentifier) {
+                <span class="font-semibold">{{ row.contactName }} ({{ row.contactIdentifier }})</span>
+              } @else if (row.contactName) {
                 <span class="font-semibold">{{ row.contactName }}</span>
-              }
-              @if (row.contactIdentifier) {
-                <span class="text-sm text-muted-foreground">Ref: {{ row.contactIdentifier }}</span>
+              } @else if (row.contactIdentifier) {
+                <span class="font-semibold">{{ row.contactIdentifier }}</span>
               }
             </div>
           } @else {

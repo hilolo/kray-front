@@ -16,7 +16,7 @@ import { ZardCheckboxComponent } from '@shared/components/checkbox/checkbox.comp
 import { ZardComboboxComponent, ZardComboboxOption } from '@shared/components/combobox/combobox.component';
 import { ZardInputGroupComponent } from '@shared/components/input-group/input-group.component';
 import { ZardInputDirective } from '@shared/components/input/input.directive';
-import { Subject, takeUntil, forkJoin } from 'rxjs';
+import { Subject, takeUntil } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 import type { Transaction } from '@shared/models/transaction/transaction.model';
@@ -389,51 +389,54 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
     this.isLoadingContacts.set(true);
     const companyId = this.userService.getCurrentUser()?.companyId;
     
-    // Load all contacts that are not shared (belong to current company)
+    // Load all contacts with a single call
     // Using ignore: true to get all contacts without pagination
     const request = {
       currentPage: 1,
-      pageSize: 10000, // Very large page size since ignore might not be fully supported
+      pageSize: 10000,
       ignore: true,
-      type: ContactType.Tenant, // We'll load all types, but start with Tenant
+      type: ContactType.Tenant, // Default type, but ignore:true should return all types
       isArchived: false,
     };
     
-    // Load all contact types
-    const contactTypes = [ContactType.Owner, ContactType.Tenant, ContactType.Service];
-    const allRequests = contactTypes.map(type => ({
-      ...request,
-      type,
-    }));
-    
-    // Combine all requests
-    const allContacts$ = allRequests.map(req => 
-      this.contactService.list(req).pipe(takeUntil(this.destroy$))
-    );
-    
-    // Use forkJoin to load all types in parallel, then combine
-    forkJoin(allContacts$).pipe(takeUntil(this.destroy$)).subscribe({
-      next: (responses) => {
-        // Combine all contacts from all types
-        const allContacts: Contact[] = [];
-        responses.forEach(response => {
-          if (response.result) {
-            allContacts.push(...response.result);
-          }
-        });
-        
+    // Make a single API call
+    this.contactService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (response) => {
         // Filter by companyId if available (contacts that belong to current company, not shared)
         const filteredContacts = companyId 
-          ? allContacts.filter(contact => contact.companyId === companyId)
-          : allContacts;
+          ? (response.result || []).filter(contact => contact.companyId === companyId)
+          : (response.result || []);
         
         this.contacts.set(filteredContacts);
         
-        // Convert contacts to combobox options
+        // Convert contacts to combobox options with name and identifier
         const options: ZardComboboxOption[] = filteredContacts.map(contact => {
-          const displayName = contact.isACompany 
-            ? contact.companyName || contact.identifier || 'Unnamed Company'
-            : `${contact.firstName} ${contact.lastName}`.trim() || contact.identifier || 'Unnamed Contact';
+          // Build display name: name (identifier) or identifier if name is missing
+          let displayName = '';
+          if (contact.isACompany) {
+            const name = contact.companyName || '';
+            if (name && contact.identifier) {
+              displayName = `${name} (${contact.identifier})`;
+            } else if (name) {
+              displayName = name;
+            } else if (contact.identifier) {
+              displayName = contact.identifier;
+            } else {
+              displayName = 'Unnamed Company';
+            }
+          } else {
+            const name = `${contact.firstName} ${contact.lastName}`.trim();
+            if (name && contact.identifier) {
+              displayName = `${name} (${contact.identifier})`;
+            } else if (name) {
+              displayName = name;
+            } else if (contact.identifier) {
+              displayName = contact.identifier;
+            } else {
+              displayName = 'Unnamed Contact';
+            }
+          }
+          
           return {
             value: contact.id,
             label: displayName,
