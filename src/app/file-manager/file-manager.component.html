@@ -120,7 +120,7 @@
       @if (filteredFolders().length > 0) {
         <div class="space-y-4">
           <h2 class="text-lg font-semibold">Folders</h2>
-          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 mb-6">
             @for (folder of filteredFolders(); track folder.id) {
               <z-card 
                 class="cursor-pointer hover:shadow-md transition-shadow relative group"
@@ -178,7 +178,7 @@
       @if (filteredFiles().length > 0) {
         <div class="space-y-4">
           <h2 class="text-lg font-semibold">Files</h2>
-          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 mb-6">
             @for (file of filteredFiles(); track file.id) {
               <z-card 
                 class="hover:shadow-md transition-shadow relative"
