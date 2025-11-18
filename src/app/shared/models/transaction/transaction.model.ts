@@ -30,6 +30,15 @@ export enum ExpenseType {
 }
 
 /**
+ * Transaction status enum
+ */
+export enum TransactionStatus {
+  Pending = 0,
+  Overdue = 1,
+  Paid = 2,
+}
+
+/**
  * Payment model for transaction
  * Currency is always MAD (Moroccan Dirham)
  */
@@ -47,7 +56,8 @@ export interface Transaction {
   type: TransactionType;
   revenueType?: RevenueType;
   expenseType?: ExpenseType;
-  propertyId: string;
+  status: TransactionStatus;
+  propertyId?: string;
   propertyName?: string;
   propertyAddress?: string;
   leaseId?: string;

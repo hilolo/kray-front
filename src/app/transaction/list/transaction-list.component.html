@@ -1,137 +1,256 @@
-<z-layout>
-  <z-content>
-    <z-page zTitle="Transactions">
-      <div class="flex flex-col h-full min-h-0">
-        <!-- Header Section -->
-        <div class="space-y-6 pb-6 flex-shrink-0">
-          <!-- Filter and Action Bar -->
-          <div class="flex flex-col gap-4">
-            <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-              <!-- Search and Filters on left -->
-              <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-1">
-                <!-- Search input -->
-                <div class="relative flex-1 sm:flex-initial w-full sm:w-[300px]">
-                  <z-icon zType="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" zSize="sm" />
-                  <input
-                    z-input
-                    type="text"
-                    placeholder="Search transactions..."
-                    class="pl-9 w-full"
-                    [value]="searchInput()"
-                    (input)="onSearchInputChange($any($event.target).value)"
-                  />
-                </div>
-                <!-- Type filter -->
-                <div class="flex gap-2">
-                  <z-button
-                    [zType]="selectedType() === TransactionType.Revenue ? 'default' : 'outline'"
-                    zSize="sm"
-                    (click)="onTypeChange(selectedType() === TransactionType.Revenue ? null : TransactionType.Revenue)"
-                  >
-                    Revenue
-                  </z-button>
-                  <z-button
-                    [zType]="selectedType() === TransactionType.Expense ? 'default' : 'outline'"
-                    zSize="sm"
-                    (click)="onTypeChange(selectedType() === TransactionType.Expense ? null : TransactionType.Expense)"
-                  >
-                    Expense
-                  </z-button>
-                </div>
-                @if (hasActiveFilters()) {
-                  <z-button zType="ghost" zSize="sm" (click)="onClearFilters()">
-                    <z-icon zType="x" zSize="sm" class="mr-2" />
-                    Clear Filters
-                  </z-button>
-                }
+<z-page zTitle="Transactions">
+  <div class="flex flex-col h-full min-h-0">
+    <!-- Header Section -->
+    <div class="space-y-6 pb-6 flex-shrink-0">
+      <!-- Filter and Action Bar -->
+      <div class="flex flex-col gap-4">
+        <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+          <!-- Filters on left -->
+          <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-1 w-full">
+            <!-- Filters group: Property, Contact, Type -->
+            <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-shrink-0 w-full sm:w-auto">
+              <!-- Property select -->
+              <div class="w-full sm:w-[200px]">
+                <z-combobox
+                  #propertyCombobox
+                  [options]="propertyOptions()"
+                  [value]="selectedPropertyId()"
+                  [placeholder]="'Select property...'"
+                  [searchPlaceholder]="'Search properties...'"
+                  [emptyText]="'No properties found'"
+                  [searchable]="true"
+                  [disabled]="isLoadingProperties()"
+                  (zValueChange)="onPropertyChange($event)"
+                  class="w-full"
+                />
               </div>
-              <!-- Action buttons on right -->
-              <div class="flex gap-2">
-                <z-button zType="default" zSize="default" class="gap-2" routerLink="/transaction/add/revenue">
-                  <z-icon zType="plus" zSize="sm" />
-                  Add Revenue
+              <!-- Contact select -->
+              <div class="w-full sm:w-[200px]">
+                <z-combobox
+                  #contactCombobox
+                  [options]="contactOptions()"
+                  [value]="selectedContactId()"
+                  [placeholder]="'Select contact...'"
+                  [searchPlaceholder]="'Search contacts...'"
+                  [emptyText]="'No contacts found'"
+                  [searchable]="true"
+                  [disabled]="isLoadingContacts()"
+                  (zValueChange)="onContactChange($event)"
+                  class="w-full"
+                />
+              </div>
+              <!-- Type filter -->
+              <div class="flex gap-2 items-center">
+                <z-button
+                  [zType]="selectedType() === TransactionType.Revenue ? 'default' : 'outline'"
+                  zSize="sm"
+                  (click)="onTypeChange(selectedType() === TransactionType.Revenue ? null : TransactionType.Revenue)"
+                >
+                  Revenue
                 </z-button>
-                <z-button zType="destructive" zSize="default" class="gap-2" routerLink="/transaction/add/expense">
-                  <z-icon zType="plus" zSize="sm" />
-                  Add Expense
+                <z-button
+                  [zType]="selectedType() === TransactionType.Expense ? 'default' : 'outline'"
+                  zSize="sm"
+                  (click)="onTypeChange(selectedType() === TransactionType.Expense ? null : TransactionType.Expense)"
+                >
+                  Expense
                 </z-button>
+                
+                <!-- Revenue Types Multi-Select -->
+                @if (selectedType() === TransactionType.Revenue) {
+                  <z-dropdown-menu class="w-full sm:w-[200px]">
+                    <z-button zType="outline" zSize="sm" class="w-full sm:w-[200px] justify-between" dropdown-trigger>
+                      <span class="truncate">{{ selectedRevenueTypesDisplay() || 'Select revenue types...' }}</span>
+                      <z-icon zType="chevron-down" zSize="sm" class="opacity-50 flex-shrink-0" />
+                    </z-button>
+                    <z-dropdown-menu-content>
+                      @for (option of revenueTypeOptions; track option.value) {
+                        <z-dropdown-menu-item (click)="$event.preventDefault(); $event.stopPropagation(); toggleRevenueType(option.value)">
+                          <div class="flex items-center gap-2 w-full pointer-events-none">
+                            <z-checkbox
+                              [ngModel]="selectedRevenueTypes().includes(option.value)"
+                              (checkChange)="toggleRevenueType(option.value)"
+                              (click)="$event.stopPropagation()"
+                              class="pointer-events-auto"
+                            />
+                            <span>{{ option.label }}</span>
+                          </div>
+                        </z-dropdown-menu-item>
+                      }
+                    </z-dropdown-menu-content>
+                  </z-dropdown-menu>
+                }
+                
+                <!-- Expense Types Multi-Select -->
+                @if (selectedType() === TransactionType.Expense) {
+                  <z-dropdown-menu class="w-full sm:w-[200px]">
+                    <z-button zType="outline" zSize="sm" class="w-full sm:w-[200px] justify-between" dropdown-trigger>
+                      <span class="truncate">{{ selectedExpenseTypesDisplay() || 'Select expense types...' }}</span>
+                      <z-icon zType="chevron-down" zSize="sm" class="opacity-50 flex-shrink-0" />
+                    </z-button>
+                    <z-dropdown-menu-content>
+                      @for (option of expenseTypeOptions; track option.value) {
+                        <z-dropdown-menu-item (click)="$event.preventDefault(); $event.stopPropagation(); toggleExpenseType(option.value)">
+                          <div class="flex items-center gap-2 w-full pointer-events-none">
+                            <z-checkbox
+                              [ngModel]="selectedExpenseTypes().includes(option.value)"
+                              (checkChange)="toggleExpenseType(option.value)"
+                              (click)="$event.stopPropagation()"
+                              class="pointer-events-auto"
+                            />
+                            <span>{{ option.label }}</span>
+                          </div>
+                        </z-dropdown-menu-item>
+                      }
+                    </z-dropdown-menu-content>
+                  </z-dropdown-menu>
+                }
               </div>
             </div>
+            @if (hasActiveFilters()) {
+              <z-button zType="ghost" zSize="sm" (click)="onClearFilters()">
+                <z-icon zType="x" zSize="sm" class="mr-2" />
+                Clear Filters
+              </z-button>
+            }
+          </div>
+          <!-- Action buttons on right -->
+          <div class="flex gap-2">
+            <z-button 
+              zType="default" 
+              zSize="icon" 
+              class="w-12 h-12 rounded-full bg-green-100 hover:bg-green-200 text-green-600 border-green-200 hover:border-green-300 dark:bg-green-900/30 dark:hover:bg-green-900/50 dark:text-green-400 dark:border-green-800/50 dark:hover:border-green-800/70 shadow-sm" 
+              routerLink="/transaction/add/revenue"
+              [title]="'Add Revenue'"
+            >
+              <z-icon zType="plus" zSize="xl" class="!size-6" />
+            </z-button>
+            <z-button 
+              zType="destructive" 
+              zSize="icon" 
+              class="w-12 h-12 rounded-full bg-red-100 hover:bg-red-200 text-red-600 border-red-200 hover:border-red-300 dark:bg-red-900/30 dark:hover:bg-red-900/50 dark:text-red-400 dark:border-red-800/50 dark:hover:border-red-800/70 shadow-sm" 
+              routerLink="/transaction/add/expense"
+              [title]="'Add Expense'"
+            >
+              <z-icon zType="minus" zSize="xl" class="!size-6" />
+            </z-button>
           </div>
         </div>
-
-        <!-- Datatable -->
-        <div class="flex-1 min-h-0 overflow-y-auto pb-4 -mx-6 px-6">
-          <z-datatable
-            [zData]="filteredTransactions()"
-            [zColumns]="columns()"
-            [zViewMode]="'list'"
-            [zSelectable]="true"
-            [zSelectedRows]="selectedRows()"
-            [zEmptyMessage]="emptyMessage()"
-            (zSelectionChange)="onSelectionChange($event)"
-          >
-            <!-- Type Column Template -->
-            <ng-template #typeCell let-row="row">
-              <z-badge [zType]="getTransactionTypeBadge(row.type)">
-                {{ getTransactionTypeLabel(row.type) }}
-              </z-badge>
-            </ng-template>
-
-            <!-- Property Column Template -->
-            <ng-template #propertyCell let-row="row">
-              <div class="flex flex-col gap-1">
-                <span class="font-semibold">{{ row.propertyName || 'N/A' }}</span>
-                @if (row.propertyAddress) {
-                  <span class="text-sm text-muted-foreground">{{ row.propertyAddress }}</span>
-                }
-              </div>
-            </ng-template>
-
-            <!-- Contact Column Template -->
-            <ng-template #contactCell let-row="row">
-              <span>{{ row.contactName || 'N/A' }}</span>
-            </ng-template>
-
-            <!-- Amount Column Template -->
-            <ng-template #amountCell let-row="row">
-              <span class="font-semibold">{{ formatCurrency(row.totalAmount) }}</span>
-            </ng-template>
-
-            <!-- Date Column Template -->
-            <ng-template #dateCell let-row="row">
-              <span>{{ formatDate(row.createdAt) }}</span>
-            </ng-template>
-
-            <!-- Actions Column Template -->
-            <ng-template #actionsCell let-row="row">
-              <z-dropdown-menu>
-                <z-button zType="ghost" zSize="sm" class="h-8 w-8 p-0">
-                  <z-icon zType="ellipsis" zSize="sm" />
-                </z-button>
-                <z-dropdown-menu-content>
-                  <z-dropdown-menu-item (click)="onDelete(row)">
-                    <z-icon zType="x" zSize="sm" class="mr-2" />
-                    Delete
-                  </z-dropdown-menu-item>
-                </z-dropdown-menu-content>
-              </z-dropdown-menu>
-            </ng-template>
-          </z-datatable>
-        </div>
-
-        <!-- Pagination Footer -->
-        <z-datatable-pagination
-          [zCurrentPage]="currentPage()"
-          [zTotalPages]="totalPages()"
-          [zPageSize]="pageSize()"
-          [zPageSizeOptions]="pageSizeOptions()"
-          [zShow]="hasData()"
-          (zPageChange)="onPageChange($event)"
-          (zPageSizeChange)="onPageSizeChange($event)"
-        />
       </div>
-    </z-page>
-  </z-content>
-</z-layout>
+    </div>
 
+    <!-- Datatable -->
+    <div class="flex-1 min-h-0 overflow-y-auto pb-4 -mx-6 px-6">
+      <z-datatable
+        [zData]="filteredTransactions()"
+        [zColumns]="columns()"
+        [zViewMode]="'list'"
+        [zSelectable]="false"
+        [zEmptyMessage]="emptyMessage()"
+        [zRowClass]="getRowClass"
+      >
+        <!-- Date Column Template -->
+        <ng-template #dateCell let-row="row">
+          <span>{{ formatDate(row.createdAt) }}</span>
+        </ng-template>
+
+        <!-- Property Column Template -->
+        <ng-template #propertyCell let-row="row">
+          <div class="flex flex-col gap-1">
+            @if (row.propertyName) {
+              <span class="font-semibold">{{ row.propertyName }}</span>
+            } @else {
+              <span class="text-muted-foreground text-sm">-</span>
+            }
+            @if (row.propertyAddress) {
+              <span class="text-sm text-muted-foreground">{{ row.propertyAddress }}</span>
+            }
+          </div>
+        </ng-template>
+
+        <!-- Contact Column Template -->
+        <ng-template #contactCell let-row="row">
+          <span>{{ row.contactName || 'N/A' }}</span>
+        </ng-template>
+
+        <!-- Type of Transaction Column Template -->
+        <ng-template #transactionTypeCell let-row="row">
+          @if (getTransactionTypeLabel(row)) {
+            <z-badge [zType]="'default'">
+              {{ getTransactionTypeLabel(row) }}
+            </z-badge>
+          } @else {
+            <span class="text-muted-foreground text-sm">-</span>
+          }
+        </ng-template>
+
+        <!-- Amount Column Template -->
+        <ng-template #amountCell let-row="row">
+          <span class="font-semibold">{{ formatCurrency(row.totalAmount) }}</span>
+        </ng-template>
+
+        <!-- Status Column Template -->
+        <ng-template #statusCell let-row="row">
+          <z-select
+            [zValue]="row.status.toString()"
+            [zLabel]="getStatusLabel(row.status)"
+            [zDisabled]="isUpdatingStatus(row.id)"
+            [zSize]="'sm'"
+            class="w-auto min-w-[100px] max-w-[120px]"
+            (zSelectionChange)="onStatusDropdownChange(row, $event)"
+          >
+            <z-icon slot="selected-icon" [zType]="getStatusIcon(row.status)" zSize="sm" [class]="getStatusIconColorClass(row.status)" />
+            <z-select-item [zValue]="TransactionStatus.Pending.toString()">
+              <div class="flex items-center gap-2">
+                <z-icon zType="clock" zSize="sm" class="text-yellow-600 dark:text-yellow-500" />
+                <span>Pending</span>
+              </div>
+            </z-select-item>
+            <z-select-item [zValue]="TransactionStatus.Overdue.toString()">
+              <div class="flex items-center gap-2">
+                <z-icon zType="triangle-alert" zSize="sm" class="text-red-600 dark:text-red-500" />
+                <span>Overdue</span>
+              </div>
+            </z-select-item>
+            <z-select-item [zValue]="TransactionStatus.Paid.toString()">
+              <div class="flex items-center gap-2">
+                <z-icon zType="circle-check" zSize="sm" class="text-green-600 dark:text-green-500" />
+                <span>Paid</span>
+              </div>
+            </z-select-item>
+          </z-select>
+        </ng-template>
+
+        <!-- Actions Column Template -->
+        <ng-template #actionsCell let-row="row">
+          <z-dropdown-menu>
+            <z-button zType="ghost" zSize="icon" class="h-8 w-8" dropdown-trigger>
+              <z-icon zType="ellipsis" zSize="sm" />
+            </z-button>
+            <z-dropdown-menu-content>
+              <z-dropdown-menu-item (click)="onView(row)">
+                <z-icon zType="eye" zSize="sm" class="mr-2" />
+                <span>View</span>
+              </z-dropdown-menu-item>
+              <z-dropdown-menu-item (click)="onEdit(row)">
+                <z-icon zType="pencil" zSize="sm" class="mr-2" />
+                <span>Edit</span>
+              </z-dropdown-menu-item>
+            </z-dropdown-menu-content>
+          </z-dropdown-menu>
+        </ng-template>
+      </z-datatable>
+    </div>
+
+    <!-- Pagination Footer -->
+    <z-datatable-pagination
+      [zCurrentPage]="currentPage()"
+      [zTotalPages]="totalPages()"
+      [zPageSize]="pageSize()"
+      [zPageSizeOptions]="pageSizeOptions()"
+      [zShow]="hasData()"
+      (zPageChange)="onPageChange($event)"
+      (zPageSizeChange)="onPageSizeChange($event)"
+    />
+  </div>
+</z-page>

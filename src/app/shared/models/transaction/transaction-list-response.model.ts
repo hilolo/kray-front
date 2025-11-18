@@ -4,10 +4,9 @@ import { Transaction } from './transaction.model';
  * Transaction list response
  */
 export interface TransactionListResponse {
-  items: Transaction[];
-  totalCount: number;
-  currentPage: number;
-  pageSize: number;
+  result: Transaction[];
   totalPages: number;
+  totalItems: number;
+  currentPage: number;
 }
 

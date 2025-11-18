@@ -1,0 +1,119 @@
+using ImmoGest.Domain.Entities;
+using ImmoGest.Domain.Repositories;
+using ImmoGest.Domain.Core.Interfaces;
+using ImmoGest.Application.Filters;
+using ImmoGest.Infrastructure.Context;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using ResultNet;
+using ImmoGest.Domain.Entities.Enums;
+using System.Collections.Generic;
+
+namespace ImmoGest.Infrastructure.Repositories
+{
+    public class TransactionRepository : Repository<Transaction>, ITransactionRepository
+    {
+        public TransactionRepository(ApplicationDbContext context) : base(context)
+        {
+        }
+
+        protected override IQueryable<Transaction> SetPagedResultFilterOptions<IFilter>(IQueryable<Transaction> query, IFilter filterOption)
+        {
+            // Always include related entities for transaction lists
+            query = query
+                .Include(t => t.Property)
+                .Include(t => t.Contact)
+                .Include(t => t.Lease)
+                    .ThenInclude(l => l.Contact);
+
+            if (filterOption is GetTransactionsFilter filter)
+            {
+                // Filter by company
+                if (filter.CompanyId.HasValue)
+                {
+                    query = query.Where(t => t.CompanyId == filter.CompanyId.Value);
+                }
+
+                // Filter by category
+                if (filter.Category.HasValue)
+                {
+                    query = query.Where(t => t.Category == filter.Category.Value);
+                }
+
+                // Filter by revenue types (if provided and category is Revenue)
+                if (filter.RevenueTypes != null && filter.RevenueTypes.Count > 0)
+                {
+                    query = query.Where(t => t.Category == TransactionCategory.Revenue && 
+                                             t.RevenueType.HasValue && 
+                                             filter.RevenueTypes.Contains(t.RevenueType.Value));
+                }
+
+                // Filter by expense types (if provided and category is Expense)
+                if (filter.ExpenseTypes != null && filter.ExpenseTypes.Count > 0)
+                {
+                    query = query.Where(t => t.Category == TransactionCategory.Expense && 
+                                             t.ExpenseType.HasValue && 
+                                             filter.ExpenseTypes.Contains(t.ExpenseType.Value));
+                }
+
+                // Filter by status
+                if (filter.Status.HasValue)
+                {
+                    query = query.Where(t => t.Status == filter.Status.Value);
+                }
+
+                // Filter by transaction type
+                if (filter.TransactionType.HasValue)
+                {
+                    query = query.Where(t => t.TransactionType == filter.TransactionType.Value);
+                }
+
+                // Filter by property
+                if (filter.PropertyId.HasValue)
+                {
+                    query = query.Where(t => t.PropertyId == filter.PropertyId.Value);
+                }
+
+                // Filter by contact
+                if (filter.ContactId.HasValue)
+                {
+                    query = query.Where(t => t.ContactId == filter.ContactId.Value);
+                }
+
+                // Filter by lease
+                if (filter.LeaseId.HasValue)
+                {
+                    query = query.Where(t => t.LeaseId == filter.LeaseId.Value);
+                }
+
+                // Filter by date range
+                if (filter.DateFrom.HasValue)
+                {
+                    query = query.Where(t => t.Date >= filter.DateFrom.Value);
+                }
+
+                if (filter.DateTo.HasValue)
+                {
+                    query = query.Where(t => t.Date <= filter.DateTo.Value);
+                }
+
+                // Filter by search term
+                if (!string.IsNullOrEmpty(filter.SearchTerm))
+                {
+                    var searchTerm = filter.SearchTerm.ToUpper();
+                    query = query.Where(t => 
+                        t.SearchTerms.Contains(searchTerm) ||
+                        t.Description.Contains(filter.SearchTerm) ||
+                        (t.Property != null && (t.Property.Name.Contains(filter.SearchTerm) || t.Property.Identifier.Contains(filter.SearchTerm))) ||
+                        (t.Contact != null && (t.Contact.FirstName.Contains(filter.SearchTerm) || t.Contact.LastName.Contains(filter.SearchTerm) || t.Contact.CompanyName.Contains(filter.SearchTerm)))
+                    );
+                }
+            }
+
+            return base.SetPagedResultFilterOptions(query, filterOption);
+        }
+    }
+}
+

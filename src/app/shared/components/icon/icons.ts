@@ -54,6 +54,7 @@ import {
   MessageCircle,
   Mic,
   Minimize2,
+  Minus,
   Monitor,
   Moon,
   MoveRight,
@@ -194,6 +195,7 @@ export const ZARD_ICONS = {
   'refresh-cw': RefreshCw,
   maximize2: Maximize2,
   minimize2: Minimize2,
+  minus: Minus,
   clock: Clock,
 } as const satisfies Record<string, LucideIconData>;
 

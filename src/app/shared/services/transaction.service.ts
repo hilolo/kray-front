@@ -6,6 +6,7 @@ import type { TransactionListResponse } from '../models/transaction/transaction-
 import type { CreateTransactionRequest } from '../models/transaction/create-transaction-request.model';
 import type { UpdateTransactionRequest } from '../models/transaction/update-transaction-request.model';
 import type { Transaction } from '../models/transaction/transaction.model';
+import { TransactionStatus } from '../models/transaction/transaction.model';
 
 /**
  * Service for transaction-related API calls
@@ -65,6 +66,17 @@ export class TransactionService {
    */
   delete(id: string): Observable<void> {
     return this.apiService.delete<void>(`Transaction/${id}`);
+  }
+
+  /**
+   * Update transaction status
+   * PUT api/Transaction/{id}/status
+   * @param id Transaction ID
+   * @param status New status
+   * @returns Observable of updated transaction
+   */
+  updateStatus(id: string, status: TransactionStatus): Observable<Transaction> {
+    return this.apiService.put<Transaction>(`Transaction/${id}/status`, { status });
   }
 }
 

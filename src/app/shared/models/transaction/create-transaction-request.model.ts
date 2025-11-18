@@ -4,14 +4,15 @@ import { AttachmentInput } from '../contact/create-contact-request.model';
 
 /**
  * Create transaction request model
+ * Maps to backend CreateTransactionDto which expects 'category' instead of 'type'
  */
 export interface CreateTransactionRequest {
-  type: TransactionType;
+  category: TransactionType; // Maps to TransactionCategory in backend (Revenue=0, Expense=1)
   revenueType?: RevenueType;
   expenseType?: ExpenseType;
-  propertyId: string;
-  leaseId?: string | null;
-  contactId: string; // From (revenue) or Pay to (expense)
+  propertyId?: string | null; // Optional - can be null if not provided
+  leaseId?: string | null; // Optional - can be null if not provided
+  contactId: string; // From (revenue) or Pay to (expense) - Required
   date: Date | string; // Transaction date
   payments: Payment[];
   description: string;

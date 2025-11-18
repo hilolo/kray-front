@@ -137,7 +137,6 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
     const data = this.formData();
     const payments = this.payments();
     return (
-      data.propertyId !== '' &&
       data.contactId !== '' &&
       data.date !== null &&
       payments.length > 0 &&
@@ -146,10 +145,7 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
   });
 
   readonly propertyIdError = computed(() => {
-    if (!this.formSubmitted()) return '';
-    if (!this.formData().propertyId || this.formData().propertyId === '') {
-      return 'Property is required';
-    }
+    // Property is optional, no error
     return '';
   });
 
@@ -162,7 +158,8 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
   });
 
   readonly propertyIdHasError = computed(() => {
-    return this.formSubmitted() && (!this.formData().propertyId || this.formData().propertyId === '');
+    // Property is optional, no error
+    return false;
   });
 
   readonly contactIdHasError = computed(() => {
@@ -380,8 +377,14 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
   updatePayment(index: number, field: keyof Payment, value: string | number): void {
     this.payments.update(payments => {
       const newPayments = [...payments];
-      const numValue = typeof value === 'string' ? parseFloat(value) || 0 : value;
-      newPayments[index] = { ...newPayments[index], [field]: numValue };
+      // Only convert to number for numeric fields (amount, vatPercent)
+      // Keep description as string
+      if (field === 'description') {
+        newPayments[index] = { ...newPayments[index], [field]: typeof value === 'string' ? value : String(value) };
+      } else {
+        const numValue = typeof value === 'string' ? parseFloat(value) || 0 : value;
+        newPayments[index] = { ...newPayments[index], [field]: numValue };
+      }
       return newPayments;
     });
     this.cdr.markForCheck();
@@ -416,10 +419,10 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
       }
 
       const request: CreateTransactionRequest = {
-        type: TransactionType.Revenue,
+        category: TransactionType.Revenue, // Maps to TransactionCategory.Revenue (0) in backend
         revenueType: data.revenueType,
-        propertyId: data.propertyId,
-        leaseId: data.leaseId || null,
+        propertyId: data.propertyId && data.propertyId.trim() !== '' ? data.propertyId : null,
+        leaseId: data.leaseId && data.leaseId.trim() !== '' ? data.leaseId : null,
         contactId: data.contactId,
         date: data.date,
         payments: this.payments(),

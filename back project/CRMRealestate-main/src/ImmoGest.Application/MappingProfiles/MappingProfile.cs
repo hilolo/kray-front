@@ -30,6 +30,7 @@ namespace ImmoGest.Application.MappingProfiles
             BankMapper();
             MaintenanceMapper();
             TaskMapper();
+            TransactionMapper();
         }
 
         private void UserMapper()
@@ -506,6 +507,71 @@ namespace ImmoGest.Application.MappingProfiles
                     
                     // Always map other properties
                     return true;
+                }));
+        }
+
+        private void TransactionMapper()
+        {
+            CreateMap<Transaction, TransactionDto>()
+                .ForMember(dest => dest.PropertyName, opt => opt.Ignore()) // Set manually in service
+                .ForMember(dest => dest.PropertyAddress, opt => opt.Ignore()) // Set manually in service
+                .ForMember(dest => dest.ContactName, opt => opt.Ignore()) // Set manually in service
+                .ForMember(dest => dest.LeaseTenantName, opt => opt.Ignore()) // Set manually in service
+                .ForMember(dest => dest.Attachments, opt => opt.Ignore()) // Set manually in service
+                .ForMember(dest => dest.AttachmentCount, opt => opt.Ignore()) // Set manually in service
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedOn.DateTime))
+                .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => src.LastModifiedOn.HasValue ? src.LastModifiedOn.Value.DateTime : (DateTime?)null));
+
+            CreateMap<Transaction, TransactionListDto>()
+                .ForMember(dest => dest.ContactName, opt => opt.Ignore()) // Set manually in service
+                .ForMember(dest => dest.PropertyName, opt => opt.Ignore()); // Set manually in service
+
+            CreateMap<Payment, PaymentDto>().ReverseMap();
+
+            CreateMap<CreateTransactionDto, Transaction>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.Property, opt => opt.Ignore())
+                .ForMember(dest => dest.Contact, opt => opt.Ignore())
+                .ForMember(dest => dest.Lease, opt => opt.Ignore())
+                .ForMember(dest => dest.Company, opt => opt.Ignore())
+                .ForMember(dest => dest.Attachments, opt => opt.Ignore()) // Handled in service
+                .ForMember(dest => dest.TransactionType, opt => opt.Ignore()) // Set in service (Manual)
+                .ForMember(dest => dest.Status, opt => opt.Ignore()) // Set in service (Overdue)
+                .ForMember(dest => dest.TotalAmount, opt => opt.Ignore()) // Calculated in service
+                .ForMember(dest => dest.IsDeleted, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedOn, opt => opt.Ignore())
+                .ForMember(dest => dest.LastModifiedOn, opt => opt.Ignore())
+                .ForMember(dest => dest.SearchTerms, opt => opt.Ignore());
+
+            CreateMap<UpdateTransactionDto, Transaction>()
+                .ForMember(dest => dest.Property, opt => opt.Ignore())
+                .ForMember(dest => dest.Contact, opt => opt.Ignore())
+                .ForMember(dest => dest.Lease, opt => opt.Ignore())
+                .ForMember(dest => dest.Company, opt => opt.Ignore())
+                .ForMember(dest => dest.Attachments, opt => opt.Ignore()) // Handled in service
+                .ForMember(dest => dest.TransactionType, opt => opt.Ignore()) // Don't update transaction type
+                .ForMember(dest => dest.TotalAmount, opt => opt.Ignore()) // Calculated in service
+                .ForMember(dest => dest.IsDeleted, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedOn, opt => opt.Ignore())
+                .ForMember(dest => dest.LastModifiedOn, opt => opt.Ignore())
+                .ForMember(dest => dest.SearchTerms, opt => opt.Ignore())
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) =>
+                {
+                    var propertyName = opts.DestinationMember.Name;
+                    // Don't update Id, CompanyId if they're null/default
+                    if (propertyName == "Id" || propertyName == "CompanyId")
+                        return srcMember != null && !srcMember.Equals(Guid.Empty);
+
+                    // For PropertyId, allow null to be mapped (to explicitly remove property)
+                    if (propertyName == "PropertyId")
+                        return true; // Always map PropertyId, including null
+
+                    // For other nullable Guid properties, allow null
+                    if (propertyName == "LeaseId" || propertyName == "ContactId")
+                        return true; // Always map, including null
+
+                    // Skip null values for other properties (partial update)
+                    return srcMember != null;
                 }));
         }
     }

@@ -71,6 +71,12 @@ namespace ImmoGest.Infrastructure.Configuration
                 .HasForeignKey(a => a.KeyId)
                 .OnDelete(DeleteBehavior.SetNull)
                 .IsRequired(false); // KeyId is now optional for generic use
+
+            builder.HasOne(a => a.Transaction)
+                .WithMany(t => t.Attachments)
+                .HasForeignKey(a => a.TransactionId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .IsRequired(false); // TransactionId is now optional for generic use
         }
     }
 }

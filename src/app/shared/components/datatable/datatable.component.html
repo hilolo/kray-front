@@ -50,7 +50,7 @@
               </thead>
               <tbody z-table-body>
                 @for (row of zData(); track trackByIndex($index)) {
-                  <tr z-table-row (click)="onRowClick(row)">
+                  <tr z-table-row [class]="zRowClass() ? zRowClass()!(row) : ''" (click)="onRowClick(row)">
                     @if (zSelectable()) {
                       <td z-table-cell>
                         <z-checkbox
