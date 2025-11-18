@@ -342,6 +342,85 @@ namespace ImmoGest.Application.Services
 
                         // Set attachment count - always retrieve as it's not expensive
                         dto.AttachmentCount = entity.Attachments?.Count ?? 0;
+
+                        // Map transactions (already loaded by repository, filter out deleted ones)
+                        var activeTransactions = entity.Transactions?.Where(t => !t.IsDeleted).ToList() ?? new List<Transaction>();
+                        if (activeTransactions.Any())
+                        {
+                            var transactionDtos = _mapper.Map<List<TransactionDto>>(activeTransactions);
+
+                            // Post-process transaction DTOs to add related entity information
+                            for (int j = 0; j < transactionDtos.Count; j++)
+                            {
+                                var transactionDto = transactionDtos[j];
+                                var transaction = activeTransactions[j];
+
+                                // Set property information
+                                if (transaction.Property != null)
+                                {
+                                    transactionDto.PropertyName = transaction.Property.Name;
+                                    transactionDto.PropertyAddress = transaction.Property.Address;
+                                }
+
+                                // Set contact information
+                                if (transaction.Contact != null)
+                                {
+                                    transactionDto.ContactName = transaction.Contact.IsACompany
+                                        ? transaction.Contact.CompanyName
+                                        : $"{transaction.Contact.FirstName} {transaction.Contact.LastName}".Trim();
+                                }
+                                transactionDto.OtherContactName = transaction.OtherContactName;
+
+                                // Set lease information
+                                if (transaction.Lease != null && transaction.Lease.Contact != null)
+                                {
+                                    transactionDto.LeaseTenantName = transaction.Lease.Contact.IsACompany
+                                        ? transaction.Lease.Contact.CompanyName
+                                        : $"{transaction.Lease.Contact.FirstName} {transaction.Lease.Contact.LastName}".Trim();
+                                }
+
+                                // Set attachment count
+                                transactionDto.AttachmentCount = transaction.Attachments?.Count ?? 0;
+
+                                // Generate attachment URLs if attachments exist
+                                if (transaction.Attachments != null && transaction.Attachments.Any())
+                                {
+                                    transactionDto.Attachments = new List<AttachmentDto>();
+                                    foreach (var attachment in transaction.Attachments)
+                                    {
+                                        try
+                                        {
+                                            var attachmentUrl = await _fileHelper.GenerateAttachmentUrlAsync(
+                                                transaction.CompanyId,
+                                                attachment,
+                                                24
+                                            );
+
+                                            transactionDto.Attachments.Add(new AttachmentDto
+                                            {
+                                                Id = attachment.Id,
+                                                FileName = attachment.FileName,
+                                                OriginalFileName = attachment.OriginalFileName,
+                                                FileExtension = attachment.FileExtension,
+                                                FileSize = attachment.FileSize,
+                                                Url = attachmentUrl,
+                                                CreatedAt = attachment.CreatedOn.DateTime
+                                            });
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            // Continue with other attachments
+                                        }
+                                    }
+                                }
+                            }
+
+                            dto.Transactions = transactionDtos;
+                        }
+                        else
+                        {
+                            dto.Transactions = new List<TransactionDto>();
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -422,6 +501,85 @@ namespace ImmoGest.Application.Services
                                 // Continue with other attachments
                             }
                         }
+                    }
+
+                    // Map transactions (already loaded by repository, filter out deleted ones)
+                    var activeTransactions = lease.Transactions?.Where(t => !t.IsDeleted).ToList() ?? new List<Transaction>();
+                    if (activeTransactions.Any())
+                    {
+                        var transactionDtos = _mapper.Map<List<TransactionDto>>(activeTransactions);
+
+                        // Post-process transaction DTOs to add related entity information
+                        for (int i = 0; i < transactionDtos.Count; i++)
+                        {
+                            var transactionDto = transactionDtos[i];
+                            var transaction = activeTransactions[i];
+
+                            // Set property information
+                            if (transaction.Property != null)
+                            {
+                                transactionDto.PropertyName = transaction.Property.Name;
+                                transactionDto.PropertyAddress = transaction.Property.Address;
+                            }
+
+                            // Set contact information
+                            if (transaction.Contact != null)
+                            {
+                                transactionDto.ContactName = transaction.Contact.IsACompany
+                                    ? transaction.Contact.CompanyName
+                                    : $"{transaction.Contact.FirstName} {transaction.Contact.LastName}".Trim();
+                            }
+                            transactionDto.OtherContactName = transaction.OtherContactName;
+
+                            // Set lease information
+                            if (transaction.Lease != null && transaction.Lease.Contact != null)
+                            {
+                                transactionDto.LeaseTenantName = transaction.Lease.Contact.IsACompany
+                                    ? transaction.Lease.Contact.CompanyName
+                                    : $"{transaction.Lease.Contact.FirstName} {transaction.Lease.Contact.LastName}".Trim();
+                            }
+
+                            // Set attachment count
+                            transactionDto.AttachmentCount = transaction.Attachments?.Count ?? 0;
+
+                            // Generate attachment URLs if attachments exist
+                            if (transaction.Attachments != null && transaction.Attachments.Any())
+                            {
+                                transactionDto.Attachments = new List<AttachmentDto>();
+                                foreach (var attachment in transaction.Attachments)
+                                {
+                                    try
+                                    {
+                                        var attachmentUrl = await _fileHelper.GenerateAttachmentUrlAsync(
+                                            transaction.CompanyId,
+                                            attachment,
+                                            24
+                                        );
+
+                                        transactionDto.Attachments.Add(new AttachmentDto
+                                        {
+                                            Id = attachment.Id,
+                                            FileName = attachment.FileName,
+                                            OriginalFileName = attachment.OriginalFileName,
+                                            FileExtension = attachment.FileExtension,
+                                            FileSize = attachment.FileSize,
+                                            Url = attachmentUrl,
+                                            CreatedAt = attachment.CreatedOn.DateTime
+                                        });
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        // Continue with other attachments
+                                    }
+                                }
+                            }
+                        }
+
+                        dto.Transactions = transactionDtos;
+                    }
+                    else
+                    {
+                        dto.Transactions = new List<TransactionDto>();
                     }
                 }
             }

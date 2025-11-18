@@ -127,7 +127,7 @@ namespace ImmoGest.Infrastructure.Configuration
                 .IsRequired(false);
 
             builder.HasOne(t => t.Lease)
-                .WithMany()
+                .WithMany(l => l.Transactions)
                 .HasForeignKey(t => t.LeaseId)
                 .OnDelete(DeleteBehavior.SetNull)
                 .IsRequired(false);

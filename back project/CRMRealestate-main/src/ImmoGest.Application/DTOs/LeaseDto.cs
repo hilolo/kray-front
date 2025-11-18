@@ -43,6 +43,9 @@ namespace ImmoGest.Application.DTOs
         public List<AttachmentDto> Attachments { get; set; }
         public int AttachmentCount { get; set; }
 
+        // Transactions
+        public List<TransactionDto> Transactions { get; set; }
+
         // Status
         public LeasingStatus Status { get; set; }
         public bool IsArchived { get; set; }

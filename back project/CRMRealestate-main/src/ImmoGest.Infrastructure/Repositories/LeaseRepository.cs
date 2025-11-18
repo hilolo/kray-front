@@ -21,12 +21,13 @@ namespace ImmoGest.Infrastructure.Repositories
 
         public override async Task<Result<Lease>> GetByIdAsync(Guid id)
         {
-            // Load lease with all related entities including attachments
+            // Load lease with all related entities including attachments and transactions
             var lease = await DbSet
                 .AsNoTracking()
                 .Include(l => l.Contact)
                 .Include(l => l.Property)
                 .Include(l => l.Attachments)
+                .Include(l => l.Transactions)
                 .FirstOrDefaultAsync(e => e.Id == id);
 
             return Result.Success<Lease>(lease);
@@ -34,11 +35,12 @@ namespace ImmoGest.Infrastructure.Repositories
 
         protected override IQueryable<Lease> SetPagedResultFilterOptions<IFilter>(IQueryable<Lease> query, IFilter filterOption)
         {
-            // IMPORTANT: Always include Contact and Property for lease lists
+            // IMPORTANT: Always include Contact, Property, Attachments, and Transactions for lease lists
             query = query
                 .Include(l => l.Contact)
                 .Include(l => l.Property)
-                .Include(l => l.Attachments);
+                .Include(l => l.Attachments)
+                .Include(l => l.Transactions);
             
             // Check for GetLeasesFilter (used by the API controller)
             if (filterOption is GetLeasesFilter leasesFilter)

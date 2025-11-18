@@ -84,27 +84,43 @@ namespace ImmoGest.Application.Services
                     entity.TotalAmount = 0;
                 }
 
-                // Load navigation properties for search terms
+                // Load navigation properties for search terms (using AsNoTracking to avoid circular dependency)
+                // We load them separately and use them only for building search terms, not assigning to navigation properties
+                Property propertyForSearch = null;
                 if (dto.PropertyId.HasValue)
                 {
                     var propertyResult = await _propertyRepository.GetByIdAsync(dto.PropertyId.Value);
                     if (propertyResult.IsSuccess() && propertyResult.Data != null)
                     {
-                        entity.Property = propertyResult.Data;
+                        propertyForSearch = propertyResult.Data;
+                        // Only set the foreign key, not the navigation property to avoid circular dependency
+                        entity.PropertyId = dto.PropertyId.Value;
                     }
                 }
 
+                Contact contactForSearch = null;
                 if (dto.ContactId.HasValue)
                 {
                     var contactResult = await _contactRepository.GetByIdAsync(dto.ContactId.Value);
                     if (contactResult.IsSuccess() && contactResult.Data != null)
                     {
-                        entity.Contact = contactResult.Data;
+                        contactForSearch = contactResult.Data;
+                        // Only set the foreign key, not the navigation property to avoid circular dependency
+                        entity.ContactId = dto.ContactId.Value;
                     }
                 }
 
-                // Build search terms
-                entity.BuildSearchTerms();
+                // Build search terms manually using loaded entities (without assigning navigation properties)
+                var propertySearch = propertyForSearch != null
+                    ? $"{propertyForSearch.Identifier} {propertyForSearch.Name} {propertyForSearch.Address}"
+                    : "";
+
+                var contactSearch = contactForSearch != null
+                    ? $"{contactForSearch.FirstName} {contactForSearch.LastName} {contactForSearch.CompanyName} {contactForSearch.Identifier}"
+                    : (dto.OtherContactName ?? "");
+
+                var totalAmountSearch = entity.TotalAmount.ToString("F2");
+                entity.SearchTerms = $"{entity.Description} {propertySearch} {contactSearch} {totalAmountSearch}".ToUpper();
             }
 
             await base.InCreate_BeforInsertAsync(entity, createModel);
@@ -202,27 +218,41 @@ namespace ImmoGest.Application.Services
                 // Status is not updated through edit - use the dedicated status update endpoint instead
                 // This ensures status can only be changed via the /status endpoint
 
-                // Load navigation properties for search terms if they're not already loaded
-                if (entity.Property == null && entity.PropertyId.HasValue)
+                // Load navigation properties for search terms (using AsNoTracking to avoid circular dependency)
+                // We load them separately and use them only for building search terms, not assigning to navigation properties
+                Property propertyForSearch = null;
+                if (entity.PropertyId.HasValue)
                 {
                     var propertyResult = await _propertyRepository.GetByIdAsync(entity.PropertyId.Value);
                     if (propertyResult.IsSuccess() && propertyResult.Data != null)
                     {
-                        entity.Property = propertyResult.Data;
+                        propertyForSearch = propertyResult.Data;
+                        // Don't assign to navigation property to avoid circular dependency
                     }
                 }
 
-                if (entity.Contact == null && entity.ContactId.HasValue)
+                Contact contactForSearch = null;
+                if (entity.ContactId.HasValue)
                 {
                     var contactResult = await _contactRepository.GetByIdAsync(entity.ContactId.Value);
                     if (contactResult.IsSuccess() && contactResult.Data != null)
                     {
-                        entity.Contact = contactResult.Data;
+                        contactForSearch = contactResult.Data;
+                        // Don't assign to navigation property to avoid circular dependency
                     }
                 }
 
-                // Build search terms
-                entity.BuildSearchTerms();
+                // Build search terms manually using loaded entities (without assigning navigation properties)
+                var propertySearch = propertyForSearch != null
+                    ? $"{propertyForSearch.Identifier} {propertyForSearch.Name} {propertyForSearch.Address}"
+                    : "";
+
+                var contactSearch = contactForSearch != null
+                    ? $"{contactForSearch.FirstName} {contactForSearch.LastName} {contactForSearch.CompanyName} {contactForSearch.Identifier}"
+                    : (dto.OtherContactName ?? "");
+
+                var totalAmountSearch = entity.TotalAmount.ToString("F2");
+                entity.SearchTerms = $"{entity.Description} {propertySearch} {contactSearch} {totalAmountSearch}".ToUpper();
 
                 Console.WriteLine($"[Backend Service] InUpdate_BeforUpdateAsync - After mapping");
                 Console.WriteLine($"[Backend Service] Entity AFTER - Category: {entity.Category}, RevenueType: {entity.RevenueType}, ExpenseType: {entity.ExpenseType}, Date: {entity.Date}");
@@ -639,27 +669,41 @@ namespace ImmoGest.Application.Services
                 // Update only the status field directly
                 transaction.Status = status;
                 
-                // Load navigation properties for search terms if they're not already loaded
-                if (transaction.Property == null && transaction.PropertyId.HasValue)
+                // Load navigation properties for search terms (using AsNoTracking to avoid circular dependency)
+                // We load them separately and use them only for building search terms, not assigning to navigation properties
+                Property propertyForSearch = null;
+                if (transaction.PropertyId.HasValue)
                 {
                     var propertyResult = await _propertyRepository.GetByIdAsync(transaction.PropertyId.Value);
                     if (propertyResult.IsSuccess() && propertyResult.Data != null)
                     {
-                        transaction.Property = propertyResult.Data;
+                        propertyForSearch = propertyResult.Data;
+                        // Don't assign to navigation property to avoid circular dependency
                     }
                 }
 
-                if (transaction.Contact == null && transaction.ContactId.HasValue)
+                Contact contactForSearch = null;
+                if (transaction.ContactId.HasValue)
                 {
                     var contactResult = await _contactRepository.GetByIdAsync(transaction.ContactId.Value);
                     if (contactResult.IsSuccess() && contactResult.Data != null)
                     {
-                        transaction.Contact = contactResult.Data;
+                        contactForSearch = contactResult.Data;
+                        // Don't assign to navigation property to avoid circular dependency
                     }
                 }
-                
-                // Build search terms (in case status change affects search)
-                transaction.BuildSearchTerms();
+
+                // Build search terms manually using loaded entities (without assigning navigation properties)
+                var propertySearch = propertyForSearch != null
+                    ? $"{propertyForSearch.Identifier} {propertyForSearch.Name} {propertyForSearch.Address}"
+                    : "";
+
+                var contactSearch = contactForSearch != null
+                    ? $"{contactForSearch.FirstName} {contactForSearch.LastName} {contactForSearch.CompanyName} {contactForSearch.Identifier}"
+                    : (transaction.OtherContactName ?? "");
+
+                var totalAmountSearch = transaction.TotalAmount.ToString("F2");
+                transaction.SearchTerms = $"{transaction.Description} {propertySearch} {contactSearch} {totalAmountSearch}".ToUpper();
 
                 // Update the entity
                 var updateResult = await _transactionRepository.Update(transaction);

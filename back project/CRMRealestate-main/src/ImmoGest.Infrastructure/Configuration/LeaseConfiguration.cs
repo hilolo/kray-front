@@ -92,6 +92,7 @@ namespace ImmoGest.Infrastructure.Configuration
                 .HasForeignKey(l => l.CompanyId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // Transactions relationship is configured in TransactionConfiguration
             // Attachments relationship will be handled in AttachmentConfiguration
         }
     }
