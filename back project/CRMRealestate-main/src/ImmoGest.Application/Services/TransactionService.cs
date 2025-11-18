@@ -131,6 +131,43 @@ namespace ImmoGest.Application.Services
                 // Store DTO for after update processing
                 _currentUpdateTransactionDto = dto;
 
+                // Map all fields from DTO to entity (this is critical - it applies the mapping profile)
+                _mapper.Map(dto, entity);
+
+                // Explicitly update Category if provided (handle nullable enum properly)
+                if (dto.Category.HasValue)
+                {
+                    entity.Category = dto.Category.Value;
+                    
+                    // Clear opposite type when Category is set
+                    if (dto.Category.Value == TransactionCategory.Revenue)
+                    {
+                        entity.ExpenseType = null;
+                    }
+                    else if (dto.Category.Value == TransactionCategory.Expense)
+                    {
+                        entity.RevenueType = null;
+                    }
+                }
+
+                // Explicitly update RevenueType if provided
+                if (dto.RevenueType.HasValue)
+                {
+                    entity.RevenueType = dto.RevenueType.Value;
+                }
+
+                // Explicitly update ExpenseType if provided
+                if (dto.ExpenseType.HasValue)
+                {
+                    entity.ExpenseType = dto.ExpenseType.Value;
+                }
+
+                // Explicitly update Date if provided
+                if (dto.Date.HasValue)
+                {
+                    entity.Date = dto.Date.Value;
+                }
+
                 // Update TotalAmount if payments changed
                 if (dto.Payments != null && dto.Payments.Count > 0)
                 {
@@ -145,15 +182,12 @@ namespace ImmoGest.Application.Services
 
                 // Build search terms
                 entity.BuildSearchTerms();
-            }
 
-            await base.InUpdate_BeforUpdateAsync(entity, updateModel);
-            
-            if (updateModel is UpdateTransactionDto dtoAfter)
-            {
                 Console.WriteLine($"[Backend Service] InUpdate_BeforUpdateAsync - After mapping");
                 Console.WriteLine($"[Backend Service] Entity AFTER - Category: {entity.Category}, RevenueType: {entity.RevenueType}, ExpenseType: {entity.ExpenseType}, Date: {entity.Date}");
             }
+
+            await base.InUpdate_BeforUpdateAsync(entity, updateModel);
         }
 
         protected override async Task InUpdate_AfterUpdateAsync<TUpdateModel>(Transaction entity, TUpdateModel updateModel)
