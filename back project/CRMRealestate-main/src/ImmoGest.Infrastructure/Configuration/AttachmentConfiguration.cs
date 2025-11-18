@@ -65,6 +65,12 @@ namespace ImmoGest.Infrastructure.Configuration
                 .HasForeignKey(a => a.ReservationId)
                 .OnDelete(DeleteBehavior.SetNull)
                 .IsRequired(false); // ReservationId is now optional for generic use
+            
+            builder.HasOne(a => a.Key)
+                .WithMany()
+                .HasForeignKey(a => a.KeyId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .IsRequired(false); // KeyId is now optional for generic use
         }
     }
 }

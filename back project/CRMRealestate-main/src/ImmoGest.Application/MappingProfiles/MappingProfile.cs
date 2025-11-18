@@ -218,7 +218,9 @@ namespace ImmoGest.Application.MappingProfiles
         private void KeyMapper()
         {
             CreateMap<Key, KeyDto>()
-                .ForMember(dest => dest.Property, opt => opt.Ignore()); // Ignore to avoid circular reference when Keys are included in PropertyDto
+                .ForMember(dest => dest.Property, opt => opt.Ignore()) // Ignore to avoid circular reference when Keys are included in PropertyDto
+                .ForMember(dest => dest.DefaultAttachmentUrl, opt => opt.Ignore()) // Set manually in service
+                .ForMember(dest => dest.Attachments, opt => opt.Ignore()); // Set manually in service
             
             CreateMap<CreateKeyDto, Key>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())

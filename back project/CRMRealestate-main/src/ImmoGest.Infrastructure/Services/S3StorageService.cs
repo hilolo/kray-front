@@ -168,6 +168,12 @@ namespace ImmoGest.Infrastructure.Services
                     key = GenerateUniqueFileName();
                 }
                 
+                // Ensure stream is at the beginning
+                if (fileStream.CanSeek && fileStream.Position > 0)
+                {
+                    fileStream.Position = 0;
+                }
+                
                 var uploadRequest = new TransferUtilityUploadRequest
                 {
                     InputStream = fileStream,
@@ -180,6 +186,15 @@ namespace ImmoGest.Infrastructure.Services
                 await transferUtility.UploadAsync(uploadRequest);
 
                 return await GetFileUrlAsync(bucketName, key);
+            }
+            catch (Amazon.S3.AmazonS3Exception s3Ex)
+            {
+                var errorDetails = $"S3 Error - StatusCode: {s3Ex.StatusCode}, ErrorCode: {s3Ex.ErrorCode}, Message: {s3Ex.Message}";
+                if (!string.IsNullOrEmpty(s3Ex.RequestId))
+                {
+                    errorDetails += $", RequestId: {s3Ex.RequestId}";
+                }
+                throw new Exception($"Error uploading file stream to S3: {errorDetails}", s3Ex);
             }
             catch (Exception ex)
             {

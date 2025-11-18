@@ -193,9 +193,22 @@
                   <div class="space-y-2">
                     @for (key of keys(); track key.id) {
                       <div class="flex items-start gap-3 p-2 rounded-md border border-border hover:bg-muted/50 transition-colors">
-                        <div class="w-10 h-10 rounded-md border border-border bg-primary/10 flex items-center justify-center flex-shrink-0">
-                          <z-icon zType="lock" zSize="sm" class="text-primary" />
-                        </div>
+                        @if (hasKeyImages(key) && getKeyImageUrl(key)) {
+                          <div 
+                            class="w-10 h-10 rounded-md border border-border overflow-hidden cursor-pointer flex-shrink-0"
+                            (click)="openKeyImageViewer(key, $event)"
+                          >
+                            <img 
+                              [src]="getKeyImageUrl(key)!" 
+                              [alt]="key.name" 
+                              class="w-full h-full object-cover"
+                            />
+                          </div>
+                        } @else {
+                          <div class="w-10 h-10 rounded-md border border-border bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <z-icon zType="lock" zSize="sm" class="text-primary" />
+                          </div>
+                        }
                         <div class="flex-1 min-w-0">
                           <div class="flex items-center gap-2 mb-1">
                             <span class="text-sm font-medium">{{ key.name }}</span>
@@ -531,4 +544,15 @@
     (close)="closeImageViewer()"
     (imageChanged)="onImageChanged($event)"
   />
+
+  <!-- Key Image Viewer -->
+  @if (isKeyImageViewerOpen() && selectedKeyForImageViewer()) {
+    <z-image-viewer
+      [images]="getKeyAttachments(selectedKeyForImageViewer()!)"
+      [currentIndex]="keyImageViewerIndex()"
+      [isOpen]="isKeyImageViewerOpen()"
+      (close)="closeKeyImageViewer()"
+      (imageChanged)="onKeyImageChanged($event)"
+    />
+  }
 </z-page>

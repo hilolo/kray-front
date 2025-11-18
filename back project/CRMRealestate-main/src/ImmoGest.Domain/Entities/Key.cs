@@ -13,6 +13,9 @@ namespace ImmoGest.Domain.Entities
         public Guid PropertyId { get; set; }
         public Property Property { get; set; }
         
+        public Guid? DefaultAttachmentId { get; set; }  // Default image attachment
+        public Attachment DefaultAttachment { get; set; }
+        
         public bool IsDeleted { get; set; }
 
         public override void BuildSearchTerms()

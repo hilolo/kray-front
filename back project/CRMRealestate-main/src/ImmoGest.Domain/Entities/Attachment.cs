@@ -20,6 +20,8 @@ namespace ImmoGest.Domain.Entities
         public Lease Lease { get; set; }
         public Guid? ReservationId { get; set; }  // Optional - can be attached to reservation
         public Reservation Reservation { get; set; }
+        public Guid? KeyId { get; set; }  // Optional - can be attached to key
+        public Key Key { get; set; }
         public Guid CompanyId { get; set; }  // Company ID for multi-tenancy
         public bool IsDeleted { get; set; }
         public string Url { get; set; }  // Cached S3 URL for the attachment

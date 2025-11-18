@@ -17,6 +17,7 @@ import { PropertyService } from '@shared/services/property.service';
 import type { Property } from '@shared/models/property/property.model';
 import { PropertyCategory } from '@shared/models/property/property.model';
 import type { Lease } from '@shared/models/property/property.model';
+import type { Key } from '@shared/models/key/key.model';
 import { LeasingStatus } from '@shared/models/lease/lease.model';
 import { catchError, of } from 'rxjs';
 import { ZardImageViewerComponent, type ImageItem } from '@shared/image-viewer/image-viewer.component';
@@ -75,6 +76,11 @@ export class PropertyDetailComponent implements OnInit {
   readonly imageAnimationDirection = signal<'next' | 'prev' | ''>('');
   readonly reservations = signal<Reservation[]>([]);
   readonly isLoadingReservations = signal(false);
+  
+  // Key image viewer state
+  readonly isKeyImageViewerOpen = signal(false);
+  readonly keyImageViewerIndex = signal(0);
+  readonly selectedKeyForImageViewer = signal<Key | null>(null);
   
   // Current month/year for calendar
   readonly currentCalendarMonth = signal<number | undefined>(undefined);
@@ -286,6 +292,71 @@ export class PropertyDetailComponent implements OnInit {
   readonly keys = computed(() => {
     return this.property()?.keys || [];
   });
+
+  // Key image helper methods
+  getKeyAttachments(key: Key): ImageItem[] {
+    if (!key.attachments || key.attachments.length === 0) {
+      return [];
+    }
+    
+    // Sort attachments: default image first
+    const defaultId = key.defaultAttachmentId;
+    if (!defaultId) {
+      return key.attachments.map(att => ({
+        url: att.url,
+        name: att.fileName || 'Image',
+        size: 0,
+      }));
+    }
+    
+    const sorted = [...key.attachments];
+    const defaultIndex = sorted.findIndex(att => att.id === defaultId);
+    
+    if (defaultIndex > 0) {
+      const defaultAttachment = sorted.splice(defaultIndex, 1)[0];
+      sorted.unshift(defaultAttachment);
+    }
+    
+    return sorted.map(att => ({
+      url: att.url,
+      name: att.fileName || 'Image',
+      size: 0,
+    }));
+  }
+
+  getKeyImageUrl(key: Key): string | null {
+    const attachments = this.getKeyAttachments(key);
+    if (attachments.length > 0) {
+      return attachments[0].url;
+    }
+    return key.defaultAttachmentUrl || null;
+  }
+
+  hasKeyImages(key: Key): boolean {
+    return (key.attachments && key.attachments.length > 0) || !!key.defaultAttachmentUrl;
+  }
+
+  openKeyImageViewer(key: Key, event?: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    const images = this.getKeyAttachments(key);
+    if (images.length > 0) {
+      this.selectedKeyForImageViewer.set(key);
+      this.keyImageViewerIndex.set(0);
+      this.isKeyImageViewerOpen.set(true);
+    }
+  }
+
+  closeKeyImageViewer(): void {
+    this.isKeyImageViewerOpen.set(false);
+    this.selectedKeyForImageViewer.set(null);
+  }
+
+  onKeyImageChanged(index: number): void {
+    this.keyImageViewerIndex.set(index);
+  }
 
   // Computed signal to get leases from property
   readonly leases = computed(() => {

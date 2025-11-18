@@ -74,9 +74,27 @@
         <!-- Key ID Column Template -->
         <ng-template #keyIdCell let-value let-row="row">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-md border border-border bg-primary/10 flex items-center justify-center">
-              <z-icon zType="lock" zSize="sm" class="text-primary" />
-            </div>
+            @if (hasKeyImages(row) && getKeyImageUrl(row)) {
+              <div 
+                class="w-10 h-10 rounded-md border border-border overflow-hidden cursor-pointer flex-shrink-0"
+                (click)="openImageViewer(row, $event)"
+              >
+                <img 
+                  [src]="getKeyImageUrl(row)!" 
+                  [alt]="getKeyDisplayName(row)" 
+                  class="w-full h-full object-cover"
+                  [zImageHoverPreview]="getKeyImageUrl(row)!"
+                  [zAlt]="getKeyDisplayName(row)"
+                  [zPosition]="'right'"
+                  [zMaxWidth]="'600px'"
+                  [zMaxHeight]="'600px'"
+                />
+              </div>
+            } @else {
+              <div class="w-10 h-10 rounded-md border border-border bg-primary/10 flex items-center justify-center">
+                <z-icon zType="lock" zSize="sm" class="text-primary" />
+              </div>
+            }
           </div>
         </ng-template>
 
@@ -146,11 +164,29 @@
             
             <!-- Main content: Icon/Type on left, Name/Details on right -->
             <div class="flex gap-6 flex-1">
-              <!-- Left side: Icon -->
+              <!-- Left side: Image or Icon -->
               <div class="flex flex-col items-center gap-3 flex-shrink-0">
-                <div class="w-16 h-16 rounded-md border border-border bg-primary/10 flex items-center justify-center">
-                  <z-icon zType="lock" zSize="lg" class="text-primary" />
-                </div>
+                @if (hasKeyImages(row) && getKeyImageUrl(row)) {
+                  <div 
+                    class="w-16 h-16 rounded-md border border-border overflow-hidden cursor-pointer"
+                    (click)="openImageViewer(row, $event)"
+                  >
+                    <img 
+                      [src]="getKeyImageUrl(row)!" 
+                      [alt]="getKeyDisplayName(row)" 
+                      class="w-full h-full object-cover"
+                      [zImageHoverPreview]="getKeyImageUrl(row)!"
+                      [zAlt]="getKeyDisplayName(row)"
+                      [zPosition]="'right'"
+                      [zMaxWidth]="'600px'"
+                      [zMaxHeight]="'600px'"
+                    />
+                  </div>
+                } @else {
+                  <div class="w-16 h-16 rounded-md border border-border bg-primary/10 flex items-center justify-center">
+                    <z-icon zType="lock" zSize="lg" class="text-primary" />
+                  </div>
+                }
               </div>
               
               <!-- Right side: Name and Key details -->
@@ -195,5 +231,16 @@
       (zPageSizeChange)="onPageSizeChange($event)"
     />
   </div>
+
+  <!-- Image Viewer -->
+  @if (isImageViewerOpen() && selectedKeyForImageViewer()) {
+    <z-image-viewer
+      [images]="getKeyAttachments(selectedKeyForImageViewer()!)"
+      [currentIndex]="imageViewerIndex()"
+      [isOpen]="isImageViewerOpen()"
+      (close)="closeImageViewer()"
+      (imageChanged)="onImageChanged($event)"
+    />
+  }
 </z-page>
 

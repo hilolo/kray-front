@@ -23,6 +23,9 @@ import type { Property as PropertyModel } from '@shared/models/property/property
 import { ZardComboboxComponent, ZardComboboxOption } from '@shared/components/combobox/combobox.component';
 import { ZardDialogService } from '@shared/components/dialog/dialog.service';
 import { EditKeyComponent } from '../edit/edit-key.component';
+import { ZardImageViewerComponent, type ImageItem } from '@shared/image-viewer/image-viewer.component';
+import { imageSlideAnimation } from '@shared/animations/image-swap.animations';
+import { ZardImageHoverPreviewDirective } from '@shared/components/image-hover-preview/image-hover-preview.component';
 
 @Component({
   selector: 'app-keys-list',
@@ -39,11 +42,14 @@ import { EditKeyComponent } from '../edit/edit-key.component';
     ZardDividerComponent,
     ZardDatatablePaginationComponent,
     ZardComboboxComponent,
+    ZardImageViewerComponent,
+    ZardImageHoverPreviewDirective,
     TranslateModule,
     FormsModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './keys-list.component.html',
+  animations: [imageSlideAnimation],
 })
 export class KeysListComponent implements OnInit, OnDestroy {
   private readonly alertDialogService = inject(ZardAlertDialogService);
@@ -73,6 +79,11 @@ export class KeysListComponent implements OnInit, OnDestroy {
   readonly propertyOptions = signal<ZardComboboxOption[]>([]);
   readonly selectedPropertyId = signal<string | null>(null);
   readonly isLoadingProperties = signal(false);
+  
+  // Image viewer state
+  readonly isImageViewerOpen = signal(false);
+  readonly imageViewerIndex = signal(0);
+  readonly selectedKeyForImageViewer = signal<Key | null>(null);
   
   // Reference to property combobox for clearing
   readonly propertyComboboxRef = viewChild<ZardComboboxComponent>('propertyCombobox');
@@ -444,6 +455,85 @@ export class KeysListComponent implements OnInit, OnDestroy {
       return this.getPropertyDisplayName(key.property as any);
     }
     return 'Unknown Property';
+  }
+
+  // Image viewer methods
+  getKeyAttachments(key: Key): ImageItem[] {
+    // Prioritize defaultAttachmentUrl (single image model)
+    if (key.defaultAttachmentUrl) {
+      return [{
+        url: key.defaultAttachmentUrl,
+        name: 'Key image',
+        size: 0,
+      }];
+    }
+    
+    // Fallback to attachments array if available
+    if (!key.attachments || key.attachments.length === 0) {
+      return [];
+    }
+    
+    // Sort attachments: default image first
+    const defaultId = key.defaultAttachmentId;
+    if (!defaultId) {
+      return key.attachments.map(att => ({
+        url: att.url,
+        name: att.fileName || 'Image',
+        size: 0,
+      }));
+    }
+    
+    const sorted = [...key.attachments];
+    const defaultIndex = sorted.findIndex(att => att.id === defaultId);
+    
+    if (defaultIndex > 0) {
+      const defaultAttachment = sorted.splice(defaultIndex, 1)[0];
+      sorted.unshift(defaultAttachment);
+    }
+    
+    return sorted.map(att => ({
+      url: att.url,
+      name: att.fileName || 'Image',
+      size: 0,
+    }));
+  }
+
+  getKeyImageUrl(key: Key): string | null {
+    // Prioritize defaultAttachmentUrl (single image model)
+    if (key.defaultAttachmentUrl) {
+      return key.defaultAttachmentUrl;
+    }
+    // Fallback to attachments if available
+    if (key.attachments && key.attachments.length > 0) {
+      return key.attachments[0].url;
+    }
+    return null;
+  }
+
+  hasKeyImages(key: Key): boolean {
+    return !!key.defaultAttachmentUrl || !!(key.attachments && key.attachments.length > 0);
+  }
+
+  openImageViewer(key: Key, event?: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    const images = this.getKeyAttachments(key);
+    if (images.length > 0) {
+      this.selectedKeyForImageViewer.set(key);
+      this.imageViewerIndex.set(0);
+      this.isImageViewerOpen.set(true);
+    }
+  }
+
+  closeImageViewer(): void {
+    this.isImageViewerOpen.set(false);
+    this.selectedKeyForImageViewer.set(null);
+  }
+
+  onImageChanged(index: number): void {
+    this.imageViewerIndex.set(index);
   }
 
   ngOnDestroy(): void {

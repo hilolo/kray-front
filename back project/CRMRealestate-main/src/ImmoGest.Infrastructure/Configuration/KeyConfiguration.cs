@@ -27,6 +27,11 @@ namespace ImmoGest.Infrastructure.Configuration
                 .WithMany(p => p.Keys)
                 .HasForeignKey(k => k.PropertyId)
                 .OnDelete(DeleteBehavior.Restrict);
+            
+            builder.HasOne(k => k.DefaultAttachment)
+                .WithMany()
+                .HasForeignKey(k => k.DefaultAttachmentId)
+                .OnDelete(DeleteBehavior.SetNull);
         }
     }
 }

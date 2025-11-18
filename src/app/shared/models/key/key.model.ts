@@ -1,3 +1,5 @@
+import type { AttachmentDetails } from '../property/property.model';
+
 /**
  * Key model from backend KeyDto
  */
@@ -7,6 +9,9 @@ export interface Key {
   description: string;
   propertyId: string;
   property?: Property;
+  defaultAttachmentId?: string | null;
+  defaultAttachmentUrl?: string | null;
+  attachments?: AttachmentDetails[];
   createdOn: string;
   lastModifiedOn?: string;
 }

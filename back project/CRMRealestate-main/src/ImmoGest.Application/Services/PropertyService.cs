@@ -759,12 +759,135 @@ namespace ImmoGest.Application.Services
                             }
                         }
                     }
+
+                    // Map keys from entity (already loaded in repository)
+                    // Always initialize keys list, even if empty
+                    dto.Keys = new List<KeyDto>();
+                    if (entity.Keys != null && entity.Keys.Any())
+                    {
+                        dto.Keys = _mapper.Map<List<KeyDto>>(entity.Keys);
+                        
+                        // Populate attachments and default attachment URL for each key
+                        foreach (var keyDto in dto.Keys)
+                        {
+                            // Find the corresponding key entity
+                            var keyEntity = entity.Keys.FirstOrDefault(k => k.Id == keyDto.Id);
+                            
+                            if (keyEntity != null)
+                            {
+                                // Generate default attachment URL if DefaultAttachmentId exists
+                                if (keyEntity.DefaultAttachmentId.HasValue)
+                                {
+                                    try
+                                    {
+                                        var attachmentEntityResult = await _attachmentRepository.GetByIdAsync(keyEntity.DefaultAttachmentId.Value);
+                                        if (attachmentEntityResult.IsSuccess() && attachmentEntityResult.Data != null)
+                                        {
+                                            var attachmentEntity = attachmentEntityResult.Data;
+                                            if (!string.IsNullOrEmpty(attachmentEntity.StorageHash))
+                                            {
+                                                var s3Key = S3PathConstants.BuildAttachmentKey(
+                                                    entity.CompanyId.ToString(),
+                                                    attachmentEntity.StorageHash,
+                                                    attachmentEntity.FileName
+                                                );
+                                                
+                                                keyDto.DefaultAttachmentUrl = await _s3StorageService.GetOrGenerateCachedUrlAsync(
+                                                    GetBucketName(), 
+                                                    s3Key, 
+                                                    attachmentEntity.Url, 
+                                                    attachmentEntity.UrlExpiresAt, 
+                                                    24);
+                                                
+                                                // Update cached URL if it was regenerated
+                                                if (keyDto.DefaultAttachmentUrl != attachmentEntity.Url)
+                                                {
+                                                    attachmentEntity.Url = keyDto.DefaultAttachmentUrl;
+                                                    attachmentEntity.UrlExpiresAt = DateTimeOffset.UtcNow.AddHours(24);
+                                                    await _attachmentRepository.Update(attachmentEntity);
+                                                }
+                                            }
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        keyDto.DefaultAttachmentUrl = null;
+                                        _logger.LogWarning(ex, "Failed to generate default attachment URL for key {KeyId}", keyDto.Id);
+                                    }
+                                }
+
+                                // Get all attachments/images for this key
+                                try
+                                {
+                                    keyDto.Attachments = new List<AttachmentDetailsDto>();
+                                    var allAttachmentsResult = await _attachmentRepository.GetAllAsync();
+                                    if (allAttachmentsResult.IsSuccess() && allAttachmentsResult.Data != null)
+                                    {
+                                        var keyAttachments = allAttachmentsResult.Data
+                                            .Where(a => a.KeyId == keyEntity.Id && a.CompanyId == entity.CompanyId && !a.IsDeleted)
+                                            .ToList();
+                                        
+                                        if (keyAttachments != null && keyAttachments.Any())
+                                        {
+                                            foreach (var attachment in keyAttachments)
+                                            {
+                                                try
+                                                {
+                                                    if (!string.IsNullOrEmpty(attachment.StorageHash))
+                                                    {
+                                                        var s3Key = S3PathConstants.BuildAttachmentKey(
+                                                            entity.CompanyId.ToString(),
+                                                            attachment.StorageHash,
+                                                            attachment.FileName
+                                                        );
+                                                        
+                                                        var signedUrl = await _s3StorageService.GetOrGenerateCachedUrlAsync(
+                                                            GetBucketName(), 
+                                                            s3Key, 
+                                                            attachment.Url, 
+                                                            attachment.UrlExpiresAt, 
+                                                            24);
+                                                        
+                                                        // Update cached URL if it was regenerated
+                                                        if (signedUrl != attachment.Url)
+                                                        {
+                                                            attachment.Url = signedUrl;
+                                                            attachment.UrlExpiresAt = DateTimeOffset.UtcNow.AddHours(24);
+                                                            await _attachmentRepository.Update(attachment);
+                                                        }
+                                                        
+                                                        keyDto.Attachments.Add(new AttachmentDetailsDto
+                                                        {
+                                                            Id = attachment.Id,
+                                                            Url = signedUrl,
+                                                            FileName = attachment.FileName
+                                                        });
+                                                    }
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    // Continue with other attachments
+                                                    _logger.LogWarning(ex, "Failed to generate attachment URL for key {KeyId}, attachment {AttachmentId}", keyDto.Id, attachment.Id);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    keyDto.Attachments = new List<AttachmentDetailsDto>();
+                                    _logger.LogWarning(ex, "Failed to load attachments for key {KeyId}", keyDto.Id);
+                                }
+                            }
+                        }
+                    }
                 }
                 else
                 {
                     // Initialize empty collections when not including related entities
                     dto.Maintenances = new List<PropertyMaintenanceSummaryDto>();
                     dto.Leases = new List<LeaseDto>();
+                    dto.Keys = new List<KeyDto>();
                 }
             }
             await base.InGet_AfterMappingAsync(entity, mappedEntity);
