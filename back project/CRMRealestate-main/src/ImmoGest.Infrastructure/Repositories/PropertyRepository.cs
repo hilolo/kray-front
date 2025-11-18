@@ -42,6 +42,7 @@ namespace ImmoGest.Infrastructure.Repositories
                     .AsNoTracking()
                     .Include(p => p.DefaultAttachment)
                     .Include(p => p.Contact) // Include the owner/contact
+                    .Include(p => p.Building) // Include the building
                     .Include(p => p.Maintenances.Where(m => !m.IsDeleted))
                         .ThenInclude(m => m.Contact)
                     .Include(p => p.Leases.Where(l => !l.IsDeleted))
@@ -126,6 +127,11 @@ namespace ImmoGest.Infrastructure.Repositories
 
         protected override IQueryable<Property> SetPagedResultFilterOptions<IFilter>(IQueryable<Property> query, IFilter filterOption)
         {
+            // IMPORTANT: Always include Building and DefaultAttachment for property lists
+            query = query
+                .Include(p => p.Building)
+                .Include(p => p.DefaultAttachment);
+            
             if (filterOption is GetPropertiesFilter filter)
             {
                 // Filter by identifier

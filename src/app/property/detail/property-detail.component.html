@@ -16,6 +16,11 @@
               <z-icon zType="id-card" zSize="default" class="text-muted-foreground" />
               <span class="text-sm font-medium text-muted-foreground">Reference:</span>
               <span class="text-sm font-semibold text-foreground">{{ property()?.identifier }}</span>
+              @if (property()?.building?.name) {
+                <span class="text-sm text-muted-foreground">•</span>
+                <z-icon zType="building" zSize="sm" class="text-muted-foreground" />
+                <span class="text-sm font-medium text-muted-foreground">{{ property()?.building?.name }}</span>
+              }
             </z-badge>
           }
         </div>

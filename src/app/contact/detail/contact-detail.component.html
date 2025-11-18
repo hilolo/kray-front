@@ -178,7 +178,12 @@
                               <div class="flex items-center gap-2 mb-1">
                                 <h4 class="text-sm font-semibold">{{ property.name || property.identifier || 'Unnamed Property' }}</h4>
                                 @if (property.identifier) {
-                                  <z-badge zType="outline" zSize="sm">{{ property.identifier }}</z-badge>
+                                  <z-badge zType="outline" zSize="sm">
+                                    {{ property.identifier }}
+                                    @if (property.building?.name) {
+                                      <span class="ml-1">• {{ property.building?.name }}</span>
+                                    }
+                                  </z-badge>
                                 }
                               </div>
                               <p class="text-xs text-muted-foreground">{{ property.typeProperty || 'N/A' }}</p>
