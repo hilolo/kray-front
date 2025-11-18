@@ -303,7 +303,11 @@ namespace ImmoGest.Application.Services
                     Description = entity.Description,
                     PropertyId = entity.PropertyId,
                     PropertyName = entity.Property != null ? entity.Property.Name : "",
+                    PropertyIdentifier = entity.Property != null ? entity.Property.Identifier : "",
                     PropertyAddress = entity.Property != null ? entity.Property.Address : "",
+                    OwnerName = entity.Property != null && entity.Property.Contact != null
+                        ? (entity.Property.Contact.IsACompany ? entity.Property.Contact.CompanyName : $"{entity.Property.Contact.FirstName} {entity.Property.Contact.LastName}".Trim())
+                        : "",
                     CompanyId = entity.CompanyId
                 }).ToList();
 

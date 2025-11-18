@@ -2,12 +2,54 @@
   <div class="flex flex-col h-full min-h-0">
     <!-- Header Section -->
     <div class="space-y-6 pb-6 flex-shrink-0">
+      <!-- Revenue/Expense Toggle - Top Center -->
+      <div class="flex justify-center items-center w-full">
+        <div class="inline-flex items-center gap-1 border rounded-lg p-1 bg-muted/50 shadow-sm">
+          <z-button
+            [zType]="selectedType() === TransactionType.Revenue ? 'default' : 'ghost'"
+            zSize="sm"
+            (click)="onTypeChange(TransactionType.Revenue)"
+            [class.!bg-green-100]="selectedType() === TransactionType.Revenue"
+            [class.hover:!bg-green-200]="selectedType() === TransactionType.Revenue"
+            [class.!text-green-600]="selectedType() === TransactionType.Revenue"
+            [class.border-green-200]="selectedType() === TransactionType.Revenue"
+            [class.hover:border-green-300]="selectedType() === TransactionType.Revenue"
+            [class.dark:!bg-green-900/30]="selectedType() === TransactionType.Revenue"
+            [class.dark:hover:!bg-green-900/50]="selectedType() === TransactionType.Revenue"
+            [class.dark:!text-green-400]="selectedType() === TransactionType.Revenue"
+            [class.dark:border-green-800/50]="selectedType() === TransactionType.Revenue"
+            [class.dark:hover:border-green-800/70]="selectedType() === TransactionType.Revenue"
+            [class.shadow-sm]="selectedType() === TransactionType.Revenue"
+            class="rounded-md transition-all duration-200 min-w-[100px] justify-center"
+          >
+            <z-icon zType="plus" zSize="sm" class="mr-1.5" [class.!text-green-600]="selectedType() === TransactionType.Revenue" [class.dark:!text-green-400]="selectedType() === TransactionType.Revenue" />
+            Revenue
+          </z-button>
+          <z-button
+            [zType]="selectedType() === TransactionType.Expense ? 'default' : 'ghost'"
+            zSize="sm"
+            (click)="onTypeChange(TransactionType.Expense)"
+            [class.bg-red-500]="selectedType() === TransactionType.Expense"
+            [class.text-white]="selectedType() === TransactionType.Expense"
+            [class.hover:bg-red-600]="selectedType() === TransactionType.Expense"
+            [class.dark:bg-red-600]="selectedType() === TransactionType.Expense"
+            [class.dark:hover:bg-red-700]="selectedType() === TransactionType.Expense"
+            [class.border-red-500]="selectedType() === TransactionType.Expense"
+            [class.shadow-sm]="selectedType() === TransactionType.Expense"
+            class="rounded-md transition-all duration-200 min-w-[100px] justify-center"
+          >
+            <z-icon zType="minus" zSize="sm" class="mr-1.5" />
+            Expense
+          </z-button>
+        </div>
+      </div>
+
       <!-- Filter and Action Bar -->
       <div class="flex flex-col gap-4">
         <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
           <!-- Filters on left -->
           <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-1 w-full">
-            <!-- Filters group: Property, Contact, Type -->
+            <!-- Filters group: Property -->
             <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-shrink-0 w-full sm:w-auto">
               <!-- Property select -->
               <div class="w-full sm:w-[200px]">
@@ -24,37 +66,8 @@
                   class="w-full"
                 />
               </div>
-              <!-- Contact select -->
-              <div class="w-full sm:w-[200px]">
-                <z-combobox
-                  #contactCombobox
-                  [options]="contactOptions()"
-                  [value]="selectedContactId()"
-                  [placeholder]="'Select contact...'"
-                  [searchPlaceholder]="'Search contacts...'"
-                  [emptyText]="'No contacts found'"
-                  [searchable]="true"
-                  [disabled]="isLoadingContacts()"
-                  (zValueChange)="onContactChange($event)"
-                  class="w-full"
-                />
-              </div>
               <!-- Type filter -->
               <div class="flex gap-2 items-center">
-                <z-button
-                  [zType]="selectedType() === TransactionType.Revenue ? 'default' : 'outline'"
-                  zSize="sm"
-                  (click)="onTypeChange(selectedType() === TransactionType.Revenue ? null : TransactionType.Revenue)"
-                >
-                  Revenue
-                </z-button>
-                <z-button
-                  [zType]="selectedType() === TransactionType.Expense ? 'default' : 'outline'"
-                  zSize="sm"
-                  (click)="onTypeChange(selectedType() === TransactionType.Expense ? null : TransactionType.Expense)"
-                >
-                  Expense
-                </z-button>
                 
                 <!-- Revenue Types Multi-Select -->
                 @if (selectedType() === TransactionType.Revenue) {
@@ -162,16 +175,21 @@
 
         <!-- Property Column Template -->
         <ng-template #propertyCell let-row="row">
-          <div class="flex flex-col gap-1">
-            @if (row.propertyName) {
-              <span class="font-semibold">{{ row.propertyName }}</span>
-            } @else {
-              <span class="text-muted-foreground text-sm">-</span>
-            }
-            @if (row.propertyAddress) {
-              <span class="text-sm text-muted-foreground">{{ row.propertyAddress }}</span>
-            }
-          </div>
+          @if (row.propertyId) {
+            <div class="flex flex-col gap-1">
+              @if (row.propertyIdentifier) {
+                <span class="font-semibold">{{ row.propertyIdentifier }}</span>
+              } @else if (row.propertyName) {
+                <span class="font-semibold">{{ row.propertyName }}</span>
+              }
+              @if (row.propertyAddress) {
+                <span class="text-sm text-muted-foreground">{{ row.propertyAddress }}</span>
+              }
+              @if (row.ownerName) {
+                <span class="text-sm text-muted-foreground">{{ row.ownerName }}</span>
+              }
+            </div>
+          }
         </ng-template>
 
         <!-- Contact Column Template -->

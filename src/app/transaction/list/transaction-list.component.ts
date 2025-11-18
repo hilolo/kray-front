@@ -21,14 +21,12 @@ import { TransactionType, TransactionStatus, RevenueType, ExpenseType } from '@s
 import type { TransactionListRequest } from '@shared/models/transaction/transaction-list-request.model';
 import { TransactionService } from '@shared/services/transaction.service';
 import { PropertyService } from '@shared/services/property.service';
-import { ContactService } from '@shared/services/contact.service';
 import { ToastService } from '@shared/services/toast.service';
 import { UserService } from '@shared/services/user.service';
 import { ZardAlertDialogService } from '@shared/components/alert-dialog/alert-dialog.service';
+import { RoutePreferencesService } from '@shared/services/route-preferences.service';
 import { FormsModule } from '@angular/forms';
 import type { Property } from '@shared/models/property/property.model';
-import type { Contact } from '@shared/models/contact/contact.model';
-import { ContactType } from '@shared/models/contact/contact.model';
 
 @Component({
   selector: 'app-transaction-list',
@@ -59,9 +57,9 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
   private readonly router = inject(Router);
   private readonly transactionService = inject(TransactionService);
   private readonly propertyService = inject(PropertyService);
-  private readonly contactService = inject(ContactService);
   private readonly toastService = inject(ToastService);
   private readonly userService = inject(UserService);
+  private readonly preferencesService = inject(RoutePreferencesService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroy$ = new Subject<void>();
 
@@ -79,7 +77,14 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
   readonly updatingStatus = signal<Set<string>>(new Set());
   readonly totalPages = signal(1);
   readonly totalItems = signal(0);
-  readonly selectedType = signal<TransactionType | null>(null);
+  readonly selectedType = signal<TransactionType>(TransactionType.Revenue);
+  
+  /**
+   * Get the route key for preferences storage
+   */
+  private getRouteKey(): string {
+    return 'transaction/list';
+  }
   
   // Transaction type filters (multi-select)
   readonly selectedRevenueTypes = signal<RevenueType[]>([]);
@@ -132,19 +137,12 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
   readonly isLoadingProperties = signal(false);
   readonly propertyComboboxRef = viewChild<ZardComboboxComponent>('propertyCombobox');
 
-  readonly contacts = signal<Contact[]>([]);
-  readonly contactOptions = signal<ZardComboboxOption[]>([]);
-  readonly selectedContactId = signal<string | null>(null);
-  readonly isLoadingContacts = signal(false);
-  readonly contactComboboxRef = viewChild<ZardComboboxComponent>('contactCombobox');
 
-  // Check if any filters are active
+  // Check if any filters are active (excluding the default selectedType)
   readonly hasActiveFilters = computed(() => {
-    return this.selectedType() !== null ||
-           this.selectedRevenueTypes().length > 0 ||
+    return this.selectedRevenueTypes().length > 0 ||
            this.selectedExpenseTypes().length > 0 ||
-           this.selectedPropertyId() !== null ||
-           this.selectedContactId() !== null;
+           this.selectedPropertyId() !== null;
   });
 
   // Template references for custom cells
@@ -226,6 +224,21 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
   });
 
   ngOnInit(): void {
+    // Get route key for preferences
+    const routeKey = this.getRouteKey();
+    
+    // Load page size preference
+    const savedPageSize = this.preferencesService.getPageSize(routeKey);
+    this.pageSize.set(savedPageSize);
+    
+    // Load current page preference
+    const savedCurrentPage = this.preferencesService.getPreference<number>(routeKey, 'currentPage', 1) ?? 1;
+    this.currentPage.set(savedCurrentPage);
+    
+    // Load selected type preference
+    const savedSelectedType = this.preferencesService.getPreference<TransactionType>(routeKey, 'selectedType', TransactionType.Revenue) ?? TransactionType.Revenue;
+    this.selectedType.set(savedSelectedType);
+    
     // Debug: Log revenue and expense type options
     console.log('Revenue Type Options:', this.revenueTypeOptions);
     console.log('Revenue Type Options Length:', this.revenueTypeOptions.length);
@@ -235,7 +248,6 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
     
     this.loadTransactions();
     this.loadProperties();
-    this.loadContacts();
   }
 
   ngAfterViewInit(): void {
@@ -263,11 +275,10 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
       pageSize: this.pageSize(),
       ignore: false,
       companyId: companyId,
-      type: this.selectedType() || undefined,
+      type: this.selectedType(),
       revenueTypes: this.selectedRevenueTypes().length > 0 ? this.selectedRevenueTypes() : undefined,
       expenseTypes: this.selectedExpenseTypes().length > 0 ? this.selectedExpenseTypes() : undefined,
       propertyId: this.selectedPropertyId() || undefined,
-      contactId: this.selectedContactId() || undefined,
     };
 
     this.transactionService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
@@ -315,49 +326,6 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
     });
   }
 
-  loadContacts(): void {
-    this.isLoadingContacts.set(true);
-    const request = {
-      currentPage: 1,
-      pageSize: 1000, // Large page size to get all contacts
-      ignore: false,
-      type: ContactType.Tenant, // Use Tenant as default, but we'll get all contacts from backend
-    };
-    
-    this.contactService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
-      next: (response) => {
-        this.contacts.set(response.result);
-        // Convert contacts to combobox options
-        const options: ZardComboboxOption[] = response.result.map(contact => ({
-          value: contact.id,
-          label: this.getContactDisplayName(contact),
-        }));
-        this.contactOptions.set(options);
-        this.isLoadingContacts.set(false);
-      },
-      error: (error) => {
-        console.error('Error loading contacts:', error);
-        this.isLoadingContacts.set(false);
-      },
-    });
-  }
-
-  getContactDisplayName(contact: Contact): string {
-    let name = '';
-    if (contact.isACompany) {
-      name = contact.companyName || '';
-    } else {
-      const firstName = contact.firstName || '';
-      const lastName = contact.lastName || '';
-      name = `${firstName} ${lastName}`.trim();
-    }
-    
-    // Add reference if available
-    if (contact.identifier) {
-      return name ? `${name} (${contact.identifier})` : contact.identifier;
-    }
-    return name || 'Unnamed Contact';
-  }
 
   onPropertyChange(propertyId: string | null): void {
     this.selectedPropertyId.set(propertyId);
@@ -365,13 +333,8 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
     this.loadTransactions();
   }
 
-  onContactChange(contactId: string | null): void {
-    this.selectedContactId.set(contactId);
-    this.currentPage.set(1);
-    this.loadTransactions();
-  }
 
-  onTypeChange(type: TransactionType | null): void {
+  onTypeChange(type: TransactionType): void {
     console.log('[onTypeChange]', {
       newType: type,
       currentType: this.selectedType(),
@@ -379,11 +342,11 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
       expenseOptions: this.expenseTypeOptions,
     });
     this.selectedType.set(type);
+    // Save selected type to localStorage
+    this.preferencesService.setPreference(this.getRouteKey(), 'selectedType', type);
+    
     // Clear transaction type selections when changing main type
-    if (type === null) {
-      this.selectedRevenueTypes.set([]);
-      this.selectedExpenseTypes.set([]);
-    } else if (type === TransactionType.Revenue) {
+    if (type === TransactionType.Revenue) {
       this.selectedExpenseTypes.set([]);
       console.log('[onTypeChange] Revenue selected, revenue options:', this.revenueTypeOptions);
     } else if (type === TransactionType.Expense) {
@@ -391,6 +354,8 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
       console.log('[onTypeChange] Expense selected, expense options:', this.expenseTypeOptions);
     }
     this.currentPage.set(1);
+    // Save current page to localStorage
+    this.preferencesService.setPreference(this.getRouteKey(), 'currentPage', 1);
     this.loadTransactions();
   }
 
@@ -430,12 +395,18 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
 
   onPageChange(page: number): void {
     this.currentPage.set(page);
+    // Save current page to localStorage
+    this.preferencesService.setPreference(this.getRouteKey(), 'currentPage', page);
     this.loadTransactions();
   }
 
   onPageSizeChange(size: number): void {
     this.pageSize.set(size);
+    // Save page size to localStorage
+    this.preferencesService.setPageSize(this.getRouteKey(), size);
     this.currentPage.set(1);
+    // Save current page to localStorage
+    this.preferencesService.setPreference(this.getRouteKey(), 'currentPage', 1);
     this.loadTransactions();
   }
 
@@ -581,21 +552,17 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
   }
 
   onClearFilters(): void {
-    this.selectedType.set(null);
+    // Reset to default Revenue type
+    this.selectedType.set(TransactionType.Revenue);
     this.selectedRevenueTypes.set([]);
     this.selectedExpenseTypes.set([]);
     this.selectedPropertyId.set(null);
-    this.selectedContactId.set(null);
     
     // Clear combobox internal values using ControlValueAccessor
     setTimeout(() => {
       const propertyCombobox = this.propertyComboboxRef();
       if (propertyCombobox) {
         (propertyCombobox as any).writeValue(null);
-      }
-      const contactCombobox = this.contactComboboxRef();
-      if (contactCombobox) {
-        (contactCombobox as any).writeValue(null);
       }
     }, 0);
     

@@ -75,7 +75,9 @@ namespace ImmoGest.Application.DTOs
         public string Description { get; set; }
         public Guid? PropertyId { get; set; }
         public string PropertyName { get; set; }
+        public string PropertyIdentifier { get; set; } // Property identifier
         public string PropertyAddress { get; set; } // Added for frontend display
+        public string OwnerName { get; set; } // Property owner name
         public Guid CompanyId { get; set; }
     }
 

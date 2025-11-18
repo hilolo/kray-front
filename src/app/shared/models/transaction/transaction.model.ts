@@ -59,7 +59,9 @@ export interface Transaction {
   status: TransactionStatus;
   propertyId?: string;
   propertyName?: string;
+  propertyIdentifier?: string;
   propertyAddress?: string;
+  ownerName?: string;
   leaseId?: string;
   leaseTenantName?: string;
   contactId?: string; // From (revenue) or Pay to (expense)
