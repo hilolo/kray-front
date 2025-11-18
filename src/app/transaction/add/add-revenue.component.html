@@ -127,7 +127,7 @@
 
                   <!-- From (Contact) Field -->
                   <z-form-field>
-                    <z-form-label [zRequired]="(formData().revenueType ?? RevenueType.Loyer) !== RevenueType.Autre">From</z-form-label>
+                    <z-form-label [zRequired]="formData().revenueType !== RevenueType.Autre">From</z-form-label>
                     <z-form-control [errorMessage]="contactIdError()">
                       <div class="space-y-3">
                         <div class="flex items-center gap-3">

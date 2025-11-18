@@ -127,7 +127,7 @@
 
                   <!-- Pay to (Contact) Field -->
                   <z-form-field>
-                    <z-form-label [zRequired]="(formData().expenseType ?? ExpenseType.Loyer) !== ExpenseType.Autre">Pay to</z-form-label>
+                    <z-form-label [zRequired]="formData().expenseType !== ExpenseType.Autre">Pay to</z-form-label>
                     <z-form-control [errorMessage]="contactIdError()">
                       <div class="space-y-3">
                         <div class="flex items-center gap-3">
