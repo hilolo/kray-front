@@ -177,6 +177,9 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
     const statusCell = this.statusCell();
     const actionsCell = this.actionsCell();
     
+    // Dynamic label based on transaction type
+    const contactLabel = this.selectedType() === TransactionType.Revenue ? 'From' : 'To';
+    
     return [
       {
         key: 'date',
@@ -191,7 +194,7 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
       },
       {
         key: 'From/To',
-        label: 'From/To',
+        label: contactLabel,
         cellTemplate: contactCell || undefined,
       },
       {
@@ -709,11 +712,27 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
 
   formatDate(dateString: string): string {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-GB', {
+    
+    // Format: "18 Nov 2025"
+    const englishDate = date.toLocaleDateString('en-GB', {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
     });
+    
+    // French month names
+    const frenchMonths = [
+      'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+      'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+    ];
+    
+    // Get French month name and 2-digit year
+    const monthIndex = date.getMonth();
+    const frenchMonth = frenchMonths[monthIndex];
+    const twoDigitYear = date.getFullYear().toString().slice(-2);
+    
+    // Format: "18 Nov 2025 (Novembre 25)"
+    return `${englishDate} (${frenchMonth} ${twoDigitYear})`;
   }
 }
 
