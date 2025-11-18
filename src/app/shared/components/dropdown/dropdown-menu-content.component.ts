@@ -1,6 +1,6 @@
 import type { ClassValue } from 'clsx';
 
-import { Component, computed, input, TemplateRef, viewChild, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, computed, inject, input, TemplateRef, viewChild, ViewEncapsulation } from '@angular/core';
 
 import { mergeClasses } from '@shared/utils/merge-classes';
 import { dropdownContentVariants } from './dropdown.variants';
@@ -16,12 +16,21 @@ import { dropdownContentVariants } from './dropdown.variants';
         <ng-content></ng-content>
       </div>
     </ng-template>
+    <div [class]="contentClasses()" role="menu" tabindex="-1" [attr.aria-orientation]="'vertical'">
+      <ng-content></ng-content>
+    </div>
   `,
 })
-export class ZardDropdownMenuContentComponent {
-  readonly contentTemplate = viewChild.required<TemplateRef<unknown>>('contentTemplate');
+export class ZardDropdownMenuContentComponent implements AfterViewInit {
+  private readonly cdr = inject(ChangeDetectorRef);
 
+  readonly contentTemplate = viewChild<TemplateRef<unknown>>('contentTemplate');
   readonly class = input<ClassValue>('');
 
   protected readonly contentClasses = computed(() => mergeClasses(dropdownContentVariants(), this.class()));
+
+  ngAfterViewInit(): void {
+    // Trigger change detection to ensure @for loops are evaluated
+    this.cdr.detectChanges();
+  }
 }

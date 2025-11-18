@@ -40,8 +40,9 @@ export class ZardDropdownDirective implements OnInit {
     event.stopPropagation();
 
     const menuContent = this.zDropdownMenu();
-    if (menuContent) {
-      this.dropdownService.toggle(this.elementRef, menuContent?.contentTemplate?.(), this.viewContainerRef);
+    const contentTemplate = menuContent?.contentTemplate?.();
+    if (menuContent && contentTemplate) {
+      this.dropdownService.toggle(this.elementRef, contentTemplate, this.viewContainerRef);
     }
   }
 
@@ -50,8 +51,9 @@ export class ZardDropdownDirective implements OnInit {
     if (this.zDisabled() || this.zTrigger() !== 'hover') return;
 
     const menuContent = this.zDropdownMenu();
-    if (menuContent) {
-      this.dropdownService.open(this.elementRef, menuContent?.contentTemplate?.(), this.viewContainerRef);
+    const contentTemplate = menuContent?.contentTemplate?.();
+    if (menuContent && contentTemplate) {
+      this.dropdownService.open(this.elementRef, contentTemplate, this.viewContainerRef);
     }
   }
 
@@ -87,15 +89,17 @@ export class ZardDropdownDirective implements OnInit {
 
   private toggleDropdown() {
     const menuContent = this.zDropdownMenu();
-    if (menuContent) {
-      this.dropdownService.toggle(this.elementRef, menuContent?.contentTemplate?.(), this.viewContainerRef);
+    const contentTemplate = menuContent?.contentTemplate?.();
+    if (menuContent && contentTemplate) {
+      this.dropdownService.toggle(this.elementRef, contentTemplate, this.viewContainerRef);
     }
   }
 
   private openDropdown() {
     const menuContent = this.zDropdownMenu();
-    if (menuContent && !this.dropdownService.isOpen()) {
-      this.dropdownService.open(this.elementRef, menuContent?.contentTemplate?.(), this.viewContainerRef);
+    const contentTemplate = menuContent?.contentTemplate?.();
+    if (menuContent && contentTemplate && !this.dropdownService.isOpen()) {
+      this.dropdownService.open(this.elementRef, contentTemplate, this.viewContainerRef);
     }
   }
 }

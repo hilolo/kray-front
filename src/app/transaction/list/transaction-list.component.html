@@ -58,52 +58,58 @@
                 
                 <!-- Revenue Types Multi-Select -->
                 @if (selectedType() === TransactionType.Revenue) {
-                  <z-dropdown-menu class="w-full sm:w-[200px]">
-                    <z-button zType="outline" zSize="sm" class="w-full sm:w-[200px] justify-between" dropdown-trigger>
-                      <span class="truncate">{{ selectedRevenueTypesDisplay() || 'Select revenue types...' }}</span>
-                      <z-icon zType="chevron-down" zSize="sm" class="opacity-50 flex-shrink-0" />
-                    </z-button>
-                    <z-dropdown-menu-content>
+                  <div class="w-full sm:w-[200px]">
+                    <z-select
+                      [zValue]="selectedRevenueTypes().length > 0 ? selectedRevenueTypes()[0].toString() : ''"
+                      [zLabel]="selectedRevenueTypesDisplay() || 'Select revenue types...'"
+                      [zPlaceholder]="'Select revenue types...'"
+                      [zSize]="'sm'"
+                      class="w-full"
+                      (zSelectionChange)="onRevenueSelectChange($event)"
+                    >
                       @for (option of revenueTypeOptions; track option.value) {
-                        <z-dropdown-menu-item (click)="$event.preventDefault(); $event.stopPropagation(); toggleRevenueType(option.value)">
+                        <z-select-item [zValue]="option.value.toString()" [class]="'cursor-default'" (click)="$event.preventDefault(); $event.stopPropagation(); toggleRevenueType(option.value)">
                           <div class="flex items-center gap-2 w-full pointer-events-none">
                             <z-checkbox
                               [ngModel]="selectedRevenueTypes().includes(option.value)"
                               (checkChange)="toggleRevenueType(option.value)"
-                              (click)="$event.stopPropagation()"
+                              (click)="$event.preventDefault(); $event.stopPropagation()"
                               class="pointer-events-auto"
                             />
-                            <span>{{ option.label }}</span>
+                            <span class="flex-1">{{ option.label }}</span>
                           </div>
-                        </z-dropdown-menu-item>
+                        </z-select-item>
                       }
-                    </z-dropdown-menu-content>
-                  </z-dropdown-menu>
+                    </z-select>
+                  </div>
                 }
                 
                 <!-- Expense Types Multi-Select -->
                 @if (selectedType() === TransactionType.Expense) {
-                  <z-dropdown-menu class="w-full sm:w-[200px]">
-                    <z-button zType="outline" zSize="sm" class="w-full sm:w-[200px] justify-between" dropdown-trigger>
-                      <span class="truncate">{{ selectedExpenseTypesDisplay() || 'Select expense types...' }}</span>
-                      <z-icon zType="chevron-down" zSize="sm" class="opacity-50 flex-shrink-0" />
-                    </z-button>
-                    <z-dropdown-menu-content>
+                  <div class="w-full sm:w-[200px]">
+                    <z-select
+                      [zValue]="selectedExpenseTypes().length > 0 ? selectedExpenseTypes()[0].toString() : ''"
+                      [zLabel]="selectedExpenseTypesDisplay() || 'Select expense types...'"
+                      [zPlaceholder]="'Select expense types...'"
+                      [zSize]="'sm'"
+                      class="w-full"
+                      (zSelectionChange)="onExpenseSelectChange($event)"
+                    >
                       @for (option of expenseTypeOptions; track option.value) {
-                        <z-dropdown-menu-item (click)="$event.preventDefault(); $event.stopPropagation(); toggleExpenseType(option.value)">
+                        <z-select-item [zValue]="option.value.toString()" [class]="'cursor-default'" (click)="$event.preventDefault(); $event.stopPropagation(); toggleExpenseType(option.value)">
                           <div class="flex items-center gap-2 w-full pointer-events-none">
                             <z-checkbox
                               [ngModel]="selectedExpenseTypes().includes(option.value)"
                               (checkChange)="toggleExpenseType(option.value)"
-                              (click)="$event.stopPropagation()"
+                              (click)="$event.preventDefault(); $event.stopPropagation()"
                               class="pointer-events-auto"
                             />
-                            <span>{{ option.label }}</span>
+                            <span class="flex-1">{{ option.label }}</span>
                           </div>
-                        </z-dropdown-menu-item>
+                        </z-select-item>
                       }
-                    </z-dropdown-menu-content>
-                  </z-dropdown-menu>
+                    </z-select>
+                  </div>
                 }
               </div>
             </div>

@@ -179,8 +179,8 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
         cellTemplate: propertyCell || undefined,
       },
       {
-        key: 'contact',
-        label: 'Contact',
+        key: 'From/To',
+        label: 'From/To',
         cellTemplate: contactCell || undefined,
       },
       {
@@ -226,12 +226,25 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
   });
 
   ngOnInit(): void {
+    // Debug: Log revenue and expense type options
+    console.log('Revenue Type Options:', this.revenueTypeOptions);
+    console.log('Revenue Type Options Length:', this.revenueTypeOptions.length);
+    console.log('Expense Type Options:', this.expenseTypeOptions);
+    console.log('Expense Type Options Length:', this.expenseTypeOptions.length);
+    console.log('Selected Type:', this.selectedType());
+    
     this.loadTransactions();
     this.loadProperties();
     this.loadContacts();
   }
 
   ngAfterViewInit(): void {
+    // Debug: Log after view init
+    console.log('[ngAfterViewInit] Revenue Type Options:', this.revenueTypeOptions);
+    console.log('[ngAfterViewInit] Expense Type Options:', this.expenseTypeOptions);
+    console.log('[ngAfterViewInit] RevenueType enum:', RevenueType);
+    console.log('[ngAfterViewInit] ExpenseType enum:', ExpenseType);
+    
     // Trigger change detection after view init to ensure templates are available
     this.cdr.markForCheck();
   }
@@ -359,6 +372,12 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
   }
 
   onTypeChange(type: TransactionType | null): void {
+    console.log('[onTypeChange]', {
+      newType: type,
+      currentType: this.selectedType(),
+      revenueOptions: this.revenueTypeOptions,
+      expenseOptions: this.expenseTypeOptions,
+    });
     this.selectedType.set(type);
     // Clear transaction type selections when changing main type
     if (type === null) {
@@ -366,8 +385,10 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
       this.selectedExpenseTypes.set([]);
     } else if (type === TransactionType.Revenue) {
       this.selectedExpenseTypes.set([]);
+      console.log('[onTypeChange] Revenue selected, revenue options:', this.revenueTypeOptions);
     } else if (type === TransactionType.Expense) {
       this.selectedRevenueTypes.set([]);
+      console.log('[onTypeChange] Expense selected, expense options:', this.expenseTypeOptions);
     }
     this.currentPage.set(1);
     this.loadTransactions();
@@ -393,6 +414,18 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
     }
     this.currentPage.set(1);
     this.loadTransactions();
+  }
+
+  onRevenueSelectChange(value: string): void {
+    // Prevent the select from changing its value when clicking on items
+    // The actual selection is handled by toggleRevenueType via checkbox
+    // This is just to prevent the select from closing/changing
+  }
+
+  onExpenseSelectChange(value: string): void {
+    // Prevent the select from changing its value when clicking on items
+    // The actual selection is handled by toggleExpenseType via checkbox
+    // This is just to prevent the select from closing/changing
   }
 
   onPageChange(page: number): void {
@@ -421,19 +454,13 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
 
   getTransactionTypeLabel(transaction: Transaction): string | null {
     if (transaction.type === TransactionType.Revenue) {
-      if (transaction.revenueType === RevenueType.Loyer) {
-        return 'Location';
-      }
-      if (transaction.revenueType === RevenueType.Maintenance) {
-        return 'Maintenance';
-      }
-    } else {
-      if (transaction.expenseType === ExpenseType.Loyer) {
-        return 'Location';
-      }
-      if (transaction.expenseType === ExpenseType.Maintenance) {
-        return 'Maintenance';
-      }
+      const revenueType = transaction.revenueType;
+      const option = this.revenueTypeOptions.find(opt => opt.value === revenueType);
+      return option?.label || null;
+    } else if (transaction.type === TransactionType.Expense) {
+      const expenseType = transaction.expenseType;
+      const option = this.expenseTypeOptions.find(opt => opt.value === expenseType);
+      return option?.label || null;
     }
     return null;
   }
@@ -545,10 +572,11 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
     // Revenue = green, Expense = red
     // Light mode: very visible colors with opacity, Dark mode: subtle colors
     // Keep same color on hover (override any default hover styles)
+    // Use !important to override table's default hover:bg-muted/50
     if (transaction.type === TransactionType.Revenue) {
-      return 'bg-green-500/30 dark:bg-green-950/20 hover:bg-green-500/30 dark:hover:bg-green-950/20';
+      return '!bg-green-500/30 dark:!bg-green-950/20 hover:!bg-green-500/30 dark:hover:!bg-green-950/20';
     } else {
-      return 'bg-red-500/30 dark:bg-red-950/20 hover:bg-red-500/30 dark:hover:bg-red-950/20';
+      return '!bg-red-500/30 dark:!bg-red-950/20 hover:!bg-red-500/30 dark:hover:!bg-red-950/20';
     }
   }
 

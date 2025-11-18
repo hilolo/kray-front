@@ -2,6 +2,7 @@ import { Overlay, OverlayModule, OverlayPositionBuilder, OverlayRef } from '@ang
 import { TemplatePortal } from '@angular/cdk/portal';
 import {
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   computed,
   ElementRef,
@@ -54,6 +55,7 @@ export class ZardDropdownMenuComponent implements OnInit, OnDestroy {
   private overlayPositionBuilder = inject(OverlayPositionBuilder);
   private viewContainerRef = inject(ViewContainerRef);
   private platformId = inject(PLATFORM_ID);
+  private cdr = inject(ChangeDetectorRef);
 
   readonly dropdownTemplate = viewChild.required<TemplateRef<unknown>>('dropdownTemplate');
 
@@ -143,9 +145,14 @@ export class ZardDropdownMenuComponent implements OnInit, OnDestroy {
     this.isOpen.set(true);
     this.openChange.emit(true);
 
+    // Trigger change detection to ensure @for loops are evaluated
+    this.cdr.detectChanges();
+
     setTimeout(() => {
       this.focusDropdown();
       this.focusFirstItem(this.getDropdownItems());
+      // Trigger change detection again after a short delay to ensure content is rendered
+      this.cdr.detectChanges();
     }, 0);
   }
 
