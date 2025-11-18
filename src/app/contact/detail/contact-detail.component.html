@@ -129,8 +129,8 @@
                         [zImageHoverPreview]="getFileViewerType(attachment.url) === 'image' ? attachment.url : null"
                         [zAlt]="attachment.fileName || attachment.originalFileName"
                         [zPosition]="'right'"
-                        [zMaxWidth]="'800px'"
-                        [zMaxHeight]="'800px'"
+                        [zMaxWidth]="'500px'"
+                        [zMaxHeight]="'500px'"
                       >
                         <div class="flex-shrink-0 w-10 h-10 rounded bg-primary/10 flex items-center justify-center">
                           <z-icon 
@@ -249,6 +249,8 @@
                                   [src]="reservation.propertyImageUrl"
                                   [alt]="reservation.propertyName"
                                   [zImageHoverPreview]="reservation.propertyImageUrl"
+                                  [zMaxWidth]="'700px'"
+                                  [zMaxHeight]="'700px'"
                                   class="w-16 h-16 rounded-md object-cover border border-border flex-shrink-0"
                                 />
                               } @else {

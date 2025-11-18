@@ -55,8 +55,8 @@ export class ZardImageHoverPreviewDirective implements OnInit, OnDestroy {
   
   readonly zImageHoverPreview = input<string | null>(null);
   readonly zPosition = input<ZardTooltipPositions>('right');
-  readonly zMaxWidth = input<string>('800px');
-  readonly zMaxHeight = input<string>('800px');
+  readonly zMaxWidth = input<string>('500px');
+  readonly zMaxHeight = input<string>('500px');
   readonly zAlt = input<string>('');
 
   get nativeElement() {
@@ -190,6 +190,10 @@ export class ZardImageHoverPreviewDirective implements OnInit, OnDestroy {
 
   private setupTriggers() {
     this.renderer.listen(this.elementRef.nativeElement, 'mouseenter', (event: MouseEvent) => {
+      // Don't show preview if hovering over a button or interactive element
+      if (this.isInteractiveElement(event.target as HTMLElement)) {
+        return;
+      }
       event.preventDefault();
       this.isMouseOver = true;
       this.show(event);
@@ -200,6 +204,46 @@ export class ZardImageHoverPreviewDirective implements OnInit, OnDestroy {
       this.isMouseOver = false;
       this.hide();
     });
+  }
+
+  private isInteractiveElement(element: HTMLElement | null): boolean {
+    if (!element) return false;
+    
+    // Check if the element or any parent is a button, link, or other interactive element
+    let current: HTMLElement | null = element;
+    while (current && current !== this.elementRef.nativeElement) {
+      const tagName = current.tagName.toLowerCase();
+      const role = current.getAttribute('role');
+      
+      // Check for button elements (native buttons, z-button components, or elements with button role)
+      if (
+        tagName === 'button' ||
+        tagName === 'z-button' ||
+        role === 'button' ||
+        current.closest('button') !== null ||
+        current.closest('z-button') !== null ||
+        current.closest('[role="button"]') !== null ||
+        current.hasAttribute('zbutton') ||
+        current.classList.contains('z-button') ||
+        current.closest('.z-button') !== null
+      ) {
+        return true;
+      }
+      
+      // Check for links
+      if (tagName === 'a' && current.hasAttribute('href')) {
+        return true;
+      }
+      
+      // Check for input elements
+      if (tagName === 'input' || tagName === 'select' || tagName === 'textarea') {
+        return true;
+      }
+      
+      current = current.parentElement;
+    }
+    
+    return false;
   }
 
   private createOverlay() {
@@ -303,8 +347,8 @@ export class ZardImageHoverPreviewComponent implements OnInit, OnDestroy {
 
   protected position = signal<ZardTooltipPositions>('right');
   protected imageUrl = signal<string>('');
-  protected maxWidth = signal<string>('800px');
-  protected maxHeight = signal<string>('800px');
+  protected maxWidth = signal<string>('500px');
+  protected maxHeight = signal<string>('500px');
   protected alt = signal<string>('');
   protected isLoading = signal(false);
   protected hasError = signal(false);

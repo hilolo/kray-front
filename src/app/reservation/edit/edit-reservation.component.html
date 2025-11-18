@@ -82,8 +82,8 @@
                             [zImageHoverPreview]="property()!.defaultAttachmentUrl"
                             [zAlt]="getPropertyDisplayName(property())"
                             [zPosition]="'right'"
-                            [zMaxWidth]="'800px'"
-                            [zMaxHeight]="'800px'"
+                            [zMaxWidth]="'700px'"
+                            [zMaxHeight]="'700px'"
                           />
                         } @else {
                           <div class="w-16 h-16 rounded-md border border-border bg-muted flex items-center justify-center">
@@ -136,8 +136,8 @@
                             [zImageHoverPreview]="contact()!.avatar"
                             [zAlt]="getContactDisplayName(contact())"
                             [zPosition]="'right'"
-                            [zMaxWidth]="'800px'"
-                            [zMaxHeight]="'800px'"
+                            [zMaxWidth]="'500px'"
+                            [zMaxHeight]="'500px'"
                           />
                         } @else {
                           <div class="w-16 h-16 rounded-full border border-border bg-muted flex items-center justify-center">
@@ -448,8 +448,8 @@
                           [zImageHoverPreview]="getFileViewerType(attachment.url) === 'image' ? attachment.url : null"
                           [zAlt]="attachment.fileName"
                           [zPosition]="'right'"
-                          [zMaxWidth]="'800px'"
-                          [zMaxHeight]="'800px'"
+                          [zMaxWidth]="'500px'"
+                          [zMaxHeight]="'500px'"
                         >
                           <div class="flex-shrink-0 w-10 h-10 rounded bg-primary/10 flex items-center justify-center">
                             <z-icon [zType]="getFileViewerType(attachment.url) === 'image' ? 'image' : 'file'" class="text-primary" zSize="sm" />
