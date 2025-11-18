@@ -158,6 +158,16 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
   readonly isLoadingContacts = signal(false);
   readonly contactComboboxRef = viewChild<ZardComboboxComponent>('contactCombobox');
 
+  // Status filter
+  readonly selectedStatus = signal<TransactionStatus | null>(null);
+  
+  // Status options
+  readonly statusOptions = [
+    { value: TransactionStatus.Pending, label: 'Pending' },
+    { value: TransactionStatus.Overdue, label: 'Overdue' },
+    { value: TransactionStatus.Paid, label: 'Paid' },
+  ];
+
   // Search icon template
   readonly searchIconTemplate = viewChild<TemplateRef<void>>('searchIconTemplate');
   readonly searchIconTemplateRef = computed(() => this.searchIconTemplate() ?? undefined);
@@ -168,6 +178,7 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
            this.selectedExpenseTypes().length > 0 ||
            this.selectedPropertyId() !== null ||
            this.selectedContactId() !== null ||
+           this.selectedStatus() !== null ||
            (this.searchQuery() && this.searchQuery().trim().length >= 3);
   });
 
@@ -325,6 +336,7 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
       expenseTypes: this.selectedExpenseTypes().length > 0 ? this.selectedExpenseTypes() : undefined,
       propertyId: this.selectedPropertyId() || undefined,
       contactId: this.selectedContactId() || undefined,
+      status: this.selectedStatus() !== null ? this.selectedStatus()! : undefined,
       searchQuery: searchQuery,
     };
 
@@ -453,6 +465,17 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
     this.loadTransactions();
   }
 
+  onStatusFilterChange(statusValue: string): void {
+    if (statusValue === '') {
+      this.selectedStatus.set(null);
+    } else {
+      const status = parseInt(statusValue) as TransactionStatus;
+      this.selectedStatus.set(status);
+    }
+    this.currentPage.set(1);
+    this.loadTransactions();
+  }
+
 
   onTypeChange(type: TransactionType): void {
     console.log('[onTypeChange]', {
@@ -465,14 +488,26 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
     // Save selected type to localStorage
     this.preferencesService.setPreference(this.getRouteKey(), 'selectedType', type);
     
-    // Clear transaction type selections when changing main type
-    if (type === TransactionType.Revenue) {
-      this.selectedExpenseTypes.set([]);
-      console.log('[onTypeChange] Revenue selected, revenue options:', this.revenueTypeOptions);
-    } else if (type === TransactionType.Expense) {
-      this.selectedRevenueTypes.set([]);
-      console.log('[onTypeChange] Expense selected, expense options:', this.expenseTypeOptions);
-    }
+    // Reset all filters when changing between Revenue and Expense
+    this.selectedRevenueTypes.set([]);
+    this.selectedExpenseTypes.set([]);
+    this.selectedPropertyId.set(null);
+    this.selectedContactId.set(null);
+    this.selectedStatus.set(null);
+    this.searchQuery.set('');
+    
+    // Clear combobox internal values using ControlValueAccessor
+    setTimeout(() => {
+      const propertyCombobox = this.propertyComboboxRef();
+      if (propertyCombobox) {
+        (propertyCombobox as any).writeValue(null);
+      }
+      const contactCombobox = this.contactComboboxRef();
+      if (contactCombobox) {
+        (contactCombobox as any).writeValue(null);
+      }
+    }, 0);
+    
     this.currentPage.set(1);
     // Save current page to localStorage
     this.preferencesService.setPreference(this.getRouteKey(), 'currentPage', 1);
@@ -690,6 +725,7 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
     this.selectedExpenseTypes.set([]);
     this.selectedPropertyId.set(null);
     this.selectedContactId.set(null);
+    this.selectedStatus.set(null);
     this.searchQuery.set('');
     
     // Clear combobox internal values using ControlValueAccessor

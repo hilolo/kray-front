@@ -129,6 +129,38 @@
                 />
               </div>
               
+              <!-- Status filter -->
+              <div class="w-full sm:w-[200px]">
+                <z-select
+                  [zValue]="selectedStatus() !== null ? selectedStatus()!.toString() : ''"
+                  [zLabel]="selectedStatus() !== null ? getStatusLabel(selectedStatus()!) : 'Select status...'"
+                  [zPlaceholder]="'Select status...'"
+                  [zSize]="'default'"
+                  class="w-full"
+                  (zSelectionChange)="onStatusFilterChange($event)"
+                >
+                  @if (selectedStatus() !== null) {
+                    <z-icon 
+                      slot="selected-icon" 
+                      [zType]="getStatusIcon(selectedStatus()!)" 
+                      zSize="sm" 
+                      [class]="getStatusIconColorClass(selectedStatus()!)" 
+                    />
+                  }
+                  <z-select-item [zValue]="''">
+                    <span>All Statuses</span>
+                  </z-select-item>
+                  @for (option of statusOptions; track option.value) {
+                    <z-select-item [zValue]="option.value.toString()">
+                      <div class="flex items-center gap-2">
+                        <z-icon [zType]="getStatusIcon(option.value)" zSize="sm" [class]="getStatusIconColorClass(option.value)" />
+                        <span>{{ option.label }}</span>
+                      </div>
+                    </z-select-item>
+                  }
+                </z-select>
+              </div>
+              
               <!-- Revenue Types Multi-Select -->
               @if (selectedType() === TransactionType.Revenue) {
                 <div class="w-full sm:w-[200px]">

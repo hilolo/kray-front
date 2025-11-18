@@ -1,4 +1,4 @@
-import { TransactionType, RevenueType, ExpenseType } from './transaction.model';
+import { TransactionType, RevenueType, ExpenseType, TransactionStatus } from './transaction.model';
 
 /**
  * Transaction list request filter
@@ -15,5 +15,6 @@ export interface TransactionListRequest {
   propertyId?: string;
   leaseId?: string;
   contactId?: string;
+  status?: TransactionStatus; // Filter by status
 }
 
