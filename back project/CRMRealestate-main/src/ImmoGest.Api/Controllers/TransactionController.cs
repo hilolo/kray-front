@@ -61,6 +61,8 @@ namespace ImmoGest.Api.Controllers
         public async Task<ActionResult<Result<TransactionDto>>> UpdateTransaction(Guid id, [FromBody] UpdateTransactionDto dto)
         {
             dto.Id = id;
+            Console.WriteLine($"[Backend Controller] UpdateTransaction called - Id: {id}");
+            Console.WriteLine($"[Backend Controller] DTO - Category: {dto.Category}, RevenueType: {dto.RevenueType}, ExpenseType: {dto.ExpenseType}, Date: {dto.Date}");
             return ActionResultFor(await _transactionService.UpdateAsync<TransactionDto, UpdateTransactionDto>(id, dto));
         }
 

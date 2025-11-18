@@ -124,6 +124,10 @@ namespace ImmoGest.Application.Services
         {
             if (updateModel is UpdateTransactionDto dto)
             {
+                Console.WriteLine($"[Backend Service] InUpdate_BeforUpdateAsync - Before mapping");
+                Console.WriteLine($"[Backend Service] DTO - Category: {dto.Category}, RevenueType: {dto.RevenueType}, ExpenseType: {dto.ExpenseType}, Date: {dto.Date}");
+                Console.WriteLine($"[Backend Service] Entity BEFORE - Category: {entity.Category}, RevenueType: {entity.RevenueType}, ExpenseType: {entity.ExpenseType}, Date: {entity.Date}");
+
                 // Store DTO for after update processing
                 _currentUpdateTransactionDto = dto;
 
@@ -144,6 +148,12 @@ namespace ImmoGest.Application.Services
             }
 
             await base.InUpdate_BeforUpdateAsync(entity, updateModel);
+            
+            if (updateModel is UpdateTransactionDto dtoAfter)
+            {
+                Console.WriteLine($"[Backend Service] InUpdate_BeforUpdateAsync - After mapping");
+                Console.WriteLine($"[Backend Service] Entity AFTER - Category: {entity.Category}, RevenueType: {entity.RevenueType}, ExpenseType: {entity.ExpenseType}, Date: {entity.Date}");
+            }
         }
 
         protected override async Task InUpdate_AfterUpdateAsync<TUpdateModel>(Transaction entity, TUpdateModel updateModel)
@@ -295,7 +305,7 @@ namespace ImmoGest.Application.Services
                     ExpenseType = entity.ExpenseType,
                     Status = entity.Status,
                     Date = entity.Date,
-                    CreatedAt = entity.CreatedOn.DateTime, // Map CreatedOn to CreatedAt for frontend compatibility
+                    CreatedAt = entity.Date, // Use Date field for CreatedAt in list view (transaction date, not creation date)
                     ContactName = entity.Contact != null
                         ? (entity.Contact.IsACompany ? entity.Contact.CompanyName : $"{entity.Contact.FirstName} {entity.Contact.LastName}".Trim())
                         : "",

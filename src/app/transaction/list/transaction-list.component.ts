@@ -8,7 +8,7 @@ import type { ZardIcon } from '@shared/components/icon/icons';
 import { ZardDatatableComponent, DatatableColumn } from '@shared/components/datatable/datatable.component';
 import { ZardDropdownMenuComponent } from '@shared/components/dropdown/dropdown.component';
 import { ZardDropdownMenuItemComponent } from '@shared/components/dropdown/dropdown-item.component';
-import { ZardDropdownMenuContentComponent } from '@shared/components/dropdown/dropdown-menu-content.component';
+import { ZardDividerComponent } from '@shared/components/divider/divider.component';
 import { ZardDatatablePaginationComponent } from '@shared/components/datatable/datatable-pagination.component';
 import { ZardSelectComponent } from '@shared/components/select/select.component';
 import { ZardSelectItemComponent } from '@shared/components/select/select-item.component';
@@ -41,7 +41,7 @@ import type { Property } from '@shared/models/property/property.model';
     ZardDatatableComponent,
     ZardDropdownMenuComponent,
     ZardDropdownMenuItemComponent,
-    ZardDropdownMenuContentComponent,
+    ZardDividerComponent,
     ZardDatatablePaginationComponent,
     ZardSelectComponent,
     ZardSelectItemComponent,
@@ -417,9 +417,9 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
 
   onEdit(transaction: Transaction): void {
     if (transaction.type === TransactionType.Revenue) {
-      this.router.navigate(['/transaction/add/revenue'], { queryParams: { id: transaction.id } });
+      this.router.navigate(['/transaction/revenue', transaction.id, 'edit']);
     } else {
-      this.router.navigate(['/transaction/add/expense'], { queryParams: { id: transaction.id } });
+      this.router.navigate(['/transaction/expense', transaction.id, 'edit']);
     }
   }
 

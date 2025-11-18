@@ -170,7 +170,7 @@
       >
         <!-- Date Column Template -->
         <ng-template #dateCell let-row="row">
-          <span>{{ formatDate(row.createdAt) }}</span>
+          <span>{{ formatDate(row.date) }}</span>
         </ng-template>
 
         <!-- Property Column Template -->
@@ -251,16 +251,19 @@
             <z-button zType="ghost" zSize="icon" class="h-8 w-8" dropdown-trigger>
               <z-icon zType="ellipsis" zSize="sm" />
             </z-button>
-            <z-dropdown-menu-content>
-              <z-dropdown-menu-item (click)="onView(row)">
-                <z-icon zType="eye" zSize="sm" class="mr-2" />
-                <span>View</span>
-              </z-dropdown-menu-item>
-              <z-dropdown-menu-item (click)="onEdit(row)">
-                <z-icon zType="pencil" zSize="sm" class="mr-2" />
-                <span>Edit</span>
-              </z-dropdown-menu-item>
-            </z-dropdown-menu-content>
+            <z-dropdown-menu-item (click)="onView(row)">
+              <z-icon zType="eye" zSize="sm" class="mr-2" />
+              <span>View</span>
+            </z-dropdown-menu-item>
+            <z-dropdown-menu-item (click)="onEdit(row)">
+              <z-icon zType="pencil" zSize="sm" class="mr-2" />
+              <span>Edit</span>
+            </z-dropdown-menu-item>
+            <z-divider class="my-1" />
+            <z-dropdown-menu-item (click)="onDelete(row)" class="text-destructive focus:text-destructive">
+              <z-icon zType="x" zSize="sm" class="mr-2" />
+              <span>Delete</span>
+            </z-dropdown-menu-item>
           </z-dropdown-menu>
         </ng-template>
       </z-datatable>

@@ -70,7 +70,8 @@ export interface Transaction {
   totalAmount: number;
   description: string;
   companyId: string;
-  createdAt: string;
+  date: string; // Transaction date (separate from createdAt)
+  createdAt: string; // Record creation timestamp
   updatedAt: string | null;
 }
 

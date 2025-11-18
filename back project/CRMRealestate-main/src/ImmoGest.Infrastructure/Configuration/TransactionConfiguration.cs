@@ -1,4 +1,5 @@
 using ImmoGest.Domain.Entities;
+using ImmoGest.Domain.Entities.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
@@ -16,20 +17,55 @@ namespace ImmoGest.Infrastructure.Configuration
 
             builder.HasKey(t => t.Id);
 
+            // Configure Category enum as string
+            var categoryConverter = new ValueConverter<TransactionCategory, string>(
+                v => v.ToString(),
+                v => Enum.Parse<TransactionCategory>(v)
+            );
             builder.Property(t => t.Category)
-                .IsRequired();
+                .IsRequired()
+                .HasMaxLength(50)
+                .HasConversion(categoryConverter);
 
+            // Configure RevenueType enum as string
+            var revenueTypeConverter = new ValueConverter<RevenueType?, string>(
+                v => v.HasValue ? v.Value.ToString() : null,
+                v => string.IsNullOrEmpty(v) ? (RevenueType?)null : Enum.Parse<RevenueType>(v)
+            );
             builder.Property(t => t.RevenueType)
-                .IsRequired(false);
+                .IsRequired(false)
+                .HasMaxLength(50)
+                .HasConversion(revenueTypeConverter);
 
+            // Configure ExpenseType enum as string
+            var expenseTypeConverter = new ValueConverter<ExpenseType?, string>(
+                v => v.HasValue ? v.Value.ToString() : null,
+                v => string.IsNullOrEmpty(v) ? (ExpenseType?)null : Enum.Parse<ExpenseType>(v)
+            );
             builder.Property(t => t.ExpenseType)
-                .IsRequired(false);
+                .IsRequired(false)
+                .HasMaxLength(50)
+                .HasConversion(expenseTypeConverter);
 
+            // Configure TransactionType enum as string
+            var transactionTypeConverter = new ValueConverter<TransactionType, string>(
+                v => v.ToString(),
+                v => Enum.Parse<TransactionType>(v)
+            );
             builder.Property(t => t.TransactionType)
-                .IsRequired();
+                .IsRequired()
+                .HasMaxLength(50)
+                .HasConversion(transactionTypeConverter);
 
+            // Configure Status enum as string
+            var statusConverter = new ValueConverter<TransactionStatus, string>(
+                v => v.ToString(),
+                v => Enum.Parse<TransactionStatus>(v)
+            );
             builder.Property(t => t.Status)
-                .IsRequired();
+                .IsRequired()
+                .HasMaxLength(50)
+                .HasConversion(statusConverter);
 
             builder.Property(t => t.Date)
                 .IsRequired();

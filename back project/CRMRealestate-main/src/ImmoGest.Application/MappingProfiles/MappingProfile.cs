@@ -9,6 +9,7 @@ using ImmoGest.Application.DTOs.User;
 using ImmoGest.Application.Services;
 using ImmoGest.Domain.Auth;
 using ImmoGest.Domain.Entities;
+using ImmoGest.Domain.Entities.Enums;
 using ResultNet;
 
 namespace ImmoGest.Application.MappingProfiles
@@ -555,6 +556,25 @@ namespace ImmoGest.Application.MappingProfiles
                 .ForMember(dest => dest.CreatedOn, opt => opt.Ignore())
                 .ForMember(dest => dest.LastModifiedOn, opt => opt.Ignore())
                 .ForMember(dest => dest.SearchTerms, opt => opt.Ignore())
+                .ForMember(dest => dest.Category, opt => opt.MapFrom((src, dest) => src.Category.HasValue ? src.Category.Value : dest.Category))
+                .ForMember(dest => dest.RevenueType, opt => opt.MapFrom((src, dest) => src.RevenueType.HasValue ? src.RevenueType.Value : dest.RevenueType))
+                .ForMember(dest => dest.ExpenseType, opt => opt.MapFrom((src, dest) => src.ExpenseType.HasValue ? src.ExpenseType.Value : dest.ExpenseType))
+                .ForMember(dest => dest.Date, opt => opt.MapFrom((src, dest) => src.Date.HasValue ? src.Date.Value : dest.Date))
+                .AfterMap((src, dest) =>
+                {
+                    // Clear opposite type when Category is set
+                    if (src.Category.HasValue)
+                    {
+                        if (src.Category.Value == TransactionCategory.Revenue)
+                        {
+                            dest.ExpenseType = null;
+                        }
+                        else if (src.Category.Value == TransactionCategory.Expense)
+                        {
+                            dest.RevenueType = null;
+                        }
+                    }
+                })
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) =>
                 {
                     var propertyName = opts.DestinationMember.Name;
@@ -569,6 +589,10 @@ namespace ImmoGest.Application.MappingProfiles
                     // For other nullable Guid properties, allow null
                     if (propertyName == "LeaseId" || propertyName == "ContactId")
                         return true; // Always map, including null
+
+                    // Skip mapping for fields that are explicitly mapped above
+                    if (propertyName == "Category" || propertyName == "RevenueType" || propertyName == "ExpenseType" || propertyName == "Date")
+                        return false; // These are handled by explicit MapFrom above
 
                     // Skip null values for other properties (partial update)
                     return srcMember != null;

@@ -16,5 +16,13 @@ export const transactionRoutes: Routes = [
     path: 'add/expense',
     component: AddExpenseComponent,
   },
+  {
+    path: 'revenue/:id/edit',
+    component: AddRevenueComponent,
+  },
+  {
+    path: 'expense/:id/edit',
+    component: AddExpenseComponent,
+  },
 ];
 

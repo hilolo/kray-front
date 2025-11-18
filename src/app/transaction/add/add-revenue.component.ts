@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, ElementRef, inject, OnDestroy, OnInit, signal, viewChild } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil, forkJoin } from 'rxjs';
@@ -23,8 +23,9 @@ import { LeaseService } from '@shared/services/lease.service';
 import { ContactService } from '@shared/services/contact.service';
 import { ToastService } from '@shared/services/toast.service';
 import { UserService } from '@shared/services/user.service';
-import { TransactionType, RevenueType, Payment } from '@shared/models/transaction/transaction.model';
+import { TransactionType, RevenueType, Payment, type Transaction } from '@shared/models/transaction/transaction.model';
 import { CreateTransactionRequest } from '@shared/models/transaction/create-transaction-request.model';
+import { UpdateTransactionRequest } from '@shared/models/transaction/update-transaction-request.model';
 import type { Property } from '@shared/models/property/property.model';
 import { PropertyCategory } from '@shared/models/property/property.model';
 import type { Lease } from '@shared/models/lease/lease.model';
@@ -63,6 +64,7 @@ interface UploadedFile {
 })
 export class AddRevenueComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly transactionService = inject(TransactionService);
   private readonly propertyService = inject(PropertyService);
   private readonly leaseService = inject(LeaseService);
@@ -74,6 +76,11 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
 
   readonly TransactionType = TransactionType;
   readonly RevenueType = RevenueType;
+
+  // Edit mode
+  readonly transactionId = signal<string | null>(null);
+  readonly isEditMode = computed(() => this.transactionId() !== null);
+  readonly isLoading = signal(false);
 
   // Form data
   readonly payments = signal<Payment[]>([
@@ -174,10 +181,17 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
-    requestAnimationFrame(() => {
-      this.loadProperties();
-      this.loadContacts();
-    });
+    // Check if we're in edit mode
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) {
+      this.transactionId.set(id);
+      this.loadTransaction(id);
+    } else {
+      requestAnimationFrame(() => {
+        this.loadProperties();
+        this.loadContacts();
+      });
+    }
   }
 
   ngOnDestroy(): void {
@@ -342,6 +356,113 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
+  loadTransaction(id: string): void {
+    this.isLoading.set(true);
+    this.transactionService.getById(id).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (transaction: Transaction) => {
+        // Populate form data
+        this.formData.set({
+          propertyId: transaction.propertyId || '',
+          leaseId: transaction.leaseId || '',
+          revenueType: transaction.revenueType || RevenueType.Loyer,
+          contactId: transaction.contactId || '',
+          date: transaction.date ? new Date(transaction.date) : new Date(),
+          description: transaction.description || '',
+        });
+
+        // Populate payments
+        if (transaction.payments && transaction.payments.length > 0) {
+          this.payments.set(transaction.payments);
+        }
+
+        // Load properties and contacts first, then set selected values
+        const contactTypes = [ContactType.Owner, ContactType.Tenant, ContactType.Service];
+        const contactRequests = contactTypes.map(type => 
+          this.contactService.list({
+            currentPage: 1,
+            pageSize: 1000,
+            ignore: true,
+            type: type,
+          }).pipe(takeUntil(this.destroy$))
+        );
+
+        forkJoin({
+          properties: this.propertyService.list({
+            currentPage: 1,
+            pageSize: 1000,
+            ignore: true,
+            companyId: this.userService.getCurrentUser()?.companyId,
+            isArchived: false,
+          }),
+          contacts: forkJoin(contactRequests),
+        }).pipe(takeUntil(this.destroy$)).subscribe({
+          next: ({ properties, contacts }) => {
+            // Set properties
+            this.properties.set(properties.result);
+            const propertyOptions: ZardComboboxOption[] = properties.result.map((property) => {
+              const parts: string[] = [];
+              if (property.identifier) parts.push(property.identifier);
+              if (property.name) parts.push(property.name);
+              if (property.address) parts.push(property.address);
+              return {
+                value: property.id,
+                label: parts.join(' - '),
+              };
+            });
+            this.propertyOptions.set(propertyOptions);
+
+            // Set selected property
+            if (transaction.propertyId) {
+              const property = properties.result.find(p => p.id === transaction.propertyId);
+              this.selectedProperty.set(property || null);
+              if (property) {
+                this.loadLeases();
+              }
+            }
+
+            // Combine all contacts from all types
+            const allContacts: Contact[] = [];
+            contacts.forEach(response => {
+              allContacts.push(...response.result);
+            });
+            this.contacts.set(allContacts);
+            const contactOptions: ZardComboboxOption[] = allContacts.map((contact) => {
+              let name = '';
+              if (contact.isACompany) {
+                name = contact.companyName || '';
+              } else {
+                name = `${contact.firstName || ''} ${contact.lastName || ''}`.trim();
+              }
+              const parts: string[] = [];
+              if (name) parts.push(name);
+              if (contact.identifier) parts.push(contact.identifier);
+              return {
+                value: contact.id,
+                label: parts.join(' - '),
+              };
+            });
+            this.contactOptions.set(contactOptions);
+
+            this.isLoading.set(false);
+            this.cdr.markForCheck();
+          },
+          error: (error) => {
+            console.error('Error loading properties/contacts:', error);
+            this.isLoading.set(false);
+            this.cdr.markForCheck();
+          },
+        });
+      },
+      error: (error) => {
+        console.error('Error loading transaction:', error);
+        this.toastService.error('Failed to load transaction');
+        this.isLoading.set(false);
+        this.router.navigate(['/transaction']);
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
   updateRevenueType(value: string): void {
     this.formData.update(data => ({ ...data, revenueType: parseInt(value) as RevenueType }));
     this.cdr.markForCheck();
@@ -418,31 +539,71 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
         );
       }
 
-      const request: CreateTransactionRequest = {
-        category: TransactionType.Revenue, // Maps to TransactionCategory.Revenue (0) in backend
-        revenueType: data.revenueType,
-        propertyId: data.propertyId && data.propertyId.trim() !== '' ? data.propertyId : null,
-        leaseId: data.leaseId && data.leaseId.trim() !== '' ? data.leaseId : null,
-        contactId: data.contactId,
-        date: data.date,
-        payments: this.payments(),
-        description: data.description,
-        attachments: attachments,
-      };
+      const transactionId = this.transactionId();
+      
+      if (transactionId) {
+        // Update existing transaction
+        const updateRequest: UpdateTransactionRequest = {
+          category: TransactionType.Revenue, // Ensure category is set to Revenue
+          revenueType: data.revenueType,
+          leaseId: data.leaseId && data.leaseId.trim() !== '' ? data.leaseId : null,
+          contactId: data.contactId,
+          date: data.date,
+          payments: this.payments(),
+          description: data.description,
+        };
 
-      this.transactionService.create(request).pipe(takeUntil(this.destroy$)).subscribe({
-        next: () => {
-          this.toastService.success('Revenue transaction created successfully');
-          this.router.navigate(['/transaction']);
-          this.isSaving.set(false);
-        },
-        error: (error) => {
-          console.error('Error creating transaction:', error);
-          this.toastService.error('Failed to create transaction');
-          this.isSaving.set(false);
-          this.cdr.markForCheck();
-        },
-      });
+        console.log('[Frontend] Update Request:', {
+          transactionId,
+          updateRequest: JSON.stringify(updateRequest, null, 2),
+          revenueType: updateRequest.revenueType,
+          category: updateRequest.category,
+          date: updateRequest.date,
+          dateType: typeof updateRequest.date,
+        });
+
+        this.transactionService.update(transactionId, updateRequest).pipe(takeUntil(this.destroy$)).subscribe({
+          next: (response) => {
+            console.log('[Frontend] Update Response:', response);
+            this.toastService.success('Revenue transaction updated successfully');
+            this.router.navigate(['/transaction']);
+            this.isSaving.set(false);
+          },
+          error: (error) => {
+            console.error('[Frontend] Error updating transaction:', error);
+            this.toastService.error('Failed to update transaction');
+            this.isSaving.set(false);
+            this.cdr.markForCheck();
+          },
+        });
+      } else {
+        // Create new transaction
+        const createRequest: CreateTransactionRequest = {
+          category: TransactionType.Revenue, // Maps to TransactionCategory.Revenue (0) in backend
+          revenueType: data.revenueType,
+          propertyId: data.propertyId && data.propertyId.trim() !== '' ? data.propertyId : null,
+          leaseId: data.leaseId && data.leaseId.trim() !== '' ? data.leaseId : null,
+          contactId: data.contactId,
+          date: data.date,
+          payments: this.payments(),
+          description: data.description,
+          attachments: attachments,
+        };
+
+        this.transactionService.create(createRequest).pipe(takeUntil(this.destroy$)).subscribe({
+          next: () => {
+            this.toastService.success('Revenue transaction created successfully');
+            this.router.navigate(['/transaction']);
+            this.isSaving.set(false);
+          },
+          error: (error) => {
+            console.error('Error creating transaction:', error);
+            this.toastService.error('Failed to create transaction');
+            this.isSaving.set(false);
+            this.cdr.markForCheck();
+          },
+        });
+      }
     } catch (error) {
       console.error('Error preparing transaction request:', error);
       this.toastService.error('Failed to prepare transaction');
