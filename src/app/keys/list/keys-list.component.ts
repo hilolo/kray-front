@@ -448,9 +448,19 @@ export class KeysListComponent implements OnInit, OnDestroy {
   }
 
   getPropertyName(key: Key): string {
+    // First try to use the property object if available
     if (key.property) {
       return this.getPropertyDisplayName(key.property as any);
     }
+    
+    // If property object is not available, look it up from the loaded properties list
+    if (key.propertyId) {
+      const property = this.properties().find(p => p.id === key.propertyId);
+      if (property) {
+        return this.getPropertyDisplayName(property);
+      }
+    }
+    
     return 'Unknown Property';
   }
 
