@@ -35,6 +35,7 @@ export class ZardPageComponent implements AfterViewInit {
     { route: '/reservation', label: 'Reservations', labelKey: 'menu.reservations', icon: 'calendar' },
     { route: '/keys', label: 'Keys', labelKey: 'menu.keys', icon: 'lock' },
     { route: '/bank', label: 'Banks', labelKey: 'menu.banks', icon: 'building-2' },
+    { route: '/transaction', label: 'Transactions', labelKey: 'menu.transactions', icon: 'banknote' },
     { route: '/tasks', label: 'Tasks', labelKey: 'menu.tasks', icon: 'clipboard' },
     { route: '/maintenance', label: 'Maintenance', labelKey: 'menu.maintenance', icon: 'settings' },
     { route: '/ai-chat', label: 'AI Chat', labelKey: 'menu.aiChat', icon: 'sparkles' },

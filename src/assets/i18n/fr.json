@@ -53,6 +53,7 @@
     "leasing": "Location",
     "keys": "Clés",
     "banks": "Banques",
+    "transactions": "Transactions",
     "buildings": "Bâtiments",
     "aiChat": "Chat IA",
     "fileManager": "Gestionnaire de fichiers"
