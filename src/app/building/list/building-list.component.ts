@@ -173,6 +173,11 @@ export class BuildingListComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    // Close any open sheet before destroying component
+    if (this.propertiesSheetRef) {
+      this.propertiesSheetRef.close();
+      this.propertiesSheetRef = null;
+    }
     this.destroy$.next();
     this.destroy$.complete();
     this.searchInputSubject.complete();
@@ -367,8 +372,10 @@ export class BuildingListComponent implements OnInit, OnDestroy {
   readonly detachingPropertyId = signal<string | null>(null);
 
   onViewProperties(building: Building): void {
+    // Close any existing sheet before opening a new one
     if (this.propertiesSheetRef) {
-      return; // Sheet already open
+      this.propertiesSheetRef.close();
+      this.propertiesSheetRef = null;
     }
 
     this.selectedBuildingId.set(building.id);
@@ -387,6 +394,7 @@ export class BuildingListComponent implements OnInit, OnDestroy {
         this.propertiesSheetRef = null;
         this.selectedBuildingId.set(null);
         this.buildingProperties.set([]);
+        this.isLoadingProperties.set(false);
       },
     });
   }
