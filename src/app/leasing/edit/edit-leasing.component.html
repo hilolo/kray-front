@@ -260,6 +260,24 @@
                 </z-form-field>
 
                 <z-form-field>
+                  <z-form-label>Deposit Price</z-form-label>
+                  <z-form-control>
+                    <z-input-group [zPrefix]="banknoteIconTemplate">
+                      <input
+                        z-input
+                        type="number"
+                        step="1000"
+                        min="0"
+                        [ngModel]="formData().depositPrice"
+                        (ngModelChange)="updateDepositPrice($event)"
+                        placeholder="0.00"
+                        class="w-full"
+                      />
+                    </z-input-group>
+                  </z-form-control>
+                </z-form-field>
+
+                <z-form-field>
                   <z-form-label zRequired>Payment Type</z-form-label>
                   <z-form-control>
                     <z-select

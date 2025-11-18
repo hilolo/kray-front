@@ -71,6 +71,7 @@ export interface Lease {
   paymentMethod: number; // PaymentMethod enum
   paymentDate: number;
   rentPrice: number;
+  depositPrice: number;
   enableReceipts: boolean;
   notificationWhatsapp: boolean;
   notificationEmail: boolean;

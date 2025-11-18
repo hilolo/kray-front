@@ -113,6 +113,7 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
     paymentMethod: PaymentMethod.Cash,
     paymentDate: 1,
     rentPrice: 0,
+    depositPrice: 0,
     enableReceipts: false,
     notificationWhatsapp: false,
     notificationEmail: false,
@@ -380,6 +381,7 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
           paymentMethod: lease.paymentMethod,
           paymentDate: lease.paymentDate,
           rentPrice: lease.rentPrice,
+          depositPrice: lease.depositPrice,
           enableReceipts: lease.enableReceipts,
           notificationWhatsapp: lease.notificationWhatsapp,
           notificationEmail: lease.notificationEmail,
@@ -802,6 +804,7 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
         paymentMethod: this.formData().paymentMethod,
         paymentDate: this.formData().paymentDate,
         rentPrice: this.formData().rentPrice,
+        depositPrice: this.formData().depositPrice,
         enableReceipts: this.formData().enableReceipts,
         notificationWhatsapp: this.formData().notificationWhatsapp,
         notificationEmail: this.formData().notificationEmail,
@@ -834,6 +837,7 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
         paymentMethod: this.formData().paymentMethod,
         paymentDate: this.formData().paymentDate,
         rentPrice: this.formData().rentPrice,
+        depositPrice: this.formData().depositPrice,
         enableReceipts: this.formData().enableReceipts,
         notificationWhatsapp: this.formData().notificationWhatsapp,
         notificationEmail: this.formData().notificationEmail,
@@ -907,6 +911,10 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
 
   updateRentPrice(value: string): void {
     this.formData.update((data) => ({ ...data, rentPrice: +value }));
+  }
+
+  updateDepositPrice(value: string): void {
+    this.formData.update((data) => ({ ...data, depositPrice: +value }));
   }
 
   updatePaymentType(value: string): void {

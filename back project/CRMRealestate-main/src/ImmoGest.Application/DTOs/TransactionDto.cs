@@ -72,6 +72,7 @@ namespace ImmoGest.Application.DTOs
         public DateTime Date { get; set; }
         public DateTime CreatedAt { get; set; } // Alias for Date to match frontend
         public string ContactName { get; set; } // De/From
+        public string ContactIdentifier { get; set; } // Contact reference/identifier
         public string OtherContactName { get; set; } // For contacts not in the system
         public decimal TotalAmount { get; set; } // Montant
         public string Description { get; set; }

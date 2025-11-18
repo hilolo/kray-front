@@ -66,6 +66,7 @@ export interface Transaction {
   leaseTenantName?: string;
   contactId?: string; // From (revenue) or Pay to (expense)
   contactName?: string;
+  contactIdentifier?: string; // Contact reference/identifier
   otherContactName?: string; // For contacts not in the system
   payments: Payment[];
   totalAmount: number;

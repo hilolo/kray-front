@@ -340,6 +340,7 @@ namespace ImmoGest.Application.Services
                     ContactName = entity.Contact != null
                         ? (entity.Contact.IsACompany ? entity.Contact.CompanyName : $"{entity.Contact.FirstName} {entity.Contact.LastName}".Trim())
                         : "",
+                    ContactIdentifier = entity.Contact != null ? entity.Contact.Identifier : "",
                     OtherContactName = entity.OtherContactName,
                     TotalAmount = entity.TotalAmount,
                     Description = entity.Description,

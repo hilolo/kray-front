@@ -34,6 +34,11 @@ namespace ImmoGest.Infrastructure.Configuration
                 .IsRequired()
                 .HasPrecision(18, 2);
 
+            builder.Property(l => l.DepositPrice)
+                .IsRequired()
+                .HasPrecision(18, 2)
+                .HasDefaultValue(0.0);
+
             // Receipt Information
             builder.Property(l => l.EnableReceipts)
                 .IsRequired()

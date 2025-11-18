@@ -28,6 +28,7 @@ namespace ImmoGest.Application.DTOs
         public PaymentMethod PaymentMethod { get; set; }
         public int PaymentDate { get; set; } // Day of month (1-31)
         public double RentPrice { get; set; }
+        public double DepositPrice { get; set; }
 
         // Receipt Information
         public bool EnableReceipts { get; set; }

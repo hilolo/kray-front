@@ -87,6 +87,9 @@ namespace ImmoGest.Application.Services
         {
             if (updateModel is UpdateLeaseDto dto)
             {
+                // Map all fields from DTO to entity (this is critical - it applies the mapping profile)
+                _mapper.Map(dto, entity);
+
                 // Update status based on new dates
                 entity.Status = CalculateLeaseStatus(dto.TenancyStart, dto.TenancyEnd);
 

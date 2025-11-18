@@ -675,28 +675,31 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
     this.loadTransactions();
   }
 
-  async onDelete(transaction: Transaction): Promise<void> {
-    const confirmed = await this.alertDialogService.confirm({
+  onDelete(transaction: Transaction): void {
+    const dialogRef = this.alertDialogService.confirm({
       zTitle: 'Delete Transaction',
       zDescription: `Are you sure you want to delete this transaction? This action cannot be undone.`,
       zOkText: 'Delete',
       zCancelText: 'Cancel',
+      zOkDestructive: true,
     });
 
-    if (!confirmed) return;
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result) => {
+      if (!result) return;
 
-    this.isDeleting.set(true);
-    this.transactionService.delete(transaction.id).pipe(takeUntil(this.destroy$)).subscribe({
-      next: () => {
-        this.toastService.success('Transaction deleted successfully');
-        this.loadTransactions();
-        this.isDeleting.set(false);
-      },
-      error: (error) => {
-        console.error('Error deleting transaction:', error);
-        this.toastService.error('Failed to delete transaction');
-        this.isDeleting.set(false);
-      },
+      this.isDeleting.set(true);
+      this.transactionService.delete(transaction.id).pipe(takeUntil(this.destroy$)).subscribe({
+        next: () => {
+          this.toastService.success('Transaction deleted successfully');
+          this.loadTransactions();
+          this.isDeleting.set(false);
+        },
+        error: (error) => {
+          console.error('Error deleting transaction:', error);
+          this.toastService.error('Failed to delete transaction');
+          this.isDeleting.set(false);
+        },
+      });
     });
   }
 

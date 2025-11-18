@@ -13,6 +13,7 @@ export interface CreateLeaseRequest {
   paymentMethod: PaymentMethod;
   paymentDate: number; // Day of month (1-31)
   rentPrice: number;
+  depositPrice: number;
   enableReceipts: boolean;
   notificationWhatsapp: boolean;
   notificationEmail: boolean;

@@ -15,6 +15,7 @@ namespace ImmoGest.Application.DTOs
         public PaymentMethod PaymentMethod { get; set; }
         public int PaymentDate { get; set; }
         public double RentPrice { get; set; }
+        public double DepositPrice { get; set; }
         public bool EnableReceipts { get; set; }
         public bool NotificationWhatsapp { get; set; }
         public bool NotificationEmail { get; set; }

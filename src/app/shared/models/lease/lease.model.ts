@@ -65,6 +65,7 @@ export interface Lease {
   paymentMethod: PaymentMethod;
   paymentDate: number; // Day of month (1-31)
   rentPrice: number;
+  depositPrice: number;
   
   // Receipt Information
   enableReceipts: boolean;
