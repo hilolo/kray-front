@@ -9,7 +9,8 @@ export interface UpdateTransactionRequest {
   revenueType?: RevenueType;
   expenseType?: ExpenseType;
   leaseId?: string | null;
-  contactId: string; // From (revenue) or Pay to (expense)
+  contactId?: string | null; // From (revenue) or Pay to (expense) - Optional if otherContactName is provided
+  otherContactName?: string | null; // For contacts not in the system
   date: Date | string; // Transaction date
   payments: Payment[];
   description: string;

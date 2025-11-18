@@ -340,6 +340,7 @@ namespace ImmoGest.Application.Services
                     ContactName = entity.Contact != null
                         ? (entity.Contact.IsACompany ? entity.Contact.CompanyName : $"{entity.Contact.FirstName} {entity.Contact.LastName}".Trim())
                         : "",
+                    OtherContactName = entity.OtherContactName,
                     TotalAmount = entity.TotalAmount,
                     Description = entity.Description,
                     PropertyId = entity.PropertyId,
@@ -387,6 +388,7 @@ namespace ImmoGest.Application.Services
                             ? entity.Contact.CompanyName
                             : $"{entity.Contact.FirstName} {entity.Contact.LastName}".Trim();
                     }
+                    dto.OtherContactName = entity.OtherContactName;
 
                     // Set lease information
                     if (entity.Lease != null && entity.Lease.Contact != null)
@@ -530,16 +532,22 @@ namespace ImmoGest.Application.Services
         private async Task<Attachment> CreateAttachmentFromBase64(
             Guid transactionId,
             Guid companyId,
-            Guid contactId,
+            Guid? contactId,
             string fileName,
             string base64Content,
             string root)
         {
-            // Get contact folder name using helper
-            var contactName = await _fileHelper.GetOwnerNameAsync(contactId);
+            // Get contact folder name using helper (if contactId is provided)
+            string contactName = null;
+            if (contactId.HasValue)
+            {
+                contactName = await _fileHelper.GetOwnerNameAsync(contactId.Value);
+            }
 
-            // Use the path structure: {contactName}/transaction
-            var attachmentRoot = $"{contactName}/transaction";
+            // Use the path structure: {contactName}/transaction or just "transaction" if no contact
+            var attachmentRoot = !string.IsNullOrEmpty(contactName) 
+                ? $"{contactName}/transaction" 
+                : "transaction";
 
             // Use FileAttachmentHelper to create attachment
             var attachment = await _fileHelper.CreateAttachmentFromBase64Async(

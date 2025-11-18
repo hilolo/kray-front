@@ -54,7 +54,10 @@ namespace ImmoGest.Domain.Entities
         public Guid? LeaseId { get; set; }
 
         public Contact Contact { get; set; }
-        public Guid ContactId { get; set; } // From (revenue) or Pay to (expense)
+        public Guid? ContactId { get; set; } // From (revenue) or Pay to (expense) - Optional if OtherContactName is provided
+
+        // For contacts not in the system
+        public string OtherContactName { get; set; }
 
         public Company Company { get; set; }
         public Guid CompanyId { get; set; }
@@ -72,7 +75,7 @@ namespace ImmoGest.Domain.Entities
 
             var contactSearch = Contact != null
                 ? $"{Contact.FirstName} {Contact.LastName} {Contact.CompanyName} {Contact.Identifier}"
-                : "";
+                : (OtherContactName ?? "");
 
             var leaseSearch = Lease != null && Contact != null
                 ? $"{Contact.FirstName} {Contact.LastName} {Contact.CompanyName}"

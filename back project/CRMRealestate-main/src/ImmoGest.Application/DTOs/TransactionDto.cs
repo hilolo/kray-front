@@ -41,8 +41,9 @@ namespace ImmoGest.Application.DTOs
         public string LeaseTenantName { get; set; }
         
         // Contact information (From for revenue, Pay to for expense)
-        public Guid ContactId { get; set; }
+        public Guid? ContactId { get; set; }
         public string ContactName { get; set; }
+        public string OtherContactName { get; set; } // For contacts not in the system
         
         // Company
         public Guid CompanyId { get; set; }
@@ -71,6 +72,7 @@ namespace ImmoGest.Application.DTOs
         public DateTime Date { get; set; }
         public DateTime CreatedAt { get; set; } // Alias for Date to match frontend
         public string ContactName { get; set; } // De/From
+        public string OtherContactName { get; set; } // For contacts not in the system
         public decimal TotalAmount { get; set; } // Montant
         public string Description { get; set; }
         public Guid? PropertyId { get; set; }
@@ -91,7 +93,8 @@ namespace ImmoGest.Application.DTOs
         public ExpenseType? ExpenseType { get; set; }
         public Guid? PropertyId { get; set; }
         public Guid? LeaseId { get; set; }
-        public Guid ContactId { get; set; }
+        public Guid? ContactId { get; set; }
+        public string OtherContactName { get; set; }
         public DateTime Date { get; set; }
         public List<PaymentDto> Payments { get; set; }
         public string Description { get; set; }
@@ -110,6 +113,7 @@ namespace ImmoGest.Application.DTOs
         public Guid? PropertyId { get; set; }
         public Guid? LeaseId { get; set; }
         public Guid? ContactId { get; set; }
+        public string OtherContactName { get; set; }
         public DateTime? Date { get; set; }
         public List<PaymentDto> Payments { get; set; }
         public string Description { get; set; }

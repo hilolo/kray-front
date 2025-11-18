@@ -12,6 +12,7 @@ import { ZardInputGroupComponent } from '@shared/components/input-group/input-gr
 import { ZardComboboxComponent, ZardComboboxOption } from '@shared/components/combobox/combobox.component';
 import { ZardCardComponent } from '@shared/components/card/card.component';
 import { ZardDatePickerComponent } from '@shared/components/date-picker/date-picker.component';
+import { ZardCheckboxComponent } from '@shared/components/checkbox/checkbox.component';
 import { ZardFileViewerComponent } from '@shared/components/file-viewer/file-viewer.component';
 import { ZardImageHoverPreviewDirective } from '@shared/components/image-hover-preview/image-hover-preview.component';
 import { ImageItem } from '@shared/image-viewer/image-viewer.component';
@@ -59,6 +60,7 @@ interface UploadedFile {
     ZardComboboxComponent,
     ZardCardComponent,
     ZardDatePickerComponent,
+    ZardCheckboxComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './add-revenue.component.html',
@@ -93,6 +95,8 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
     leaseId: '',
     revenueType: RevenueType.Loyer,
     contactId: '',
+    isOtherContact: false,
+    otherContactName: '',
     date: new Date(),
     description: '',
   });
@@ -140,12 +144,18 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
     { value: RevenueType.Autre.toString(), label: 'Autre' },
   ];
 
-  // Form validation
+  // Form validation - contact not required for type "Autre"
   readonly isFormValid = computed(() => {
     const data = this.formData();
     const payments = this.payments();
+    const isAutreType = data.revenueType === RevenueType.Autre;
+    const hasValidContact = isAutreType 
+      ? true // Contact not required for "Autre" type
+      : (data.isOtherContact 
+        ? (data.otherContactName && data.otherContactName.trim() !== '')
+        : (data.contactId !== ''));
     return (
-      data.contactId !== '' &&
+      hasValidContact &&
       data.date !== null &&
       payments.length > 0 &&
       payments.every(p => p.amount > 0)
@@ -159,8 +169,17 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
 
   readonly contactIdError = computed(() => {
     if (!this.formSubmitted()) return '';
-    if (!this.formData().contactId || this.formData().contactId === '') {
-      return 'From (contact) is required';
+    const data = this.formData();
+    const isAutreType = data.revenueType === RevenueType.Autre;
+    if (isAutreType) return ''; // No error for "Autre" type - contact is optional
+    if (data.isOtherContact) {
+      if (!data.otherContactName || data.otherContactName.trim() === '') {
+        return 'Other contact name is required';
+      }
+    } else {
+      if (!data.contactId || data.contactId === '') {
+        return 'From (contact) is required';
+      }
     }
     return '';
   });
@@ -171,7 +190,15 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
   });
 
   readonly contactIdHasError = computed(() => {
-    return this.formSubmitted() && (!this.formData().contactId || this.formData().contactId === '');
+    if (!this.formSubmitted()) return false;
+    const data = this.formData();
+    const isAutreType = data.revenueType === RevenueType.Autre;
+    if (isAutreType) return false; // No error for "Autre" type - contact is optional
+    if (data.isOtherContact) {
+      return !data.otherContactName || data.otherContactName.trim() === '';
+    } else {
+      return !data.contactId || data.contactId === '';
+    }
   });
 
   readonly totalAmount = computed(() => {
@@ -357,16 +384,34 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
+  updateIsOtherContact(value: boolean): void {
+    this.formData.update(data => ({ 
+      ...data, 
+      isOtherContact: value,
+      contactId: value ? '' : data.contactId,
+      otherContactName: value ? data.otherContactName : '',
+    }));
+    this.cdr.markForCheck();
+  }
+
+  updateOtherContactName(value: string): void {
+    this.formData.update(data => ({ ...data, otherContactName: value || '' }));
+    this.cdr.markForCheck();
+  }
+
   loadTransaction(id: string): void {
     this.isLoading.set(true);
     this.transactionService.getById(id).pipe(takeUntil(this.destroy$)).subscribe({
       next: (transaction: Transaction) => {
         // Populate form data
+        const hasOtherContact = !transaction.contactId && !!transaction.otherContactName;
         this.formData.set({
           propertyId: transaction.propertyId || '',
           leaseId: transaction.leaseId || '',
           revenueType: transaction.revenueType || RevenueType.Loyer,
           contactId: transaction.contactId || '',
+          isOtherContact: hasOtherContact,
+          otherContactName: transaction.otherContactName || '',
           date: transaction.date ? new Date(transaction.date) : new Date(),
           description: transaction.description || '',
         });
@@ -546,11 +591,14 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
         // Update existing transaction
         // Normalize date to UTC midnight to avoid timezone shifts
         const normalizedDate = normalizeDateToUTCMidnight(data.date);
+        const isAutreType = data.revenueType === RevenueType.Autre;
+        const useOtherContact = data.isOtherContact || isAutreType;
         const updateRequest: UpdateTransactionRequest = {
           category: TransactionType.Revenue, // Ensure category is set to Revenue
           revenueType: data.revenueType,
           leaseId: data.leaseId && data.leaseId.trim() !== '' ? data.leaseId : null,
-          contactId: data.contactId,
+          contactId: useOtherContact ? null : (data.contactId || null),
+          otherContactName: useOtherContact ? (data.otherContactName && data.otherContactName.trim() !== '' ? data.otherContactName : null) : null,
           date: normalizedDate || data.date,
           payments: this.payments(),
           description: data.description,
@@ -583,12 +631,15 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
         // Create new transaction
         // Normalize date to UTC midnight to avoid timezone shifts
         const normalizedDate = normalizeDateToUTCMidnight(data.date);
+        const isAutreType = data.revenueType === RevenueType.Autre;
+        const useOtherContact = data.isOtherContact || isAutreType;
         const createRequest: CreateTransactionRequest = {
           category: TransactionType.Revenue, // Maps to TransactionCategory.Revenue (0) in backend
           revenueType: data.revenueType,
           propertyId: data.propertyId && data.propertyId.trim() !== '' ? data.propertyId : null,
           leaseId: data.leaseId && data.leaseId.trim() !== '' ? data.leaseId : null,
-          contactId: data.contactId,
+          contactId: useOtherContact ? null : (data.contactId || null),
+          otherContactName: useOtherContact ? (data.otherContactName && data.otherContactName.trim() !== '' ? data.otherContactName : null) : null,
           date: normalizedDate || data.date,
           payments: this.payments(),
           description: data.description,

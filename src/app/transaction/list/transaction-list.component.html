@@ -207,7 +207,12 @@
 
         <!-- Contact Column Template -->
         <ng-template #contactCell let-row="row">
-          <span>{{ row.contactName || 'N/A' }}</span>
+          @if ((row.type === TransactionType.Revenue && row.revenueType === RevenueType.Autre) || 
+               (row.type === TransactionType.Expense && row.expenseType === ExpenseType.Autre)) {
+            <span>{{ row.otherContactName || 'N/A' }}</span>
+          } @else {
+            <span>{{ row.otherContactName || row.contactName || 'N/A' }}</span>
+          }
         </ng-template>
 
         <!-- Type of Transaction Column Template -->

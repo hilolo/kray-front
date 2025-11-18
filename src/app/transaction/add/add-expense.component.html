@@ -127,20 +127,47 @@
 
                   <!-- Pay to (Contact) Field -->
                   <z-form-field>
-                    <z-form-label zRequired>Pay to</z-form-label>
+                    <z-form-label [zRequired]="(formData().expenseType ?? ExpenseType.Loyer) !== ExpenseType.Autre">Pay to</z-form-label>
                     <z-form-control [errorMessage]="contactIdError()">
-                      <z-combobox
-                        [options]="contactOptions()"
-                        [value]="formData().contactId"
-                        [placeholder]="'Select contact...'"
-                        [searchPlaceholder]="'Search contacts...'"
-                        [emptyText]="'No contacts found'"
-                        [searchable]="true"
-                        [disabled]="isLoadingContacts()"
-                        [zWidth]="'lg'"
-                        (zValueChange)="updateContactId($event || '')"
-                        class="w-full"
-                      />
+                      <div class="space-y-3">
+                        <div class="flex items-center gap-3">
+                          <z-combobox
+                            [options]="contactOptions()"
+                            [value]="formData().contactId"
+                            [placeholder]="'Select contact...'"
+                            [searchPlaceholder]="'Search contacts...'"
+                            [emptyText]="'No contacts found'"
+                            [searchable]="true"
+                            [disabled]="isLoadingContacts() || formData().isOtherContact || formData().expenseType === ExpenseType.Autre"
+                            [zWidth]="'lg'"
+                            (zValueChange)="updateContactId($event || '')"
+                            class="flex-1"
+                          />
+                          @if (formData().expenseType !== ExpenseType.Autre) {
+                            <z-checkbox
+                              [ngModel]="formData().isOtherContact"
+                              (ngModelChange)="updateIsOtherContact($event)"
+                              class="flex-shrink-0"
+                            >
+                              Other
+                            </z-checkbox>
+                          }
+                        </div>
+                        @if (formData().isOtherContact || formData().expenseType === ExpenseType.Autre) {
+                          <z-input-group>
+                            <input
+                              z-input
+                              type="text"
+                              [ngModel]="formData().otherContactName"
+                              (ngModelChange)="updateOtherContactName($event)"
+                              name="otherContactName"
+                              placeholder="Enter contact name..."
+                              [zStatus]="contactIdHasError() ? 'error' : undefined"
+                              class="w-full"
+                            />
+                          </z-input-group>
+                        }
+                      </div>
                     </z-form-control>
                   </z-form-field>
                 </div>

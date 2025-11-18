@@ -96,7 +96,11 @@ namespace ImmoGest.Infrastructure.Configuration
                 .IsRequired(false);
 
             builder.Property(t => t.ContactId)
-                .IsRequired();
+                .IsRequired(false);
+
+            builder.Property(t => t.OtherContactName)
+                .HasMaxLength(500)
+                .IsRequired(false);
 
             builder.Property(t => t.CompanyId)
                 .IsRequired();
@@ -115,7 +119,8 @@ namespace ImmoGest.Infrastructure.Configuration
             builder.HasOne(t => t.Contact)
                 .WithMany()
                 .HasForeignKey(t => t.ContactId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired(false);
 
             builder.HasOne(t => t.Lease)
                 .WithMany()
