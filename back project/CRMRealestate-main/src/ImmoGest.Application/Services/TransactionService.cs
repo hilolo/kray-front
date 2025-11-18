@@ -21,6 +21,8 @@ namespace ImmoGest.Application.Services
         private readonly ITransactionRepository _transactionRepository;
         private readonly IAttachmentRepository _attachmentRepository;
         private readonly IAttachmentService _attachmentService;
+        private readonly IPropertyRepository _propertyRepository;
+        private readonly IContactRepository _contactRepository;
         private readonly IMapper _mapper;
         private readonly ISession _session;
         private readonly IS3StorageService _s3StorageService;
@@ -36,6 +38,8 @@ namespace ImmoGest.Application.Services
             ITransactionRepository transactionRepository,
             IAttachmentRepository attachmentRepository,
             IAttachmentService attachmentService,
+            IPropertyRepository propertyRepository,
+            IContactRepository contactRepository,
             ISession session,
             IS3StorageService s3StorageService,
             IConfiguration configuration,
@@ -45,6 +49,8 @@ namespace ImmoGest.Application.Services
             _transactionRepository = transactionRepository;
             _attachmentRepository = attachmentRepository;
             _attachmentService = attachmentService;
+            _propertyRepository = propertyRepository;
+            _contactRepository = contactRepository;
             _mapper = mapper;
             _session = session;
             _s3StorageService = s3StorageService;
@@ -76,6 +82,25 @@ namespace ImmoGest.Application.Services
                 else
                 {
                     entity.TotalAmount = 0;
+                }
+
+                // Load navigation properties for search terms
+                if (dto.PropertyId.HasValue)
+                {
+                    var propertyResult = await _propertyRepository.GetByIdAsync(dto.PropertyId.Value);
+                    if (propertyResult.IsSuccess() && propertyResult.Data != null)
+                    {
+                        entity.Property = propertyResult.Data;
+                    }
+                }
+
+                if (dto.ContactId.HasValue)
+                {
+                    var contactResult = await _contactRepository.GetByIdAsync(dto.ContactId.Value);
+                    if (contactResult.IsSuccess() && contactResult.Data != null)
+                    {
+                        entity.Contact = contactResult.Data;
+                    }
                 }
 
                 // Build search terms
@@ -176,6 +201,25 @@ namespace ImmoGest.Application.Services
 
                 // Status is not updated through edit - use the dedicated status update endpoint instead
                 // This ensures status can only be changed via the /status endpoint
+
+                // Load navigation properties for search terms if they're not already loaded
+                if (entity.Property == null && entity.PropertyId.HasValue)
+                {
+                    var propertyResult = await _propertyRepository.GetByIdAsync(entity.PropertyId.Value);
+                    if (propertyResult.IsSuccess() && propertyResult.Data != null)
+                    {
+                        entity.Property = propertyResult.Data;
+                    }
+                }
+
+                if (entity.Contact == null && entity.ContactId.HasValue)
+                {
+                    var contactResult = await _contactRepository.GetByIdAsync(entity.ContactId.Value);
+                    if (contactResult.IsSuccess() && contactResult.Data != null)
+                    {
+                        entity.Contact = contactResult.Data;
+                    }
+                }
 
                 // Build search terms
                 entity.BuildSearchTerms();
@@ -594,6 +638,25 @@ namespace ImmoGest.Application.Services
 
                 // Update only the status field directly
                 transaction.Status = status;
+                
+                // Load navigation properties for search terms if they're not already loaded
+                if (transaction.Property == null && transaction.PropertyId.HasValue)
+                {
+                    var propertyResult = await _propertyRepository.GetByIdAsync(transaction.PropertyId.Value);
+                    if (propertyResult.IsSuccess() && propertyResult.Data != null)
+                    {
+                        transaction.Property = propertyResult.Data;
+                    }
+                }
+
+                if (transaction.Contact == null && transaction.ContactId.HasValue)
+                {
+                    var contactResult = await _contactRepository.GetByIdAsync(transaction.ContactId.Value);
+                    if (contactResult.IsSuccess() && contactResult.Data != null)
+                    {
+                        transaction.Contact = contactResult.Data;
+                    }
+                }
                 
                 // Build search terms (in case status change affects search)
                 transaction.BuildSearchTerms();

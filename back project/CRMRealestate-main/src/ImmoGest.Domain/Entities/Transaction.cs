@@ -84,7 +84,10 @@ namespace ImmoGest.Domain.Entities
                 ? $"{Contact.FirstName} {Contact.LastName} {Contact.CompanyName}"
                 : "";
 
-            SearchTerms = $"{Description} {propertySearch} {contactSearch} {leaseSearch}".ToUpper();
+            // Include total amount in search terms (convert to string for searching)
+            var totalAmountSearch = TotalAmount.ToString("F2");
+
+            SearchTerms = $"{Description} {propertySearch} {contactSearch} {leaseSearch} {totalAmountSearch}".ToUpper();
         }
     }
 }

@@ -117,11 +117,18 @@ namespace ImmoGest.Infrastructure.Repositories
                 if (!string.IsNullOrEmpty(filter.SearchTerm))
                 {
                     var searchTerm = filter.SearchTerm.ToUpper();
+                    // Try to parse search term as decimal for amount search
+                    decimal searchAmount = 0;
+                    bool isNumericSearch = decimal.TryParse(filter.SearchTerm, out searchAmount);
+                    
                     query = query.Where(t => 
                         t.SearchTerms.Contains(searchTerm) ||
                         t.Description.Contains(filter.SearchTerm) ||
-                        (t.Property != null && (t.Property.Name.Contains(filter.SearchTerm) || t.Property.Identifier.Contains(filter.SearchTerm))) ||
-                        (t.Contact != null && (t.Contact.FirstName.Contains(filter.SearchTerm) || t.Contact.LastName.Contains(filter.SearchTerm) || t.Contact.CompanyName.Contains(filter.SearchTerm)))
+                        (t.Property != null && (t.Property.Name.Contains(filter.SearchTerm) || t.Property.Identifier.Contains(filter.SearchTerm) || (t.Property.Address != null && t.Property.Address.Contains(filter.SearchTerm)))) ||
+                        (t.Contact != null && (t.Contact.FirstName.Contains(filter.SearchTerm) || t.Contact.LastName.Contains(filter.SearchTerm) || t.Contact.CompanyName.Contains(filter.SearchTerm) || (t.Contact.Identifier != null && t.Contact.Identifier.Contains(filter.SearchTerm)))) ||
+                        (t.OtherContactName != null && t.OtherContactName.Contains(filter.SearchTerm)) ||
+                        (isNumericSearch && t.TotalAmount == searchAmount) ||
+                        (isNumericSearch && t.TotalAmount.ToString().Contains(filter.SearchTerm))
                     );
                 }
             }

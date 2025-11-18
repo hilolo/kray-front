@@ -77,8 +77,26 @@
         <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
           <!-- Filters on left -->
           <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-1 w-full">
-            <!-- Filters group: Property, Contact, and Revenue Types -->
+            <!-- Filters group: Search, Property, Contact, and Revenue Types -->
             <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-shrink-0 w-full sm:w-auto">
+              <!-- Search input -->
+              <div class="w-full sm:w-[200px]">
+                <z-input-group [zPrefix]="searchIconTemplateRef()">
+                  <input
+                    z-input
+                    type="text"
+                    [ngModel]="searchQuery()"
+                    (ngModelChange)="onSearchChange($event)"
+                    name="searchQuery"
+                    placeholder="Search transactions..."
+                    class="w-full text-sm"
+                  />
+                </z-input-group>
+                <ng-template #searchIconTemplate>
+                  <z-icon zType="search" zSize="sm" class="text-muted-foreground" />
+                </ng-template>
+              </div>
+              
               <!-- Property select -->
               <div class="w-full sm:w-[200px]">
                 <z-combobox

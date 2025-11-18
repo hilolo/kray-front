@@ -14,7 +14,10 @@ import { ZardSelectComponent } from '@shared/components/select/select.component'
 import { ZardSelectItemComponent } from '@shared/components/select/select-item.component';
 import { ZardCheckboxComponent } from '@shared/components/checkbox/checkbox.component';
 import { ZardComboboxComponent, ZardComboboxOption } from '@shared/components/combobox/combobox.component';
+import { ZardInputGroupComponent } from '@shared/components/input-group/input-group.component';
+import { ZardInputDirective } from '@shared/components/input/input.directive';
 import { Subject, takeUntil, forkJoin } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 import type { Transaction } from '@shared/models/transaction/transaction.model';
 import { TransactionType, TransactionStatus, RevenueType, ExpenseType } from '@shared/models/transaction/transaction.model';
@@ -50,6 +53,8 @@ import { ContactType } from '@shared/models/contact/contact.model';
     ZardSelectItemComponent,
     ZardCheckboxComponent,
     ZardComboboxComponent,
+    ZardInputGroupComponent,
+    ZardInputDirective,
     FormsModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -82,6 +87,10 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
   readonly totalPages = signal(1);
   readonly totalItems = signal(0);
   readonly selectedType = signal<TransactionType>(TransactionType.Revenue);
+  
+  // Search query
+  readonly searchQuery = signal<string>('');
+  private readonly searchSubject = new Subject<string>();
   
   /**
    * Get the route key for preferences storage
@@ -149,13 +158,17 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
   readonly isLoadingContacts = signal(false);
   readonly contactComboboxRef = viewChild<ZardComboboxComponent>('contactCombobox');
 
+  // Search icon template
+  readonly searchIconTemplate = viewChild<TemplateRef<void>>('searchIconTemplate');
+  readonly searchIconTemplateRef = computed(() => this.searchIconTemplate() ?? undefined);
 
   // Check if any filters are active (excluding the default selectedType)
   readonly hasActiveFilters = computed(() => {
     return this.selectedRevenueTypes().length > 0 ||
            this.selectedExpenseTypes().length > 0 ||
            this.selectedPropertyId() !== null ||
-           this.selectedContactId() !== null;
+           this.selectedContactId() !== null ||
+           (this.searchQuery() && this.searchQuery().trim().length >= 3);
   });
 
   // Template references for custom cells
@@ -255,6 +268,17 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
     const savedSelectedType = this.preferencesService.getPreference<TransactionType>(routeKey, 'selectedType', TransactionType.Revenue) ?? TransactionType.Revenue;
     this.selectedType.set(savedSelectedType);
     
+    // Setup search debounce
+    this.searchSubject.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      takeUntil(this.destroy$)
+    ).subscribe((query) => {
+      this.searchQuery.set(query);
+      this.currentPage.set(1);
+      this.loadTransactions();
+    });
+    
     // Debug: Log revenue and expense type options
     console.log('Revenue Type Options:', this.revenueTypeOptions);
     console.log('Revenue Type Options Length:', this.revenueTypeOptions.length);
@@ -287,6 +311,10 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
     this.isLoading.set(true);
     const companyId = this.userService.getCurrentUser()?.companyId;
     
+    const searchQuery = this.searchQuery() && this.searchQuery().trim().length >= 3 
+      ? this.searchQuery().trim() 
+      : undefined;
+
     const request: TransactionListRequest = {
       currentPage: this.currentPage(),
       pageSize: this.pageSize(),
@@ -297,6 +325,7 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
       expenseTypes: this.selectedExpenseTypes().length > 0 ? this.selectedExpenseTypes() : undefined,
       propertyId: this.selectedPropertyId() || undefined,
       contactId: this.selectedContactId() || undefined,
+      searchQuery: searchQuery,
     };
 
     this.transactionService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
@@ -661,6 +690,7 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
     this.selectedExpenseTypes.set([]);
     this.selectedPropertyId.set(null);
     this.selectedContactId.set(null);
+    this.searchQuery.set('');
     
     // Clear combobox internal values using ControlValueAccessor
     setTimeout(() => {
@@ -676,6 +706,13 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
     
     this.currentPage.set(1);
     this.loadTransactions();
+  }
+
+  onSearchChange(query: string): void {
+    // Only trigger search if query has 3+ characters or is empty (to clear search)
+    if (query.trim().length >= 3 || query.trim().length === 0) {
+      this.searchSubject.next(query);
+    }
   }
 
   onDelete(transaction: Transaction): void {
