@@ -167,15 +167,20 @@
                 </div>
               }
             </div>
+          </div>
+          <!-- Action buttons on right -->
+          <div class="flex gap-2 items-center">
             @if (hasActiveFilters()) {
-              <z-button zType="ghost" zSize="sm" (click)="onClearFilters()">
+              <z-button 
+                zType="destructive" 
+                zSize="sm" 
+                (click)="onClearFilters()"
+                class="bg-red-500 hover:bg-red-600 text-white border-red-500 hover:border-red-600 dark:bg-red-600 dark:hover:bg-red-700 dark:border-red-600 dark:hover:border-red-700"
+              >
                 <z-icon zType="x" zSize="sm" class="mr-2" />
                 Clear Filters
               </z-button>
             }
-          </div>
-          <!-- Action buttons on right -->
-          <div class="flex gap-2">
             <z-button 
               zType="default" 
               zSize="icon" 
