@@ -65,8 +65,8 @@ namespace ImmoGest.Application.Services
                 // Set TransactionType to Manual (created from front)
                 entity.TransactionType = TransactionType.Manual;
 
-                // Set Status to Overdue (as per requirement: when created from front it should show overdue)
-                entity.Status = TransactionStatus.Overdue;
+                // Set Status to Pending (default status for new transactions)
+                entity.Status = TransactionStatus.Pending;
 
                 // Calculate TotalAmount from payments
                 if (dto.Payments != null && dto.Payments.Count > 0)
@@ -571,8 +571,8 @@ namespace ImmoGest.Application.Services
         {
             try
             {
-                // Get transaction
-                var transactionResult = await _transactionRepository.GetByIdAsync(id);
+                // Get transaction using GetById (which doesn't use AsNoTracking, so entity can be tracked for update)
+                var transactionResult = await _transactionRepository.GetById(id);
                 if (!transactionResult.IsSuccess() || transactionResult.Data == null)
                 {
                     return Result.Failure<TransactionDto>().WithMessage("Transaction not found");
@@ -586,16 +586,22 @@ namespace ImmoGest.Application.Services
                     return Result.Failure<TransactionDto>().WithMessage("Access denied");
                 }
 
-                // Create update DTO with only status
-                var updateDto = new UpdateTransactionDto
-                {
-                    Id = id,
-                    Status = status
-                };
+                // Update only the status field directly
+                transaction.Status = status;
+                
+                // Build search terms (in case status change affects search)
+                transaction.BuildSearchTerms();
 
-                // Use base UpdateAsync method
-                var updateResult = await UpdateAsync<TransactionDto, UpdateTransactionDto>(id, updateDto);
-                return updateResult;
+                // Update the entity
+                var updateResult = await _transactionRepository.Update(transaction);
+                if (!updateResult.IsSuccess())
+                {
+                    return Result.Failure<TransactionDto>().WithMessage("Error updating transaction status");
+                }
+
+                // Map to DTO and return
+                var dto = _mapper.Map<TransactionDto>(updateResult.Data);
+                return Result.Success(dto);
             }
             catch (Exception ex)
             {

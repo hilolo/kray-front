@@ -19,6 +19,20 @@ namespace ImmoGest.Infrastructure.Repositories
         {
         }
 
+        /// <summary>
+        /// Override GetById to return a tracked entity for updates
+        /// </summary>
+        public override async Task<Result<Transaction>> GetById(Guid id)
+        {
+            // Return tracked entity (without AsNoTracking) for updates
+            var entity = await DbSet
+                .FirstOrDefaultAsync(e => e.Id == id);
+
+            return entity != null
+                ? Result.Success<Transaction>(entity)
+                : Result.Failure<Transaction>();
+        }
+
         protected override IQueryable<Transaction> SetPagedResultFilterOptions<IFilter>(IQueryable<Transaction> query, IFilter filterOption)
         {
             // Always include related entities for transaction lists
