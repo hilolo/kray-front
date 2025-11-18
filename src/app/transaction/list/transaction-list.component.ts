@@ -628,15 +628,27 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
   }
 
   getRowClass(transaction: Transaction): string {
-    // Revenue = green, Expense = red
-    // Light mode: very visible colors with opacity, Dark mode: subtle colors
+    // Only color transactions if they are paid
+    // Pending transactions should be yellow
     // Keep same color on hover (override any default hover styles)
     // Use !important to override table's default hover:bg-muted/50
-    if (transaction.type === TransactionType.Revenue) {
-      return '!bg-green-500/30 dark:!bg-green-950/20 hover:!bg-green-500/30 dark:hover:!bg-green-950/20';
-    } else {
-      return '!bg-red-500/30 dark:!bg-red-950/20 hover:!bg-red-500/30 dark:hover:!bg-red-950/20';
+    
+    // Pending status: yellow background
+    if (transaction.status === TransactionStatus.Pending) {
+      return '!bg-yellow-500/30 dark:!bg-yellow-600/40 hover:!bg-yellow-500/30 dark:hover:!bg-yellow-600/40';
     }
+    
+    // Paid status: color based on transaction type (Revenue = green, Expense = red)
+    if (transaction.status === TransactionStatus.Paid) {
+      if (transaction.type === TransactionType.Revenue) {
+        return '!bg-green-500/30 dark:!bg-green-600/40 hover:!bg-green-500/30 dark:hover:!bg-green-600/40';
+      } else {
+        return '!bg-red-500/30 dark:!bg-red-600/40 hover:!bg-red-500/30 dark:hover:!bg-red-600/40';
+      }
+    }
+    
+    // Overdue or other statuses: no special color
+    return '';
   }
 
   onClearFilters(): void {
