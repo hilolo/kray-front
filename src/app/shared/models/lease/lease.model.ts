@@ -47,6 +47,7 @@ export interface Lease {
   id: string;
   propertyId: string;
   propertyName: string;
+  propertyIdentifier?: string;
   propertyAddress: string;
   propertyImageUrl: string;
   contactId: string;

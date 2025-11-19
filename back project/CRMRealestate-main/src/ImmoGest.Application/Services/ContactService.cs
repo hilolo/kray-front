@@ -748,6 +748,7 @@ namespace ImmoGest.Application.Services
                                 {
                                     var property = propertyResult.Data;
                                     leaseDto.PropertyName = property.Name ?? property.Identifier;
+                                    leaseDto.PropertyIdentifier = property.Identifier;
                                     leaseDto.PropertyAddress = property.Address;
                                     
                                     // Set PropertyImageUrl if default attachment exists

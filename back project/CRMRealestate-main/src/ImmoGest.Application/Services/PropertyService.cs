@@ -568,6 +568,7 @@ namespace ImmoGest.Application.Services
                             var leaseEntity = entity.Leases.FirstOrDefault(l => l.Id == leaseDto.Id);
                             
                             leaseDto.PropertyName = entity.Name;
+                            leaseDto.PropertyIdentifier = entity.Identifier;
                             leaseDto.PropertyAddress = entity.Address;
                             
                             // Set tenant information from Contact if available

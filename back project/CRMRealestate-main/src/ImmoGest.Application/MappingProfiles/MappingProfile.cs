@@ -285,6 +285,7 @@ namespace ImmoGest.Application.MappingProfiles
         {
             CreateMap<Lease, LeaseDto>()
                 .ForMember(dest => dest.PropertyName, opt => opt.Ignore()) // Set manually in service to avoid cycle
+                .ForMember(dest => dest.PropertyIdentifier, opt => opt.Ignore()) // Set manually in service to avoid cycle
                 .ForMember(dest => dest.PropertyAddress, opt => opt.Ignore()) // Set manually in service to avoid cycle
                 .ForMember(dest => dest.PropertyImageUrl, opt => opt.Ignore()) // Set manually in service
                 .ForMember(dest => dest.TenantName, opt => opt.MapFrom(src => src.Contact != null ? src.Contact.FirstName + " " + src.Contact.LastName : null))
