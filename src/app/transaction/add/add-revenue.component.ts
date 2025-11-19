@@ -173,7 +173,31 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
     return type === RevenueType.ReservationFull || type === RevenueType.ReservationPart;
   });
 
+  // Check if property should be filtered by Location category (for Loyer, Caution, FraisAgence)
+  readonly shouldFilterByLocationCategory = computed(() => {
+    const type = this.formData().revenueType;
+    return type === RevenueType.Loyer || type === RevenueType.Caution || type === RevenueType.FraisAgence;
+  });
+
+  // Check if lease select should be hidden (for reservation types, maintenance, and autre)
+  readonly shouldHideLeaseSelect = computed(() => {
+    const type = this.formData().revenueType;
+    return this.isReservationType() || type === RevenueType.Maintenance || type === RevenueType.Autre;
+  });
+
+  // Check if property select should be hidden (for reservation types)
+  readonly shouldHidePropertySelect = computed(() => {
+    return this.isReservationType();
+  });
+
+  // Check if property and lease are required (for Loyer, Caution, FraisAgence)
+  readonly isPropertyAndLeaseRequired = computed(() => {
+    const type = this.formData().revenueType;
+    return type === RevenueType.Loyer || type === RevenueType.Caution || type === RevenueType.FraisAgence;
+  });
+
   // Form validation - contact not required for type "Autre", reservation required for reservation types
+  // Property and lease required for Loyer, Caution, FraisAgence
   readonly isFormValid = computed(() => {
     const data = this.formData();
     const payments = this.payments();
@@ -186,9 +210,17 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
     const hasValidReservation = this.isReservationType()
       ? (data.reservationId && data.reservationId !== '')
       : true;
+    const hasValidProperty = this.isPropertyAndLeaseRequired()
+      ? (data.propertyId && data.propertyId !== '')
+      : true;
+    const hasValidLease = this.isPropertyAndLeaseRequired()
+      ? (data.leaseId && data.leaseId !== '')
+      : true;
     return (
       hasValidContact &&
       hasValidReservation &&
+      hasValidProperty &&
+      hasValidLease &&
       data.date !== null &&
       payments.length > 0 &&
       payments.every(p => p.amount > 0)
@@ -196,7 +228,13 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
   });
 
   readonly propertyIdError = computed(() => {
-    // Property is optional, no error
+    if (!this.formSubmitted()) return '';
+    const data = this.formData();
+    if (this.isPropertyAndLeaseRequired()) {
+      if (!data.propertyId || data.propertyId === '') {
+        return 'Property is required';
+      }
+    }
     return '';
   });
 
@@ -218,7 +256,11 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
   });
 
   readonly propertyIdHasError = computed(() => {
-    // Property is optional, no error
+    if (!this.formSubmitted()) return false;
+    const data = this.formData();
+    if (this.isPropertyAndLeaseRequired()) {
+      return !data.propertyId || data.propertyId === '';
+    }
     return false;
   });
 
@@ -248,9 +290,31 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
     return this.isReservationType() && (!this.formData().reservationId || this.formData().reservationId === '');
   });
 
+  readonly leaseIdError = computed(() => {
+    if (!this.formSubmitted()) return '';
+    const data = this.formData();
+    if (this.isPropertyAndLeaseRequired()) {
+      if (!data.leaseId || data.leaseId === '') {
+        return 'Lease is required';
+      }
+    }
+    return '';
+  });
+
+  readonly leaseIdHasError = computed(() => {
+    if (!this.formSubmitted()) return false;
+    const data = this.formData();
+    if (this.isPropertyAndLeaseRequired()) {
+      return !data.leaseId || data.leaseId === '';
+    }
+    return false;
+  });
+
   // Check if contact field should be disabled (for reservation types, contact auto-fills from reservation)
+  // Also disabled for Loyer, Caution, FraisAgence (contact auto-fills from lease)
   readonly isContactDisabled = computed(() => {
-    return this.isReservationType();
+    const type = this.formData().revenueType;
+    return this.isReservationType() || this.isPropertyAndLeaseRequired();
   });
 
   readonly totalAmount = computed(() => {
@@ -295,13 +359,18 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
 
     const companyId = this.userService.getCurrentUser()?.companyId;
 
-    const propertiesRequest = {
+    const propertiesRequest: any = {
       currentPage: 1,
       pageSize: 1000,
       ignore: true,
       companyId: companyId,
       isArchived: false,
     };
+
+    // Filter by Location category for Loyer, Caution, and FraisAgence
+    if (this.shouldFilterByLocationCategory()) {
+      propertiesRequest.category = PropertyCategory.Location;
+    }
 
     const contactsRequest = {
       currentPage: 1,
@@ -479,13 +548,18 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
   loadProperties(): void {
     this.isLoadingProperties.set(true);
     const companyId = this.userService.getCurrentUser()?.companyId;
-    const request = {
+    const request: any = {
       currentPage: 1,
       pageSize: 1000,
       ignore: true,
       companyId: companyId,
       isArchived: false,
     };
+
+    // Filter by Location category for Loyer, Caution, and FraisAgence
+    if (this.shouldFilterByLocationCategory()) {
+      request.category = PropertyCategory.Location;
+    }
 
     setTimeout(() => {
       this.propertyService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
@@ -651,13 +725,52 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
       this.selectedProperty.set(null);
       this.leases.set([]);
       this.leaseOptions.set([]);
-      this.formData.update(data => ({ ...data, leaseId: '' }));
+      // Clear lease and contact if property is cleared and we're in a type that requires property/lease
+      if (this.isPropertyAndLeaseRequired()) {
+        this.formData.update(data => ({
+          ...data,
+          leaseId: '',
+          contactId: '',
+          isOtherContact: false,
+          otherContactName: ''
+        }));
+      } else {
+        this.formData.update(data => ({ ...data, leaseId: '' }));
+      }
     }
     this.cdr.markForCheck();
   }
 
   updateLeaseId(value: string): void {
-    this.formData.update(data => ({ ...data, leaseId: value || '' }));
+    // Auto-fill contact from lease for Loyer, Caution, FraisAgence
+    if (value && this.isPropertyAndLeaseRequired()) {
+      const lease = this.leases().find(l => l.id === value);
+      if (lease && lease.contactId) {
+        this.formData.update(data => ({
+          ...data,
+          leaseId: value,
+          contactId: lease.contactId,
+          isOtherContact: false,
+          otherContactName: ''
+        }));
+      } else {
+        this.formData.update(data => ({ ...data, leaseId: value || '' }));
+      }
+    } else {
+      // Clear contact if lease is cleared and we're in a type that requires property/lease
+      if (!value && this.isPropertyAndLeaseRequired()) {
+        this.formData.update(data => ({
+          ...data,
+          leaseId: '',
+          contactId: '',
+          isOtherContact: false,
+          otherContactName: ''
+        }));
+      } else {
+        this.formData.update(data => ({ ...data, leaseId: value || '' }));
+      }
+    }
+    
     this.cdr.markForCheck();
   }
 
@@ -755,14 +868,22 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
           contactRequest.type = ContactType.Service;
         }
 
+        const propertiesRequest: any = {
+          currentPage: 1,
+          pageSize: 1000,
+          ignore: true,
+          companyId: this.userService.getCurrentUser()?.companyId,
+          isArchived: false,
+        };
+
+        // Filter by Location category for Loyer, Caution, and FraisAgence
+        const revenueType = transaction.revenueType || RevenueType.Loyer;
+        if (revenueType === RevenueType.Loyer || revenueType === RevenueType.Caution || revenueType === RevenueType.FraisAgence) {
+          propertiesRequest.category = PropertyCategory.Location;
+        }
+
         forkJoin({
-          properties: this.propertyService.list({
-            currentPage: 1,
-            pageSize: 1000,
-            ignore: true,
-            companyId: this.userService.getCurrentUser()?.companyId,
-            isArchived: false,
-          }),
+          properties: this.propertyService.list(propertiesRequest),
           contacts: this.contactService.list(contactRequest),
         }).pipe(takeUntil(this.destroy$)).subscribe({
           next: ({ properties, contacts }) => {
@@ -835,6 +956,7 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
 
   updateRevenueType(value: string): void {
     const type = parseInt(value) as RevenueType;
+    const previousType = this.formData().revenueType;
 
     // Reset contact fields when revenue type changes
     this.formData.update(data => ({
@@ -842,8 +964,15 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
       revenueType: type,
       contactId: '',
       isOtherContact: false,
-      otherContactName: ''
+      otherContactName: '',
+      propertyId: '', // Reset property when type changes
+      leaseId: '', // Reset lease when type changes
     }));
+
+    // Clear property and lease selections
+    this.selectedProperty.set(null);
+    this.leases.set([]);
+    this.leaseOptions.set([]);
 
     // Load reservations if reservation type is selected
     if (type === RevenueType.ReservationFull || type === RevenueType.ReservationPart) {
@@ -856,6 +985,9 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
     } else {
       this.loadContacts();
     }
+
+    // Reload properties with appropriate filter
+    this.loadProperties();
 
     this.cdr.markForCheck();
   }
