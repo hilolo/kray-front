@@ -243,7 +243,7 @@ export class LeasingListComponent implements OnInit, OnDestroy {
     // Check transactions that come with each lease
     leases.forEach(lease => {
       if (lease.transactions && lease.transactions.length > 0) {
-        // Find deposit transaction: Revenue type (0) with revenueType: 0 (Loyer) and status: 2 (Paid)
+        // Find deposit transaction: Revenue type (0) with revenueType: 1 (Caution) and status: 2 (Paid)
         const depositTransaction = lease.transactions.find(t => {
           // Check both 'type' and 'category' fields (backend uses 'category')
           const transactionType = t.type ?? (t as any).category;
@@ -251,11 +251,11 @@ export class LeasingListComponent implements OnInit, OnDestroy {
           const isRevenue = transactionType === TransactionType.Revenue || 
                           categoryValue === TransactionType.Revenue;
           const revenueTypeValue = t.revenueType;
-          const isLoyer = revenueTypeValue === RevenueType.Loyer;
+          const isCaution = revenueTypeValue === RevenueType.Caution;
           const statusValue = t.status;
           const isPaid = statusValue === TransactionStatus.Paid;
           
-          return isRevenue && isLoyer && isPaid;
+          return isRevenue && isCaution && isPaid;
         });
         
         if (depositTransaction) {
@@ -263,7 +263,7 @@ export class LeasingListComponent implements OnInit, OnDestroy {
         }
 
         // Find all rent transactions: Revenue type with revenueType: 0 (Loyer)
-        // Exclude the deposit transaction (which is also Loyer but shown separately)
+        // Exclude the deposit transaction (which is Caution, not Loyer)
         const depositId = depositTransaction?.id;
         const rentTransactions = lease.transactions.filter(t => {
           // Exclude deposit transaction
@@ -311,12 +311,12 @@ export class LeasingListComponent implements OnInit, OnDestroy {
     }
 
     // Navigate to add revenue page with pre-filled data
-    // User specified: revenueType: 0 (Loyer), status: 2 (Paid)
+    // Deposit should use revenueType: 1 (Caution), status: 2 (Paid)
     const queryParams = {
       leaseId: lease.id,
       propertyId: lease.propertyId,
       contactId: lease.contactId,
-      revenueType: RevenueType.Loyer, // revenueType: 0 (Loyer) as specified by user
+      revenueType: RevenueType.Caution, // revenueType: 1 (Caution) for deposits
       status: TransactionStatus.Paid, // Status 2 (Paid)
       depositPrice: lease.depositPrice || 0,
     };
