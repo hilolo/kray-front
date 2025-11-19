@@ -33,6 +33,7 @@ import { FormsModule } from '@angular/forms';
 import type { Property } from '@shared/models/property/property.model';
 import type { Contact } from '@shared/models/contact/contact.model';
 import { ContactType } from '@shared/models/contact/contact.model';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-transaction-list',
@@ -70,6 +71,7 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
   private readonly toastService = inject(ToastService);
   private readonly userService = inject(UserService);
   private readonly preferencesService = inject(RoutePreferencesService);
+  private readonly translateService = inject(TranslateService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroy$ = new Subject<void>();
 
@@ -849,13 +851,6 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
   formatDate(transaction: Transaction): string {
     const date = new Date(transaction.date);
     
-    // Format: "19 Nov 2025"
-    const englishDate = date.toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
-    
     // Get transaction type (handle both 'type' and 'category' fields)
     const transactionType = transaction.type ?? transaction.category;
     
@@ -865,23 +860,37 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
     
     // Only apply special format for Loyer transactions
     if (isLoyer) {
-      // French month names
-      const frenchMonths = [
-        'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-        'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+      // Use translation keys for month names
+      const monthKeys = [
+        'date.months.january',
+        'date.months.february',
+        'date.months.march',
+        'date.months.april',
+        'date.months.may',
+        'date.months.june',
+        'date.months.july',
+        'date.months.august',
+        'date.months.september',
+        'date.months.october',
+        'date.months.november',
+        'date.months.december'
       ];
       
-      // Get French month name and 2-digit year
       const monthIndex = date.getMonth();
-      const frenchMonth = frenchMonths[monthIndex];
-      const twoDigitYear = date.getFullYear().toString().slice(-2);
+      const monthKey = monthKeys[monthIndex];
+      const translatedMonth = this.translateService.instant(monthKey);
+      const year = date.getFullYear();
       
-      // Format: "19 Nov 2025 (Novembre 25)"
-      return `${englishDate} (${frenchMonth} ${twoDigitYear})`;
+      // Format: "Novembre 2025"
+      return `${translatedMonth} ${year}`;
     }
     
-    // For non-Loyer transactions, return simple format
-    return englishDate;
+    // For non-Loyer transactions, return simple format: "19 Nov 2025"
+    return date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
   }
 }
 

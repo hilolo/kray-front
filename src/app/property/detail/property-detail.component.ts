@@ -35,6 +35,7 @@ import type { Transaction } from '@shared/models/transaction/transaction.model';
 import { TransactionType, TransactionStatus, RevenueType, ExpenseType } from '@shared/models/transaction/transaction.model';
 import { ZardDatatableComponent, DatatableColumn } from '@shared/components/datatable/datatable.component';
 import type { ZardIcon } from '@shared/components/icon/icons';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-property-detail',
@@ -73,6 +74,7 @@ export class PropertyDetailComponent implements OnInit {
   private readonly propertyService = inject(PropertyService);
   private readonly toastService = inject(ToastService);
   private readonly reservationService = inject(ReservationService);
+  private readonly translateService = inject(TranslateService);
 
   // Property data
   readonly property = signal<Property | null>(null);
@@ -1431,30 +1433,42 @@ export class PropertyDetailComponent implements OnInit {
   formatTransactionDate(transaction: Transaction): string {
     const date = new Date(transaction.date);
     
-    const englishDate = date.toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
-    
     const transactionType = transaction.type ?? transaction.category;
     const isLoyer = (transactionType === TransactionType.Revenue && transaction.revenueType === RevenueType.Loyer) ||
                     (transactionType === TransactionType.Expense && transaction.expenseType === ExpenseType.Loyer);
     
     if (isLoyer) {
-      const frenchMonths = [
-        'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-        'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+      // Use translation keys for month names
+      const monthKeys = [
+        'date.months.january',
+        'date.months.february',
+        'date.months.march',
+        'date.months.april',
+        'date.months.may',
+        'date.months.june',
+        'date.months.july',
+        'date.months.august',
+        'date.months.september',
+        'date.months.october',
+        'date.months.november',
+        'date.months.december'
       ];
       
       const monthIndex = date.getMonth();
-      const frenchMonth = frenchMonths[monthIndex];
-      const twoDigitYear = date.getFullYear().toString().slice(-2);
+      const monthKey = monthKeys[monthIndex];
+      const translatedMonth = this.translateService.instant(monthKey);
+      const year = date.getFullYear();
       
-      return `${englishDate} (${frenchMonth} ${twoDigitYear})`;
+      // Format: "Novembre 2025"
+      return `${translatedMonth} ${year}`;
     }
     
-    return englishDate;
+    // For non-Loyer transactions, return simple format: "19 Nov 2025"
+    return date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
   }
 
   viewTransaction(transaction: Transaction): void {
