@@ -537,8 +537,17 @@ export class AddExpenseComponent implements OnInit, OnDestroy {
 
   updateExpenseType(value: string): void {
     const type = parseInt(value) as ExpenseType;
-    this.formData.update(data => ({ ...data, expenseType: type }));
 
+    // Reset contact fields when expense type changes
+    this.formData.update(data => ({
+      ...data,
+      expenseType: type,
+      contactId: '',
+      isOtherContact: false,
+      otherContactName: ''
+    }));
+
+    // Load appropriate contacts based on expense type
     if (type === ExpenseType.Maintenance) {
       this.loadContacts(ContactType.Service);
     } else {

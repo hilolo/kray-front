@@ -248,9 +248,9 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
     return this.isReservationType() && (!this.formData().reservationId || this.formData().reservationId === '');
   });
 
-  // Check if contact field should be disabled (when reservation is selected)
+  // Check if contact field should be disabled (for reservation types, contact auto-fills from reservation)
   readonly isContactDisabled = computed(() => {
-    return this.isReservationType() && !!this.formData().reservationId;
+    return this.isReservationType();
   });
 
   readonly totalAmount = computed(() => {
@@ -835,13 +835,22 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
 
   updateRevenueType(value: string): void {
     const type = parseInt(value) as RevenueType;
-    this.formData.update(data => ({ ...data, revenueType: type }));
+
+    // Reset contact fields when revenue type changes
+    this.formData.update(data => ({
+      ...data,
+      revenueType: type,
+      contactId: '',
+      isOtherContact: false,
+      otherContactName: ''
+    }));
 
     // Load reservations if reservation type is selected
     if (type === RevenueType.ReservationFull || type === RevenueType.ReservationPart) {
       this.loadReservations();
     }
 
+    // Load appropriate contacts based on revenue type
     if (type === RevenueType.Maintenance) {
       this.loadContacts(ContactType.Service);
     } else {
