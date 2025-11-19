@@ -839,29 +839,42 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
     return `${amount.toFixed(2)} MAD`;
   }
 
-  formatDate(dateString: string): string {
-    const date = new Date(dateString);
+  formatDate(transaction: Transaction): string {
+    const date = new Date(transaction.date);
     
-    // Format: "18 Nov 2025"
+    // Format: "19 Nov 2025"
     const englishDate = date.toLocaleDateString('en-GB', {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
     });
     
-    // French month names
-    const frenchMonths = [
-      'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-      'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
-    ];
+    // Get transaction type (handle both 'type' and 'category' fields)
+    const transactionType = transaction.type ?? transaction.category;
     
-    // Get French month name and 2-digit year
-    const monthIndex = date.getMonth();
-    const frenchMonth = frenchMonths[monthIndex];
-    const twoDigitYear = date.getFullYear().toString().slice(-2);
+    // Check if transaction is of type Loyer (Rent)
+    const isLoyer = (transactionType === TransactionType.Revenue && transaction.revenueType === RevenueType.Loyer) ||
+                    (transactionType === TransactionType.Expense && transaction.expenseType === ExpenseType.Loyer);
     
-    // Format: "18 Nov 2025 (Novembre 25)"
-    return `${englishDate} (${frenchMonth} ${twoDigitYear})`;
+    // Only apply special format for Loyer transactions
+    if (isLoyer) {
+      // French month names
+      const frenchMonths = [
+        'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+        'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+      ];
+      
+      // Get French month name and 2-digit year
+      const monthIndex = date.getMonth();
+      const frenchMonth = frenchMonths[monthIndex];
+      const twoDigitYear = date.getFullYear().toString().slice(-2);
+      
+      // Format: "19 Nov 2025 (Novembre 25)"
+      return `${englishDate} (${frenchMonth} ${twoDigitYear})`;
+    }
+    
+    // For non-Loyer transactions, return simple format
+    return englishDate;
   }
 }
 
