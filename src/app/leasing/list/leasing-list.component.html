@@ -223,7 +223,32 @@
 
         <!-- Rent Column Template -->
         <ng-template #rentCell let-value let-row="row">
-          <!-- Content will be added later -->
+          <div class="flex items-center gap-3">
+            <!-- Paid Count -->
+            <div class="flex items-center gap-1.5">
+              <z-icon zType="circle-check" zSize="sm" class="text-green-500" />
+              <span class="text-sm font-medium text-green-600 dark:text-green-400">
+                {{ getPaidRentCount(row.id) }}
+              </span>
+            </div>
+            <!-- Overdue Count -->
+            <div class="flex items-center gap-1.5">
+              <z-icon zType="triangle-alert" zSize="sm" class="text-red-500" />
+              <span class="text-sm font-medium text-red-600 dark:text-red-400">
+                {{ getOverdueRentCount(row.id) }}
+              </span>
+            </div>
+            <!-- View Situation Button -->
+            <z-button
+              zType="ghost"
+              zSize="icon"
+              class="h-7 w-7 text-muted-foreground hover:text-primary"
+              [title]="'View Situation'"
+              (click)="onViewRentSituation(row)"
+            >
+              <z-icon zType="eye" zSize="sm" />
+            </z-button>
+          </div>
         </ng-template>
 
         <!-- Payment Column Template -->

@@ -1,5 +1,5 @@
 import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, inject, OnDestroy, OnInit, signal, TemplateRef, viewChild } from '@angular/core';
-import { RouterLink, Router } from '@angular/router';
+import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { ZardPageComponent } from '../../page/page.component';
 import { ZardButtonComponent } from '@shared/components/button/button.component';
 import { ZardIconComponent } from '@shared/components/icon/icon.component';
@@ -63,6 +63,7 @@ import { ContactType } from '@shared/models/contact/contact.model';
 export class TransactionListComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly alertDialogService = inject(ZardAlertDialogService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly transactionService = inject(TransactionService);
   private readonly propertyService = inject(PropertyService);
   private readonly contactService = inject(ContactService);
@@ -267,17 +268,32 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
     // Get route key for preferences
     const routeKey = this.getRouteKey();
     
-    // Load page size preference
+    // Read query parameters first (they take precedence over preferences)
+    const queryParams = this.route.snapshot.queryParams;
+    
+    // Load page size preference (unless overridden by query params)
     const savedPageSize = this.preferencesService.getPageSize(routeKey);
     this.pageSize.set(savedPageSize);
     
-    // Load current page preference
+    // Load current page preference (unless overridden by query params)
     const savedCurrentPage = this.preferencesService.getPreference<number>(routeKey, 'currentPage', 1) ?? 1;
     this.currentPage.set(savedCurrentPage);
     
-    // Load selected type preference
+    // Load selected type preference (or from query params)
+    const queryType = queryParams['type'] !== undefined ? parseInt(queryParams['type']) : null;
     const savedSelectedType = this.preferencesService.getPreference<TransactionType>(routeKey, 'selectedType', TransactionType.Revenue) ?? TransactionType.Revenue;
-    this.selectedType.set(savedSelectedType);
+    this.selectedType.set(queryType !== null ? queryType : savedSelectedType);
+    
+    // Apply filters from query params
+    if (queryParams['propertyId']) {
+      this.selectedPropertyId.set(queryParams['propertyId']);
+    }
+    if (queryParams['contactId']) {
+      this.selectedContactId.set(queryParams['contactId']);
+    }
+    if (queryParams['status'] !== undefined) {
+      this.selectedStatus.set(parseInt(queryParams['status']));
+    }
     
     // Setup search debounce
     this.searchSubject.pipe(
@@ -377,6 +393,17 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
         }));
         this.propertyOptions.set(options);
         this.isLoadingProperties.set(false);
+        
+        // Set combobox value if query param exists
+        const queryParams = this.route.snapshot.queryParams;
+        if (queryParams['propertyId'] && this.propertyComboboxRef()) {
+          setTimeout(() => {
+            const combobox = this.propertyComboboxRef();
+            if (combobox) {
+              (combobox as any).writeValue(queryParams['propertyId']);
+            }
+          }, 0);
+        }
       },
       error: (error) => {
         console.error('Error loading properties:', error);
@@ -445,6 +472,17 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
         this.contactOptions.set(options);
         this.isLoadingContacts.set(false);
         this.cdr.markForCheck();
+        
+        // Set combobox value if query param exists
+        const queryParams = this.route.snapshot.queryParams;
+        if (queryParams['contactId'] && this.contactComboboxRef()) {
+          setTimeout(() => {
+            const combobox = this.contactComboboxRef();
+            if (combobox) {
+              (combobox as any).writeValue(queryParams['contactId']);
+            }
+          }, 0);
+        }
       },
       error: (error) => {
         console.error('Error loading contacts:', error);
@@ -514,6 +552,10 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
     this.currentPage.set(1);
     // Save current page to localStorage
     this.preferencesService.setPreference(this.getRouteKey(), 'currentPage', 1);
+    
+    // Remove query parameters from URL
+    this.router.navigate(['/transaction'], { queryParams: {} });
+    
     this.loadTransactions();
   }
 
@@ -744,6 +786,10 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
     }, 0);
     
     this.currentPage.set(1);
+    
+    // Remove query parameters from URL
+    this.router.navigate(['/transaction'], { queryParams: {} });
+    
     this.loadTransactions();
   }
 

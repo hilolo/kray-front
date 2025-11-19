@@ -112,6 +112,9 @@ export class LeasingListComponent implements OnInit, OnDestroy {
   readonly depositTransactions = signal<Map<string, Transaction>>(new Map());
   readonly isLoadingDeposits = signal(false);
 
+  // Rent transactions cache (leaseId -> Transaction[])
+  readonly rentTransactions = signal<Map<string, Transaction[]>>(new Map());
+
   // Template references for comboboxes (to reset internal values)
   readonly tenantComboboxRef = viewChild<ZardComboboxComponent>('tenantCombobox');
   readonly propertyComboboxRef = viewChild<ZardComboboxComponent>('propertyCombobox');
@@ -235,6 +238,7 @@ export class LeasingListComponent implements OnInit, OnDestroy {
   loadDepositTransactions(): void {
     const leases = this.filteredLeases();
     const depositMap = new Map<string, Transaction>();
+    const rentMap = new Map<string, Transaction[]>();
 
     // Check transactions that come with each lease
     leases.forEach(lease => {
@@ -257,10 +261,34 @@ export class LeasingListComponent implements OnInit, OnDestroy {
         if (depositTransaction) {
           depositMap.set(lease.id, depositTransaction);
         }
+
+        // Find all rent transactions: Revenue type with revenueType: 0 (Loyer)
+        // Exclude the deposit transaction (which is also Loyer but shown separately)
+        const depositId = depositTransaction?.id;
+        const rentTransactions = lease.transactions.filter(t => {
+          // Exclude deposit transaction
+          if (depositId && t.id === depositId) {
+            return false;
+          }
+          
+          const transactionType = t.type ?? (t as any).category;
+          const categoryValue = (t as any).category;
+          const isRevenue = transactionType === TransactionType.Revenue || 
+                          categoryValue === TransactionType.Revenue;
+          const revenueTypeValue = t.revenueType;
+          const isLoyer = revenueTypeValue === RevenueType.Loyer;
+          
+          return isRevenue && isLoyer;
+        });
+        
+        if (rentTransactions.length > 0) {
+          rentMap.set(lease.id, rentTransactions);
+        }
       }
     });
 
     this.depositTransactions.set(depositMap);
+    this.rentTransactions.set(rentMap);
     this.isLoadingDeposits.set(false);
   }
 
@@ -294,6 +322,35 @@ export class LeasingListComponent implements OnInit, OnDestroy {
     };
 
     this.router.navigate(['/transaction/add/revenue'], { queryParams });
+  }
+
+  // Get rent transactions for a lease
+  getRentTransactions(leaseId: string): Transaction[] {
+    return this.rentTransactions().get(leaseId) || [];
+  }
+
+  // Count paid rent transactions
+  getPaidRentCount(leaseId: string): number {
+    const transactions = this.getRentTransactions(leaseId);
+    return transactions.filter(t => t.status === TransactionStatus.Paid).length;
+  }
+
+  // Count overdue rent transactions
+  getOverdueRentCount(leaseId: string): number {
+    const transactions = this.getRentTransactions(leaseId);
+    return transactions.filter(t => t.status === TransactionStatus.Overdue).length;
+  }
+
+  // Navigate to transaction list with filters
+  onViewRentSituation(lease: Lease): void {
+    // Navigate to transaction list with Revenue tab selected and filters applied
+    const queryParams: any = {
+      type: TransactionType.Revenue, // Set to Revenue tab
+      propertyId: lease.propertyId,
+      contactId: lease.contactId,
+    };
+
+    this.router.navigate(['/transaction'], { queryParams });
   }
 
   ngOnDestroy(): void {
