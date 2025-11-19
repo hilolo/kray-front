@@ -1,6 +1,6 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, TemplateRef, ViewChild, ViewContainerRef, ViewEncapsulation, OnDestroy } from '@angular/core';
-import { Subject, takeUntil } from 'rxjs';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, TemplateRef, ViewChild, ViewContainerRef, ViewEncapsulation, OnDestroy, OnInit } from '@angular/core';
+import { Subject, takeUntil, filter } from 'rxjs';
+import { Router, RouterLink, RouterLinkActive, NavigationEnd, NavigationStart } from '@angular/router';
 import type { ClassValue } from 'clsx';
 import { LayoutModule } from '@shared/components/layout/layout.module';
 import { ZardIconComponent } from '@shared/components/icon/icon.component';
@@ -15,12 +15,13 @@ import { UserService } from '@shared/services/user.service';
 import { AuthService } from '@shared/services/auth.service';
 import { ZardAlertDialogService } from '@shared/components/alert-dialog/alert-dialog.service';
 import { DarkModeService } from '@shared/services/darkmode.service';
+import { ZardTooltipDirective } from '@shared/components/tooltip/tooltip';
 
 @Component({
   selector: 'app-sidebar',
   exportAs: 'appSidebar',
   standalone: true,
-  imports: [LayoutModule, ZardIconComponent, ZardDropdownModule, RouterLink, RouterLinkActive, TranslateModule, ZardAvatarComponent, ZardDividerComponent],
+  imports: [LayoutModule, ZardIconComponent, ZardDropdownModule, RouterLink, RouterLinkActive, TranslateModule, ZardAvatarComponent, ZardDividerComponent, ZardTooltipDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   templateUrl: './app-sidebar.component.html',
@@ -28,7 +29,7 @@ import { DarkModeService } from '@shared/services/darkmode.service';
     class: 'h-full',
   },
 })
-export class AppSidebarComponent implements OnDestroy {
+export class AppSidebarComponent implements OnInit, OnDestroy {
   private readonly sheetService = inject(ZardSheetService);
   private readonly userService = inject(UserService);
   private readonly router = inject(Router);
@@ -119,6 +120,34 @@ export class AppSidebarComponent implements OnDestroy {
       const collapsed = this.sidebarCollapsed();
       localStorage.setItem(this.storageKey, String(collapsed));
     });
+
+    // Hide all tooltips when navigation starts (immediate hide on click)
+    this.router.events
+      .pipe(
+        filter(event => event instanceof NavigationStart),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(() => {
+        // Hide immediately when navigation starts
+        this.hideAllTooltips();
+      });
+
+    // Also hide on navigation end as backup
+    this.router.events
+      .pipe(
+        filter(event => event instanceof NavigationEnd),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(() => {
+        // Hide immediately on navigation end
+        this.hideAllTooltips();
+        // Also hide after a short delay to catch any lingering tooltips
+        setTimeout(() => this.hideAllTooltips(), 50);
+      });
+  }
+
+  ngOnInit(): void {
+    // Tooltips will be hidden via click handlers and router navigation
   }
 
   private loadCollapsedState(): boolean {
@@ -159,6 +188,69 @@ export class AppSidebarComponent implements OnDestroy {
 
   getRouterLinkActiveOptions(route: string): { exact: boolean } {
     return route === '/' ? { exact: true } : { exact: false };
+  }
+
+  getItemLabel(item: { label: string; labelKey?: string }): string {
+    if (item.labelKey) {
+      return this.translateService.instant(item.labelKey);
+    }
+    return item.label;
+  }
+
+  hideAllTooltips(): void {
+    if (typeof document === 'undefined') return;
+
+    // Use requestAnimationFrame to ensure DOM is ready
+    requestAnimationFrame(() => {
+      // Method 1: Find and directly remove tooltip overlay elements
+      // Tooltips are rendered in CDK overlay containers with data-side attribute
+      const tooltipOverlays = document.querySelectorAll('[data-side]');
+      tooltipOverlays.forEach(overlay => {
+        const state = overlay.getAttribute('data-state');
+        if (state === 'opened') {
+          // Set state to closed immediately
+          overlay.setAttribute('data-state', 'closed');
+          // Remove the overlay element directly
+          overlay.remove();
+        }
+      });
+
+      // Method 2: Find CDK overlay containers and remove tooltip content
+      const cdkOverlayContainers = document.querySelectorAll('.cdk-overlay-container');
+      cdkOverlayContainers.forEach(container => {
+        const tooltipElements = container.querySelectorAll('[data-side]');
+        tooltipElements.forEach(element => {
+          element.remove();
+        });
+      });
+
+      // Method 3: Dispatch mouseleave events on all tooltip triggers as backup
+      const tooltipTriggers = document.querySelectorAll('[zTooltip]');
+      tooltipTriggers.forEach(element => {
+        const mouseLeaveEvent = new MouseEvent('mouseleave', {
+          bubbles: true,
+          cancelable: true,
+        });
+        element.dispatchEvent(mouseLeaveEvent);
+      });
+    });
+  }
+
+  onMenuItemClick(event: Event): void {
+    // Hide tooltip immediately when clicking
+    const target = event.currentTarget as HTMLElement;
+    if (target) {
+      // Dispatch mouseleave event
+      const mouseLeaveEvent = new MouseEvent('mouseleave', {
+        bubbles: true,
+        cancelable: true,
+      });
+      target.dispatchEvent(mouseLeaveEvent);
+    }
+    
+    // Also hide all tooltips immediately (no delay)
+    this.hideAllTooltips();
+    this.closeMobileSidebar();
   }
 
 
