@@ -202,22 +202,30 @@
           @if (hasDeposit(row.id)) {
             @if (getDepositTransaction(row.id)) {
               <div class="flex items-center gap-2">
-                <z-icon zType="circle-check" zSize="sm" class="text-green-500" />
-                <span class="font-semibold text-base">{{ formatCurrency(getDepositTransaction(row.id)!.totalAmount) }}</span>
+                <z-icon 
+                  [zType]="getDepositStatusIcon(getDepositTransaction(row.id)!.status)" 
+                  zSize="sm" 
+                  [class]="getDepositStatusColorClass(getDepositTransaction(row.id)!.status)" 
+                />
+                <span class="font-semibold text-base" [class]="getDepositStatusColorClass(getDepositTransaction(row.id)!.status)">
+                  {{ formatCurrency(getDepositTransaction(row.id)!.totalAmount) }}
+                </span>
               </div>
             } @else {
               <span class="text-sm text-muted-foreground">No deposit data</span>
             }
           } @else {
-            <z-button
-              zType="outline"
-              zSize="sm"
-              class="gap-2 text-primary border-primary hover:bg-primary hover:text-primary-foreground"
-              (click)="onCreateDeposit(row)"
-            >
-              <z-icon zType="plus" zSize="sm" />
-              <span>Create Deposit</span>
-            </z-button>
+            @if (getStatusColor(row.status) === 'default') {
+              <z-button
+                zType="outline"
+                zSize="sm"
+                class="gap-2 text-primary border-primary hover:bg-primary hover:text-primary-foreground"
+                (click)="onCreateDeposit(row)"
+              >
+                <z-icon zType="plus" zSize="sm" />
+                <span>Create Deposit</span>
+              </z-button>
+            }
           }
         </ng-template>
 

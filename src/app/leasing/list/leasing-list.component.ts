@@ -6,6 +6,7 @@ import { ZardInputDirective } from '@shared/components/input/input.directive';
 import { ZardBadgeComponent } from '@shared/components/badge/badge.component';
 import { ZardCheckboxComponent } from '@shared/components/checkbox/checkbox.component';
 import { ZardIconComponent } from '@shared/components/icon/icon.component';
+import type { ZardIcon } from '@shared/components/icon/icons';
 import { ZardAvatarComponent } from '@shared/components/avatar/avatar.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
@@ -243,7 +244,7 @@ export class LeasingListComponent implements OnInit, OnDestroy {
     // Check transactions that come with each lease
     leases.forEach(lease => {
       if (lease.transactions && lease.transactions.length > 0) {
-        // Find deposit transaction: Revenue type (0) with revenueType: 1 (Caution) and status: 2 (Paid)
+        // Find deposit transaction: Revenue type (0) with revenueType: 1 (Caution) - any status
         const depositTransaction = lease.transactions.find(t => {
           // Check both 'type' and 'category' fields (backend uses 'category')
           const transactionType = t.type ?? (t as any).category;
@@ -252,10 +253,8 @@ export class LeasingListComponent implements OnInit, OnDestroy {
                           categoryValue === TransactionType.Revenue;
           const revenueTypeValue = t.revenueType;
           const isCaution = revenueTypeValue === RevenueType.Caution;
-          const statusValue = t.status;
-          const isPaid = statusValue === TransactionStatus.Paid;
           
-          return isRevenue && isCaution && isPaid;
+          return isRevenue && isCaution;
         });
         
         if (depositTransaction) {
@@ -300,6 +299,34 @@ export class LeasingListComponent implements OnInit, OnDestroy {
   // Check if deposit exists for a lease
   hasDeposit(leaseId: string): boolean {
     return this.depositTransactions().has(leaseId);
+  }
+
+  // Get deposit status icon
+  getDepositStatusIcon(status: TransactionStatus): ZardIcon {
+    switch (status) {
+      case TransactionStatus.Pending:
+        return 'clock';
+      case TransactionStatus.Overdue:
+        return 'triangle-alert';
+      case TransactionStatus.Paid:
+        return 'circle-check';
+      default:
+        return 'circle';
+    }
+  }
+
+  // Get deposit status color class
+  getDepositStatusColorClass(status: TransactionStatus): string {
+    switch (status) {
+      case TransactionStatus.Pending:
+        return 'text-yellow-600 dark:text-yellow-500';
+      case TransactionStatus.Overdue:
+        return 'text-red-600 dark:text-red-500';
+      case TransactionStatus.Paid:
+        return 'text-green-600 dark:text-green-500';
+      default:
+        return 'text-muted-foreground';
+    }
   }
 
   // Create deposit transaction
