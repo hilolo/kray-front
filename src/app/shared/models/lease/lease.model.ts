@@ -80,6 +80,9 @@ export interface Lease {
   attachments: Attachment[];
   attachmentCount: number;
   
+  // Transactions (included in lease response)
+  transactions?: import('../transaction/transaction.model').Transaction[];
+  
   // Status
   status: LeasingStatus;
   isArchived: boolean;

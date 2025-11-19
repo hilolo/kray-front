@@ -66,7 +66,8 @@ export interface Attachment {
  */
 export interface Transaction {
   id: string;
-  type: TransactionType;
+  type?: TransactionType; // May be missing if backend uses 'category'
+  category?: TransactionType; // Backend uses 'category' instead of 'type'
   revenueType?: RevenueType;
   expenseType?: ExpenseType;
   status: TransactionStatus;

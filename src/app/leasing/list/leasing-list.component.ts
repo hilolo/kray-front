@@ -34,6 +34,9 @@ import { ContactType } from '@shared/models/contact/contact.model';
 import type { Property } from '@shared/models/property/property.model';
 import { PropertyCategory } from '@shared/models/property/property.model';
 import { PropertyPricePipe } from '@shared/pipes/property-price.pipe';
+import { TransactionService } from '@shared/services/transaction.service';
+import { TransactionType, RevenueType, TransactionStatus, type Transaction } from '@shared/models/transaction/transaction.model';
+import type { TransactionListRequest } from '@shared/models/transaction/transaction-list-request.model';
 
 @Component({
   selector: 'app-leasing-list',
@@ -74,6 +77,7 @@ export class LeasingListComponent implements OnInit, OnDestroy {
   private readonly userService = inject(UserService);
   private readonly contactService = inject(ContactService);
   private readonly propertyService = inject(PropertyService);
+  private readonly transactionService = inject(TransactionService);
   private readonly destroy$ = new Subject<void>();
   private readonly searchInputSubject = new Subject<string>();
 
@@ -103,6 +107,10 @@ export class LeasingListComponent implements OnInit, OnDestroy {
   readonly properties = signal<Property[]>([]);
   readonly propertyOptions = signal<ZardComboboxOption[]>([]);
   readonly isLoadingProperties = signal(false);
+
+  // Deposit transactions cache (leaseId -> Transaction)
+  readonly depositTransactions = signal<Map<string, Transaction>>(new Map());
+  readonly isLoadingDeposits = signal(false);
 
   // Template references for comboboxes (to reset internal values)
   readonly tenantComboboxRef = viewChild<ZardComboboxComponent>('tenantCombobox');
@@ -223,6 +231,71 @@ export class LeasingListComponent implements OnInit, OnDestroy {
     this.loadLeases();
   }
 
+  // Load deposit transactions from lease data (transactions are included in lease response)
+  loadDepositTransactions(): void {
+    const leases = this.filteredLeases();
+    const depositMap = new Map<string, Transaction>();
+
+    // Check transactions that come with each lease
+    leases.forEach(lease => {
+      if (lease.transactions && lease.transactions.length > 0) {
+        // Find deposit transaction: Revenue type (0) with revenueType: 0 (Loyer) and status: 2 (Paid)
+        const depositTransaction = lease.transactions.find(t => {
+          // Check both 'type' and 'category' fields (backend uses 'category')
+          const transactionType = t.type ?? (t as any).category;
+          const categoryValue = (t as any).category;
+          const isRevenue = transactionType === TransactionType.Revenue || 
+                          categoryValue === TransactionType.Revenue;
+          const revenueTypeValue = t.revenueType;
+          const isLoyer = revenueTypeValue === RevenueType.Loyer;
+          const statusValue = t.status;
+          const isPaid = statusValue === TransactionStatus.Paid;
+          
+          return isRevenue && isLoyer && isPaid;
+        });
+        
+        if (depositTransaction) {
+          depositMap.set(lease.id, depositTransaction);
+        }
+      }
+    });
+
+    this.depositTransactions.set(depositMap);
+    this.isLoadingDeposits.set(false);
+  }
+
+  // Get deposit transaction for a lease
+  getDepositTransaction(leaseId: string): Transaction | undefined {
+    return this.depositTransactions().get(leaseId);
+  }
+
+  // Check if deposit exists for a lease
+  hasDeposit(leaseId: string): boolean {
+    return this.depositTransactions().has(leaseId);
+  }
+
+  // Create deposit transaction
+  onCreateDeposit(lease: Lease): void {
+    const companyId = this.userService.getCurrentUser()?.companyId;
+    if (!companyId) {
+      this.toastService.error('Company ID not found');
+      return;
+    }
+
+    // Navigate to add revenue page with pre-filled data
+    // User specified: revenueType: 0 (Loyer), status: 2 (Paid)
+    const queryParams = {
+      leaseId: lease.id,
+      propertyId: lease.propertyId,
+      contactId: lease.contactId,
+      revenueType: RevenueType.Loyer, // revenueType: 0 (Loyer) as specified by user
+      status: TransactionStatus.Paid, // Status 2 (Paid)
+      depositPrice: lease.depositPrice || 0,
+    };
+
+    this.router.navigate(['/transaction/add/revenue'], { queryParams });
+  }
+
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
@@ -255,6 +328,8 @@ export class LeasingListComponent implements OnInit, OnDestroy {
         this.totalPages.set(response.totalPages);
         this.totalItems.set(response.totalItems);
         this.isLoading.set(false);
+        // Load deposit transactions after leases are loaded
+        this.loadDepositTransactions();
       },
       error: (error) => {
         console.error('Error loading leases:', error);

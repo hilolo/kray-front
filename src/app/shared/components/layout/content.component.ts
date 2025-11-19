@@ -72,21 +72,26 @@ export class ContentComponent {
   readonly breadcrumbs = signal<BreadcrumbItem[]>([]);
 
   constructor() {
-    // Initialize breadcrumbs
-    this.updateBreadcrumbs(this.router.url);
+    // Initialize breadcrumbs (without query params)
+    const urlWithoutQuery = this.router.url.split('?')[0];
+    this.updateBreadcrumbs(urlWithoutQuery);
 
     // Update breadcrumbs on route change
     this.router.events
       .pipe(filter((event) => event instanceof NavigationEnd))
       .subscribe((event) => {
         if (event instanceof NavigationEnd) {
-          this.updateBreadcrumbs(event.urlAfterRedirects);
+          // Remove query parameters from URL for breadcrumb display
+          const urlWithoutQuery = event.urlAfterRedirects.split('?')[0];
+          this.updateBreadcrumbs(urlWithoutQuery);
         }
       });
   }
 
   private updateBreadcrumbs(url: string): void {
-    const segments = url.split('/').filter((segment) => segment !== '');
+    // Remove query parameters from URL for breadcrumb display
+    const urlWithoutQuery = url.split('?')[0];
+    const segments = urlWithoutQuery.split('/').filter((segment) => segment !== '');
     const breadcrumbItems: BreadcrumbItem[] = [];
 
     // Always add home as first breadcrumb
