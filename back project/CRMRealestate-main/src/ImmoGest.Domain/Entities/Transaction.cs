@@ -62,6 +62,9 @@ namespace ImmoGest.Domain.Entities
         // For contacts not in the system
         public string OtherContactName { get; set; }
 
+        public Reservation Reservation { get; set; }
+        public Guid? ReservationId { get; set; }
+
         public Company Company { get; set; }
         public Guid CompanyId { get; set; }
 

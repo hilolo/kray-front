@@ -106,6 +106,9 @@ namespace ImmoGest.Infrastructure.Configuration
                 .HasMaxLength(500)
                 .IsRequired(false);
 
+            builder.Property(t => t.ReservationId)
+                .IsRequired(false);
+
             builder.Property(t => t.CompanyId)
                 .IsRequired();
 
@@ -129,6 +132,12 @@ namespace ImmoGest.Infrastructure.Configuration
             builder.HasOne(t => t.Lease)
                 .WithMany(l => l.Transactions)
                 .HasForeignKey(t => t.LeaseId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .IsRequired(false);
+
+            builder.HasOne(t => t.Reservation)
+                .WithMany()
+                .HasForeignKey(t => t.ReservationId)
                 .OnDelete(DeleteBehavior.SetNull)
                 .IsRequired(false);
 

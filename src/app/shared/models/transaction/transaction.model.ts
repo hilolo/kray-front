@@ -82,6 +82,7 @@ export interface Transaction {
   contactId?: string; // From (revenue) or Pay to (expense)
   contactName?: string;
   otherContactName?: string; // For contacts not in the system
+  reservationId?: string;
   payments: Payment[];
   totalAmount: number;
   depositPrice?: number;

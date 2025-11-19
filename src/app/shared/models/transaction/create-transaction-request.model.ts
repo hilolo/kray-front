@@ -14,6 +14,7 @@ export interface CreateTransactionRequest {
   leaseId?: string | null; // Optional - can be null if not provided
   contactId?: string | null; // From (revenue) or Pay to (expense) - Optional if otherContactName is provided
   otherContactName?: string | null; // For contacts not in the system
+  reservationId?: string | null; // Optional - for reservation transactions
   date: Date | string; // Transaction date
   payments: Payment[];
   depositPrice?: number;

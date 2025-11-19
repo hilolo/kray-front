@@ -22,6 +22,7 @@ import type { Attachment } from '@shared/models/transaction/transaction.model';
 import { TransactionService } from '@shared/services/transaction.service';
 import { PropertyService } from '@shared/services/property.service';
 import { LeaseService } from '@shared/services/lease.service';
+import { ReservationService } from '@shared/services/reservation.service';
 import { ContactService } from '@shared/services/contact.service';
 import { ToastService } from '@shared/services/toast.service';
 import { UserService } from '@shared/services/user.service';
@@ -82,6 +83,7 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
   private readonly transactionService = inject(TransactionService);
   private readonly propertyService = inject(PropertyService);
   private readonly leaseService = inject(LeaseService);
+  private readonly reservationService = inject(ReservationService);
   private readonly contactService = inject(ContactService);
   private readonly toastService = inject(ToastService);
   private readonly userService = inject(UserService);
@@ -112,6 +114,7 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
     contactId: '',
     isOtherContact: false,
     otherContactName: '',
+    reservationId: '',
     date: new Date(),
     description: '',
   });
@@ -120,12 +123,15 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
   readonly isSaving = signal(false);
   readonly isLoadingProperties = signal(false);
   readonly isLoadingLeases = signal(false);
+  readonly isLoadingReservations = signal(false);
   readonly isLoadingContacts = signal(false);
 
   readonly properties = signal<Property[]>([]);
   readonly propertyOptions = signal<ZardComboboxOption[]>([]);
   readonly leases = signal<Lease[]>([]);
   readonly leaseOptions = signal<ZardComboboxOption[]>([]);
+  readonly reservations = signal<any[]>([]);
+  readonly reservationOptions = signal<ZardComboboxOption[]>([]);
   readonly contacts = signal<Contact[]>([]);
   readonly contactOptions = signal<ZardComboboxOption[]>([]);
 
@@ -161,7 +167,13 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
     { value: RevenueType.Autre.toString(), label: 'Autre' },
   ];
 
-  // Form validation - contact not required for type "Autre"
+  // Check if revenue type is reservation-related
+  readonly isReservationType = computed(() => {
+    const type = this.formData().revenueType;
+    return type === RevenueType.ReservationFull || type === RevenueType.ReservationPart;
+  });
+
+  // Form validation - contact not required for type "Autre", reservation required for reservation types
   readonly isFormValid = computed(() => {
     const data = this.formData();
     const payments = this.payments();
@@ -171,8 +183,12 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
       : (data.isOtherContact
         ? (data.otherContactName && data.otherContactName.trim() !== '')
         : (data.contactId !== ''));
+    const hasValidReservation = this.isReservationType()
+      ? (data.reservationId && data.reservationId !== '')
+      : true;
     return (
       hasValidContact &&
+      hasValidReservation &&
       data.date !== null &&
       payments.length > 0 &&
       payments.every(p => p.amount > 0)
@@ -216,6 +232,25 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
     } else {
       return !data.contactId || data.contactId === '';
     }
+  });
+
+  readonly reservationIdError = computed(() => {
+    if (!this.formSubmitted()) return '';
+    const data = this.formData();
+    if (this.isReservationType() && (!data.reservationId || data.reservationId === '')) {
+      return 'Reservation is required for this revenue type';
+    }
+    return '';
+  });
+
+  readonly reservationIdHasError = computed(() => {
+    if (!this.formSubmitted()) return false;
+    return this.isReservationType() && (!this.formData().reservationId || this.formData().reservationId === '');
+  });
+
+  // Check if contact field should be disabled (when reservation is selected)
+  readonly isContactDisabled = computed(() => {
+    return this.isReservationType() && !!this.formData().reservationId;
   });
 
   readonly totalAmount = computed(() => {
@@ -566,6 +601,46 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
     }, 0);
   }
 
+  loadReservations(): void {
+    this.isLoadingReservations.set(true);
+    const companyId = this.userService.getCurrentUser()?.companyId;
+    const request = {
+      currentPage: 1,
+      pageSize: 1000,
+      ignore: true,
+      companyId: companyId,
+      isArchived: false,
+    };
+
+    setTimeout(() => {
+      this.reservationService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
+        next: (response) => {
+          this.reservations.set(response.result);
+          const options: ZardComboboxOption[] = response.result.map((reservation) => {
+            // Format: {tenant name} - {property ref} - {start date} to {end date} - {price} MAD
+            const tenantName = reservation.contactName || 'Unknown';
+            const propertyRef = reservation.propertyIdentifier || reservation.propertyName || 'Unknown Property';
+            const startDate = new Date(reservation.startDate).toLocaleDateString();
+            const endDate = new Date(reservation.endDate).toLocaleDateString();
+            const price = reservation.totalAmount.toFixed(2);
+            return {
+              value: reservation.id,
+              label: `${tenantName} - ${propertyRef} - ${startDate} to ${endDate} - ${price} MAD`,
+            };
+          });
+          this.reservationOptions.set(options);
+          this.isLoadingReservations.set(false);
+          this.cdr.markForCheck();
+        },
+        error: (error) => {
+          console.error('Error loading reservations:', error);
+          this.isLoadingReservations.set(false);
+          this.cdr.markForCheck();
+        },
+      });
+    }, 0);
+  }
+
   updatePropertyId(value: string): void {
     this.formData.update(data => ({ ...data, propertyId: value || '' }));
     if (value) {
@@ -606,6 +681,26 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
+  updateReservationId(value: string): void {
+    this.formData.update(data => ({ ...data, reservationId: value || '' }));
+
+    // Auto-fill contact from reservation
+    if (value) {
+      const reservation = this.reservations().find(r => r.id === value);
+      if (reservation && reservation.contactId) {
+        // Set the contact to the reservation's tenant
+        this.formData.update(data => ({
+          ...data,
+          contactId: reservation.contactId,
+          isOtherContact: false,
+          otherContactName: ''
+        }));
+      }
+    }
+
+    this.cdr.markForCheck();
+  }
+
   loadTransaction(id: string): void {
     this.isLoading.set(true);
     this.transactionService.getById(id).pipe(takeUntil(this.destroy$)).subscribe({
@@ -619,6 +714,7 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
           contactId: transaction.contactId || '',
           isOtherContact: hasOtherContact,
           otherContactName: transaction.otherContactName || '',
+          reservationId: transaction.reservationId || '',
           date: transaction.date ? new Date(transaction.date) : new Date(),
           description: transaction.description || '',
         });
@@ -741,6 +837,11 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
     const type = parseInt(value) as RevenueType;
     this.formData.update(data => ({ ...data, revenueType: type }));
 
+    // Load reservations if reservation type is selected
+    if (type === RevenueType.ReservationFull || type === RevenueType.ReservationPart) {
+      this.loadReservations();
+    }
+
     if (type === RevenueType.Maintenance) {
       this.loadContacts(ContactType.Service);
     } else {
@@ -861,6 +962,7 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
           leaseId: data.leaseId && data.leaseId.trim() !== '' ? data.leaseId : null,
           contactId: useOtherContact ? null : (data.contactId || null),
           otherContactName: useOtherContact ? (data.otherContactName && data.otherContactName.trim() !== '' ? data.otherContactName : null) : null,
+          reservationId: data.reservationId && data.reservationId.trim() !== '' ? data.reservationId : null,
           date: normalizedDate || data.date,
           payments: this.payments(),
           description: data.description,
@@ -904,6 +1006,7 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
           leaseId: data.leaseId && data.leaseId.trim() !== '' ? data.leaseId : null,
           contactId: useOtherContact ? null : (data.contactId || null),
           otherContactName: useOtherContact ? (data.otherContactName && data.otherContactName.trim() !== '' ? data.otherContactName : null) : null,
+          reservationId: data.reservationId && data.reservationId.trim() !== '' ? data.reservationId : null,
           date: normalizedDate || data.date,
           payments: this.payments(),
           description: data.description,
