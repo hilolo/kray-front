@@ -149,6 +149,7 @@ export class AddExpenseComponent implements OnInit, OnDestroy {
   // Expense type options
   readonly expenseTypeOptions: ZardComboboxOption[] = [
     { value: ExpenseType.Loyer.toString(), label: 'Loyer' },
+    { value: ExpenseType.Caution.toString(), label: 'Caution' },
     { value: ExpenseType.Maintenance.toString(), label: 'Maintenance' },
     { value: ExpenseType.Chargee.toString(), label: 'Chargee' },
     { value: ExpenseType.Autre.toString(), label: 'Autre' },
@@ -159,9 +160,9 @@ export class AddExpenseComponent implements OnInit, OnDestroy {
     const data = this.formData();
     const payments = this.payments();
     const isAutreType = data.expenseType === ExpenseType.Autre;
-    const hasValidContact = isAutreType 
+    const hasValidContact = isAutreType
       ? true // Contact not required for "Autre" type
-      : (data.isOtherContact 
+      : (data.isOtherContact
         ? (data.otherContactName && data.otherContactName.trim() !== '')
         : (data.contactId !== ''));
     return (
@@ -316,32 +317,25 @@ export class AddExpenseComponent implements OnInit, OnDestroy {
     }, 0);
   }
 
-  loadContacts(): void {
+  loadContacts(type?: ContactType): void {
     this.isLoadingContacts.set(true);
-    
-    // Load contacts of all types (Owner, Tenant, Service) and combine them
-    const contactTypes = [ContactType.Owner, ContactType.Tenant, ContactType.Service];
-    const requests = contactTypes.map(type => 
-      this.contactService.list({
-        currentPage: 1,
-        pageSize: 1000,
-        ignore: true,
-        type: type,
-      }).pipe(takeUntil(this.destroy$))
-    );
+
+    const request: any = {
+      currentPage: 1,
+      pageSize: 1000,
+      ignore: true,
+      isArchived: false,
+    };
+
+    if (type !== undefined) {
+      request.type = type;
+    }
 
     setTimeout(() => {
-      // Combine all requests
-      forkJoin(requests).subscribe({
-        next: (responses) => {
-          // Combine all contacts from all types
-          const allContacts: Contact[] = [];
-          responses.forEach(response => {
-            allContacts.push(...response.result);
-          });
-          
-          this.contacts.set(allContacts);
-          const options: ZardComboboxOption[] = allContacts.map((contact) => {
+      this.contactService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
+        next: (response) => {
+          this.contacts.set(response.result);
+          const options: ZardComboboxOption[] = response.result.map((contact) => {
             let name = '';
             if (contact.isACompany) {
               name = contact.companyName || '';
@@ -395,8 +389,8 @@ export class AddExpenseComponent implements OnInit, OnDestroy {
   }
 
   updateIsOtherContact(value: boolean): void {
-    this.formData.update(data => ({ 
-      ...data, 
+    this.formData.update(data => ({
+      ...data,
       isOtherContact: value,
       contactId: value ? '' : data.contactId,
       otherContactName: value ? data.otherContactName : '',
@@ -450,9 +444,20 @@ export class AddExpenseComponent implements OnInit, OnDestroy {
         this.filesToDelete.set(new Set());
 
         // Load properties and contacts first, then set selected values
-        // Load all contacts with a single call (like in list component)
         const companyId = this.userService.getCurrentUser()?.companyId;
-        
+
+        // Load contacts based on expense type
+        const contactRequest: any = {
+          currentPage: 1,
+          pageSize: 1000,
+          ignore: true,
+          isArchived: false,
+        };
+
+        if (transaction.expenseType === ExpenseType.Maintenance) {
+          contactRequest.type = ContactType.Service;
+        }
+
         forkJoin({
           properties: this.propertyService.list({
             currentPage: 1,
@@ -461,13 +466,7 @@ export class AddExpenseComponent implements OnInit, OnDestroy {
             companyId: companyId,
             isArchived: false,
           }),
-          contacts: this.contactService.list({
-            currentPage: 1,
-            pageSize: 10000,
-            ignore: true,
-            type: ContactType.Tenant, // Default type, but ignore:true should return all typesq
-            isArchived: false,
-          }),
+          contacts: this.contactService.list(contactRequest),
         }).pipe(takeUntil(this.destroy$)).subscribe({
           next: ({ properties, contacts }) => {
             // Set properties
@@ -494,10 +493,10 @@ export class AddExpenseComponent implements OnInit, OnDestroy {
             }
 
             // Filter contacts by companyId if available (contacts that belong to current company, not shared)
-            const filteredContacts = companyId 
+            const filteredContacts = companyId
               ? (contacts.result || []).filter(contact => contact.companyId === companyId)
               : (contacts.result || []);
-            
+
             this.contacts.set(filteredContacts);
             const contactOptions: ZardComboboxOption[] = filteredContacts.map((contact) => {
               let name = '';
@@ -537,7 +536,15 @@ export class AddExpenseComponent implements OnInit, OnDestroy {
   }
 
   updateExpenseType(value: string): void {
-    this.formData.update(data => ({ ...data, expenseType: parseInt(value) as ExpenseType }));
+    const type = parseInt(value) as ExpenseType;
+    this.formData.update(data => ({ ...data, expenseType: type }));
+
+    if (type === ExpenseType.Maintenance) {
+      this.loadContacts(ContactType.Service);
+    } else {
+      this.loadContacts();
+    }
+
     this.cdr.markForCheck();
   }
 
@@ -595,7 +602,7 @@ export class AddExpenseComponent implements OnInit, OnDestroy {
 
     try {
       const data = this.formData();
-      
+
       // Convert uploaded files to attachments
       let attachments: AttachmentInput[] | undefined;
       const uploadedFiles = this.uploadedFiles();
@@ -613,14 +620,14 @@ export class AddExpenseComponent implements OnInit, OnDestroy {
       }
 
       const transactionId = this.transactionId();
-      
+
       if (transactionId) {
         // Update existing transaction
         // Normalize date to UTC midnight to avoid timezone shifts
         const normalizedDate = normalizeDateToUTCMidnight(data.date);
         const isAutreType = data.expenseType === ExpenseType.Autre;
         const useOtherContact = data.isOtherContact || isAutreType;
-        
+
         // Convert uploaded files to AttachmentInput (async)
         const filePromises = this.uploadedFiles().map((file) => {
           return new Promise<AttachmentInput>((resolve) => {
@@ -746,7 +753,7 @@ export class AddExpenseComponent implements OnInit, OnDestroy {
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        
+
         // Validate file size (max 10MB per file)
         if (file.size > 10 * 1024 * 1024) {
           this.toastService.error(`File "${file.name}" is too large. Maximum size is 10MB.`);
@@ -823,7 +830,7 @@ export class AddExpenseComponent implements OnInit, OnDestroy {
   openFile(url: string, name: string, size: number): void {
     // Check if this is an uploaded file (no URL yet)
     const uploadedFile = this.uploadedFiles().find(f => f.name === name);
-    
+
     if (uploadedFile && uploadedFile.type.startsWith('image/')) {
       // Create data URL for uploaded image
       const reader = new FileReader();
@@ -832,7 +839,7 @@ export class AddExpenseComponent implements OnInit, OnDestroy {
         this.fileViewerUrl.set(dataUrl);
         this.fileViewerName.set(name);
         this.fileViewerSize.set(size);
-        
+
         // Set up image navigation
         const allImages = this.allImages();
         const uploadedImages = this.uploadedFiles()
@@ -844,7 +851,7 @@ export class AddExpenseComponent implements OnInit, OnDestroy {
             return null;
           })
           .filter((img): img is ImageItem => img !== null);
-        
+
         const combinedImages = [...allImages, ...uploadedImages];
         const currentIndex = combinedImages.findIndex(img => img.url === dataUrl || img.name === name);
         this.fileViewerCurrentIndex.set(currentIndex >= 0 ? currentIndex : 0);
@@ -854,12 +861,12 @@ export class AddExpenseComponent implements OnInit, OnDestroy {
       reader.readAsDataURL(uploadedFile.file);
       return;
     }
-    
+
     // For existing files with URLs
     this.fileViewerUrl.set(url);
     this.fileViewerName.set(name);
     this.fileViewerSize.set(size);
-    
+
     // If it's an image, set up image navigation
     if (getFileViewerType(url) === 'image') {
       const allImages = this.allImages();
@@ -870,7 +877,7 @@ export class AddExpenseComponent implements OnInit, OnDestroy {
       this.fileViewerImages.set([]);
       this.fileViewerCurrentIndex.set(0);
     }
-    
+
     this.fileViewerOpen.set(true);
   }
 
@@ -906,7 +913,7 @@ export class AddExpenseComponent implements OnInit, OnDestroy {
 
   readonly allImages = computed(() => {
     const images: ImageItem[] = [];
-    
+
     // Add existing attachments (not marked for deletion) that are images
     const toDelete = this.filesToDelete();
     this.existingAttachments().forEach(att => {
@@ -918,7 +925,7 @@ export class AddExpenseComponent implements OnInit, OnDestroy {
         });
       }
     });
-    
+
     return images;
   });
 

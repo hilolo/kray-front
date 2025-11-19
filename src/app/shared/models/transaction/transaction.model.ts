@@ -24,9 +24,10 @@ export enum RevenueType {
  */
 export enum ExpenseType {
   Loyer = 0,
-  Maintenance = 1,
-  Chargee = 2,
-  Autre = 3,
+  Caution = 1,
+  Maintenance = 2,
+  Chargee = 3,
+  Autre = 4,
 }
 
 /**
@@ -79,7 +80,7 @@ export interface Transaction {
   leaseId?: string;
   leaseTenantName?: string;
   contactId?: string; // From (revenue) or Pay to (expense)
-  contactName?: string;                                           
+  contactName?: string;
   otherContactName?: string; // For contacts not in the system
   payments: Payment[];
   totalAmount: number;

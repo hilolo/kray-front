@@ -91,7 +91,7 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
   readonly TransactionType = TransactionType;
   readonly RevenueType = RevenueType;
   readonly TransactionStatus = TransactionStatus;
-  
+
   // Status from query params (for deposit transactions)
   readonly initialStatus = signal<TransactionStatus | null>(null);
 
@@ -166,9 +166,9 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
     const data = this.formData();
     const payments = this.payments();
     const isAutreType = data.revenueType === RevenueType.Autre;
-    const hasValidContact = isAutreType 
+    const hasValidContact = isAutreType
       ? true // Contact not required for "Autre" type
-      : (data.isOtherContact 
+      : (data.isOtherContact
         ? (data.otherContactName && data.otherContactName.trim() !== '')
         : (data.contactId !== ''));
     return (
@@ -235,7 +235,7 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
       // Check for query parameters to pre-fill form (e.g., from leasing list)
       const queryParams = this.route.snapshot.queryParams;
       console.log('[AddRevenue] Query params received:', queryParams);
-      
+
       if (queryParams['leaseId'] || queryParams['propertyId'] || queryParams['contactId']) {
         // Load properties and contacts first, then pre-fill
         requestAnimationFrame(() => {
@@ -257,9 +257,9 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
   loadPropertiesAndContacts(callback?: () => void): void {
     this.isLoadingProperties.set(true);
     this.isLoadingContacts.set(true);
-    
+
     const companyId = this.userService.getCurrentUser()?.companyId;
-    
+
     const propertiesRequest = {
       currentPage: 1,
       pageSize: 1000,
@@ -283,7 +283,7 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
       next: ({ properties, contacts }) => {
         console.log('[AddRevenue] Properties loaded:', properties.result.length);
         console.log('[AddRevenue] Contacts loaded:', contacts.result.length);
-        
+
         // Set properties
         this.properties.set(properties.result);
         const propertyOptions: ZardComboboxOption[] = properties.result.map((property) => {
@@ -300,10 +300,10 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
         this.isLoadingProperties.set(false);
 
         // Filter contacts by companyId if available
-        const filteredContacts = companyId 
+        const filteredContacts = companyId
           ? (contacts.result || []).filter(contact => contact.companyId === companyId)
           : (contacts.result || []);
-        
+
         this.contacts.set(filteredContacts);
         const contactOptions: ZardComboboxOption[] = filteredContacts.map((contact) => {
           let name = '';
@@ -322,9 +322,9 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
         });
         this.contactOptions.set(contactOptions);
         this.isLoadingContacts.set(false);
-        
+
         this.cdr.markForCheck();
-        
+
         // Call callback after data is loaded
         if (callback) {
           setTimeout(() => callback(), 100);
@@ -341,10 +341,10 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
 
   preFillFromQueryParams(queryParams: any): void {
     console.log('[AddRevenue] Pre-filling form with query params:', queryParams);
-    
+
     // Build updated form data object
     let updatedFormData = { ...this.formData() };
-    
+
     // Pre-fill property if provided
     if (queryParams['propertyId']) {
       console.log('[AddRevenue] Setting propertyId:', queryParams['propertyId']);
@@ -355,30 +355,30 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
       }
       updatedFormData.propertyId = queryParams['propertyId'];
     }
-    
+
     // Pre-fill contact if provided
     if (queryParams['contactId']) {
       console.log('[AddRevenue] Setting contactId:', queryParams['contactId']);
       updatedFormData.contactId = queryParams['contactId'];
       updatedFormData.isOtherContact = false;
     }
-    
+
     // Pre-fill revenue type if provided
     if (queryParams['revenueType'] !== undefined) {
       const revenueType = parseInt(queryParams['revenueType'], 10);
       console.log('[AddRevenue] Setting revenueType:', revenueType);
       updatedFormData.revenueType = revenueType as RevenueType;
     }
-    
+
     // Set all form data at once
     this.formData.set(updatedFormData);
     console.log('[AddRevenue] Form data after initial set:', this.formData());
-    
+
     // Load leases if propertyId was set
     if (queryParams['propertyId']) {
       console.log('[AddRevenue] Loading leases for property:', queryParams['propertyId']);
       this.loadLeases();
-      
+
       // Pre-fill lease after leases are loaded
       if (queryParams['leaseId']) {
         console.log('[AddRevenue] Will set leaseId after leases load:', queryParams['leaseId']);
@@ -395,7 +395,7 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
             this.cdr.markForCheck();
           }
         }, 100);
-        
+
         // Timeout after 3 seconds
         setTimeout(() => {
           clearInterval(checkLeases);
@@ -409,7 +409,7 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
         leaseId: queryParams['leaseId'],
       }));
     }
-    
+
     // Pre-fill deposit price if provided
     if (queryParams['depositPrice'] !== undefined) {
       const depositPrice = parseFloat(queryParams['depositPrice']);
@@ -420,14 +420,14 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
         ]);
       }
     }
-    
+
     // Pre-fill status if provided (will be set after transaction creation)
     if (queryParams['status'] !== undefined) {
       const status = parseInt(queryParams['status'], 10);
       console.log('[AddRevenue] Setting initialStatus:', status);
       this.initialStatus.set(status as TransactionStatus);
     }
-    
+
     console.log('[AddRevenue] Final form data:', this.formData());
     console.log('[AddRevenue] Final payments:', this.payments());
     console.log('[AddRevenue] Property options count:', this.propertyOptions().length);
@@ -520,32 +520,25 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
     }, 0);
   }
 
-  loadContacts(): void {
+  loadContacts(type?: ContactType): void {
     this.isLoadingContacts.set(true);
-    
-    // Load contacts of all types (Owner, Tenant, Service) and combine them
-    const contactTypes = [ContactType.Owner, ContactType.Tenant, ContactType.Service];
-    const requests = contactTypes.map(type => 
-      this.contactService.list({
-        currentPage: 1,
-        pageSize: 1000,
-        ignore: true,
-        type: type,
-      }).pipe(takeUntil(this.destroy$))
-    );
+
+    const request: any = {
+      currentPage: 1,
+      pageSize: 1000,
+      ignore: true,
+      isArchived: false,
+    };
+
+    if (type !== undefined) {
+      request.type = type;
+    }
 
     setTimeout(() => {
-      // Combine all requests
-      forkJoin(requests).subscribe({
-        next: (responses) => {
-          // Combine all contacts from all types
-          const allContacts: Contact[] = [];
-          responses.forEach(response => {
-            allContacts.push(...response.result);
-          });
-          
-          this.contacts.set(allContacts);
-          const options: ZardComboboxOption[] = allContacts.map((contact) => {
+      this.contactService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
+        next: (response) => {
+          this.contacts.set(response.result);
+          const options: ZardComboboxOption[] = response.result.map((contact) => {
             let name = '';
             if (contact.isACompany) {
               name = contact.companyName || '';
@@ -599,8 +592,8 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
   }
 
   updateIsOtherContact(value: boolean): void {
-    this.formData.update(data => ({ 
-      ...data, 
+    this.formData.update(data => ({
+      ...data,
       isOtherContact: value,
       contactId: value ? '' : data.contactId,
       otherContactName: value ? data.otherContactName : '',
@@ -654,7 +647,18 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
         this.filesToDelete.set(new Set());
 
         // Load properties and contacts first, then set selected values
-        // Load all contacts with a single call (like in list component)
+
+        const contactRequest: any = {
+          currentPage: 1,
+          pageSize: 1000,
+          ignore: true,
+          isArchived: false,
+        };
+
+        if (transaction.revenueType === RevenueType.Maintenance) {
+          contactRequest.type = ContactType.Service;
+        }
+
         forkJoin({
           properties: this.propertyService.list({
             currentPage: 1,
@@ -663,13 +667,7 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
             companyId: this.userService.getCurrentUser()?.companyId,
             isArchived: false,
           }),
-          contacts: this.contactService.list({
-            currentPage: 1,
-            pageSize: 10000,
-            ignore: true,
-            type: ContactType.Tenant, // Default type, but ignore:true should return all types
-            isArchived: false,
-          }),
+          contacts: this.contactService.list(contactRequest),
         }).pipe(takeUntil(this.destroy$)).subscribe({
           next: ({ properties, contacts }) => {
             // Set properties
@@ -697,10 +695,10 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
 
             // Filter contacts by companyId if available (contacts that belong to current company, not shared)
             const companyId = this.userService.getCurrentUser()?.companyId;
-            const filteredContacts = companyId 
+            const filteredContacts = companyId
               ? (contacts.result || []).filter(contact => contact.companyId === companyId)
               : (contacts.result || []);
-            
+
             this.contacts.set(filteredContacts);
             const contactOptions: ZardComboboxOption[] = filteredContacts.map((contact) => {
               let name = '';
@@ -740,7 +738,15 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
   }
 
   updateRevenueType(value: string): void {
-    this.formData.update(data => ({ ...data, revenueType: parseInt(value) as RevenueType }));
+    const type = parseInt(value) as RevenueType;
+    this.formData.update(data => ({ ...data, revenueType: type }));
+
+    if (type === RevenueType.Maintenance) {
+      this.loadContacts(ContactType.Service);
+    } else {
+      this.loadContacts();
+    }
+
     this.cdr.markForCheck();
   }
 
@@ -798,7 +804,7 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
 
     try {
       const data = this.formData();
-      
+
       // Convert uploaded files to attachments
       let attachments: AttachmentInput[] | undefined;
       const uploadedFiles = this.uploadedFiles();
@@ -816,7 +822,7 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
       }
 
       const transactionId = this.transactionId();
-      
+
       if (transactionId) {
         // Update existing transaction
         // Normalize date to UTC midnight to avoid timezone shifts
@@ -967,7 +973,7 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        
+
         // Validate file size (max 10MB per file)
         if (file.size > 10 * 1024 * 1024) {
           this.toastService.error(`File "${file.name}" is too large. Maximum size is 10MB.`);
@@ -1060,7 +1066,7 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
   openFile(url: string, name: string, size: number): void {
     // Check if this is an uploaded file (no URL yet)
     const uploadedFile = this.uploadedFiles().find(f => f.name === name);
-    
+
     if (uploadedFile && uploadedFile.type.startsWith('image/')) {
       // Create data URL for uploaded image
       const reader = new FileReader();
@@ -1069,7 +1075,7 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
         this.fileViewerUrl.set(dataUrl);
         this.fileViewerName.set(name);
         this.fileViewerSize.set(size);
-        
+
         // Set up image navigation
         const allImages = this.allImages();
         const uploadedImages = this.uploadedFiles()
@@ -1081,7 +1087,7 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
             return null;
           })
           .filter((img): img is ImageItem => img !== null);
-        
+
         const combinedImages = [...allImages, ...uploadedImages];
         const currentIndex = combinedImages.findIndex(img => img.url === dataUrl || img.name === name);
         this.fileViewerCurrentIndex.set(currentIndex >= 0 ? currentIndex : 0);
@@ -1091,12 +1097,12 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
       reader.readAsDataURL(uploadedFile.file);
       return;
     }
-    
+
     // For existing files with URLs
     this.fileViewerUrl.set(url);
     this.fileViewerName.set(name);
     this.fileViewerSize.set(size);
-    
+
     // If it's an image, set up image navigation
     if (getFileViewerType(url) === 'image') {
       const allImages = this.allImages();
@@ -1107,7 +1113,7 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
       this.fileViewerImages.set([]);
       this.fileViewerCurrentIndex.set(0);
     }
-    
+
     this.fileViewerOpen.set(true);
   }
 
@@ -1143,7 +1149,7 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
 
   readonly allImages = computed(() => {
     const images: ImageItem[] = [];
-    
+
     // Add existing attachments (not marked for deletion) that are images
     const toDelete = this.filesToDelete();
     this.existingAttachments().forEach(att => {
@@ -1155,7 +1161,7 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
         });
       }
     });
-    
+
     return images;
   });
 
