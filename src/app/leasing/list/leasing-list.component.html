@@ -191,10 +191,20 @@
               <z-icon zType="check" zSize="sm" class="text-muted-foreground" />
               <span class="text-sm">{{ formatDate(row.tenancyEnd) }}</span>
             </div>
-            @if (row.tenancyDuration) {
-              <span class="text-xs text-muted-foreground mt-1">{{ row.tenancyDuration }} months</span>
+            @if (getTenancyDuration(row)) {
+              <span class="text-xs text-muted-foreground mt-1">{{ getTenancyDuration(row) }} months</span>
             }
           </div>
+        </ng-template>
+
+        <!-- Deposit Column Template -->
+        <ng-template #depositCell let-value let-row="row">
+          <!-- Content will be added later -->
+        </ng-template>
+
+        <!-- Rent Column Template -->
+        <ng-template #rentCell let-value let-row="row">
+          <!-- Content will be added later -->
         </ng-template>
 
         <!-- Payment Column Template -->
@@ -202,9 +212,7 @@
           <div class="flex flex-col gap-1">
             <span class="font-semibold text-base">{{ row.rentPrice | propertyPrice:row.paymentType }}</span>
             <span class="text-sm text-muted-foreground">{{ getPaymentMethodLabel(row.paymentMethod) }}</span>
-            @if (row.paymentDate) {
-              <span class="text-xs text-muted-foreground">Day {{ row.paymentDate }} of month</span>
-            }
+           
           </div>
         </ng-template>
 
@@ -331,10 +339,10 @@
                     {{ formatDate(row.tenancyStart) }} - {{ formatDate(row.tenancyEnd) }}
                   </span>
                 </div>
-                @if (row.tenancyDuration) {
+                @if (getTenancyDuration(row)) {
                   <div class="flex items-center gap-2 text-xs ml-6">
                     <z-icon zType="clock" zSize="sm" class="text-muted-foreground/70 flex-shrink-0 w-3 h-3" />
-                    <span class="text-muted-foreground/70">{{ row.tenancyDuration }} months</span>
+                    <span class="text-muted-foreground/70">{{ getTenancyDuration(row) }} months</span>
                   </div>
                 }
               </div>

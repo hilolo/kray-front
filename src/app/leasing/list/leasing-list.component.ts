@@ -119,6 +119,8 @@ export class LeasingListComponent implements OnInit, OnDestroy {
   readonly propertyCell = viewChild<TemplateRef<any>>('propertyCell');
   readonly tenantCell = viewChild<TemplateRef<any>>('tenantCell');
   readonly datesCell = viewChild<TemplateRef<any>>('datesCell');
+  readonly depositCell = viewChild<TemplateRef<any>>('depositCell');
+  readonly rentCell = viewChild<TemplateRef<any>>('rentCell');
   readonly paymentCell = viewChild<TemplateRef<any>>('paymentCell');
   readonly statusCell = viewChild<TemplateRef<any>>('statusCell');
   readonly actionsCell = viewChild<TemplateRef<any>>('actionsCell');
@@ -140,6 +142,18 @@ export class LeasingListComponent implements OnInit, OnDestroy {
       label: 'Tenancy Period',
       sortable: true,
       cellTemplate: this.datesCell(),
+    },
+    {
+      key: 'deposit',
+      label: 'Deposit',
+      sortable: true,
+      cellTemplate: this.depositCell(),
+    },
+    {
+      key: 'rent',
+      label: 'Rent',
+      sortable: true,
+      cellTemplate: this.rentCell(),
     },
     {
       key: 'payment',
@@ -674,6 +688,42 @@ export class LeasingListComponent implements OnInit, OnDestroy {
       style: 'currency',
       currency: 'USD',
     }).format(amount);
+  }
+
+  getTenancyDuration(lease: Lease): number | null {
+    // If tenancyDuration is already provided, use it
+    if (lease.tenancyDuration !== null && lease.tenancyDuration !== undefined) {
+      return lease.tenancyDuration;
+    }
+    
+    // Otherwise, calculate from dates
+    if (!lease.tenancyStart || !lease.tenancyEnd) {
+      return null;
+    }
+    
+    try {
+      const startDate = new Date(lease.tenancyStart);
+      const endDate = new Date(lease.tenancyEnd);
+      
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        return null;
+      }
+      
+      // Calculate difference in months
+      const years = endDate.getFullYear() - startDate.getFullYear();
+      const months = endDate.getMonth() - startDate.getMonth();
+      const totalMonths = years * 12 + months;
+      
+      // Adjust for days - if end date is later in the month, count as full month
+      if (endDate.getDate() >= startDate.getDate()) {
+        return totalMonths;
+      } else {
+        return Math.max(0, totalMonths - 1);
+      }
+    } catch (error) {
+      console.error('Error calculating tenancy duration:', error);
+      return null;
+    }
   }
 
   getTenantInitials(lease: Lease): string {
