@@ -469,7 +469,7 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
   }
 
   onStatusFilterChange(statusValue: string): void {
-    if (statusValue === '') {
+    if (statusValue === '' || statusValue === 'all') {
       this.selectedStatus.set(null);
     } else {
       const status = parseInt(statusValue) as TransactionStatus;

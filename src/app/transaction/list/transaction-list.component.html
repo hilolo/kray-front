@@ -132,8 +132,8 @@
               <!-- Status filter -->
               <div class="w-full sm:w-[200px]">
                 <z-select
-                  [zValue]="selectedStatus() !== null ? selectedStatus()!.toString() : ''"
-                  [zLabel]="selectedStatus() !== null ? getStatusLabel(selectedStatus()!) : 'Select status...'"
+                  [zValue]="selectedStatus() !== null ? selectedStatus()!.toString() : 'all'"
+                  [zLabel]="selectedStatus() !== null ? getStatusLabel(selectedStatus()!) : 'All Statuses'"
                   [zPlaceholder]="'Select status...'"
                   [zSize]="'default'"
                   class="w-full"
@@ -147,7 +147,7 @@
                       [class]="getStatusIconColorClass(selectedStatus()!)" 
                     />
                   }
-                  <z-select-item [zValue]="''">
+                  <z-select-item [zValue]="'all'">
                     <span>All Statuses</span>
                   </z-select-item>
                   @for (option of statusOptions; track option.value) {
