@@ -42,7 +42,6 @@ export interface DatatableColumn<T = any> {
     ZardTableModule,
     ZardEmptyComponent,
     ZardCheckboxComponent,
-    ZardIconComponent,
     ZardCardComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
