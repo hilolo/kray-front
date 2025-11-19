@@ -54,13 +54,16 @@
     "keys": "Keys",
     "banks": "Banks",
     "transactions": "Transactions",
+    "tasks": "Tasks",
     "buildings": "Buildings",
     "aiChat": "AI Chat",
     "fileManager": "File Manager"
   },
   "sidebar": {
     "expand": "Expand sidebar",
-    "collapse": "Collapse sidebar"
+    "collapse": "Collapse sidebar",
+    "essential": "The Essential",
+    "more": "The Plus"
   },
   "page": {
     "dashboard": {

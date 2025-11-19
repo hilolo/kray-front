@@ -16,8 +16,6 @@ import { ZardAccordionItemComponent } from '@shared/components/accordion/accordi
 import { AuthService } from '@shared/services/auth.service';
 import { UserService } from '@shared/services/user.service';
 import { ZardAlertDialogService } from '@shared/components/alert-dialog/alert-dialog.service';
-import { ZardDialogService } from '@shared/components/dialog/dialog.service';
-import { PermissionsDialogComponent } from '@shared/components/permissions-dialog/permissions-dialog.component';
 import { Subject, takeUntil } from 'rxjs';
 import { ToastService } from '@shared/services/toast.service';
 import type { TeamMember } from '@shared/models/user/team-member.model';
@@ -26,8 +24,11 @@ import { SettingsService } from '@shared/services/settings.service';
 import type { Settings } from '@shared/models/settings/settings.model';
 import type { Category } from '@shared/models/settings/category.model';
 import { ZardBadgeComponent } from '@shared/components/badge/badge.component';
+import { ZardCheckboxComponent } from '@shared/components/checkbox/checkbox.component';
+import type { UserPermissions } from '@shared/models/user/user-permissions.model';
+import { MODULES } from '@shared/constants/modules.constant';
 
-type SettingsSection = 'account' | 'security' | 'plan-billing' | 'team' | 'application';
+type SettingsSection = 'account' | 'security' | 'team' | 'application';
 
 @Component({
   selector: 'app-settings',
@@ -49,6 +50,7 @@ type SettingsSection = 'account' | 'security' | 'plan-billing' | 'team' | 'appli
     ZardAccordionComponent,
     ZardAccordionItemComponent,
     ZardBadgeComponent,
+    ZardCheckboxComponent,
   ],
   templateUrl: './settings.component.html',
 })
@@ -56,7 +58,6 @@ export class SettingsComponent implements OnInit, OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly userService = inject(UserService);
   private readonly alertDialogService = inject(ZardAlertDialogService);
-  private readonly dialogService = inject(ZardDialogService);
   private readonly viewContainerRef = inject(ViewContainerRef);
   private readonly toastService = inject(ToastService);
   private readonly themeService = inject(ThemeService);
@@ -142,8 +143,16 @@ export class SettingsComponent implements OnInit, OnDestroy {
   isUpdatingPassword = signal(false);
 
   // Team Members
-                                      teamMembers = signal<TeamMember[]>([]);
+  teamMembers = signal<TeamMember[]>([]);
   isLoadingTeamMembers = signal(false);
+
+  // Permissions state for each user
+  userPermissions = signal<Map<string, UserPermissions | null>>(new Map());
+  isLoadingPermissions = signal<Map<string, boolean>>(new Map());
+  isSavingPermissions = signal<Map<string, boolean>>(new Map());
+  editingUserId = signal<string | null>(null);
+
+  readonly modules = MODULES;
 
   // Application Settings
   appSettings = {
@@ -185,6 +194,15 @@ export class SettingsComponent implements OnInit, OnDestroy {
     const roleLower = role?.toLowerCase() || '';
     if (roleLower.includes('admin')) return 'user';
     return 'users'; // default icon for User role
+  }
+
+  /**
+   * Check if a team member is the current user
+   */
+  isCurrentUser(member: TeamMember): boolean {
+    const user = this.currentUser();
+    if (!user || !user.id) return false;
+    return user.id === member.id;
   }
 
   // Computed signals for reactive user and company data
@@ -278,36 +296,190 @@ export class SettingsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Open permissions dialog for a team member
+   * Toggle permissions editing for a team member
    */
-  openPermissionsDialog(member: TeamMember): void {
-    const dialogRef = this.dialogService.create({
-      zContent: PermissionsDialogComponent,
-      zTitle: `Permissions - ${member.name || member.email}`,
-      zWidth: '800px',
-      zCustomClasses: 'max-w-[calc(100vw-2rem)] sm:max-w-[800px]',
-      zData: { userId: member.id, currentRole: member.role },
-      zViewContainerRef: this.viewContainerRef,
-      zOkText: 'Save',
-      zCancelText: 'Cancel',
-      zOnOk: (instance: PermissionsDialogComponent) => {
-        // Save permissions and role
-        instance.savePermissions()
-          .pipe(takeUntil(this.destroy$))
-          .subscribe({
-            next: () => {
-              dialogRef.close();
-              // Reload team members to reflect changes
-              this.loadTeamMembers();
-            },
-            error: () => {
-              // Error is already handled in the component
-              // Don't close dialog on error
-            }
-          });
-        return false; // Prevent default close behavior
-      },
+  togglePermissions(member: TeamMember): void {
+    const currentEditing = this.editingUserId();
+    if (currentEditing === member.id) {
+      // Close permissions
+      this.editingUserId.set(null);
+    } else {
+      // Open permissions for this user
+      this.editingUserId.set(member.id);
+      // Load permissions if not already loaded
+      if (!this.userPermissions().has(member.id)) {
+        this.loadUserPermissions(member.id);
+      }
+    }
+  }
+
+  /**
+   * Load permissions for a user
+   */
+  loadUserPermissions(userId: string): void {
+    const loadingMap = new Map(this.isLoadingPermissions());
+    loadingMap.set(userId, true);
+    this.isLoadingPermissions.set(loadingMap);
+
+    this.userService.getUserPermissions(userId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (permissions) => {
+          const permsMap = new Map(this.userPermissions());
+          permsMap.set(userId, permissions);
+          this.userPermissions.set(permsMap);
+          
+          const loadingMap = new Map(this.isLoadingPermissions());
+          loadingMap.set(userId, false);
+          this.isLoadingPermissions.set(loadingMap);
+        },
+        error: (error) => {
+          console.error('Error loading permissions:', error);
+          const loadingMap = new Map(this.isLoadingPermissions());
+          loadingMap.set(userId, false);
+          this.isLoadingPermissions.set(loadingMap);
+          this.toastService.error('Failed to load permissions');
+        }
+      });
+  }
+
+  /**
+   * Get permissions for a user
+   */
+  getUserPermissions(userId: string): UserPermissions | null {
+    return this.userPermissions().get(userId) || null;
+  }
+
+  /**
+   * Check if permissions are loading for a user
+   */
+  isUserPermissionsLoading(userId: string): boolean {
+    return this.isLoadingPermissions().get(userId) || false;
+  }
+
+  /**
+   * Check if permissions are saving for a user
+   */
+  isUserPermissionsSaving(userId: string): boolean {
+    return this.isSavingPermissions().get(userId) || false;
+  }
+
+  /**
+   * Get permission value for a module
+   */
+  getPermission(userId: string, moduleKey: string, permission: 'view' | 'edit' | 'delete'): boolean {
+    const perms = this.getUserPermissions(userId);
+    if (!perms?.permissions) return false;
+    const modulePerms = perms.permissions[moduleKey as keyof typeof perms.permissions];
+    return modulePerms?.[permission] ?? false;
+  }
+
+  /**
+   * Get all permissions for a module
+   */
+  getAllPermission(userId: string, moduleKey: string): boolean {
+    const perms = this.getUserPermissions(userId);
+    if (!perms?.permissions) return false;
+    const modulePerms = perms.permissions[moduleKey as keyof typeof perms.permissions];
+    return modulePerms?.view && modulePerms?.edit && modulePerms?.delete || false;
+  }
+
+  /**
+   * Update permission value
+   */
+  updatePermission(userId: string, moduleKey: string, permission: 'view' | 'edit' | 'delete', value: boolean): void {
+    const perms = this.getUserPermissions(userId);
+    if (!perms) return;
+
+    const updatedPerms = { ...perms };
+    if (!updatedPerms.permissions[moduleKey as keyof typeof updatedPerms.permissions]) {
+      updatedPerms.permissions[moduleKey as keyof typeof updatedPerms.permissions] = {
+        view: false,
+        edit: false,
+        delete: false,
+      };
+    }
+
+    const modulePerms = updatedPerms.permissions[moduleKey as keyof typeof updatedPerms.permissions];
+    if (modulePerms) {
+      modulePerms[permission] = value;
+    }
+
+    const permsMap = new Map(this.userPermissions());
+    permsMap.set(userId, updatedPerms);
+    this.userPermissions.set(permsMap);
+  }
+
+  /**
+   * Update all permissions for a module
+   */
+  updateAllPermission(userId: string, moduleKey: string, value: boolean): void {
+    this.updatePermission(userId, moduleKey, 'view', value);
+    this.updatePermission(userId, moduleKey, 'edit', value);
+    this.updatePermission(userId, moduleKey, 'delete', value);
+  }
+
+  /**
+   * Toggle select all permissions
+   */
+  toggleSelectAll(userId: string): void {
+    const perms = this.getUserPermissions(userId);
+    if (!perms) return;
+
+    const allSelected = this.modules.every(module => 
+      this.getPermission(userId, module.key, 'view') && 
+      this.getPermission(userId, module.key, 'edit') && 
+      this.getPermission(userId, module.key, 'delete')
+    );
+
+    const newValue = !allSelected;
+
+    this.modules.forEach(module => {
+      this.updateAllPermission(userId, module.key, newValue);
     });
+  }
+
+  /**
+   * Save permissions for a user
+   */
+  saveUserPermissions(userId: string): void {
+    const perms = this.getUserPermissions(userId);
+    if (!perms) {
+      this.toastService.error('No permissions to save');
+      return;
+    }
+
+    const savingMap = new Map(this.isSavingPermissions());
+    savingMap.set(userId, true);
+    this.isSavingPermissions.set(savingMap);
+
+    this.userService.updateUserPermissions(userId, perms.permissions)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (updatedPermissions) => {
+          const permsMap = new Map(this.userPermissions());
+          permsMap.set(userId, updatedPermissions);
+          this.userPermissions.set(permsMap);
+          
+          const savingMap = new Map(this.isSavingPermissions());
+          savingMap.set(userId, false);
+          this.isSavingPermissions.set(savingMap);
+          
+          // Close the permissions section after successful save
+          this.editingUserId.set(null);
+          
+          this.toastService.success('Permissions updated successfully');
+          // Reload team members to reflect any role changes
+          this.loadTeamMembers();
+        },
+        error: (error) => {
+          console.error('Error saving permissions:', error);
+          const savingMap = new Map(this.isSavingPermissions());
+          savingMap.set(userId, false);
+          this.isSavingPermissions.set(savingMap);
+          // Error toast is handled by API interceptor
+        }
+      });
   }
 
 

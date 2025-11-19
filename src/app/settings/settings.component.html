@@ -33,19 +33,6 @@
 
           <button
             type="button"
-            (click)="activeSection.set('plan-billing')"
-            [class]="activeSection() === 'plan-billing' ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'"
-            class="w-full flex items-center gap-2 px-3 py-2 rounded-md transition-colors text-left"
-          >
-            <z-icon zType="credit-card" zSize="default" />
-            <div class="flex-1 min-w-0">
-              <div class="text-sm font-medium truncate">Plan & Billing</div>
-              <div class="text-xs opacity-80 line-clamp-2">Manage your subscription plan, payment method and billing information</div>
-            </div>
-          </button>
-
-          <button
-            type="button"
             (click)="activeSection.set('team')"
             [class]="activeSection() === 'team' ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'"
             class="w-full flex items-center gap-2 px-3 py-2 rounded-md transition-colors text-left"
@@ -393,43 +380,154 @@
                   <div class="text-muted-foreground">No team members found</div>
                 </div>
               } @else {
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="space-y-4">
                   @for (member of teamMembers(); track member.id) {
-                    <div class="flex items-center justify-between p-4 rounded-lg border bg-card">
-                      <div class="flex items-center gap-4">
-                        <z-avatar 
-                          zSize="lg" 
-                          zType="default" 
-                          [zImage]="member.avatar ? { url: member.avatar, fallback: (member.name || member.email).charAt(0).toUpperCase() } : { fallback: (member.name || member.email).charAt(0).toUpperCase() }" 
-                        />
-                        <div>
-                          <div class="font-semibold">{{ member.name || 'No name' }}</div>
-                          <div class="text-sm text-muted-foreground">{{ member.email }}</div>
-                          @if (member.phone) {
-                            <div class="flex items-center gap-2 mt-1">
-                              <z-icon zType="smartphone" zSize="sm" class="text-muted-foreground" />
-                              <span class="text-xs text-muted-foreground">{{ member.phone }}</span>
+                    <z-card>
+                      <div class="space-y-4">
+                        <!-- User Card Header -->
+                        <div class="flex items-center justify-between">
+                          <div class="flex items-center gap-4">
+                            <z-avatar 
+                              zSize="lg" 
+                              zType="default" 
+                              [zImage]="member.avatar ? { url: member.avatar, fallback: (member.name || member.email).charAt(0).toUpperCase() } : { fallback: (member.name || member.email).charAt(0).toUpperCase() }" 
+                            />
+                            <div>
+                              <div class="font-semibold">{{ member.name || 'No name' }}</div>
+                              <div class="text-sm text-muted-foreground">{{ member.email }}</div>
+                              @if (member.phone) {
+                                <div class="flex items-center gap-2 mt-1">
+                                  <z-icon zType="smartphone" zSize="sm" class="text-muted-foreground" />
+                                  <span class="text-xs text-muted-foreground">{{ member.phone }}</span>
+                                </div>
+                              }
                             </div>
-                          }
-                        </div>
-                      </div>
-                      <div class="flex items-center gap-2">
-                        <div class="relative flex-shrink-0">
-                          <z-icon [zType]="getRoleIcon(member.role || '')" zSize="sm" class="text-muted-foreground" />
-                          <div class="absolute -top-1 -right-1 size-3 rounded-full bg-primary border-2 border-background flex items-center justify-center">
-                            <svg class="size-1.5 text-primary-foreground" fill="currentColor" viewBox="0 0 20 20">
-                              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
+                          </div>
+                          <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-2">
+                              <div class="relative flex-shrink-0">
+                                <z-icon [zType]="getRoleIcon(member.role || '')" zSize="sm" class="text-muted-foreground" />
+                                <div class="absolute -top-1 -right-1 size-3 rounded-full bg-primary border-2 border-background flex items-center justify-center">
+                                  <svg class="size-1.5 text-primary-foreground" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                  </svg>
+                                </div>
+                              </div>
+                              <span class="text-sm font-medium">{{ member.role || 'No role' }}</span>
+                            </div>
+                            @if (!isCurrentUser(member)) {
+                              <z-button 
+                                zType="outline" 
+                                zSize="sm"
+                                (click)="togglePermissions(member)"
+                              >
+                                @if (editingUserId() === member.id) {
+                                  <z-icon zType="x" zSize="sm" />
+                                  Close
+                                } @else {
+                                  <z-icon zType="pencil" zSize="sm" />
+                                  Modify
+                                }
+                              </z-button>
+                            }
                           </div>
                         </div>
-                        <span class="text-sm font-medium">{{ member.role || 'No role' }}</span>
+
+                        <!-- Permissions Section -->
+                        @if (editingUserId() === member.id) {
+                          <div class="border-t pt-4 space-y-4">
+                            <!-- User Name and Email Display -->
+                            <div class="space-y-1">
+                              <div class="text-sm font-semibold">User: {{ member.name || 'No name' }}</div>
+                              <div class="text-sm text-muted-foreground">Email: {{ member.email }}</div>
+                            </div>
+
+                            @if (isUserPermissionsLoading(member.id)) {
+                              <div class="flex items-center justify-center p-8">
+                                <div class="text-muted-foreground">Loading permissions...</div>
+                              </div>
+                            } @else if (getUserPermissions(member.id)) {
+                              <div class="space-y-4">
+                                <!-- Select All Permissions Header -->
+                                <div class="flex items-center gap-3 p-4 rounded-lg border bg-card cursor-pointer hover:bg-accent transition-colors" (click)="toggleSelectAll(member.id)">
+                                  <div class="w-8 h-8 rounded bg-primary flex items-center justify-center flex-shrink-0">
+                                    <z-icon zType="check" zSize="sm" class="text-primary-foreground" />
+                                  </div>
+                                  <span class="font-medium">Select All Permissions</span>
+                                </div>
+
+                                <!-- Permissions List -->
+                                <div class="space-y-1">
+                                  <div class="text-sm font-semibold mb-3">Permissions:</div>
+                                  <div class="border rounded-lg divide-y">
+                                    @for (module of modules; track module.key) {
+                                      <div class="flex items-center gap-4 p-3 hover:bg-accent/50 transition-colors">
+                                        <!-- Module Name with Icon -->
+                                        <div class="flex items-center gap-2 min-w-[200px] flex-shrink-0">
+                                          <z-icon [zType]="$any(module.icon)" zSize="sm" class="text-muted-foreground flex-shrink-0" />
+                                          <span class="text-sm font-medium">{{ module.label }}</span>
+                                        </div>
+                                        
+                                        <!-- Permissions Checkboxes (Horizontal) -->
+                                        <div class="flex items-center gap-6 flex-1">
+                                          <div class="flex items-center gap-2">
+                                            <span class="text-xs text-muted-foreground min-w-[40px]">View</span>
+                                            <z-checkbox 
+                                              [ngModel]="getPermission(member.id, module.key, 'view')"
+                                              (ngModelChange)="updatePermission(member.id, module.key, 'view', $event)"
+                                            />
+                                          </div>
+                                          <div class="flex items-center gap-2">
+                                            <span class="text-xs text-muted-foreground min-w-[40px]">Edit</span>
+                                            <z-checkbox 
+                                              [ngModel]="getPermission(member.id, module.key, 'edit')"
+                                              (ngModelChange)="updatePermission(member.id, module.key, 'edit', $event)"
+                                            />
+                                          </div>
+                                          <div class="flex items-center gap-2">
+                                            <span class="text-xs text-muted-foreground min-w-[50px]">Delete</span>
+                                            <z-checkbox 
+                                              zType="destructive"
+                                              [ngModel]="getPermission(member.id, module.key, 'delete')"
+                                              (ngModelChange)="updatePermission(member.id, module.key, 'delete', $event)"
+                                            />
+                                          </div>
+                                          <div class="flex items-center gap-2 ml-auto">
+                                            <span class="text-xs font-medium min-w-[30px]">All</span>
+                                            <z-checkbox 
+                                              [ngModel]="getAllPermission(member.id, module.key)"
+                                              (ngModelChange)="updateAllPermission(member.id, module.key, $event)"
+                                            />
+                                          </div>
+                                        </div>
+                                      </div>
+                                    }
+                                  </div>
+                                </div>
+
+                                <!-- Save Button -->
+                                <div class="flex justify-end pt-2">
+                                  <z-button 
+                                    [zType]="isUserPermissionsSaving(member.id) ? 'ghost' : 'default'" 
+                                    [disabled]="isUserPermissionsSaving(member.id)" 
+                                    (click)="!isUserPermissionsSaving(member.id) && saveUserPermissions(member.id)"
+                                  >
+                                    @if (isUserPermissionsSaving(member.id)) {
+                                      <span class="flex items-center gap-2">
+                                        <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+                                        Saving...
+                                      </span>
+                                    } @else {
+                                      Save Permissions
+                                    }
+                                  </z-button>
+                                </div>
+                              </div>
+                            }
+                          </div>
+                        }
                       </div>
-                      <div class="flex items-center gap-3">
-                        <button type="button" class="p-2 hover:bg-accent rounded-lg transition-colors" (click)="openPermissionsDialog(member)">
-                          <z-icon zType="pencil" zSize="sm" class="text-muted-foreground" />
-                        </button>
-                      </div>
-                    </div>
+                    </z-card>
                   }
                 </div>
               }
@@ -711,12 +809,6 @@
             </div>
           }
 
-          @case ('plan-billing') {
-            <div class="space-y-8">
-              <h1 class="text-3xl font-bold">Plan & Billing</h1>
-              <p class="text-muted-foreground">Manage your subscription plan, payment method and billing information</p>
-            </div>
-          }
         }
       </div>
     </div>

@@ -45,28 +45,44 @@ export class AppSidebarComponent implements OnDestroy {
   readonly zSidebarWidth = input<number>(240);
   readonly zSidebarItems = input<
     Array<{
-      route: string;
-      label: string;
-      labelKey?: string;
-      icon?: ZardIcon;
+      group?: string;
+      groupKey?: string;
+      items: Array<{
+        route: string;
+        label: string;
+        labelKey?: string;
+        icon?: ZardIcon;
+      }>;
     }>
   >([
-    { route: '/', label: 'Dashboard', labelKey: 'menu.dashboard', icon: 'monitor' },
-    { route: '/contact/tenants', label: 'Tenants', labelKey: 'menu.tenants', icon: 'user' },
-    { route: '/contact/owners', label: 'Owners', labelKey: 'menu.owners', icon: 'users' },
-    { route: '/contact/services', label: 'Services', labelKey: 'menu.services', icon: 'building' },
-    { route: '/property', label: 'Properties', labelKey: 'menu.properties', icon: 'house' },
-    { route: '/building', label: 'Buildings', labelKey: 'menu.buildings', icon: 'building' },
-    { route: '/leasing', label: 'Leasing', labelKey: 'menu.leasing', icon: 'file-text' },
-    { route: '/reservation', label: 'Reservations', labelKey: 'menu.reservations', icon: 'calendar' },
-    { route: '/keys', label: 'Keys', labelKey: 'menu.keys', icon: 'lock' },
-    { route: '/bank', label: 'Banks', labelKey: 'menu.banks', icon: 'building-2' },
-    { route: '/transaction', label: 'Transactions', labelKey: 'menu.transactions', icon: 'banknote' },
-    { route: '/tasks', label: 'Tasks', labelKey: 'menu.tasks', icon: 'clipboard' },
-    { route: '/maintenance', label: 'Maintenance', labelKey: 'menu.maintenance', icon: 'settings' },
-    { route: '/ai-chat', label: 'AI Chat', labelKey: 'menu.aiChat', icon: 'sparkles' },
-    { route: '/file-manager', label: 'File Manager', labelKey: 'menu.fileManager', icon: 'folder' },
-    { route: '/settings', label: 'Settings', labelKey: 'menu.settings', icon: 'settings' },
+    {
+      group: 'L\'essentiel',
+      groupKey: 'sidebar.essential',
+      items: [
+        { route: '/', label: 'Dashboard', labelKey: 'menu.dashboard', icon: 'monitor' },
+        { route: '/contact/tenants', label: 'Tenants', labelKey: 'menu.tenants', icon: 'user' },
+        { route: '/contact/owners', label: 'Owners', labelKey: 'menu.owners', icon: 'users' },
+        { route: '/contact/services', label: 'Services', labelKey: 'menu.services', icon: 'building' },
+        { route: '/property', label: 'Properties', labelKey: 'menu.properties', icon: 'house' },
+        { route: '/building', label: 'Buildings', labelKey: 'menu.buildings', icon: 'building' },
+        { route: '/leasing', label: 'Leasing', labelKey: 'menu.leasing', icon: 'file-text' },
+        { route: '/reservation', label: 'Reservations', labelKey: 'menu.reservations', icon: 'calendar' },
+        { route: '/transaction', label: 'Transactions', labelKey: 'menu.transactions', icon: 'banknote' },
+        { route: '/settings', label: 'Settings', labelKey: 'menu.settings', icon: 'settings' },
+      ],
+    },
+    {
+      group: 'Le plus',
+      groupKey: 'sidebar.more',
+      items: [
+        { route: '/keys', label: 'Keys', labelKey: 'menu.keys', icon: 'lock' },
+        { route: '/bank', label: 'Banks', labelKey: 'menu.banks', icon: 'building-2' },
+        { route: '/tasks', label: 'Tasks', labelKey: 'menu.tasks', icon: 'clipboard' },
+        { route: '/maintenance', label: 'Maintenance', labelKey: 'menu.maintenance', icon: 'settings' },
+        { route: '/ai-chat', label: 'AI Chat', labelKey: 'menu.aiChat', icon: 'sparkles' },
+        { route: '/file-manager', label: 'File Manager', labelKey: 'menu.fileManager', icon: 'folder' },
+      ],
+    },
   ]);
   readonly zUserName = input<string>('');
   readonly zUserEmail = input<string>('');

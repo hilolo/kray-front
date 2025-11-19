@@ -54,13 +54,16 @@
     "keys": "Clés",
     "banks": "Banques",
     "transactions": "Transactions",
+    "tasks": "Tâches",
     "buildings": "Bâtiments",
     "aiChat": "Chat IA",
     "fileManager": "Gestionnaire de fichiers"
   },
   "sidebar": {
     "expand": "Développer la barre latérale",
-    "collapse": "Réduire la barre latérale"
+    "collapse": "Réduire la barre latérale",
+    "essential": "L'essentiel",
+    "more": "Le plus"
   },
   "page": {
     "dashboard": {
