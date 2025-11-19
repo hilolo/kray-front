@@ -44,6 +44,9 @@ namespace ImmoGest.Domain.Entities
         // Documents
         public ICollection<Attachment> Attachments { get; set; }
         
+        // Transactions
+        public ICollection<Transaction> Transactions { get; set; }
+        
         public bool IsDeleted { get; set; }
         
         public override void BuildSearchTerms()

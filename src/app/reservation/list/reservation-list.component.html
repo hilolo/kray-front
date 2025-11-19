@@ -239,6 +239,38 @@
           </div>
         </ng-template>
 
+        <!-- Transaction Column Template -->
+        <ng-template #transactionCell let-value let-row="row">
+          @if (hasTransaction(row.id)) {
+            @if (getTransaction(row.id)) {
+              <div class="flex items-center gap-2">
+                <z-icon 
+                  [zType]="getTransactionStatusIcon(getTransaction(row.id)!.status)" 
+                  zSize="sm" 
+                  [class]="getTransactionStatusColorClass(getTransaction(row.id)!.status)" 
+                />
+                <span class="font-semibold text-base" [class]="getTransactionStatusColorClass(getTransaction(row.id)!.status)">
+                  {{ getTransaction(row.id)!.totalAmount | propertyPrice:null }}
+                </span>
+              </div>
+            } @else {
+              <span class="text-sm text-muted-foreground">No transaction data</span>
+            }
+          } @else {
+            @if (row.status === ReservationStatus.Approved || row.status === ReservationStatus.Pending) {
+              <z-button
+                zType="outline"
+                zSize="sm"
+                class="gap-2 text-primary border-primary hover:bg-primary hover:text-primary-foreground"
+                (click)="onCreateTransaction(row)"
+              >
+                <z-icon zType="plus" zSize="sm" />
+                <span>Create Transaction</span>
+              </z-button>
+            }
+          }
+        </ng-template>
+
         <!-- Status Column Template -->
         <ng-template #statusCell let-value let-row="row">
           <z-select

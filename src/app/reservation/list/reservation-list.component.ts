@@ -37,6 +37,7 @@ import type { Contact } from '@shared/models/contact/contact.model';
 import { ContactType } from '@shared/models/contact/contact.model';
 import type { Property } from '@shared/models/property/property.model';
 import { PropertyCategory } from '@shared/models/property/property.model';
+import { TransactionType, RevenueType, TransactionStatus, type Transaction } from '@shared/models/transaction/transaction.model';
 
 @Component({
   selector: 'app-reservation-list',
@@ -129,6 +130,7 @@ export class ReservationListComponent implements OnInit, OnDestroy {
   readonly contactCell = viewChild<TemplateRef<any>>('contactCell');
   readonly datesCell = viewChild<TemplateRef<any>>('datesCell');
   readonly amountCell = viewChild<TemplateRef<any>>('amountCell');
+  readonly transactionCell = viewChild<TemplateRef<any>>('transactionCell');
   readonly statusCell = viewChild<TemplateRef<any>>('statusCell');
   readonly actionsCell = viewChild<TemplateRef<any>>('actionsCell');
 
@@ -155,6 +157,12 @@ export class ReservationListComponent implements OnInit, OnDestroy {
       label: 'Amount',
       sortable: true,
       cellTemplate: this.amountCell(),
+    },
+    {
+      key: 'transaction',
+      label: 'Transaction',
+      sortable: true,
+      cellTemplate: this.transactionCell(),
     },
     {
       key: 'status',
@@ -859,11 +867,70 @@ export class ReservationListComponent implements OnInit, OnDestroy {
     return this.updatingStatus().has(reservationId);
   }
 
+  // Expose ReservationStatus enum to template
+  readonly ReservationStatus = ReservationStatus;
+
   // Status options for select dropdown
   readonly statusOptions = [
     { value: ReservationStatus.Pending, label: 'Pending' },
     { value: ReservationStatus.Approved, label: 'Approved' },
     { value: ReservationStatus.Cancelled, label: 'Cancelled' },
   ];
+
+  // Transaction methods
+  hasTransaction(reservationId: string): boolean {
+    const reservation = this.reservations().find(r => r.id === reservationId);
+    return !!(reservation?.transactions && reservation.transactions.length > 0);
+  }
+
+  getTransaction(reservationId: string): Transaction | undefined {
+    const reservation = this.reservations().find(r => r.id === reservationId);
+    if (reservation?.transactions && reservation.transactions.length > 0) {
+      // Return the first transaction (reservations typically have one transaction)
+      return reservation.transactions[0];
+    }
+    return undefined;
+  }
+
+  getTransactionStatusIcon(status: TransactionStatus): 'clock' | 'circle-check' | 'triangle-alert' {
+    switch (status) {
+      case TransactionStatus.Pending:
+        return 'clock';
+      case TransactionStatus.Overdue:
+        return 'triangle-alert';
+      case TransactionStatus.Paid:
+        return 'circle-check';
+      default:
+        return 'clock';
+    }
+  }
+
+  getTransactionStatusColorClass(status: TransactionStatus): string {
+    switch (status) {
+      case TransactionStatus.Pending:
+        return 'text-yellow-600 dark:text-yellow-500';
+      case TransactionStatus.Overdue:
+        return 'text-red-600 dark:text-red-500';
+      case TransactionStatus.Paid:
+        return 'text-green-600 dark:text-green-500';
+      default:
+        return 'text-muted-foreground';
+    }
+  }
+
+  onCreateTransaction(reservation: Reservation): void {
+    // Navigate to add revenue page with pre-filled data for reservation
+    // Use ReservationFull (4) as the revenue type for reservation transactions
+    const queryParams: any = {
+      reservationId: reservation.id,
+      propertyId: reservation.propertyId,
+      contactId: reservation.contactId,
+      revenueType: RevenueType.ReservationFull, // Revenue type for full reservation payment
+      status: TransactionStatus.Pending,
+      totalAmount: reservation.totalAmount, // Pass reservation amount to pre-fill payment
+    };
+
+    this.router.navigate(['/transaction/add/revenue'], { queryParams });
+  }
 }
 

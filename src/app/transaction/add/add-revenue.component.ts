@@ -179,21 +179,32 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
     return type === RevenueType.Loyer || type === RevenueType.Caution || type === RevenueType.FraisAgence;
   });
 
+  // Check if property should be filtered by LocationVacances category (for Reservation types)
+  readonly shouldFilterByLocationVacancesCategory = computed(() => {
+    return this.isReservationType();
+  });
+
   // Check if lease select should be hidden (for reservation types, maintenance, and autre)
   readonly shouldHideLeaseSelect = computed(() => {
     const type = this.formData().revenueType;
     return this.isReservationType() || type === RevenueType.Maintenance || type === RevenueType.Autre;
   });
 
-  // Check if property select should be hidden (for reservation types)
+  // Check if property select should be hidden (never hide for reservation types - property should be visible)
   readonly shouldHidePropertySelect = computed(() => {
-    return this.isReservationType();
+    return false; // Always show property field
   });
 
   // Check if property and lease are required (for Loyer, Caution, FraisAgence)
   readonly isPropertyAndLeaseRequired = computed(() => {
     const type = this.formData().revenueType;
     return type === RevenueType.Loyer || type === RevenueType.Caution || type === RevenueType.FraisAgence;
+  });
+
+  // Check if property is required (for reservation types and Loyer, Caution, FraisAgence)
+  readonly isPropertyRequired = computed(() => {
+    const type = this.formData().revenueType;
+    return this.isPropertyAndLeaseRequired() || this.isReservationType();
   });
 
   // Form validation - contact not required for type "Autre", reservation required for reservation types
@@ -210,7 +221,7 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
     const hasValidReservation = this.isReservationType()
       ? (data.reservationId && data.reservationId !== '')
       : true;
-    const hasValidProperty = this.isPropertyAndLeaseRequired()
+    const hasValidProperty = this.isPropertyRequired()
       ? (data.propertyId && data.propertyId !== '')
       : true;
     const hasValidLease = this.isPropertyAndLeaseRequired()
@@ -230,7 +241,7 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
   readonly propertyIdError = computed(() => {
     if (!this.formSubmitted()) return '';
     const data = this.formData();
-    if (this.isPropertyAndLeaseRequired()) {
+    if (this.isPropertyRequired()) {
       if (!data.propertyId || data.propertyId === '') {
         return 'Property is required';
       }
@@ -258,7 +269,7 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
   readonly propertyIdHasError = computed(() => {
     if (!this.formSubmitted()) return false;
     const data = this.formData();
-    if (this.isPropertyAndLeaseRequired()) {
+    if (this.isPropertyRequired()) {
       return !data.propertyId || data.propertyId === '';
     }
     return false;
@@ -317,6 +328,11 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
     return this.isReservationType() || this.isPropertyAndLeaseRequired();
   });
 
+  // Check if property field should be disabled (for reservation types, property auto-fills from reservation)
+  readonly isPropertyDisabled = computed(() => {
+    return this.isReservationType();
+  });
+
   readonly totalAmount = computed(() => {
     return this.payments().reduce((sum, payment) => {
       const amountWithVat = payment.amount * (1 + payment.vatPercent / 100);
@@ -335,7 +351,16 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
       const queryParams = this.route.snapshot.queryParams;
       console.log('[AddRevenue] Query params received:', queryParams);
 
-      if (queryParams['leaseId'] || queryParams['propertyId'] || queryParams['contactId']) {
+      if (queryParams['leaseId'] || queryParams['propertyId'] || queryParams['contactId'] || queryParams['reservationId']) {
+        // Set revenue type FIRST if provided in query params (needed for property filter)
+        if (queryParams['revenueType'] !== undefined) {
+          const revenueType = parseInt(queryParams['revenueType'], 10) as RevenueType;
+          this.formData.update(data => ({
+            ...data,
+            revenueType: revenueType
+          }));
+        }
+        
         // Load properties and contacts first, then pre-fill
         requestAnimationFrame(() => {
           this.loadPropertiesAndContacts(() => {
@@ -370,6 +395,10 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
     // Filter by Location category for Loyer, Caution, and FraisAgence
     if (this.shouldFilterByLocationCategory()) {
       propertiesRequest.category = PropertyCategory.Location;
+    }
+    // Filter by LocationVacances category for Reservation types
+    else if (this.shouldFilterByLocationVacancesCategory()) {
+      propertiesRequest.category = PropertyCategory.LocationVacances;
     }
 
     const contactsRequest = {
@@ -449,15 +478,21 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
     // Build updated form data object
     let updatedFormData = { ...this.formData() };
 
-    // Pre-fill property if provided
-    if (queryParams['propertyId']) {
-      console.log('[AddRevenue] Setting propertyId:', queryParams['propertyId']);
-      const property = this.properties().find(p => p.id === queryParams['propertyId']);
-      console.log('[AddRevenue] Found property:', property);
-      if (property) {
-        this.selectedProperty.set(property);
+    // Pre-fill revenue type first (needed to determine property filter)
+    if (queryParams['revenueType'] !== undefined) {
+      const revenueType = parseInt(queryParams['revenueType'], 10);
+      console.log('[AddRevenue] Setting revenueType:', revenueType);
+      updatedFormData.revenueType = revenueType as RevenueType;
+    }
+
+    // Pre-fill reservation if provided
+    if (queryParams['reservationId']) {
+      console.log('[AddRevenue] Setting reservationId:', queryParams['reservationId']);
+      updatedFormData.reservationId = queryParams['reservationId'];
+      // Load reservations if revenue type is reservation type
+      if (updatedFormData.revenueType === RevenueType.ReservationFull || updatedFormData.revenueType === RevenueType.ReservationPart) {
+        this.loadReservations();
       }
-      updatedFormData.propertyId = queryParams['propertyId'];
     }
 
     // Pre-fill contact if provided
@@ -467,16 +502,38 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
       updatedFormData.isOtherContact = false;
     }
 
-    // Pre-fill revenue type if provided
-    if (queryParams['revenueType'] !== undefined) {
-      const revenueType = parseInt(queryParams['revenueType'], 10);
-      console.log('[AddRevenue] Setting revenueType:', revenueType);
-      updatedFormData.revenueType = revenueType as RevenueType;
+    // Pre-fill property if provided (set in updatedFormData before setting form data)
+    if (queryParams['propertyId']) {
+      console.log('[AddRevenue] Setting propertyId in form data:', queryParams['propertyId']);
+      updatedFormData.propertyId = queryParams['propertyId'];
     }
 
-    // Set all form data at once
+    // Set form data (includes propertyId if provided)
     this.formData.set(updatedFormData);
     console.log('[AddRevenue] Form data after initial set:', this.formData());
+
+    // After form data is set, try to find and set the selected property
+    if (queryParams['propertyId']) {
+      // Wait for properties to be loaded, then set selected property
+      const checkProperty = setInterval(() => {
+        const property = this.properties().find(p => p.id === queryParams['propertyId']);
+        if (property) {
+          clearInterval(checkProperty);
+          console.log('[AddRevenue] Found property in list, setting selectedProperty:', property);
+          this.selectedProperty.set(property);
+          this.cdr.markForCheck();
+        } else if (this.properties().length > 0 && !this.isLoadingProperties()) {
+          // Properties loaded but property not found - might be filtered out
+          clearInterval(checkProperty);
+          console.log('[AddRevenue] Property not found in loaded list');
+        }
+      }, 100);
+
+      // Timeout after 2 seconds
+      setTimeout(() => {
+        clearInterval(checkProperty);
+      }, 2000);
+    }
 
     // Load leases if propertyId was set
     if (queryParams['propertyId']) {
@@ -525,6 +582,17 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
       }
     }
 
+    // Pre-fill total amount if provided (for reservations or other transactions)
+    if (queryParams['totalAmount'] !== undefined && queryParams['depositPrice'] === undefined) {
+      const totalAmount = parseFloat(queryParams['totalAmount']);
+      console.log('[AddRevenue] Setting totalAmount:', totalAmount);
+      if (totalAmount > 0) {
+        this.payments.set([
+          { amount: totalAmount, vatPercent: 0, description: 'Reservation Payment' }
+        ]);
+      }
+    }
+
     // Pre-fill status if provided (will be set after transaction creation)
     if (queryParams['status'] !== undefined) {
       const status = parseInt(queryParams['status'], 10);
@@ -559,6 +627,10 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
     // Filter by Location category for Loyer, Caution, and FraisAgence
     if (this.shouldFilterByLocationCategory()) {
       request.category = PropertyCategory.Location;
+    }
+    // Filter by LocationVacances category for Reservation types
+    else if (this.shouldFilterByLocationVacancesCategory()) {
+      request.category = PropertyCategory.LocationVacances;
     }
 
     setTimeout(() => {
@@ -797,18 +869,53 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
   updateReservationId(value: string): void {
     this.formData.update(data => ({ ...data, reservationId: value || '' }));
 
-    // Auto-fill contact from reservation
+    // Auto-fill contact and property from reservation
     if (value) {
       const reservation = this.reservations().find(r => r.id === value);
-      if (reservation && reservation.contactId) {
+      if (reservation) {
         // Set the contact to the reservation's tenant
-        this.formData.update(data => ({
-          ...data,
-          contactId: reservation.contactId,
-          isOtherContact: false,
-          otherContactName: ''
-        }));
+        if (reservation.contactId) {
+          this.formData.update(data => ({
+            ...data,
+            contactId: reservation.contactId,
+            isOtherContact: false,
+            otherContactName: ''
+          }));
+        }
+
+        // Auto-fill property from reservation
+        if (reservation.propertyId) {
+          // Check if property exists in the loaded properties list
+          const property = this.properties().find(p => p.id === reservation.propertyId);
+          if (property) {
+            this.selectedProperty.set(property);
+            this.formData.update(data => ({
+              ...data,
+              propertyId: reservation.propertyId
+            }));
+          } else {
+            // Property not in list, need to load it or add it to the list
+            // For now, just set the propertyId - it will be loaded when properties are refreshed
+            this.formData.update(data => ({
+              ...data,
+              propertyId: reservation.propertyId
+            }));
+            // Try to load the property if it's not in the list
+            this.loadProperties();
+          }
+        }
       }
+    } else {
+      // Clear property and contact when reservation is cleared (only if it was set from reservation)
+      // But don't clear if user manually set them
+      this.formData.update(data => ({
+        ...data,
+        propertyId: '',
+        contactId: '',
+        isOtherContact: false,
+        otherContactName: ''
+      }));
+      this.selectedProperty.set(null);
     }
 
     this.cdr.markForCheck();
@@ -877,9 +984,12 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
         };
 
         // Filter by Location category for Loyer, Caution, and FraisAgence
+        // Filter by LocationVacances category for Reservation types
         const revenueType = transaction.revenueType || RevenueType.Loyer;
         if (revenueType === RevenueType.Loyer || revenueType === RevenueType.Caution || revenueType === RevenueType.FraisAgence) {
           propertiesRequest.category = PropertyCategory.Location;
+        } else if (revenueType === RevenueType.ReservationFull || revenueType === RevenueType.ReservationPart) {
+          propertiesRequest.category = PropertyCategory.LocationVacances;
         }
 
         forkJoin({
@@ -934,6 +1044,12 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
             });
             this.contactOptions.set(contactOptions);
 
+            // Load reservations if this is a reservation type transaction
+            const revenueType = transaction.revenueType || RevenueType.Loyer;
+            if (revenueType === RevenueType.ReservationFull || revenueType === RevenueType.ReservationPart) {
+              this.loadReservations();
+            }
+
             this.isLoading.set(false);
             this.cdr.markForCheck();
           },
@@ -977,17 +1093,19 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
     // Load reservations if reservation type is selected
     if (type === RevenueType.ReservationFull || type === RevenueType.ReservationPart) {
       this.loadReservations();
-    }
-
-    // Load appropriate contacts based on revenue type
-    if (type === RevenueType.Maintenance) {
-      this.loadContacts(ContactType.Service);
+      // Load properties with LocationVacances filter for reservation types
+      this.loadProperties();
     } else {
-      this.loadContacts();
-    }
+      // Load appropriate contacts based on revenue type
+      if (type === RevenueType.Maintenance) {
+        this.loadContacts(ContactType.Service);
+      } else {
+        this.loadContacts();
+      }
 
-    // Reload properties with appropriate filter
-    this.loadProperties();
+      // Reload properties with appropriate filter
+      this.loadProperties();
+    }
 
     this.cdr.markForCheck();
   }
@@ -1100,6 +1218,7 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
         const updateRequest: UpdateTransactionRequest = {
           category: TransactionType.Revenue, // Ensure category is set to Revenue
           revenueType: data.revenueType,
+          propertyId: data.propertyId && data.propertyId.trim() !== '' ? data.propertyId : null,
           leaseId: data.leaseId && data.leaseId.trim() !== '' ? data.leaseId : null,
           contactId: useOtherContact ? null : (data.contactId || null),
           otherContactName: useOtherContact ? (data.otherContactName && data.otherContactName.trim() !== '' ? data.otherContactName : null) : null,

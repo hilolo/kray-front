@@ -67,6 +67,7 @@ namespace ImmoGest.Infrastructure.Repositories
                 .Include(t => t.Contact)
                 .Include(t => t.Lease)
                     .ThenInclude(l => l.Contact)
+                .Include(t => t.Reservation)
                 .Include(t => t.Attachments);
 
             if (filterOption is GetTransactionsFilter filter)

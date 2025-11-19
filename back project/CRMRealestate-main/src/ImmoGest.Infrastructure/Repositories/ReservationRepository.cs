@@ -21,12 +21,18 @@ namespace ImmoGest.Infrastructure.Repositories
 
         public override async Task<Result<Reservation>> GetByIdAsync(Guid id)
         {
-            // Load reservation with all related entities including attachments
+            // Load reservation with all related entities including attachments and transactions
             var reservation = await DbSet
                 .AsNoTracking()
                 .Include(v => v.Contact)
                 .Include(v => v.Property)
                 .Include(v => v.Attachments)
+                .Include(v => v.Transactions)
+                    .ThenInclude(t => t.Property)
+                .Include(v => v.Transactions)
+                    .ThenInclude(t => t.Contact)
+                .Include(v => v.Transactions)
+                    .ThenInclude(t => t.Attachments)
                 .FirstOrDefaultAsync(e => e.Id == id);
 
             return Result.Success<Reservation>(reservation);
@@ -34,12 +40,18 @@ namespace ImmoGest.Infrastructure.Repositories
 
         protected override IQueryable<Reservation> SetPagedResultFilterOptions<IFilter>(IQueryable<Reservation> query, IFilter filterOption)
         {
-            // IMPORTANT: Always include Contact and Property (with DefaultAttachment) for reservation lists
+            // IMPORTANT: Always include Contact, Property (with DefaultAttachment), Attachments, and Transactions (with related entities) for reservation lists
             query = query
                 .Include(v => v.Contact)
                 .Include(v => v.Property)
                     .ThenInclude(p => p.DefaultAttachment)
-                .Include(v => v.Attachments);
+                .Include(v => v.Attachments)
+                .Include(v => v.Transactions)
+                    .ThenInclude(t => t.Property)
+                .Include(v => v.Transactions)
+                    .ThenInclude(t => t.Contact)
+                .Include(v => v.Transactions)
+                    .ThenInclude(t => t.Attachments);
             
             // Check for GetReservationsFilter
             if (filterOption is GetReservationsFilter reservationsFilter)

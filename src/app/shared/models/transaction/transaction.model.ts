@@ -1,3 +1,5 @@
+import type { Reservation } from '../reservation/reservation.model';
+
 /**
  * Transaction type enum
  */
@@ -83,6 +85,7 @@ export interface Transaction {
   contactName?: string;
   otherContactName?: string; // For contacts not in the system
   reservationId?: string;
+  reservation?: Reservation; // Full reservation object when included
   payments: Payment[];
   totalAmount: number;
   depositPrice?: number;

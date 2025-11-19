@@ -196,19 +196,27 @@
                                   <span>{{ formatTransactionDate(row) }}</span>
                                 </ng-template>
                                 <ng-template #revenuePropertyCell let-row="row">
-                                  <div class="flex items-center gap-2 flex-wrap">
-                                    @if (row.propertyIdentifier) {
-                                      <z-badge zType="outline" zSize="sm">{{ row.propertyIdentifier }}</z-badge>
-                                    }
-                                    @if (row.propertyAddress) {
-                                      <span class="text-sm text-muted-foreground">{{ row.propertyAddress }}</span>
-                                    }
-                                    @if (!row.propertyIdentifier && !row.propertyAddress) {
-                                      @if (row.propertyName) {
-                                        <span class="text-sm">{{ row.propertyName }}</span>
-                                      } @else {
-                                        <span class="text-muted-foreground text-sm">-</span>
+                                  <div class="flex flex-col gap-1">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                      @if (row.propertyIdentifier) {
+                                        <z-badge zType="outline" zSize="sm">{{ row.propertyIdentifier }}</z-badge>
                                       }
+                                      @if (row.propertyAddress) {
+                                        <span class="text-sm text-muted-foreground">{{ row.propertyAddress }}</span>
+                                      }
+                                      @if (!row.propertyIdentifier && !row.propertyAddress) {
+                                        @if (row.propertyName) {
+                                          <span class="text-sm">{{ row.propertyName }}</span>
+                                        } @else {
+                                          <span class="text-muted-foreground text-sm">-</span>
+                                        }
+                                      }
+                                    </div>
+                                    @if (row.reservation) {
+                                      <div class="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                                        <z-icon zType="calendar" zSize="sm" />
+                                        <span>Reservation: {{ formatDate(row.reservation.startDate) }} - {{ formatDate(row.reservation.endDate) }}</span>
+                                      </div>
                                     }
                                   </div>
                                 </ng-template>
@@ -262,19 +270,27 @@
                                   <span>{{ formatTransactionDate(row) }}</span>
                                 </ng-template>
                                 <ng-template #expensePropertyCell let-row="row">
-                                  <div class="flex items-center gap-2 flex-wrap">
-                                    @if (row.propertyIdentifier) {
-                                      <z-badge zType="outline" zSize="sm">{{ row.propertyIdentifier }}</z-badge>
-                                    }
-                                    @if (row.propertyAddress) {
-                                      <span class="text-sm text-muted-foreground">{{ row.propertyAddress }}</span>
-                                    }
-                                    @if (!row.propertyIdentifier && !row.propertyAddress) {
-                                      @if (row.propertyName) {
-                                        <span class="text-sm">{{ row.propertyName }}</span>
-                                      } @else {
-                                        <span class="text-muted-foreground text-sm">-</span>
+                                  <div class="flex flex-col gap-1">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                      @if (row.propertyIdentifier) {
+                                        <z-badge zType="outline" zSize="sm">{{ row.propertyIdentifier }}</z-badge>
                                       }
+                                      @if (row.propertyAddress) {
+                                        <span class="text-sm text-muted-foreground">{{ row.propertyAddress }}</span>
+                                      }
+                                      @if (!row.propertyIdentifier && !row.propertyAddress) {
+                                        @if (row.propertyName) {
+                                          <span class="text-sm">{{ row.propertyName }}</span>
+                                        } @else {
+                                          <span class="text-muted-foreground text-sm">-</span>
+                                        }
+                                      }
+                                    </div>
+                                    @if (row.reservation) {
+                                      <div class="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                                        <z-icon zType="calendar" zSize="sm" />
+                                        <span>Reservation: {{ formatDate(row.reservation.startDate) }} - {{ formatDate(row.reservation.endDate) }}</span>
+                                      </div>
                                     }
                                   </div>
                                 </ng-template>

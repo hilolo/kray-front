@@ -347,6 +347,7 @@ namespace ImmoGest.Application.MappingProfiles
                 .ForMember(dest => dest.PropertyImageUrl, opt => opt.Ignore()) // Set manually in service
                 .ForMember(dest => dest.Attachments, opt => opt.Ignore()) // Set manually in service
                 .ForMember(dest => dest.AttachmentCount, opt => opt.Ignore()) // Set manually in service
+                .ForMember(dest => dest.Transactions, opt => opt.Ignore()) // Will be mapped manually in service after AutoMapper processes nested mapping
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedOn.DateTime))
                 .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => src.LastModifiedOn.HasValue ? src.LastModifiedOn.Value.DateTime : (DateTime?)null));
             
@@ -363,7 +364,6 @@ namespace ImmoGest.Application.MappingProfiles
                 .ForMember(dest => dest.DurationDays, opt => opt.Ignore()) // Calculated in service
                 .ForMember(dest => dest.NumberOfNights, opt => opt.Ignore()) // Calculated in service
                 .ForMember(dest => dest.ApprovedBy, opt => opt.Ignore())
-                .ForMember(dest => dest.ApprovalDate, opt => opt.Ignore())
                 .ForMember(dest => dest.ApprovalNotes, opt => opt.Ignore())
                 .ForMember(dest => dest.IsDeleted, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedOn, opt => opt.Ignore())

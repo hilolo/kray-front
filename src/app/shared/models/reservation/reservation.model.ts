@@ -64,6 +64,9 @@ export interface Reservation {
   attachments: Attachment[];
   attachmentCount: number;
   
+  // Transactions (included in reservation response)
+  transactions?: import('../transaction/transaction.model').Transaction[];
+  
   // Archive status
   isArchived: boolean;
   

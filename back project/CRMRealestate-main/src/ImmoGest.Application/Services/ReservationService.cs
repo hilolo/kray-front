@@ -263,13 +263,19 @@ namespace ImmoGest.Application.Services
             // Map entities to DTOs
             var reservationDtos = _mapper.Map<List<ReservationDto>>(paginatedEntities.Result);
 
-            // Post-process the DTOs to add avatar URLs
+            // Post-process the DTOs to add avatar URLs and process transactions
             if (typeof(TOut) == typeof(ReservationDto))
             {
                 for (int i = 0; i < reservationDtos.Count; i++)
                 {
                     var dto = reservationDtos[i];
                     var entity = paginatedEntities.Result[i];
+
+                    // Initialize Transactions list if null (to ensure it's always serialized)
+                    if (dto.Transactions == null)
+                    {
+                        dto.Transactions = new List<TransactionDto>();
+                    }
 
                     try
                     {
@@ -380,10 +386,67 @@ namespace ImmoGest.Application.Services
 
                         // Set attachment count - always retrieve as it's not expensive
                         dto.AttachmentCount = entity.Attachments?.Count ?? 0;
+
+                        // Map transactions (already loaded by repository, filter out deleted ones)
+                        // Check if Transactions collection is loaded (might be null if no transactions exist)
+                        var transactions = entity.Transactions;
+                        if (transactions == null)
+                        {
+                            // If Transactions is null, it means no transactions exist for this reservation
+                            dto.Transactions = new List<TransactionDto>();
+                        }
+                        else
+                        {
+                            var activeTransactions = transactions.Where(t => !t.IsDeleted).ToList();
+                            if (activeTransactions.Any())
+                            {
+                                var transactionDtos = _mapper.Map<List<TransactionDto>>(activeTransactions);
+
+                                // Post-process transaction DTOs to add related entity information
+                                for (int j = 0; j < transactionDtos.Count; j++)
+                                {
+                                    var transactionDto = transactionDtos[j];
+                                    var transaction = activeTransactions[j];
+
+                                    // Set property information
+                                    if (transaction.Property != null)
+                                    {
+                                        transactionDto.PropertyName = transaction.Property.Name;
+                                        transactionDto.PropertyAddress = transaction.Property.Address;
+                                        transactionDto.PropertyIdentifier = transaction.Property.Identifier;
+                                    }
+
+                                    // Set contact information
+                                    if (transaction.Contact != null)
+                                    {
+                                        transactionDto.ContactName = transaction.Contact.IsACompany
+                                            ? transaction.Contact.CompanyName
+                                            : $"{transaction.Contact.FirstName} {transaction.Contact.LastName}".Trim();
+                                    }
+                                    transactionDto.OtherContactName = transaction.OtherContactName;
+
+                                    // Set reservation information
+                                    if (transaction.Reservation != null)
+                                    {
+                                        transactionDto.ReservationId = transaction.Reservation.Id;
+                                    }
+
+                                    // Set attachment count
+                                    transactionDto.AttachmentCount = transaction.Attachments?.Count ?? 0;
+                                }
+                                
+                                dto.Transactions = transactionDtos;
+                            }
+                            else
+                            {
+                                dto.Transactions = new List<TransactionDto>();
+                            }
+                        }
                     }
                     catch (Exception ex)
                     {
                         // Continue with other reservations
+                        dto.Transactions = new List<TransactionDto>();
                     }
                 }
             }

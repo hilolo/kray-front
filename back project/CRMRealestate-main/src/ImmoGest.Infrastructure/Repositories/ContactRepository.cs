@@ -60,6 +60,14 @@ namespace ImmoGest.Infrastructure.Repositories
                     .Include(c => c.Transactions)
                         .ThenInclude(t => t.Lease)
                         .ThenInclude(l => l.Contact)
+                    .Include(c => c.Transactions)
+                        .ThenInclude(t => t.Reservation)
+                        .ThenInclude(r => r.Property)
+                    .Include(c => c.Transactions)
+                        .ThenInclude(t => t.Reservation)
+                        .ThenInclude(r => r.Contact)
+                    .Include(c => c.Transactions)
+                        .ThenInclude(t => t.Attachments)
                     .FirstOrDefaultAsync(e => e.Id == id);
 
                 return contact != null

@@ -136,7 +136,7 @@ namespace ImmoGest.Infrastructure.Configuration
                 .IsRequired(false);
 
             builder.HasOne(t => t.Reservation)
-                .WithMany()
+                .WithMany(r => r.Transactions)
                 .HasForeignKey(t => t.ReservationId)
                 .OnDelete(DeleteBehavior.SetNull)
                 .IsRequired(false);

@@ -9,6 +9,7 @@ export interface UpdateTransactionRequest {
   category?: TransactionType; // Category (Revenue or Expense) - maps to Category in backend
   revenueType?: RevenueType;
   expenseType?: ExpenseType;
+  propertyId?: string | null; // Optional - can be null if not provided
   leaseId?: string | null;
   contactId?: string | null; // From (revenue) or Pay to (expense) - Optional if otherContactName is provided
   otherContactName?: string | null; // For contacts not in the system

@@ -902,6 +902,66 @@ namespace ImmoGest.Application.Services
                     {
                         dto.Maintenances = new List<MaintenanceDto>();
                     }
+
+                    // Map transactions from entity (already loaded with Reservation via repository)
+                    if (entity.Transactions != null && entity.Transactions.Any())
+                    {
+                        // Convert ICollection to List to enable indexing
+                        var activeTransactions = entity.Transactions.Where(t => !t.IsDeleted).ToList();
+                        var transactionDtos = _mapper.Map<List<TransactionDto>>(activeTransactions);
+                        
+                        // Post-process transaction DTOs to add reservation information
+                        for (int i = 0; i < transactionDtos.Count; i++)
+                        {
+                            var transactionDto = transactionDtos[i];
+                            var transaction = activeTransactions[i];
+                            
+                            // Map reservation if it exists
+                            if (transaction.Reservation != null)
+                            {
+                                transactionDto.ReservationId = transaction.Reservation.Id;
+                                transactionDto.Reservation = _mapper.Map<ReservationDto>(transaction.Reservation);
+                                
+                                // Set reservation property image URL if available
+                                if (transaction.Reservation.Property != null && transaction.Reservation.Property.DefaultAttachmentId.HasValue)
+                                {
+                                    try
+                                    {
+                                        var attachmentResult = await _attachmentRepository.GetByIdAsync(transaction.Reservation.Property.DefaultAttachmentId.Value);
+                                        if (attachmentResult.IsSuccess() && attachmentResult.Data != null)
+                                        {
+                                            var attachment = attachmentResult.Data;
+                                            if (!string.IsNullOrEmpty(attachment.StorageHash))
+                                            {
+                                                var s3Key = S3PathConstants.BuildAttachmentKey(
+                                                    transaction.Reservation.Property.CompanyId.ToString(),
+                                                    attachment.StorageHash,
+                                                    attachment.FileName
+                                                );
+                                                
+                                                transactionDto.Reservation.PropertyImageUrl = await _s3StorageService.GetOrGenerateCachedUrlAsync(
+                                                    GetBucketName(),
+                                                    s3Key,
+                                                    attachment.Url,
+                                                    attachment.UrlExpiresAt,
+                                                    24);
+                                            }
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        // Continue if image URL generation fails
+                                    }
+                                }
+                            }
+                        }
+                        
+                        dto.Transactions = transactionDtos;
+                    }
+                    else
+                    {
+                        dto.Transactions = new List<TransactionDto>();
+                    }
                 }
                 else
                 {

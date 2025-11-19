@@ -46,11 +46,12 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               <!-- Property Field -->
               <z-form-field>
-                <z-form-label [zRequired]="isPropertyAndLeaseRequired()">Property</z-form-label>
+                <z-form-label [zRequired]="isPropertyRequired()">Property</z-form-label>
                 <z-form-control [errorMessage]="propertyIdError()">
                   <z-combobox [options]="propertyOptions()" [value]="formData().propertyId"
                     [placeholder]="'Select property...'" [searchPlaceholder]="'Search properties...'"
-                    [emptyText]="'No properties found'" [searchable]="true" [disabled]="isLoadingProperties()"
+                    [emptyText]="'No properties found'" [searchable]="true" 
+                    [disabled]="isLoadingProperties() || isPropertyDisabled()"
                     [zWidth]="'lg'" (zValueChange)="updatePropertyId($event || '')" class="w-full" />
                 </z-form-control>
               </z-form-field>

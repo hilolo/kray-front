@@ -45,6 +45,9 @@ namespace ImmoGest.Application.DTOs
         public List<AttachmentDto> Attachments { get; set; }
         public int AttachmentCount { get; set; }
         
+        // Transactions
+        public List<TransactionDto> Transactions { get; set; }
+        
         // System fields
         public Guid CompanyId { get; set; }
         public DateTime CreatedAt { get; set; }
