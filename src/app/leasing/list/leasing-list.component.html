@@ -231,6 +231,13 @@
                 {{ getPaidRentCount(row.id) }}
               </span>
             </div>
+            <!-- Pending Count -->
+            <div class="flex items-center gap-1.5">
+              <z-icon zType="clock" zSize="sm" class="text-yellow-500" />
+              <span class="text-sm font-medium text-yellow-600 dark:text-yellow-400">
+                {{ getPendingRentCount(row.id) }}
+              </span>
+            </div>
             <!-- Overdue Count -->
             <div class="flex items-center gap-1.5">
               <z-icon zType="triangle-alert" zSize="sm" class="text-red-500" />

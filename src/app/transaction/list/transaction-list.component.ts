@@ -828,6 +828,13 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
     });
   }
 
+  onGenerateRentReceipt(transaction: Transaction): void {
+    // TODO: Implement rent receipt generation
+    // This could navigate to a receipt page or call an API endpoint
+    this.toastService.info('Rent receipt generation will be available soon');
+    console.log('Generate rent receipt for transaction:', transaction.id);
+  }
+
   formatCurrency(amount: number): string {
     return `${amount.toFixed(2)} MAD`;
   }

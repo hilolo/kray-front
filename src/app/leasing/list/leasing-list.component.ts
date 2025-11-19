@@ -341,6 +341,12 @@ export class LeasingListComponent implements OnInit, OnDestroy {
     return transactions.filter(t => t.status === TransactionStatus.Overdue).length;
   }
 
+  // Count pending rent transactions
+  getPendingRentCount(leaseId: string): number {
+    const transactions = this.getRentTransactions(leaseId);
+    return transactions.filter(t => t.status === TransactionStatus.Pending).length;
+  }
+
   // Navigate to transaction list with filters
   onViewRentSituation(lease: Lease): void {
     // Navigate to transaction list with Revenue tab selected and filters applied
