@@ -115,13 +115,13 @@ namespace ImmoGest.Infrastructure.Configuration
 
             // Relationships
             builder.HasOne(t => t.Property)
-                .WithMany()
+                .WithMany(p => p.Transactions)
                 .HasForeignKey(t => t.PropertyId)
                 .OnDelete(DeleteBehavior.SetNull)
                 .IsRequired(false);
 
             builder.HasOne(t => t.Contact)
-                .WithMany()
+                .WithMany(c => c.Transactions)
                 .HasForeignKey(t => t.ContactId)
                 .OnDelete(DeleteBehavior.Restrict)
                 .IsRequired(false);

@@ -34,6 +34,7 @@ namespace ImmoGest.Domain.Entities
         public Company Company { get; set; }
 
         public ICollection<Attachment> Attachments { get; set; }
+        public ICollection<Transaction> Transactions { get; set; }
 
         public bool IsDeleted { get; set; }
         public bool IsArchived { get; set; }

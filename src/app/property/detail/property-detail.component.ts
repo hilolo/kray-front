@@ -31,6 +31,10 @@ import { ZardReservationCalendarComponent } from '@shared/components/reservation
 import { ReservationService } from '@shared/services/reservation.service';
 import type { Reservation } from '@shared/models/reservation/reservation.model';
 import { ZardImageHoverPreviewDirective } from '@shared/components/image-hover-preview/image-hover-preview.component';
+import type { Transaction } from '@shared/models/transaction/transaction.model';
+import { TransactionType, TransactionStatus, RevenueType, ExpenseType } from '@shared/models/transaction/transaction.model';
+import { ZardDatatableComponent, DatatableColumn } from '@shared/components/datatable/datatable.component';
+import type { ZardIcon } from '@shared/components/icon/icons';
 
 @Component({
   selector: 'app-property-detail',
@@ -57,6 +61,7 @@ import { ZardImageHoverPreviewDirective } from '@shared/components/image-hover-p
     ZardAvatarComponent,
     ZardReservationCalendarComponent,
     ZardImageHoverPreviewDirective,
+    ZardDatatableComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './property-detail.component.html',
@@ -94,6 +99,97 @@ export class PropertyDetailComponent implements OnInit {
   
   readonly calendarCopyButtonTemplateRef = computed(() => this.calendarCopyButtonTemplate() ?? undefined);
   readonly publicProfileCopyButtonTemplateRef = computed(() => this.publicProfileCopyButtonTemplate() ?? undefined);
+
+  // Transaction table template references
+  readonly revenueDateCell = viewChild<TemplateRef<any>>('revenueDateCell');
+  readonly revenueContactCell = viewChild<TemplateRef<any>>('revenueContactCell');
+  readonly revenueTypeCell = viewChild<TemplateRef<any>>('revenueTypeCell');
+  readonly revenueAmountCell = viewChild<TemplateRef<any>>('revenueAmountCell');
+  readonly revenueStatusCell = viewChild<TemplateRef<any>>('revenueStatusCell');
+
+  readonly expenseDateCell = viewChild<TemplateRef<any>>('expenseDateCell');
+  readonly expenseContactCell = viewChild<TemplateRef<any>>('expenseContactCell');
+  readonly expenseTypeCell = viewChild<TemplateRef<any>>('expenseTypeCell');
+  readonly expenseAmountCell = viewChild<TemplateRef<any>>('expenseAmountCell');
+  readonly expenseStatusCell = viewChild<TemplateRef<any>>('expenseStatusCell');
+
+  // Revenue columns
+  readonly revenueColumns = computed<DatatableColumn<Transaction>[]>(() => {
+    const dateCell = this.revenueDateCell();
+    const contactCell = this.revenueContactCell();
+    const typeCell = this.revenueTypeCell();
+    const amountCell = this.revenueAmountCell();
+    const statusCell = this.revenueStatusCell();
+
+    return [
+      {
+        key: 'date',
+        label: 'Date',
+        sortable: true,
+        cellTemplate: dateCell || undefined,
+      },
+      {
+        key: 'contact',
+        label: 'From',
+        cellTemplate: contactCell || undefined,
+      },
+      {
+        key: 'type',
+        label: 'Type',
+        cellTemplate: typeCell || undefined,
+      },
+      {
+        key: 'amount',
+        label: 'Amount',
+        sortable: true,
+        cellTemplate: amountCell || undefined,
+      },
+      {
+        key: 'status',
+        label: 'Status',
+        cellTemplate: statusCell || undefined,
+      },
+    ];
+  });
+
+  // Expense columns
+  readonly expenseColumns = computed<DatatableColumn<Transaction>[]>(() => {
+    const dateCell = this.expenseDateCell();
+    const contactCell = this.expenseContactCell();
+    const typeCell = this.expenseTypeCell();
+    const amountCell = this.expenseAmountCell();
+    const statusCell = this.expenseStatusCell();
+
+    return [
+      {
+        key: 'date',
+        label: 'Date',
+        sortable: true,
+        cellTemplate: dateCell || undefined,
+      },
+      {
+        key: 'contact',
+        label: 'To',
+        cellTemplate: contactCell || undefined,
+      },
+      {
+        key: 'type',
+        label: 'Type',
+        cellTemplate: typeCell || undefined,
+      },
+      {
+        key: 'amount',
+        label: 'Amount',
+        sortable: true,
+        cellTemplate: amountCell || undefined,
+      },
+      {
+        key: 'status',
+        label: 'Status',
+        cellTemplate: statusCell || undefined,
+      },
+    ];
+  });
 
   // Sharing settings
   readonly enableSharing = signal(false);
@@ -185,6 +281,135 @@ export class PropertyDetailComponent implements OnInit {
   readonly validationErrors = computed(() => {
     // Validation errors removed as per requirements
     return [];
+  });
+
+  // Transaction-related computed values
+  readonly transactions = computed(() => {
+    const prop = this.property();
+    if (!prop) return [];
+    return Array.isArray(prop.transactions) ? prop.transactions : [];
+  });
+
+  readonly revenueTransactions = computed(() => {
+    return this.transactions().filter(t => {
+      const type = t.type ?? t.category;
+      return type === TransactionType.Revenue;
+    });
+  });
+
+  readonly expenseTransactions = computed(() => {
+    return this.transactions().filter(t => {
+      const type = t.type ?? t.category;
+      return type === TransactionType.Expense;
+    });
+  });
+
+  readonly hasTransactions = computed(() => {
+    return this.transactions().length > 0;
+  });
+
+  readonly hasRevenueTransactions = computed(() => {
+    return this.revenueTransactions().length > 0;
+  });
+
+  readonly hasExpenseTransactions = computed(() => {
+    return this.expenseTransactions().length > 0;
+  });
+
+  // Transaction type options (same as transaction list)
+  readonly revenueTypeOptions = [
+    { value: RevenueType.Loyer, label: 'Loyer' },
+    { value: RevenueType.Caution, label: 'Caution' },
+    { value: RevenueType.FraisAgence, label: 'Frais d\'agence' },
+    { value: RevenueType.ReservationPart, label: 'Reservation Part' },
+    { value: RevenueType.ReservationFull, label: 'Reservation Full' },
+    { value: RevenueType.Maintenance, label: 'Maintenance' },
+    { value: RevenueType.Autre, label: 'Autre' },
+  ];
+
+  readonly expenseTypeOptions = [
+    { value: ExpenseType.Loyer, label: 'Loyer' },
+    { value: ExpenseType.Maintenance, label: 'Maintenance' },
+    { value: ExpenseType.Chargee, label: 'Chargee' },
+    { value: ExpenseType.Autre, label: 'Autre' },
+  ];
+
+  // Group revenue transactions by type
+  readonly groupedRevenueTransactions = computed(() => {
+    const revenue = this.revenueTransactions();
+    const groups: Map<number, Transaction[]> = new Map();
+    
+    revenue.forEach(transaction => {
+      const revenueType = transaction.revenueType;
+      if (revenueType === undefined || revenueType === null) return;
+      const key = revenueType as number;
+      if (!groups.has(key)) {
+        groups.set(key, []);
+      }
+      groups.get(key)!.push(transaction);
+    });
+    
+    // Convert to array of { type, label, transactions }
+    return Array.from(groups.entries())
+      .map(([key, transactions]) => {
+        const type = key as RevenueType;
+        const option = this.revenueTypeOptions.find(opt => opt.value === type);
+        return {
+          type,
+          label: option?.label || 'Unknown',
+          transactions: transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        };
+      })
+      .sort((a, b) => {
+        // Sort by type order in revenueTypeOptions
+        const aIndex = this.revenueTypeOptions.findIndex(opt => opt.value === a.type);
+        const bIndex = this.revenueTypeOptions.findIndex(opt => opt.value === b.type);
+        return (aIndex === -1 ? 999 : aIndex) - (bIndex === -1 ? 999 : bIndex);
+      });
+  });
+
+  // Group expense transactions by type
+  readonly groupedExpenseTransactions = computed(() => {
+    const expense = this.expenseTransactions();
+    const groups: Map<number, Transaction[]> = new Map();
+    
+    expense.forEach(transaction => {
+      const expenseType = transaction.expenseType;
+      if (expenseType === undefined || expenseType === null) return;
+      const key = expenseType as number;
+      if (!groups.has(key)) {
+        groups.set(key, []);
+      }
+      groups.get(key)!.push(transaction);
+    });
+    
+    // Convert to array of { type, label, transactions }
+    return Array.from(groups.entries())
+      .map(([key, transactions]) => {
+        const type = key as ExpenseType;
+        const option = this.expenseTypeOptions.find(opt => opt.value === type);
+        return {
+          type,
+          label: option?.label || 'Unknown',
+          transactions: transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        };
+      })
+      .sort((a, b) => {
+        // Sort by type order in expenseTypeOptions
+        const aIndex = this.expenseTypeOptions.findIndex(opt => opt.value === a.type);
+        const bIndex = this.expenseTypeOptions.findIndex(opt => opt.value === b.type);
+        return (aIndex === -1 ? 999 : aIndex) - (bIndex === -1 ? 999 : bIndex);
+      });
+  });
+
+  // Default values for accordion (all revenue groups open)
+  readonly revenueAccordionDefaultValues = computed(() => {
+    return this.groupedRevenueTransactions().map(g => `revenue-${g.type}`);
+  });
+
+  // Default values for accordion (all expense groups open)
+  readonly expenseAccordionDefaultValues = computed(() => {
+    return this.groupedExpenseTransactions().map(g => `expense-${g.type}`);
   });
 
   ngOnInit(): void {
@@ -1113,4 +1338,137 @@ export class PropertyDetailComponent implements OnInit {
         }
       });
   }
+
+  // Transaction helper methods (same as transaction list)
+  getTransactionTypeLabel(transaction: Transaction): string | null {
+    const transactionType = transaction.type ?? transaction.category;
+    if (transactionType === TransactionType.Revenue) {
+      const revenueType = transaction.revenueType;
+      const option = this.revenueTypeOptions.find(opt => opt.value === revenueType);
+      return option?.label || null;
+    } else if (transactionType === TransactionType.Expense) {
+      const expenseType = transaction.expenseType;
+      const option = this.expenseTypeOptions.find(opt => opt.value === expenseType);
+      return option?.label || null;
+    }
+    return null;
+  }
+
+  getStatusLabel(status: TransactionStatus): string {
+    switch (status) {
+      case TransactionStatus.Pending:
+        return 'Pending';
+      case TransactionStatus.Overdue:
+        return 'Overdue';
+      case TransactionStatus.Paid:
+        return 'Paid';
+      default:
+        return 'Unknown';
+    }
+  }
+
+  getStatusBadge(status: TransactionStatus): 'default' | 'destructive' {
+    switch (status) {
+      case TransactionStatus.Pending:
+        return 'default';
+      case TransactionStatus.Overdue:
+        return 'destructive';
+      case TransactionStatus.Paid:
+        return 'default';
+      default:
+        return 'default';
+    }
+  }
+
+  getStatusIcon(status: TransactionStatus): ZardIcon {
+    switch (status) {
+      case TransactionStatus.Pending:
+        return 'clock';
+      case TransactionStatus.Overdue:
+        return 'triangle-alert';
+      case TransactionStatus.Paid:
+        return 'circle-check';
+      default:
+        return 'circle';
+    }
+  }
+
+  getStatusIconColorClass(status: TransactionStatus): string {
+    switch (status) {
+      case TransactionStatus.Pending:
+        return 'text-yellow-600 dark:text-yellow-500';
+      case TransactionStatus.Overdue:
+        return 'text-red-600 dark:text-red-500';
+      case TransactionStatus.Paid:
+        return 'text-green-600 dark:text-green-500';
+      default:
+        return '';
+    }
+  }
+
+  getRowClass(transaction: Transaction): string {
+    // Same color logic as transaction list
+    if (transaction.status === TransactionStatus.Pending) {
+      return '!bg-yellow-500/30 dark:!bg-yellow-600/40 hover:!bg-yellow-500/30 dark:hover:!bg-yellow-600/40';
+    }
+    
+    if (transaction.status === TransactionStatus.Paid) {
+      const transactionType = transaction.type ?? transaction.category;
+      if (transactionType === TransactionType.Revenue) {
+        return '!bg-green-500/30 dark:!bg-green-600/40 hover:!bg-green-500/30 dark:hover:!bg-green-600/40';
+      } else {
+        return '!bg-red-500/30 dark:!bg-red-600/40 hover:!bg-red-500/30 dark:hover:!bg-red-600/40';
+      }
+    }
+    
+    return '';
+  }
+
+  formatCurrency(amount: number): string {
+    return `${amount.toFixed(2)} MAD`;
+  }
+
+  formatTransactionDate(transaction: Transaction): string {
+    const date = new Date(transaction.date);
+    
+    const englishDate = date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+    
+    const transactionType = transaction.type ?? transaction.category;
+    const isLoyer = (transactionType === TransactionType.Revenue && transaction.revenueType === RevenueType.Loyer) ||
+                    (transactionType === TransactionType.Expense && transaction.expenseType === ExpenseType.Loyer);
+    
+    if (isLoyer) {
+      const frenchMonths = [
+        'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+        'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+      ];
+      
+      const monthIndex = date.getMonth();
+      const frenchMonth = frenchMonths[monthIndex];
+      const twoDigitYear = date.getFullYear().toString().slice(-2);
+      
+      return `${englishDate} (${frenchMonth} ${twoDigitYear})`;
+    }
+    
+    return englishDate;
+  }
+
+  viewTransaction(transaction: Transaction): void {
+    const transactionType = transaction.type ?? transaction.category;
+    if (transactionType === TransactionType.Revenue) {
+      this.router.navigate(['/transaction/revenue', transaction.id, 'edit']);
+    } else {
+      this.router.navigate(['/transaction/expense', transaction.id, 'edit']);
+    }
+  }
+
+  // Expose enums to template
+  readonly TransactionType = TransactionType;
+  readonly TransactionStatus = TransactionStatus;
+  readonly RevenueType = RevenueType;
+  readonly ExpenseType = ExpenseType;
 }

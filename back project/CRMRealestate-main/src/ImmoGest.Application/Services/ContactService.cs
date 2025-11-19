@@ -508,7 +508,16 @@ namespace ImmoGest.Application.Services
         public override async Task<Result<TOut>> GetByIdAsync<TOut>(Guid id)
         {
             _includeRelated = false; // Default to false for backward compatibility
-            return await base.GetByIdAsync<TOut>(id);
+            var entityResult = await _contactRepository.GetByIdWithRelatedAsync(id, false);
+            if (entityResult is null || entityResult.Data is null)
+                return Result.Failure<TOut>();
+
+            var mappedEntity = _mapper.Map<TOut>(entityResult.Data);
+
+            /*hook after mapping the entity*/
+            await InGet_AfterMappingAsync(entityResult.Data, mappedEntity);
+
+            return Result.Success(mappedEntity);
         }
 
         /// <summary>
@@ -517,7 +526,16 @@ namespace ImmoGest.Application.Services
         public async Task<Result<TOut>> GetByIdAsync<TOut>(Guid id, bool includeRelated)
         {
             _includeRelated = includeRelated;
-            return await base.GetByIdAsync<TOut>(id);
+            var entityResult = await _contactRepository.GetByIdWithRelatedAsync(id, includeRelated);
+            if (entityResult is null || entityResult.Data is null)
+                return Result.Failure<TOut>();
+
+            var mappedEntity = _mapper.Map<TOut>(entityResult.Data);
+
+            /*hook after mapping the entity*/
+            await InGet_AfterMappingAsync(entityResult.Data, mappedEntity);
+
+            return Result.Success(mappedEntity);
         }
 
         protected override async Task InGet_AfterMappingAsync<TOut>(Contact entity, TOut mappedEntity)
@@ -891,6 +909,7 @@ namespace ImmoGest.Application.Services
                     dto.Leases = new List<LeaseDto>();
                     dto.Banks = new List<BankDto>();
                     dto.Maintenances = new List<MaintenanceDto>();
+                    dto.Transactions = new List<TransactionDto>();
                 }
             }
             await base.InGet_AfterMappingAsync(entity, mappedEntity);

@@ -50,6 +50,9 @@ namespace ImmoGest.Application.DTOs
         // Keys - List of keys associated with the property
         public List<KeyDto> Keys { get; set; }
         
+        // Transactions - List of transactions associated with the property
+        public List<TransactionDto> Transactions { get; set; }
+        
         // Timestamps
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }

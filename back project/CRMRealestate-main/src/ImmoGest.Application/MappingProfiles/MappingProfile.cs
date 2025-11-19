@@ -77,8 +77,25 @@ namespace ImmoGest.Application.MappingProfiles
             CreateMap<Contact, ContactDto>()
                 .ForMember(dest => dest.Attachments, opt => opt.Ignore())  // Handled manually in service
                 .ForMember(dest => dest.AttachmentCount, opt => opt.Ignore())  // Set manually in service
+                .ForMember(dest => dest.Transactions, opt => opt.MapFrom(src => src.Transactions)) // Map Transactions when loaded
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedOn.DateTime))
-                .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => src.LastModifiedOn.HasValue ? src.LastModifiedOn.Value.DateTime : src.CreatedOn.DateTime));
+                .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => src.LastModifiedOn.HasValue ? src.LastModifiedOn.Value.DateTime : src.CreatedOn.DateTime))
+                .AfterMap((src, dest) => 
+                {
+                    // Set ContactName for transactions loaded from Contact
+                    // (since transaction.Contact might be null to avoid cycles, use parent Contact)
+                    if (dest.Transactions != null && dest.Transactions.Any())
+                    {
+                        var contactName = src.IsACompany ? src.CompanyName : $"{src.FirstName} {src.LastName}".Trim();
+                        foreach (var transaction in dest.Transactions)
+                        {
+                            if (string.IsNullOrEmpty(transaction.ContactName))
+                            {
+                                transaction.ContactName = contactName;
+                            }
+                        }
+                    }
+                });
             
             CreateMap<ContactDto, Contact>()
                 .ForMember(dest => dest.Attachments, opt => opt.Ignore());
@@ -136,7 +153,31 @@ namespace ImmoGest.Application.MappingProfiles
                 .ForMember(dest => dest.Attachments, opt => opt.Ignore()) // Set manually in service
                 .ForMember(dest => dest.Maintenances, opt => opt.MapFrom(src => src.Maintenances))
                 .ForMember(dest => dest.Leases, opt => opt.Ignore()) // Set manually in service (like Attachments)
-                .ForMember(dest => dest.Keys, opt => opt.MapFrom(src => src.Keys)); // Map Keys collection
+                .ForMember(dest => dest.Keys, opt => opt.MapFrom(src => src.Keys)) // Map Keys collection
+                .ForMember(dest => dest.Transactions, opt => opt.MapFrom(src => src.Transactions)) // Map Transactions when loaded
+                .AfterMap((src, dest) => 
+                {
+                    // Set PropertyName, PropertyAddress, and PropertyIdentifier for transactions loaded from Property
+                    // (since transaction.Property is null to avoid cycles)
+                    if (dest.Transactions != null && dest.Transactions.Any())
+                    {
+                        foreach (var transaction in dest.Transactions)
+                        {
+                            if (string.IsNullOrEmpty(transaction.PropertyName))
+                            {
+                                transaction.PropertyName = src.Name;
+                            }
+                            if (string.IsNullOrEmpty(transaction.PropertyAddress))
+                            {
+                                transaction.PropertyAddress = src.Address;
+                            }
+                            if (string.IsNullOrEmpty(transaction.PropertyIdentifier))
+                            {
+                                transaction.PropertyIdentifier = src.Identifier;
+                            }
+                        }
+                    }
+                });
             
             CreateMap<CreatePropertyDto, Property>();
             CreateMap<UpdatePropertyDto, Property>()
@@ -514,20 +555,43 @@ namespace ImmoGest.Application.MappingProfiles
         private void TransactionMapper()
         {
             CreateMap<Transaction, TransactionDto>()
-                .ForMember(dest => dest.PropertyName, opt => opt.Ignore()) // Set manually in service
-                .ForMember(dest => dest.PropertyAddress, opt => opt.Ignore()) // Set manually in service
-                .ForMember(dest => dest.ContactName, opt => opt.Ignore()) // Set manually in service
-                .ForMember(dest => dest.LeaseTenantName, opt => opt.Ignore()) // Set manually in service
+                .ForMember(dest => dest.PropertyName, opt => opt.MapFrom(src => src.Property != null ? src.Property.Name : null))
+                .ForMember(dest => dest.PropertyAddress, opt => opt.MapFrom(src => src.Property != null ? src.Property.Address : null))
+                .ForMember(dest => dest.PropertyIdentifier, opt => opt.MapFrom(src => src.Property != null ? src.Property.Identifier : null))
+                .ForMember(dest => dest.ContactName, opt => opt.MapFrom(src => 
+                    src.Contact != null 
+                        ? (src.Contact.IsACompany ? src.Contact.CompanyName : $"{src.Contact.FirstName} {src.Contact.LastName}".Trim())
+                        : null))
+                .ForMember(dest => dest.LeaseTenantName, opt => opt.MapFrom(src => 
+                    src.Lease != null && src.Lease.Contact != null
+                        ? (src.Lease.Contact.IsACompany ? src.Lease.Contact.CompanyName : $"{src.Lease.Contact.FirstName} {src.Lease.Contact.LastName}".Trim())
+                        : null))
                 .ForMember(dest => dest.Attachments, opt => opt.Ignore()) // Set manually in service
-                .ForMember(dest => dest.AttachmentCount, opt => opt.Ignore()) // Set manually in service
+                .ForMember(dest => dest.AttachmentCount, opt => opt.MapFrom(src => src.Attachments != null ? src.Attachments.Count : 0))
+                .ForMember(dest => dest.Payments, opt => opt.Ignore()) // Ignore Payments during projection to avoid EF Core translation issues
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedOn.DateTime))
-                .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => src.LastModifiedOn.HasValue ? src.LastModifiedOn.Value.DateTime : (DateTime?)null));
+                .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => src.LastModifiedOn.HasValue ? src.LastModifiedOn.Value.DateTime : (DateTime?)null))
+                .AfterMap((src, dest) => 
+                {
+                    // Map Payments after entity is materialized (not during query translation)
+                    if (src.Payments != null && src.Payments.Any())
+                    {
+                        dest.Payments = src.Payments.Select(p => new PaymentDto 
+                        { 
+                            Amount = p.Amount, 
+                            VatPercent = p.VatPercent, 
+                            Description = p.Description 
+                        }).ToList();
+                    }
+                });
 
             CreateMap<Transaction, TransactionListDto>()
                 .ForMember(dest => dest.ContactName, opt => opt.Ignore()) // Set manually in service
                 .ForMember(dest => dest.PropertyName, opt => opt.Ignore()); // Set manually in service
 
-            CreateMap<Payment, PaymentDto>().ReverseMap();
+            // Payment to PaymentDto - No explicit mapping needed
+            // AutoMapper will use convention-based mapping (same property names) after materialization
+            // This avoids EF Core query translation issues during projection
 
             CreateMap<CreateTransactionDto, Transaction>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())

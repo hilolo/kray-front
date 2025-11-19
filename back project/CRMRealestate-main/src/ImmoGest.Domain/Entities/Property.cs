@@ -47,6 +47,7 @@ namespace ImmoGest.Domain.Entities
         public ICollection<Maintenance> Maintenances { get; set; }
         public ICollection<Lease> Leases { get; set; }
         public ICollection<Key> Keys { get; set; }
+        public ICollection<Transaction> Transactions { get; set; }
 
         public override void BuildSearchTerms()
         => SearchTerms = $"{Identifier} {Name} {Description} {Address} {City} {TypeProperty} {Category.ToString()}".ToUpper();

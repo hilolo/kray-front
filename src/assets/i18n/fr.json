@@ -84,6 +84,22 @@
       "day": "jour"
     }
   },
+  "date": {
+    "months": {
+      "january": "Janvier",
+      "february": "Février",
+      "march": "Mars",
+      "april": "Avril",
+      "may": "Mai",
+      "june": "Juin",
+      "july": "Juillet",
+      "august": "Août",
+      "september": "Septembre",
+      "october": "Octobre",
+      "november": "Novembre",
+      "december": "Décembre"
+    }
+  },
   "aiChat": {
     "alert": {
       "title": "Avertissement sur les résultats de l'IA",

@@ -44,6 +44,35 @@ namespace ImmoGest.Infrastructure.Repositories
             return Result.Success<Contact>(contact);
         }
 
+        /// <summary>
+        /// Get contact by ID with optional related entities
+        /// </summary>
+        public async Task<Result<Contact>> GetByIdWithRelatedAsync(Guid id, bool includeRelated)
+        {
+            if (includeRelated)
+            {
+                // Include all related entities (for detail mode)
+                var contact = await DbSet
+                    .AsNoTracking()
+                    .Include(c => c.Attachments)
+                    .Include(c => c.Transactions)
+                        .ThenInclude(t => t.Property)
+                    .Include(c => c.Transactions)
+                        .ThenInclude(t => t.Lease)
+                        .ThenInclude(l => l.Contact)
+                    .FirstOrDefaultAsync(e => e.Id == id);
+
+                return contact != null
+                    ? Result.Success<Contact>(contact)
+                    : Result.Failure<Contact>();
+            }
+            else
+            {
+                // Don't include related entities (for edit mode) - call base method
+                return await base.GetByIdAsync(id);
+            }
+        }
+
         public void DeleteContactAttachments(List<Attachment> attachments)
         {
             if (attachments == null || !attachments.Any())

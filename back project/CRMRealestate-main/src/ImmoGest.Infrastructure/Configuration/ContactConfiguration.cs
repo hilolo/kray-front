@@ -72,6 +72,12 @@ namespace ImmoGest.Infrastructure.Configuration
                 .WithMany()
                 .HasForeignKey(c => c.CompanyId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Configure relationship with Transactions
+            builder.HasMany(c => c.Transactions)
+                .WithOne(t => t.Contact)
+                .HasForeignKey(t => t.ContactId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

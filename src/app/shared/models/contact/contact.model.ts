@@ -61,6 +61,7 @@ export interface Contact {
   leases?: import('../lease/lease.model').Lease[];
   banks?: import('../bank/bank.model').Bank[];
   maintenances?: import('../maintenance/maintenance.model').Maintenance[];
+  transactions?: import('../transaction/transaction.model').Transaction[];
 }
 
 /**

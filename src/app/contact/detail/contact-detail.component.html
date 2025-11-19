@@ -162,7 +162,143 @@
               <!-- Finance Tab (always shown) -->
               <z-tab label="FINANCE">
                 <div class="pt-4">
-                  <p class="text-sm text-muted-foreground">Finance content coming soon</p>
+                  @if (!hasTransactions()) {
+                    <div class="text-center py-8 text-sm text-muted-foreground">
+                      No transactions found
+                    </div>
+                  } @else {
+                    <!-- Revenue Section (GREEN) -->
+                    @if (hasRevenueTransactions()) {
+                      <div class="mb-6">
+                        <div class="flex items-center gap-2 mb-4 pb-2 border-b-2 border-green-500">
+                          <z-icon zType="plus" zSize="sm" class="text-green-600 dark:text-green-400" />
+                          <h3 class="text-sm font-semibold text-green-600 dark:text-green-400">REVENUE</h3>
+                          <z-badge zType="default" class="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                            {{ revenueTransactions().length }}
+                          </z-badge>
+                        </div>
+                        <z-accordion zType="multiple" [zDefaultValue]="revenueAccordionDefaultValues()">
+                          @for (group of groupedRevenueTransactions(); track group.type) {
+                            <z-accordion-item [zValue]="'revenue-' + group.type" [zTitle]="group.label + ' (' + group.transactions.length + ')'">
+                              <z-datatable
+                                [zData]="group.transactions"
+                                [zColumns]="revenueColumns()"
+                                [zViewMode]="'list'"
+                                [zSelectable]="false"
+                                [zEmptyMessage]="'No transactions'"
+                                [zRowClass]="getRowClass"
+                              >
+                                <ng-template #revenueDateCell let-row="row">
+                                  <span>{{ formatTransactionDate(row) }}</span>
+                                </ng-template>
+                                <ng-template #revenuePropertyCell let-row="row">
+                                  <div class="flex items-center gap-2 flex-wrap">
+                                    @if (row.propertyIdentifier) {
+                                      <z-badge zType="outline" zSize="sm">{{ row.propertyIdentifier }}</z-badge>
+                                    }
+                                    @if (row.propertyAddress) {
+                                      <span class="text-sm text-muted-foreground">{{ row.propertyAddress }}</span>
+                                    }
+                                    @if (!row.propertyIdentifier && !row.propertyAddress) {
+                                      @if (row.propertyName) {
+                                        <span class="text-sm">{{ row.propertyName }}</span>
+                                      } @else {
+                                        <span class="text-muted-foreground text-sm">-</span>
+                                      }
+                                    }
+                                  </div>
+                                </ng-template>
+                                <ng-template #revenueTypeCell let-row="row">
+                                  @if (getTransactionTypeLabel(row)) {
+                                    <z-badge [zType]="'default'">
+                                      {{ getTransactionTypeLabel(row) }}
+                                    </z-badge>
+                                  } @else {
+                                    <span class="text-muted-foreground text-sm">-</span>
+                                  }
+                                </ng-template>
+                                <ng-template #revenueAmountCell let-row="row">
+                                  <span class="font-semibold text-green-600 dark:text-green-400">{{ formatCurrency(row.totalAmount) }}</span>
+                                </ng-template>
+                                <ng-template #revenueStatusCell let-row="row">
+                                  <z-badge [zType]="getStatusBadge(row.status)">
+                                    <z-icon [zType]="getStatusIcon(row.status)" zSize="sm" [class]="getStatusIconColorClass(row.status)" class="mr-1" />
+                                    {{ getStatusLabel(row.status) }}
+                                  </z-badge>
+                                </ng-template>
+                              </z-datatable>
+                            </z-accordion-item>
+                          }
+                        </z-accordion>
+                      </div>
+                    }
+
+                    <!-- Expense Section (RED) -->
+                    @if (hasExpenseTransactions()) {
+                      <div>
+                        <div class="flex items-center gap-2 mb-4 pb-2 border-b-2 border-red-500">
+                          <z-icon zType="minus" zSize="sm" class="text-red-600 dark:text-red-400" />
+                          <h3 class="text-sm font-semibold text-red-600 dark:text-red-400">EXPENSE</h3>
+                          <z-badge zType="destructive" class="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                            {{ expenseTransactions().length }}
+                          </z-badge>
+                        </div>
+                        <z-accordion zType="multiple" [zDefaultValue]="expenseAccordionDefaultValues()">
+                          @for (group of groupedExpenseTransactions(); track group.type) {
+                            <z-accordion-item [zValue]="'expense-' + group.type" [zTitle]="group.label + ' (' + group.transactions.length + ')'">
+                              <z-datatable
+                                [zData]="group.transactions"
+                                [zColumns]="expenseColumns()"
+                                [zViewMode]="'list'"
+                                [zSelectable]="false"
+                                [zEmptyMessage]="'No transactions'"
+                                [zRowClass]="getRowClass"
+                              >
+                                <ng-template #expenseDateCell let-row="row">
+                                  <span>{{ formatTransactionDate(row) }}</span>
+                                </ng-template>
+                                <ng-template #expensePropertyCell let-row="row">
+                                  <div class="flex items-center gap-2 flex-wrap">
+                                    @if (row.propertyIdentifier) {
+                                      <z-badge zType="outline" zSize="sm">{{ row.propertyIdentifier }}</z-badge>
+                                    }
+                                    @if (row.propertyAddress) {
+                                      <span class="text-sm text-muted-foreground">{{ row.propertyAddress }}</span>
+                                    }
+                                    @if (!row.propertyIdentifier && !row.propertyAddress) {
+                                      @if (row.propertyName) {
+                                        <span class="text-sm">{{ row.propertyName }}</span>
+                                      } @else {
+                                        <span class="text-muted-foreground text-sm">-</span>
+                                      }
+                                    }
+                                  </div>
+                                </ng-template>
+                                <ng-template #expenseTypeCell let-row="row">
+                                  @if (getTransactionTypeLabel(row)) {
+                                    <z-badge [zType]="'default'">
+                                      {{ getTransactionTypeLabel(row) }}
+                                    </z-badge>
+                                  } @else {
+                                    <span class="text-muted-foreground text-sm">-</span>
+                                  }
+                                </ng-template>
+                                <ng-template #expenseAmountCell let-row="row">
+                                  <span class="font-semibold text-red-600 dark:text-red-400">{{ formatCurrency(row.totalAmount) }}</span>
+                                </ng-template>
+                                <ng-template #expenseStatusCell let-row="row">
+                                  <z-badge [zType]="getStatusBadge(row.status)">
+                                    <z-icon [zType]="getStatusIcon(row.status)" zSize="sm" [class]="getStatusIconColorClass(row.status)" class="mr-1" />
+                                    {{ getStatusLabel(row.status) }}
+                                  </z-badge>
+                                </ng-template>
+                              </z-datatable>
+                            </z-accordion-item>
+                          }
+                        </z-accordion>
+                      </div>
+                    }
+                  }
                 </div>
               </z-tab>
 

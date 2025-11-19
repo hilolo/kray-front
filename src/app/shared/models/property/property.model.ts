@@ -146,6 +146,7 @@ export interface Property {
   maintenances: PropertyMaintenanceSummary[];
   leases: Lease[];
   keys: Key[];
+  transactions?: import('../transaction/transaction.model').Transaction[];
   createdAt: string;
   updatedAt: string;
 }

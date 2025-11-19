@@ -12,6 +12,7 @@ using ImmoGest.Domain.Entities.Enums;
 using ImmoGest.Domain.Repositories;
 using ImmoGest.Domain.Constants;
 using ImmoGest.Domain.Auth.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using ResultNet;
@@ -797,6 +798,7 @@ namespace ImmoGest.Application.Services
                     dto.Maintenances = new List<PropertyMaintenanceSummaryDto>();
                     dto.Leases = new List<LeaseDto>();
                     dto.Keys = new List<KeyDto>();
+                    dto.Transactions = new List<TransactionDto>();
                 }
             }
             await base.InGet_AfterMappingAsync(entity, mappedEntity);

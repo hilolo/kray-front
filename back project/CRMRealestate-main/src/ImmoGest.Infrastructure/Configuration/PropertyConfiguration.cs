@@ -113,6 +113,11 @@ namespace ImmoGest.Infrastructure.Configuration
                 .WithOne(k => k.Property)
                 .HasForeignKey(k => k.PropertyId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasMany(p => p.Transactions)
+                .WithOne(t => t.Property)
+                .HasForeignKey(t => t.PropertyId)
+                .OnDelete(DeleteBehavior.SetNull);
         }
     }
 } 

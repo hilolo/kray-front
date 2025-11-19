@@ -30,6 +30,7 @@ namespace ImmoGest.Application.DTOs
         public List<LeaseDto> Leases { get; set; }
         public List<BankDto> Banks { get; set; }
         public List<MaintenanceDto> Maintenances { get; set; }
+        public List<TransactionDto> Transactions { get; set; }
     }
 
     public class UpdateContactArchiveStatusDto

@@ -36,6 +36,7 @@ namespace ImmoGest.Application.DTOs
         public Guid? PropertyId { get; set; }
         public string PropertyName { get; set; }
         public string PropertyAddress { get; set; }
+        public string PropertyIdentifier { get; set; }
         
         // Lease information (optional)
         public Guid? LeaseId { get; set; }

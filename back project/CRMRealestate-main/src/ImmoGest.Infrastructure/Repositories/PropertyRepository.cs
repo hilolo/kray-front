@@ -50,6 +50,11 @@ namespace ImmoGest.Infrastructure.Repositories
                     .Include(p => p.Leases.Where(l => !l.IsDeleted))
                         .ThenInclude(l => l.Attachments)
                     .Include(p => p.Keys.Where(k => !k.IsDeleted))
+                    .Include(p => p.Transactions)
+                        .ThenInclude(t => t.Contact)
+                    .Include(p => p.Transactions)
+                        .ThenInclude(t => t.Lease)
+                        .ThenInclude(l => l.Contact)
                     .FirstOrDefaultAsync(p => p.Id == id);
 
                 return property != null
