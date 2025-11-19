@@ -589,7 +589,10 @@ namespace ImmoGest.Application.MappingProfiles
                 .ForMember(dest => dest.ContactName, opt => opt.Ignore()) // Set manually in service
                 .ForMember(dest => dest.PropertyName, opt => opt.Ignore()); // Set manually in service
 
-            // Payment to PaymentDto - No explicit mapping needed
+            // PaymentDto to Payment mapping (needed for CreateTransactionDto -> Transaction)
+            CreateMap<PaymentDto, Payment>();
+
+            // Payment to PaymentDto - No explicit mapping needed for query projection
             // AutoMapper will use convention-based mapping (same property names) after materialization
             // This avoids EF Core query translation issues during projection
 
