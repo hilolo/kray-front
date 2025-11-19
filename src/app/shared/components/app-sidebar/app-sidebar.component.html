@@ -78,7 +78,7 @@
         <button
           dropdown-trigger
           type="button"
-          class="flex gap-2.5 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground items-center p-2 rounded-md transition-colors w-full group"
+          class="flex gap-2.5 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground items-center py-2 pl-2 pr-0 rounded-md transition-colors w-full group relative"
         >
           @if (!sidebarCollapsed()) {
             <z-avatar 
@@ -90,7 +90,6 @@
               <div class="text-sm font-medium break-words">{{ userName() }}</div>
               <div class="text-xs text-sidebar-foreground/60 break-words leading-tight">{{ userEmail() }}</div>
             </div>
-            <z-icon zType="ellipsis" zSize="sm" class="text-sidebar-foreground/40 group-hover:text-sidebar-accent-foreground flex-shrink-0 transition-colors" />
           }
         </button>
 
