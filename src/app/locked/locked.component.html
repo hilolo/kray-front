@@ -1,0 +1,25 @@
+<div class="min-h-screen flex items-center justify-center bg-background p-4">
+  <z-card class="w-full max-w-md">
+    <div class="flex flex-col items-center text-center space-y-6 p-6">
+      <!-- Lock Icon -->
+      <div class="rounded-full bg-destructive/10 p-4">
+        <z-icon zType="lock" class="h-12 w-12 text-destructive" />
+      </div>
+
+      <!-- Title and Message -->
+      <div class="space-y-2">
+        <h1 class="text-2xl font-semibold tracking-tight">Access Restricted</h1>
+        <p class="text-muted-foreground">
+          Your access has been restricted. Please contact support.
+        </p>
+      </div>
+
+      <!-- Logout Button -->
+      <z-button zType="default" (click)="onLogout()" class="w-full">
+        <z-icon zType="log-out" />
+        Logout
+      </z-button>
+    </div>
+  </z-card>
+</div>
+

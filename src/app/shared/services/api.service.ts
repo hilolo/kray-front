@@ -62,10 +62,17 @@ export class ApiService {
       map((response) => {
         // Check if response has error status even with 200 OK
         if (response.status === 'Failed') {
-          if (response.message) {
+          // Create error object with code and data for company_restricted handling
+          const error: any = new Error(response.message || 'Request failed');
+          error.code = response.code;
+          error.data = response.data;
+          error.message = response.message;
+          error.errors = response.errors;
+          // Don't show toast for company_restricted - let login component handle it
+          if (response.code !== 'company_restricted' && response.message) {
             this.toastService.error(response.message);
           }
-          throw new Error(response.message || 'Request failed');
+          throw error;
         }
         return response.data; // Extract data from standard response
       }),

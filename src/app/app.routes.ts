@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { HomeComponent } from './home/home.component';
 import { LoginComponent } from './login/login.component';
+import { LockedComponent } from './locked/locked.component';
 import { HeroiconExampleComponent } from './shared/components/icon/heroicon-example.component';
 import { AiChatComponent } from './ai-chat/ai-chat.component';
 import { FileManagerComponent } from './file-manager/file-manager.component';
@@ -18,6 +19,10 @@ export const routes: Routes = [
     path: 'login',
     component: LoginComponent,
     canActivate: [loginGuard],
+  },
+  {
+    path: 'locked',
+    component: LockedComponent,
   },
   {
     path: 'heroicons',
