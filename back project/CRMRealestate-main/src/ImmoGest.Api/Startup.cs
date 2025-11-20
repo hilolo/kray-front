@@ -145,7 +145,7 @@ namespace ImmoGest.Api
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger<Startup> logger)
         {
             if (env.IsDevelopment()) app.UseDeveloperExceptionPage();
-            app.UseCustomSerilogRequestLogging();
+            // app.UseCustomSerilogRequestLogging(); // Disabled to remove HTTP request logging
             app.UseRouting();
             
             // Swagger basic authentication
