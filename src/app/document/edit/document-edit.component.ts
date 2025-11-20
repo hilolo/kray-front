@@ -1,13 +1,18 @@
-import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { ZardPageComponent } from '../../page/page.component';
 import { ZardButtonComponent } from '@shared/components/button/button.component';
 import { ZardIconComponent } from '@shared/components/icon/icon.component';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ZardTextEditorComponent } from '@shared/components/text-editor/text-editor.component';
 import { HtmlToPdfmakeService } from '@shared/services/html-to-pdfmake.service';
 import { SafePipe } from '@shared/pipes/safe.pipe';
 import { ZardPdfViewerComponent } from '@shared/pdf-viewer/pdf-viewer.component';
+import { ZardFormFieldComponent } from '@shared/components/form/form.component';
+import { ZardFormControlComponent } from '@shared/components/form/form.component';
+import { ZardFormLabelComponent } from '@shared/components/form/form.component';
+import { ZardInputDirective } from '@shared/components/input/input.directive';
 import { ChangeDetectorRef } from '@angular/core';
 import pdfMake from 'pdfmake/build/pdfmake';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
@@ -30,17 +35,24 @@ import pdfFonts from 'pdfmake/build/vfs_fonts';
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     ZardPageComponent,
     ZardButtonComponent,
     ZardIconComponent,
     ZardTextEditorComponent,
     ZardPdfViewerComponent,
+    ZardFormFieldComponent,
+    ZardFormControlComponent,
+    ZardFormLabelComponent,
+    ZardInputDirective,
     SafePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './document-edit.component.html',
 })
 export class DocumentEditComponent implements OnInit {
+  @ViewChild('textEditor') textEditor!: ZardTextEditorComponent;
+
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly htmlToPdfmake = inject(HtmlToPdfmakeService);
@@ -58,6 +70,10 @@ export class DocumentEditComponent implements OnInit {
   readonly isGeneratingPdf = signal(false);
   readonly showDebug = signal(false);
   readonly showPdfViewer = signal(false);
+
+  // Textarea inputs
+  readonly htmlInput = signal<string>('');
+  readonly pdfMakeJsonInput = signal<string>('');
 
   readonly isFormValid = computed(() => {
     return this.editorContent().trim().length > 0;
@@ -189,6 +205,54 @@ export class DocumentEditComponent implements OnInit {
       this.isSaving.set(false);
       this.router.navigate(['/document']);
     }, 1000);
+  }
+
+  insertHtmlIntoEditor(): void {
+    const html = this.htmlInput().trim();
+    if (!html) return;
+
+    if (!this.textEditor) {
+      console.warn('Text editor is not ready yet');
+      return;
+    }
+
+    this.textEditor.setHtml(html);
+    // Update editor content signal
+    const updatedHtml = this.textEditor.getHtml();
+    this.editorContent.set(updatedHtml);
+    // Clear the textarea
+    this.htmlInput.set('');
+    // Update PDF preview
+    setTimeout(() => {
+      this.updatePdfPreview();
+    }, 0);
+  }
+
+  generatePdfFromJson(): void {
+    const jsonString = this.pdfMakeJsonInput().trim();
+    if (!jsonString) return;
+
+    try {
+      const docDefinition = JSON.parse(jsonString);
+      
+      this.isGeneratingPdf.set(true);
+      
+      // Store the JSON
+      this.pdfMakeJson.set(JSON.stringify(docDefinition, null, 2));
+
+      pdfMake.createPdf(docDefinition).getDataUrl((dataUrl: string) => {
+        if (dataUrl) {
+          this.pdfDataUrl.set(dataUrl);
+        }
+        this.isGeneratingPdf.set(false);
+        this.cdr.markForCheck();
+      });
+    } catch (error) {
+      console.error('Error parsing PDFMake JSON:', error);
+      alert('Invalid JSON format. Please check your PDFMake JSON.');
+      this.isGeneratingPdf.set(false);
+      this.cdr.markForCheck();
+    }
   }
 }
 

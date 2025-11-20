@@ -52,6 +52,72 @@
           </div>
         </div>
       } @else {
+        <!-- HTML and PDFMake JSON Input Section -->
+        <div class="mb-6 space-y-4">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <!-- HTML Input -->
+            <z-form-field>
+              <z-form-label>Insert HTML into Editor</z-form-label>
+              <z-form-control>
+                <div class="space-y-2">
+                  <textarea
+                    z-input
+                    [ngModel]="htmlInput()"
+                    (ngModelChange)="htmlInput.set($event)"
+                    name="htmlInput"
+                    placeholder="Paste HTML content here..."
+                    rows="6"
+                    class="w-full resize-none font-mono text-xs"
+                  ></textarea>
+                  <z-button 
+                    zType="default" 
+                    zSize="sm" 
+                    [disabled]="!htmlInput().trim()" 
+                    (click)="insertHtmlIntoEditor()"
+                    class="w-full"
+                  >
+                    <z-icon zType="code" zSize="sm" class="mr-2" />
+                    Insert HTML into Editor
+                  </z-button>
+                </div>
+              </z-form-control>
+            </z-form-field>
+
+            <!-- PDFMake JSON Input -->
+            <z-form-field>
+              <z-form-label>Generate PDF from PDFMake JSON</z-form-label>
+              <z-form-control>
+                <div class="space-y-2">
+                  <textarea
+                    z-input
+                    [ngModel]="pdfMakeJsonInput()"
+                    (ngModelChange)="pdfMakeJsonInput.set($event)"
+                    name="pdfMakeJsonInput"
+                    placeholder="Paste PDFMake JSON here..."
+                    rows="6"
+                    class="w-full resize-none font-mono text-xs"
+                  ></textarea>
+                  <z-button 
+                    zType="default" 
+                    zSize="sm" 
+                    [disabled]="!pdfMakeJsonInput().trim() || isGeneratingPdf()" 
+                    (click)="generatePdfFromJson()"
+                    class="w-full"
+                  >
+                    @if (isGeneratingPdf()) {
+                      <z-icon zType="loader-circle" zSize="sm" class="mr-2 animate-spin" />
+                      Generating...
+                    } @else {
+                      <z-icon zType="file-text" zSize="sm" class="mr-2" />
+                      Generate PDF from JSON
+                    }
+                  </z-button>
+                </div>
+              </z-form-control>
+            </z-form-field>
+          </div>
+        </div>
+
         <!-- Two Column Layout -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <!-- Left Half - Text Editor -->
@@ -62,6 +128,7 @@
             </div>
             <div class="flex-1 min-h-0">
               <z-text-editor
+                #textEditor
                 [value]="editorContent()"
                 [zSize]="'lg'"
                 placeholder="Start typing your document content here..."
