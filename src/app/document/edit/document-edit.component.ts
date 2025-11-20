@@ -13,6 +13,7 @@ import { ZardFormFieldComponent } from '@shared/components/form/form.component';
 import { ZardFormControlComponent } from '@shared/components/form/form.component';
 import { ZardFormLabelComponent } from '@shared/components/form/form.component';
 import { ZardInputDirective } from '@shared/components/input/input.directive';
+import { ZardInputGroupComponent } from '@shared/components/input-group/input-group.component';
 import { ZardSegmentedComponent } from '@shared/components/segmented/segmented.component';
 import { ChangeDetectorRef } from '@angular/core';
 import pdfMake from 'pdfmake/build/pdfmake';
@@ -48,6 +49,7 @@ import { PdfFontsService } from '@shared/services/pdf-fonts.service';
     ZardFormControlComponent,
     ZardFormLabelComponent,
     ZardInputDirective,
+    ZardInputGroupComponent,
     ZardSegmentedComponent,
     SafePipe,
   ],
@@ -67,6 +69,11 @@ export class DocumentEditComponent implements OnInit {
   readonly editorContent = signal<string>('');
   readonly isLoading = signal(false);
   readonly isSaving = signal(false);
+  
+  // Field values for tags
+  readonly nameValue = signal<string>('');
+  readonly ageValue = signal<string>('');
+  readonly dateValue = signal<string>('');
   
   // Text size control
   readonly textSize = signal<'normal' | 'large' | 'extralarge'>('normal');
@@ -364,6 +371,11 @@ export class DocumentEditComponent implements OnInit {
     
     let htmlContent = this.editorContent();
     
+    // Replace tags with their values before converting to PDFMake
+    if (this.textEditor) {
+      htmlContent = this.textEditor.replaceTagsWithValues(htmlContent);
+    }
+    
     // Remove line-height from HTML style attributes before converting to PDFMake
     htmlContent = this.removeLineHeightFromHtml(htmlContent);
     
@@ -520,6 +532,49 @@ export class DocumentEditComponent implements OnInit {
       this.isGeneratingPdf.set(false);
       this.cdr.markForCheck();
     }
+  }
+
+  /**
+   * Insert a field tag into the editor at the current cursor position
+   * @param fieldName The name of the field (e.g., "Name", "Age", "Date")
+   */
+  insertFieldTag(fieldName: string): void {
+    if (!this.textEditor) {
+      console.warn('Text editor is not ready yet');
+      return;
+    }
+
+    let value = '';
+    switch (fieldName) {
+      case 'Name':
+        value = this.nameValue();
+        break;
+      case 'Age':
+        value = this.ageValue();
+        break;
+      case 'Date':
+        value = this.dateValue();
+        break;
+      default:
+        console.warn(`Unknown field name: ${fieldName}`);
+        return;
+    }
+
+    if (!value) {
+      console.warn(`No value set for field: ${fieldName}`);
+      return;
+    }
+
+    this.textEditor.insertTag(fieldName, value);
+    
+    // Update editor content signal to trigger change detection
+    const updatedHtml = this.textEditor.getHtml();
+    this.editorContent.set(updatedHtml);
+    
+    // Update PDF preview
+    setTimeout(() => {
+      this.updatePdfPreview();
+    }, 0);
   }
 }
 
