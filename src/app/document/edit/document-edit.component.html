@@ -53,9 +53,9 @@
         </div>
       } @else {
         <!-- Two Column Layout -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-6 min-w-0">
           <!-- Left Half - Text Editor -->
-          <div class="flex flex-col">
+          <div class="flex flex-col min-w-0 overflow-hidden">
             <div class="mb-2 flex items-center justify-between flex-shrink-0">
               <div>
                 <h3 class="text-sm font-medium">Document Content</h3>
@@ -75,7 +75,7 @@
                 />
               </div>
             </div>
-            <div class="flex-shrink-0 border rounded-lg overflow-hidden" [style.font-size]="(textSizeMultiplier() * 100) + '%'" style="height: 600px;">
+            <div class="flex-shrink-0 border rounded-lg overflow-hidden min-w-0" [style.font-size]="(textSizeMultiplier() * 100) + '%'" style="height: 600px;">
               <z-text-editor
                 #textEditor
                 [value]="editorContent()"
@@ -89,7 +89,7 @@
           </div>
 
           <!-- Right Half - PDF Preview -->
-          <div class="flex flex-col min-h-0">
+          <div class="flex flex-col min-h-0 min-w-0 overflow-hidden">
             <div class="mb-2 flex items-center justify-between">
               <div>
                 <h3 class="text-sm font-medium">Document Details</h3>

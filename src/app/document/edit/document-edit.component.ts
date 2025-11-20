@@ -413,7 +413,8 @@ export class DocumentEditComponent implements OnInit {
           pageMargins: [40, 40, 40, 40],
           defaultStyle: {
             fontSize: Math.round(baseFontSize * multiplier * 100) / 100,  // Apply multiplier to default font size
-            font: fontFamily
+            font: fontFamily,
+            lineHeight: 2
           }
         };
 
