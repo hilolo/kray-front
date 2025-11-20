@@ -55,8 +55,8 @@
         <!-- Two Column Layout -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <!-- Left Half - Text Editor -->
-          <div class="flex flex-col min-h-0">
-            <div class="mb-2 flex items-center justify-between">
+          <div class="flex flex-col">
+            <div class="mb-2 flex items-center justify-between flex-shrink-0">
               <div>
                 <h3 class="text-sm font-medium">Document Content</h3>
                 <p class="text-xs text-muted-foreground">Edit your document content</p>
@@ -75,7 +75,7 @@
                 />
               </div>
             </div>
-            <div class="flex-1 min-h-0" [style.font-size]="(textSizeMultiplier() * 100) + '%'">
+            <div class="flex-shrink-0 border rounded-lg overflow-hidden" [style.font-size]="(textSizeMultiplier() * 100) + '%'" style="height: 600px;">
               <z-text-editor
                 #textEditor
                 [value]="editorContent()"
