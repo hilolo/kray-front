@@ -867,10 +867,21 @@ export class SettingsComponent implements OnInit, OnDestroy {
   /**
    * Update category reference
    */
-  updateCategoryReference(key: string, reference: string): void {
-    this.propertySettings.categories.update(categories => 
-      categories.map(cat => cat.key === key ? { ...cat, reference } : cat)
-    );
+  updateCategoryReference(key: string, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const reference = input.value.trim();
+    
+    if (reference) {
+      this.propertySettings.categories.update(categories => 
+        categories.map(cat => cat.key === key ? { ...cat, reference } : cat)
+      );
+    } else {
+      // If empty, find the current reference and reset
+      const category = this.propertySettings.categories().find(cat => cat.key === key);
+      if (category) {
+        input.value = category.reference;
+      }
+    }
   }
 
   ngOnDestroy(): void {
