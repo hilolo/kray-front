@@ -89,6 +89,9 @@ export class DocumentEditComponent implements OnInit {
   // Textarea inputs
   readonly htmlInput = signal<string>('');
   readonly pdfMakeJsonInput = signal<string>('');
+  
+  // Cleaned HTML (after removing line-height)
+  readonly cleanedHtml = signal<string>('');
 
   readonly isFormValid = computed(() => {
     return this.editorContent().trim().length > 0;
@@ -217,6 +220,52 @@ export class DocumentEditComponent implements OnInit {
   }
 
   /**
+   * Recursively removes lineHeight from all elements to use only defaultStyle lineHeight
+   */
+  private removeLineHeightFromElements(content: any): any {
+    if (!content) return content;
+
+    // Handle arrays
+    if (Array.isArray(content)) {
+      return content.map(item => this.removeLineHeightFromElements(item));
+    }
+
+    // Handle objects
+    if (typeof content === 'object') {
+      const processed: any = { ...content };
+
+      // Remove lineHeight if it exists
+      if ('lineHeight' in processed) {
+        delete processed.lineHeight;
+      }
+
+      // Recursively process nested properties
+      if (processed.text && Array.isArray(processed.text)) {
+        processed.text = this.removeLineHeightFromElements(processed.text);
+      }
+      if (processed.stack && Array.isArray(processed.stack)) {
+        processed.stack = this.removeLineHeightFromElements(processed.stack);
+      }
+      if (processed.columns && Array.isArray(processed.columns)) {
+        processed.columns = this.removeLineHeightFromElements(processed.columns);
+      }
+      if (processed.table && processed.table.body && Array.isArray(processed.table.body)) {
+        processed.table.body = this.removeLineHeightFromElements(processed.table.body);
+      }
+      if (processed.ul && Array.isArray(processed.ul)) {
+        processed.ul = this.removeLineHeightFromElements(processed.ul);
+      }
+      if (processed.ol && Array.isArray(processed.ol)) {
+        processed.ol = this.removeLineHeightFromElements(processed.ol);
+      }
+
+      return processed;
+    }
+
+    return content;
+  }
+
+  /**
    * Recursively processes PDFMake content to convert ql-align-* classes to alignment property
    */
   private processAlignmentClasses(content: any): any {
@@ -283,16 +332,50 @@ export class DocumentEditComponent implements OnInit {
     return content;
   }
 
+  /**
+   * Removes line-height from all style attributes in HTML content
+   */
+  private removeLineHeightFromHtml(html: string): string {
+    if (!html) return html;
+    
+    // Remove line-height from style attributes (handles both double and single quotes)
+    const result = html.replace(/style\s*=\s*(["'])([^"']*)\1/gi, (match, quote, styleContent) => {
+      // Remove line-height property from style content (handles various formats)
+      // Pattern matches: line-height: followed by any value (number, percentage, etc.) and optional semicolon
+      let cleanedStyle = styleContent
+        .replace(/line-height\s*:\s*[^;]+;?/gi, '') // Remove line-height: value; or line-height: value
+        .replace(/;\s*;/g, ';') // Remove double semicolons
+        .replace(/^\s*;\s*|\s*;\s*$/g, '') // Remove leading/trailing semicolons
+        .trim();
+      
+      // If style is empty after cleaning, remove the style attribute entirely
+      if (!cleanedStyle) {
+        return '';
+      }
+      
+      return `style=${quote}${cleanedStyle}${quote}`;
+    });
+    
+    return result;
+  }
+
   updatePdfPreview(): void {
     if (this.isGeneratingPdf()) return;
     
-    const htmlContent = this.editorContent();
+    let htmlContent = this.editorContent();
+    
+    // Remove line-height from HTML style attributes before converting to PDFMake
+    htmlContent = this.removeLineHeightFromHtml(htmlContent);
+    
+    // Store cleaned HTML for debug display
+    this.cleanedHtml.set(htmlContent);
     
     // Check if content is empty or just whitespace/empty tags
     const cleanContent = htmlContent?.replace(/<[^>]*>/g, '').trim() || '';
     if (!htmlContent || cleanContent.length === 0) {
       this.pdfDataUrl.set('');
       this.pdfMakeJson.set('');
+      this.cleanedHtml.set('');
       return;
     }
     
@@ -309,6 +392,9 @@ export class DocumentEditComponent implements OnInit {
         // Handle both cases: result can be content directly or object with content/images
         let pdfContent = result.content || result;
         const images = result.images;
+
+        // Remove lineHeight from all elements first (so only defaultStyle lineHeight is used)
+        pdfContent = this.removeLineHeightFromElements(pdfContent);
 
         // Process alignment classes (convert ql-align-* to alignment property)
         pdfContent = this.processAlignmentClasses(pdfContent);
@@ -328,7 +414,6 @@ export class DocumentEditComponent implements OnInit {
           pageMargins: [40, 40, 40, 40],
           defaultStyle: {
             fontSize: Math.round(baseFontSize * multiplier * 100) / 100,  // Apply multiplier to default font size
-            lineHeight: 1.5,  // Matches text editor line-height: 1.5
             font: fontFamily
           }
         };
