@@ -1,0 +1,526 @@
+.wysiwyg-container {
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  width: 770px;
+  height: 1129px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 770px;
+  max-width: 770px;
+  min-height: 1129px;
+  max-height: 1129px;
+}
+
+.wysiwyg-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  width: 730px;
+  min-width: 730px;
+  max-width: 730px;
+  overflow: visible;
+}
+
+.wysiwyg-header h2 {
+  margin: 0;
+  color: #333;
+  font-size: 1.5rem;
+  white-space: nowrap;
+}
+
+.wysiwyg-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: nowrap;
+  overflow: visible;
+}
+
+.wysiwyg-footer {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  width: 730px;
+  min-width: 730px;
+  max-width: 730px;
+}
+
+.quill-editor {
+  min-height: 900px;
+  max-height: 900px;
+  background: #f5f5f5; /* Canvas background */
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  width: 730px;
+  min-width: 730px;
+  max-width: 730px;
+}
+
+/* Quill Editor Styles */
+:host ::ng-deep .ql-toolbar {
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 4px 4px 0 0;
+  padding: 8px;
+  box-sizing: border-box;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  width: 730px;
+  min-width: 730px;
+  max-width: 730px;
+}
+
+:host ::ng-deep .ql-container {
+  border: 1px solid #ddd;
+  border-top: none;
+  font-size: 14px; /* 14pt = 14px (1:1 ratio) */
+  font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+  box-sizing: border-box;
+  background: white;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  width: 730px;
+  min-width: 730px;
+  max-width: 730px;
+  line-height: 1.5;
+}
+
+:host ::ng-deep .ql-editor {
+  min-height: 900px;
+  max-height: 900px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 40px; /* 40pt = 40px (1:1 ratio) - matches PDF margins */
+  box-sizing: border-box;
+  background: white;
+  flex: 1;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  position: relative;
+  width: 730px;
+  min-width: 730px;
+  max-width: 730px;
+  margin: 0;
+  font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+  font-size: 14px; /* 14pt = 14px (1:1 ratio) */
+  line-height: 1.5;
+  text-align: left; /* Ensure text starts from left */
+}
+
+:host ::ng-deep .ql-editor p,
+:host ::ng-deep .ql-editor div,
+:host ::ng-deep .ql-editor span,
+:host ::ng-deep .ql-editor h1,
+:host ::ng-deep .ql-editor h2,
+:host ::ng-deep .ql-editor h3,
+:host ::ng-deep .ql-editor h4,
+:host ::ng-deep .ql-editor h5,
+:host ::ng-deep .ql-editor h6,
+:host ::ng-deep .ql-editor li {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+}
+
+/* Match pdfMake font sizes - 1:1 ratio (pt = px) */
+:host ::ng-deep .ql-editor p {
+  font-size: 14px; /* 14pt = 14px */
+  line-height: 1.5;
+  margin: 0 0 5px 0; /* 5pt = 5px */
+  padding: 0;
+}
+
+/* Ensure strong and b tags inherit the same font size */
+:host ::ng-deep .ql-editor strong,
+:host ::ng-deep .ql-editor b {
+  font-size: inherit;
+  font-weight: bold;
+}
+
+:host ::ng-deep .ql-editor h1 {
+  font-size: 32px; /* 32pt = 32px */
+  font-weight: bold;
+  margin: 0 0 8px 0; /* 8pt = 8px */
+  padding: 0;
+  line-height: 1.5;
+}
+
+/* Header 2 styling - bold */
+:host ::ng-deep .ql-editor h2 {
+  font-size: 26px; /* 26pt = 26px */
+  font-weight: bold;
+  margin: 0 0 6px 0; /* 6pt = 6px */
+  padding: 0;
+  line-height: 1.5;
+}
+
+:host ::ng-deep .ql-editor h3 {
+  font-size: 21px; /* 21pt = 21px */
+  font-weight: bold;
+  margin: 0 0 6px 0; /* 6pt = 6px */
+  padding: 0;
+  line-height: 1.5;
+}
+
+:host ::ng-deep .ql-editor h4 {
+  font-size: 20px; /* 20pt = 20px */
+  font-weight: bold;
+  margin: 0 0 5px 0; /* 5pt = 5px */
+  padding: 0;
+  line-height: 1.5;
+}
+
+:host ::ng-deep .ql-editor h5 {
+  font-size: 18px; /* 18pt = 18px */
+  font-weight: bold;
+  margin: 0 0 5px 0; /* 5pt = 5px */
+  padding: 0;
+  line-height: 1.5;
+}
+
+:host ::ng-deep .ql-editor h6 {
+  font-size: 16px; /* 16pt = 16px */
+  font-weight: bold;
+  margin: 0 0 5px 0; /* 5pt = 5px */
+  padding: 0;
+  line-height: 1.5;
+}
+
+:host ::ng-deep .ql-editor ul,
+:host ::ng-deep .ql-editor ol {
+  margin: 0 0 5px 0; /* 5pt = 5px */
+  padding-left: 20px; /* 20pt = 20px */
+  line-height: 1.5;
+}
+
+:host ::ng-deep .ql-editor li {
+  font-size: 14px; /* 14pt = 14px */
+  line-height: 1.5;
+  margin: 0;
+  padding: 0;
+}
+
+:host ::ng-deep .ql-editor.ql-blank::before {
+  color: #aaa;
+  font-style: italic;
+}
+
+/* Image Styles */
+:host ::ng-deep .ql-editor img {
+  cursor: pointer;
+  max-width: 100%;
+  height: auto;
+  transition: outline 0.2s ease;
+}
+
+:host ::ng-deep .ql-editor img:hover {
+  outline: 2px solid #2196F3;
+  outline-offset: 2px;
+}
+
+/* Resize Handle Styles */
+:host ::ng-deep .resize-handle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background-color: #2196F3;
+  border: 2px solid white;
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  border-radius: 50%;
+}
+
+:host ::ng-deep .resize-handle:hover {
+  background-color: #1976D2;
+  transform: scale(1.2);
+}
+
+/* Button Styles */
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn-primary {
+  background: #2196F3;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #1976D2;
+}
+
+.btn-secondary {
+  background: #757575;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #616161;
+}
+
+.btn-table {
+  background: #3F51B5;
+  color: white;
+}
+
+.btn-table:hover {
+  background: #303F9F;
+}
+
+.btn-logo {
+  background: #FF9800;
+  color: white;
+}
+
+.btn-logo:hover {
+  background: #F57C00;
+}
+
+.btn-placeholder {
+  background: #9C27B0;
+  color: white;
+}
+
+.btn-placeholder:hover {
+  background: #7B1FA2;
+}
+
+.btn-copy {
+  background: #4CAF50;
+  color: white;
+}
+
+.btn-copy:hover {
+  background: #388E3C;
+}
+
+.btn-import {
+  background: #00BCD4;
+  color: white;
+}
+
+.btn-import:hover {
+  background: #0097A7;
+}
+
+.btn svg {
+  flex-shrink: 0;
+}
+
+/* Import Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  width: 90%;
+  max-width: 700px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: #333;
+  font-size: 1.25rem;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: #757575;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.modal-body {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modal-body label {
+  display: block;
+  margin-bottom: 10px;
+  color: #333;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.html-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 13px;
+  resize: vertical;
+  min-height: 200px;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.html-input:focus {
+  outline: none;
+  border-color: #2196F3;
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 20px;
+  border-top: 1px solid #e0e0e0;
+  background: #f9f9f9;
+}
+
+/* Fixed size - no responsive changes */
+/* The editor will maintain 770px x 1129px size on all screen sizes */
+
+/* Quill Better Table Styles */
+:host ::ng-deep .quill-better-table {
+  table-layout: fixed;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+:host ::ng-deep .quill-better-table td,
+:host ::ng-deep .quill-better-table th {
+  border: 1px solid #ddd;
+  padding: 8px;
+  position: relative;
+  min-width: 50px;
+}
+
+:host ::ng-deep .quill-better-table-wrapper {
+  overflow-x: auto;
+  margin: 10px 0;
+}
+
+:host ::ng-deep .qlbt-operation-menu {
+  background-color: white;
+  border: 1px solid #ddd;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  padding: 5px 0;
+  z-index: 1000;
+}
+
+:host ::ng-deep .qlbt-operation-menu-item {
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+:host ::ng-deep .qlbt-operation-menu-item:hover {
+  background-color: #f5f5f5;
+}
+
+:host ::ng-deep .qlbt-col-tool,
+:host ::ng-deep .qlbt-row-tool {
+  background-color: #2196F3;
+  opacity: 0.3;
+  cursor: pointer;
+}
+
+:host ::ng-deep .qlbt-col-tool:hover,
+:host ::ng-deep .qlbt-row-tool:hover {
+  opacity: 0.6;
+}
+
+:host ::ng-deep .qlbt-selection-line {
+  background-color: #2196F3;
+}
+
+:host ::ng-deep .qlbt-cell-selected {
+  background-color: rgba(33, 150, 243, 0.1);
+}
+
