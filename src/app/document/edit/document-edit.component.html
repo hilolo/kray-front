@@ -57,25 +57,18 @@
           <!-- Left Half - Text Editor -->
           <div class="flex flex-col min-w-0 overflow-hidden">
             <!-- Contact Buttons - On top of document content -->
-            <div class="mb-3 flex items-center gap-2 flex-shrink-0">
-              <z-button 
-                zType="outline" 
-                zSize="sm" 
-                (click)="insertContactName()"
-                class="flex items-center gap-1"
-              >
-                <z-icon zType="user" zSize="sm" />
-                {{ contactData.contactName }}
-              </z-button>
-              <z-button 
-                zType="outline" 
-                zSize="sm" 
-                (click)="insertContactAge()"
-                class="flex items-center gap-1"
-              >
-                <z-icon zType="calendar" zSize="sm" />
-                {{ contactData.contactAge }}
-              </z-button>
+            <div class="mb-3 flex items-center gap-2 flex-shrink-0 flex-wrap">
+              @for (key of dataKeys(); track key) {
+                <z-button 
+                  zType="outline" 
+                  zSize="sm" 
+                  (click)="insertDataKey(key)"
+                  class="flex items-center gap-1"
+                >
+                  <z-icon zType="code" zSize="sm" />
+                  {{ key }}
+                </z-button>
+              }
             </div>
             <div class="mb-2 flex items-center justify-between flex-shrink-0">
               <div>
@@ -101,6 +94,7 @@
                 #textEditor
                 [value]="editorContent()"
                 [zSize]="'lg'"
+                [protectedCodeBlocks]="protectedCodeBlocks()"
                 placeholder="Start typing your document content here..."
                 (valueChange)="onEditorChange($event)"
                 (htmlChange)="onEditorChange($event)"

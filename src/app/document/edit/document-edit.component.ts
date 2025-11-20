@@ -94,10 +94,20 @@ export class DocumentEditComponent implements OnInit {
   readonly cleanedHtml = signal<string>('');
 
   // Contact data in JSON format
-  readonly contactData = {
+  readonly Data = {
     contactName: 'ahmed',
     contactAge: 19
   };
+
+  // Get all keys from Data as an array
+  readonly dataKeys = computed(() => {
+    return Object.keys(this.Data);
+  });
+
+  // Protected code blocks - dynamically generated from Data keys
+  readonly protectedCodeBlocks = computed(() => {
+    return Object.keys(this.Data);
+  });
 
   readonly isFormValid = computed(() => {
     return this.editorContent().trim().length > 0;
@@ -272,7 +282,7 @@ export class DocumentEditComponent implements OnInit {
   }
 
   /**
-   * Recursively replaces placeholders in PDFMake content with actual values
+   * Recursively replaces CODE nodes in PDFMake content with values from Data
    */
   private replacePlaceholders(content: any): any {
     if (!content) return content;
@@ -286,40 +296,73 @@ export class DocumentEditComponent implements OnInit {
     if (typeof content === 'object') {
       const processed: any = { ...content };
 
-      // Replace placeholders in text property
-      if (typeof processed.text === 'string') {
-        processed.text = processed.text
-          .replace(/#contactname#/g, this.contactData.contactName)
-          .replace(/#contactage#/g, String(this.contactData.contactAge));
-      } else if (Array.isArray(processed.text)) {
-        processed.text = this.replacePlaceholders(processed.text);
-      }
-
-      // Recursively process nested properties
-      if (processed.stack && Array.isArray(processed.stack)) {
-        processed.stack = this.replacePlaceholders(processed.stack);
-      }
-      if (processed.columns && Array.isArray(processed.columns)) {
-        processed.columns = this.replacePlaceholders(processed.columns);
-      }
-      if (processed.table && processed.table.body && Array.isArray(processed.table.body)) {
-        processed.table.body = this.replacePlaceholders(processed.table.body);
-      }
-      if (processed.ul && Array.isArray(processed.ul)) {
-        processed.ul = this.replacePlaceholders(processed.ul);
-      }
-      if (processed.ol && Array.isArray(processed.ol)) {
-        processed.ol = this.replacePlaceholders(processed.ol);
+      // Check if this is a CODE node and replace with Data value
+      if (processed.nodeName === 'CODE') {
+        let codeText: string | null = null;
+        
+        // Extract text from CODE node - handle different structures
+        if (typeof processed.text === 'string') {
+          codeText = processed.text.trim();
+        } else if (Array.isArray(processed.text)) {
+          // If text is an array, recursively process to find CODE nodes inside
+          // First try to find a string element
+          const firstText = processed.text.find((item: any) => typeof item === 'string');
+          if (firstText) {
+            codeText = firstText.trim();
+          } else if (processed.text.length > 0) {
+            // Process nested elements (might contain nested CODE nodes)
+            processed.text = this.replacePlaceholders(processed.text);
+            return processed;
+          }
+        } else if (typeof processed.text === 'object' && processed.text !== null) {
+          // Recursively process nested object (might contain nested CODE nodes)
+          processed.text = this.replacePlaceholders(processed.text);
+          return processed;
+        }
+        
+        // Check if the code text matches a key in Data
+        if (codeText && this.Data.hasOwnProperty(codeText)) {
+          // Replace CODE node with the actual value from Data
+          const value = (this.Data as any)[codeText];
+          // Return just the text value (PDFMake can handle string directly in arrays)
+          // This makes it cleaner when CODE node is in a text array
+          return typeof value === 'string' ? value : String(value);
+        }
+        
+        // If no match found, keep processing nested content
+        if (processed.text && Array.isArray(processed.text)) {
+          processed.text = this.replacePlaceholders(processed.text);
+        } else if (processed.text && typeof processed.text === 'object') {
+          processed.text = this.replacePlaceholders(processed.text);
+        }
+        return processed;
+      } else {
+        // Recursively process nested properties for non-CODE nodes
+        if (processed.text) {
+          if (Array.isArray(processed.text)) {
+            processed.text = this.replacePlaceholders(processed.text);
+          } else if (typeof processed.text === 'object') {
+            processed.text = this.replacePlaceholders(processed.text);
+          }
+        }
+        if (processed.stack && Array.isArray(processed.stack)) {
+          processed.stack = this.replacePlaceholders(processed.stack);
+        }
+        if (processed.columns && Array.isArray(processed.columns)) {
+          processed.columns = this.replacePlaceholders(processed.columns);
+        }
+        if (processed.table && processed.table.body && Array.isArray(processed.table.body)) {
+          processed.table.body = this.replacePlaceholders(processed.table.body);
+        }
+        if (processed.ul && Array.isArray(processed.ul)) {
+          processed.ul = this.replacePlaceholders(processed.ul);
+        }
+        if (processed.ol && Array.isArray(processed.ol)) {
+          processed.ol = this.replacePlaceholders(processed.ol);
+        }
       }
 
       return processed;
-    }
-
-    // Handle strings directly
-    if (typeof content === 'string') {
-      return content
-        .replace(/#contactname#/g, this.contactData.contactName)
-        .replace(/#contactage#/g, String(this.contactData.contactAge));
     }
 
     return content;
@@ -477,7 +520,7 @@ export class DocumentEditComponent implements OnInit {
           defaultStyle: {
             fontSize: Math.round(baseFontSize * multiplier * 100) / 100,  // Apply multiplier to default font size
             font: fontFamily,
-            lineHeight: 2
+            lineHeight: 0.1
           }
         };
 
@@ -585,36 +628,26 @@ export class DocumentEditComponent implements OnInit {
     }
   }
 
-  insertContactName(): void {
+  /**
+   * Insert a data key into the editor as a code block
+   * @param key The key from Data object to insert
+   */
+  insertDataKey(key: string): void {
     if (!this.textEditor) {
       console.warn('Text editor is not ready yet');
       return;
     }
-    // Insert "#contactname#" format
-    this.textEditor.insertText('#contactname#');
-    // Update editor content signal
-    const updatedHtml = this.textEditor.getHtml();
-    this.editorContent.set(updatedHtml);
-    // Update PDF preview
+    // Insert the key with code format
+    this.textEditor.insertTextWithFormat(key, 'code', true);
+    // Update editor content signal after a brief delay to ensure Quill has updated
     setTimeout(() => {
-      this.updatePdfPreview();
-    }, 0);
-  }
-
-  insertContactAge(): void {
-    if (!this.textEditor) {
-      console.warn('Text editor is not ready yet');
-      return;
-    }
-    // Insert "#contactage#" format
-    this.textEditor.insertText('#contactage#');
-    // Update editor content signal
-    const updatedHtml = this.textEditor.getHtml();
-    this.editorContent.set(updatedHtml);
-    // Update PDF preview
-    setTimeout(() => {
-      this.updatePdfPreview();
-    }, 0);
+      if (this.textEditor) {
+        const updatedHtml = this.textEditor.getHtml();
+        this.editorContent.set(updatedHtml);
+        // Update PDF preview
+        this.updatePdfPreview();
+      }
+    }, 100);
   }
 }
 

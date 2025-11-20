@@ -58,12 +58,14 @@ export class ZardTextEditorComponent implements AfterViewInit, OnDestroy {
   readonly placeholder = input<string>('Start typing your content here...');
   readonly value = input<string>('');
   readonly zReadonly = input(false);
+  readonly protectedCodeBlocks = input<string[]>([]);
 
   readonly valueChange = output<string>();
   readonly htmlChange = output<string>();
 
   private quill?: Quill;
   private updateTimeout?: ReturnType<typeof setTimeout>;
+  private isCleaningUp = false;
   readonly isReady = signal(false);
 
   protected readonly classes = computed(() =>
@@ -133,6 +135,8 @@ export class ZardTextEditorComponent implements AfterViewInit, OnDestroy {
 
     // Add change listener with debouncing
     this.quill.on('text-change', () => {
+      // Immediately clean up invalid code blocks before debounced change handler
+      this.immediateCleanupInvalidCodeBlocks();
       this.onEditorChange();
     });
 
@@ -141,9 +145,9 @@ export class ZardTextEditorComponent implements AfterViewInit, OnDestroy {
       this.updateButtonState();
     });
 
-    // Add keyboard handler to remove entire code tag when deleting inside it
+    // Add keyboard handler to handle code block interactions
     this.quill.root.addEventListener('keydown', (e: KeyboardEvent) => {
-      this.handleCodeTagDeletion(e);
+      this.handleCodeBlockInteraction(e);
     });
 
     this.isReady.set(true);
@@ -213,6 +217,24 @@ export class ZardTextEditorComponent implements AfterViewInit, OnDestroy {
         // Clean up empty paragraphs
         html = html.replace(/<p><br><\/p>/gi, '<p>&nbsp;</p>');
         
+        // Clean up invalid code blocks (only allow contactName and contactAge)
+        html = this.cleanupInvalidCodeBlocks(html);
+        
+        // Update the editor if HTML was cleaned
+        if (html !== this.quill.root.innerHTML) {
+          const selection = this.quill.getSelection();
+          const scrollTop = this.quill.root.scrollTop;
+          this.quill.root.innerHTML = html;
+          
+          // Restore selection if we had one
+          if (selection) {
+            const length = this.quill.getLength();
+            const adjustedIndex = Math.min(selection.index, Math.max(0, length - 1));
+            this.quill.setSelection(adjustedIndex, 0, 'silent');
+          }
+          this.quill.root.scrollTop = scrollTop;
+        }
+        
         this.valueChange.emit(html);
         this.htmlChange.emit(html);
       }
@@ -253,6 +275,45 @@ export class ZardTextEditorComponent implements AfterViewInit, OnDestroy {
     }
     this.quill.insertText(range.index, text);
     this.quill.setSelection(range.index + text.length, 0);
+    this.onEditorChange();
+  }
+
+  insertTextWithFormat(text: string, format: string, value: boolean): void {
+    if (!this.quill) {
+      return;
+    }
+    
+    // Focus the editor to ensure it's active
+    this.quill.focus();
+    
+    let range = this.quill.getSelection(true);
+    if (!range) {
+      // If no selection, set cursor to the end
+      const length = this.quill.getLength();
+      range = { index: length - 1, length: 0 };
+      this.quill.setSelection(range.index, 0, 'user');
+    }
+    
+    // Insert text with format
+    this.quill.insertText(range.index, text, format as any, value, 'user');
+    
+    // Calculate the position after the inserted text
+    const newPosition = range.index + text.length;
+    
+    // Set cursor position after the inserted text (outside the formatted text)
+    this.quill.setSelection(newPosition, 0, 'user');
+    
+    // Remove the format from the cursor position so future typing is not in that format
+    // This ensures the cursor is "outside" the code block
+    // Format removal needs to happen on the current selection (which is at newPosition)
+    this.quill.format(format, false, 'user');
+    
+    // Re-set selection to ensure cursor position is correct and format is cleared
+    this.quill.setSelection(newPosition, 0, 'user');
+    
+    // Update button state
+    this.updateButtonState();
+    
     this.onEditorChange();
   }
 
@@ -320,15 +381,15 @@ export class ZardTextEditorComponent implements AfterViewInit, OnDestroy {
   }
 
   /**
-   * Handle deletion of code tags - removes entire code tag when deleting inside it
+   * Handle all interactions with code blocks - protects contactName and contactAge, allows normal editing for others
    */
-  private handleCodeTagDeletion(event: KeyboardEvent): void {
+  private handleCodeBlockInteraction(event: KeyboardEvent): void {
     if (!this.quill) {
       return;
     }
 
-    // Only handle Backspace and Delete keys
-    if (event.key !== 'Backspace' && event.key !== 'Delete') {
+    // Allow special key combinations to pass through (Ctrl+C, Ctrl+V, Ctrl+A, etc.)
+    if (event.ctrlKey || event.metaKey || event.altKey) {
       return;
     }
 
@@ -343,21 +404,206 @@ export class ZardTextEditorComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
-    // Prevent default deletion behavior
-    event.preventDefault();
-    event.stopPropagation();
-
-    // Find the boundaries of the code format using Quill's format API
+    // Find the boundaries of the code format
     const { startIndex, endIndex } = this.findCodeFormatRange(range.index);
     if (startIndex === -1 || endIndex === -1) {
       return;
     }
 
-    // Remove the entire code tag and its content
-    this.quill.deleteText(startIndex, endIndex - startIndex, 'user');
+    // Get protected code blocks from input
+    const protectedCodeBlocks = this.protectedCodeBlocks();
     
-    // Set cursor position after the deleted code
-    this.quill.setSelection(startIndex, 0, 'user');
+    // Get the text content of the code block
+    const codeBlockText = this.getCodeBlockText(startIndex, endIndex);
+    const isProtected = protectedCodeBlocks.includes(codeBlockText);
+    
+    if (!isProtected) {
+      // Allow normal editing for non-protected code blocks
+      return;
+    }
+
+    // Handle deletion (Backspace or Delete) - completely remove the protected code block
+    if (event.key === 'Backspace' || event.key === 'Delete') {
+      event.preventDefault();
+      event.stopPropagation();
+
+      // Get the current HTML and directly remove the code block from HTML
+      let html = this.quill.root.innerHTML;
+      
+      // Create a temporary DOM element to parse and manipulate the HTML
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = html;
+      
+      // Find all code elements and remove the ones matching our protected code blocks
+      const codeElements = tempDiv.querySelectorAll('code');
+      codeElements.forEach((codeEl) => {
+        const textContent = codeEl.textContent?.trim() || '';
+        if (protectedCodeBlocks.includes(textContent)) {
+          // Completely remove the code element (don't keep the text)
+          codeEl.remove();
+        }
+      });
+      
+      // Update the HTML
+      const cleanedHtml = tempDiv.innerHTML;
+      if (cleanedHtml !== html) {
+        const scrollTop = this.quill.root.scrollTop;
+        this.quill.root.innerHTML = cleanedHtml;
+        
+        // Set cursor position where the code block was (adjusted for length change)
+        const length = this.quill.getLength();
+        const adjustedIndex = Math.min(startIndex, Math.max(0, length - 1));
+        this.quill.setSelection(adjustedIndex, 0, 'user');
+        this.quill.root.scrollTop = scrollTop;
+      } else {
+        // Fallback: use deleteText if HTML manipulation didn't work
+        this.quill.deleteText(startIndex, endIndex - startIndex, 'user');
+        this.cleanupCodeTags();
+        this.quill.setSelection(startIndex, 0, 'user');
+      }
+      
+      this.onEditorChange();
+      return;
+    }
+
+    // Handle text input (typing) - completely remove protected code block when trying to add text
+    // Check if it's a printable character (not special keys like Ctrl, Alt, Arrow keys, etc.)
+    // Single character keys are printable, or Enter key
+    const isPrintableKey = event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey;
+    
+    if (isPrintableKey || event.key === 'Enter') {
+      event.preventDefault();
+      event.stopPropagation();
+
+      // Completely remove the entire code block and its content
+      this.quill.deleteText(startIndex, endIndex - startIndex, 'user');
+      
+      // Clean up any remaining code tags from HTML
+      this.cleanupCodeTags();
+      
+      // Get the character to insert
+      const charToInsert = event.key === 'Enter' ? '\n' : event.key;
+      
+      // Insert only the new character as plain text (not the old code content)
+      this.quill.insertText(startIndex, charToInsert, 'user');
+      
+      // Set cursor position after the inserted character
+      this.quill.setSelection(startIndex + charToInsert.length, 0, 'user');
+      
+      this.onEditorChange();
+      return;
+    }
+  }
+
+  /**
+   * Clean up any remaining <code> tags from the HTML
+   */
+  private cleanupCodeTags(): void {
+    if (!this.quill) {
+      return;
+    }
+
+    // Use setTimeout to ensure Quill has processed the deletion first
+    setTimeout(() => {
+      if (!this.quill) {
+        return;
+      }
+
+      // Get current HTML
+      let html = this.quill.root.innerHTML;
+      
+      // Save current selection and scroll position
+      const selection = this.quill.getSelection();
+      const scrollTop = this.quill.root.scrollTop;
+      
+      // Remove any remaining <code> tags and their content
+      const cleanedHtml = html.replace(/<code[^>]*>.*?<\/code>/gi, '').replace(/<code[^>]*><\/code>/gi, '');
+      
+      // Update the HTML if it changed
+      if (cleanedHtml !== html) {
+        // Set the cleaned HTML directly
+        this.quill.root.innerHTML = cleanedHtml;
+        
+        // Restore selection if we had one (adjust if necessary)
+        if (selection) {
+          const length = this.quill.getLength();
+          const adjustedIndex = Math.min(selection.index, Math.max(0, length - 1));
+          this.quill.setSelection(adjustedIndex, 0, 'silent');
+        }
+        
+        // Restore scroll position
+        this.quill.root.scrollTop = scrollTop;
+        
+        // Trigger change event
+        this.onEditorChange();
+      }
+    }, 10);
+  }
+
+  /**
+   * Clean up invalid code blocks - only allow protected code blocks
+   * Removes any <code> tags that don't contain exactly one of the protected code blocks
+   */
+  private cleanupInvalidCodeBlocks(html: string): string {
+    const protectedCodeBlocks = this.protectedCodeBlocks();
+    
+    // Use regex to find all code blocks
+    // Match <code>content</code> and extract the content
+    return html.replace(/<code[^>]*>(.*?)<\/code>/gi, (match, content) => {
+      // Trim the content and remove any HTML entities or special characters
+      const textContent = content.replace(/<[^>]*>/g, '').trim(); // Remove any nested HTML
+      
+      // Check if the content exactly matches one of the protected code blocks
+      if (protectedCodeBlocks.includes(textContent)) {
+        // Keep the code block as is
+        return match;
+      } else {
+        // Remove the code tags but keep the content as plain text
+        return textContent || '';
+      }
+    });
+  }
+
+  /**
+   * Immediately clean up invalid code blocks after a text change
+   * This runs synchronously to prevent invalid code blocks from appearing
+   */
+  private immediateCleanupInvalidCodeBlocks(): void {
+    if (!this.quill || this.isCleaningUp) {
+      return;
+    }
+
+    const html = this.quill.root.innerHTML;
+    const cleanedHtml = this.cleanupInvalidCodeBlocks(html);
+    
+    // Only update if there was a change
+    if (cleanedHtml !== html) {
+      this.isCleaningUp = true;
+      
+      try {
+        const selection = this.quill.getSelection();
+        const scrollTop = this.quill.root.scrollTop;
+        
+        // Update the HTML
+        this.quill.root.innerHTML = cleanedHtml;
+        
+        // Restore selection if we had one (adjust if necessary)
+        if (selection) {
+          const length = this.quill.getLength();
+          const adjustedIndex = Math.min(selection.index, Math.max(0, length - 1));
+          // Use 'silent' to prevent triggering another text-change event
+          this.quill.setSelection(adjustedIndex, 0, 'silent');
+        }
+        
+        // Restore scroll position
+        this.quill.root.scrollTop = scrollTop;
+      } finally {
+        // Use setTimeout to reset flag after Quill has processed the change
+        setTimeout(() => {
+          this.isCleaningUp = false;
+        }, 0);
+      }
+    }
   }
 
   /**
@@ -372,7 +618,14 @@ export class ZardTextEditorComponent implements AfterViewInit, OnDestroy {
 
     // Find the start index by going backwards
     let startIndex = index;
-    for (let i = index; i >= 0; i--) {
+    // Check current position first
+    let currentFormat = this.quill.getFormat(index, 1);
+    if (!currentFormat || !currentFormat['code']) {
+      return { startIndex: -1, endIndex: -1 }; // Not in a code block
+    }
+
+    // Go backwards to find the start
+    for (let i = index - 1; i >= 0; i--) {
       const format = this.quill.getFormat(i, 1);
       if (!format || !format['code']) {
         // Found the boundary - code format starts at i + 1
@@ -388,7 +641,7 @@ export class ZardTextEditorComponent implements AfterViewInit, OnDestroy {
 
     // Find the end index by going forwards
     let endIndex = editorLength - 1; // Default to end of editor
-    for (let i = index; i < editorLength - 1; i++) {
+    for (let i = index + 1; i < editorLength - 1; i++) {
       const format = this.quill.getFormat(i, 1);
       if (!format || !format['code']) {
         // Found the boundary - code format ends at i
@@ -398,11 +651,35 @@ export class ZardTextEditorComponent implements AfterViewInit, OnDestroy {
     }
 
     // Ensure we have valid indices
-    if (startIndex < 0 || endIndex <= startIndex || endIndex > editorLength) {
+    if (startIndex < 0 || endIndex <= startIndex || endIndex >= editorLength) {
       return { startIndex: -1, endIndex: -1 };
     }
 
     return { startIndex, endIndex };
+  }
+
+  /**
+   * Get the text content of a code block between startIndex and endIndex
+   */
+  private getCodeBlockText(startIndex: number, endIndex: number): string {
+    if (!this.quill) {
+      return '';
+    }
+
+    // Get the delta for the range
+    const delta = this.quill.getContents(startIndex, endIndex - startIndex);
+    
+    // Extract text from the delta
+    let text = '';
+    if (delta.ops) {
+      for (const op of delta.ops) {
+        if (typeof op.insert === 'string') {
+          text += op.insert;
+        }
+      }
+    }
+
+    return text.trim();
   }
 }
 
