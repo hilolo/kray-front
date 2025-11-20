@@ -44,12 +44,53 @@
   height: 16px;
 }
 
+/* Size picker styling */
+.quill-editor-wrapper ::ng-deep .ql-toolbar .ql-picker {
+  color: hsl(var(--foreground));
+  font-size: 14px;
+}
+
+.quill-editor-wrapper ::ng-deep .ql-toolbar .ql-picker-label {
+  padding: 4px 8px;
+  border-radius: calc(var(--radius) - 2px);
+  transition: all 0.2s;
+}
+
+.quill-editor-wrapper ::ng-deep .ql-toolbar .ql-picker-label:hover {
+  background: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+}
+
+.quill-editor-wrapper ::ng-deep .ql-toolbar .ql-picker-options {
+  background: white;
+  border: 1px solid hsl(var(--border));
+  border-radius: calc(var(--radius) - 2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 4px;
+}
+
+.quill-editor-wrapper ::ng-deep .ql-toolbar .ql-picker-item {
+  padding: 6px 12px;
+  border-radius: calc(var(--radius) - 2px);
+  transition: all 0.2s;
+}
+
+.quill-editor-wrapper ::ng-deep .ql-toolbar .ql-picker-item:hover {
+  background: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+}
+
+.quill-editor-wrapper ::ng-deep .ql-toolbar .ql-picker-item.ql-selected {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
 .quill-editor-wrapper ::ng-deep .ql-container {
   border: 1px solid hsl(var(--border));
   border-top: none;
   border-bottom: none;
   border-radius: 0;
-  font-family: inherit;
+  font-family: Arial, Helvetica, sans-serif;
   font-size: 16px; /* Increased from 14px to match editor */
   line-height: 2 !important; /* Force line-height to 2 */
   background: white;
@@ -60,7 +101,7 @@
 .quill-editor-wrapper ::ng-deep .ql-editor {
   min-height: 200px;
   padding: 16px;
-  font-family: inherit;
+  font-family: Arial, Helvetica, sans-serif;
   font-size: 16px; /* Increased from 14px for better readability */
   line-height: 2 !important; /* Force line-height to 2 */
   color: hsl(var(--foreground));

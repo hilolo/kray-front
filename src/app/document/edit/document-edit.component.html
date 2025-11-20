@@ -122,11 +122,26 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <!-- Left Half - Text Editor -->
           <div class="flex flex-col min-h-0">
-            <div class="mb-2">
-              <h3 class="text-sm font-medium">Document Content</h3>
-              <p class="text-xs text-muted-foreground">Edit your document content</p>
+            <div class="mb-2 flex items-center justify-between">
+              <div>
+                <h3 class="text-sm font-medium">Document Content</h3>
+                <p class="text-xs text-muted-foreground">Edit your document content</p>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="text-xs text-muted-foreground">Text Size:</span>
+                <z-segmented
+                  [zOptions]="[
+                    { value: 'normal', label: 'Normal' },
+                    { value: 'large', label: 'Large' },
+                    { value: 'extralarge', label: 'Extra Large' }
+                  ]"
+                  [zDefaultValue]="textSize()"
+                  (zChange)="onTextSizeChange($event)"
+                  zSize="sm"
+                />
+              </div>
             </div>
-            <div class="flex-1 min-h-0">
+            <div class="flex-1 min-h-0" [style.font-size]="(textSizeMultiplier() * 100) + '%'">
               <z-text-editor
                 #textEditor
                 [value]="editorContent()"
@@ -173,8 +188,9 @@
                   <iframe
                     [src]="pdfDataUrlWithZoom() | safe: 'resourceUrl'"
                     class="w-full h-full border-0"
-                    style="min-height: 600px;"
+                    style="min-height: 600px; width: 100%; height: 100%;"
                     type="application/pdf"
+                    allow="fullscreen"
                   ></iframe>
                 </div>
               } @else {
