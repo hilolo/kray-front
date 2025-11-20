@@ -403,8 +403,7 @@ export class DocumentEditComponent implements OnInit {
         const multiplier = this.textSizeMultiplier();
         pdfContent = this.applyTextSizeMultiplier(pdfContent, multiplier);
         
-        const baseFontSize = 9.6; // Base font size in pt
-        
+        const baseFontSize = 8;
         // Use Arial if available, otherwise fallback to Roboto
         const fontFamily = (pdfMake as any).fonts?.Arial ? 'Arial' : 'Roboto';
         
