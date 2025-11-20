@@ -57,7 +57,8 @@
     "tasks": "Tâches",
     "buildings": "Bâtiments",
     "aiChat": "Chat IA",
-    "fileManager": "Gestionnaire de fichiers"
+    "fileManager": "Gestionnaire de fichiers",
+    "documents": "Documents"
   },
   "sidebar": {
     "expand": "Développer la barre latérale",

@@ -55,6 +55,7 @@ export class ZardPageComponent implements AfterViewInit {
         { route: '/maintenance', label: 'Maintenance', labelKey: 'menu.maintenance', icon: 'settings' },
         { route: '/ai-chat', label: 'AI Chat', labelKey: 'menu.aiChat', icon: 'sparkles' },
         { route: '/file-manager', label: 'File Manager', labelKey: 'menu.fileManager', icon: 'folder' },
+        { route: '/document', label: 'Documents', labelKey: 'menu.documents', icon: 'file' },
       ],
     },
   ]);

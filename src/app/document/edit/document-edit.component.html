@@ -1,0 +1,93 @@
+<z-page [zTitle]="isNew() ? 'Create Document' : 'Edit Document'">
+  <div class="flex flex-col min-h-0 h-full overflow-hidden">
+    <!-- Header Section -->
+    <div class="space-y-4 pb-6 flex-shrink-0">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-3xl font-bold mb-2">
+            @if (isNew()) {
+              Add New Document
+            } @else {
+              Edit Document
+            }
+          </h2>
+          <p class="text-muted-foreground">
+            @if (isNew()) {
+              Create a new document by filling in the information below
+            } @else {
+              Update the document information below
+            }
+          </p>
+        </div>
+        <div class="flex gap-2">
+          <z-button zType="outline" zSize="default" [disabled]="isSaving()" (click)="!isSaving() && onCancel()">
+            Cancel
+          </z-button>
+          <z-button [zType]="isSaving() || !isFormValid() ? 'ghost' : 'default'" [disabled]="isSaving()" (click)="!isSaving() && onSave()">
+            @if (isSaving()) {
+              <span class="flex items-center gap-2">
+                <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+                Saving...
+              </span>
+            } @else {
+              <z-icon zType="check" zSize="sm" class="mr-2" />
+              @if (isNew()) {
+                Create Document
+              } @else {
+                Update Document
+              }
+            }
+          </z-button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 min-h-0 overflow-y-auto">
+      @if (isLoading()) {
+        <div class="flex items-center justify-center h-full">
+          <div class="flex flex-col items-center gap-2">
+            <z-icon zType="loader-circle" zSize="lg" class="animate-spin text-primary" />
+            <p class="text-muted-foreground">Loading document data...</p>
+          </div>
+        </div>
+      } @else {
+        <!-- Two Column Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Left Half - Text Editor -->
+          <div class="flex flex-col min-h-0">
+            <div class="mb-2">
+              <h3 class="text-sm font-medium">Document Content</h3>
+              <p class="text-xs text-muted-foreground">Edit your document content</p>
+            </div>
+            <div class="flex-1 min-h-0">
+              <z-text-editor
+                [value]="editorContent()"
+                [zSize]="'lg'"
+                placeholder="Start typing your document content here..."
+                (valueChange)="onEditorChange($event)"
+                (htmlChange)="onEditorChange($event)"
+                class="h-full"
+              />
+            </div>
+          </div>
+
+          <!-- Right Half - Additional Content (can be used for preview, metadata, etc.) -->
+          <div class="flex flex-col min-h-0">
+            <div class="mb-2">
+              <h3 class="text-sm font-medium">Document Details</h3>
+              <p class="text-xs text-muted-foreground">Additional information</p>
+            </div>
+            <div class="flex-1 flex items-center justify-center border border-dashed rounded-lg bg-muted/50 min-h-[200px]">
+              <div class="text-center text-muted-foreground">
+                <p>Additional content area</p>
+                <p class="text-xs mt-2">Preview, metadata, or other information can go here</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</z-page>
+

@@ -57,7 +57,8 @@
     "tasks": "Tasks",
     "buildings": "Buildings",
     "aiChat": "AI Chat",
-    "fileManager": "File Manager"
+    "fileManager": "File Manager",
+    "documents": "Documents"
   },
   "sidebar": {
     "expand": "Expand sidebar",

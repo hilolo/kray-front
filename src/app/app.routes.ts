@@ -99,4 +99,9 @@ export const routes: Routes = [
     loadChildren: () => import('./transaction/transaction.routes').then((m) => m.transactionRoutes),
     canActivate: [authGuard],
   },
+  {
+    path: 'document',
+    loadChildren: () => import('./document/document.routes').then((m) => m.documentRoutes),
+    canActivate: [authGuard],
+  },
 ];
