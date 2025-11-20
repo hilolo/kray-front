@@ -50,7 +50,8 @@
   border-bottom: none;
   border-radius: 0;
   font-family: inherit;
-  font-size: 14px;
+  font-size: 16px; /* Increased from 14px to match editor */
+  line-height: 2 !important; /* Force line-height to 2 */
   background: white;
   color: hsl(var(--foreground));
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -60,10 +61,29 @@
   min-height: 200px;
   padding: 16px;
   font-family: inherit;
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 16px; /* Increased from 14px for better readability */
+  line-height: 2 !important; /* Force line-height to 2 */
   color: hsl(var(--foreground));
   background: white;
+}
+
+/* Force line-height on ql-editor with multiple selectors - highest specificity */
+.quill-editor-wrapper ::ng-deep .ql-snow .ql-editor,
+.quill-editor-wrapper ::ng-deep .ql-container .ql-editor,
+.quill-editor-wrapper ::ng-deep .ql-editor.ql-blank,
+.quill-editor-wrapper ::ng-deep div.ql-editor,
+.quill-editor-wrapper ::ng-deep .ql-snow div.ql-editor {
+  line-height: 2 !important;
+}
+
+/* Ensure all text elements use line-height 2 */
+.quill-editor-wrapper ::ng-deep .ql-editor *,
+.quill-editor-wrapper ::ng-deep .ql-snow .ql-editor *,
+.quill-editor-wrapper ::ng-deep .ql-container .ql-editor *,
+.quill-editor-wrapper ::ng-deep .ql-editor p,
+.quill-editor-wrapper ::ng-deep .ql-editor div,
+.quill-editor-wrapper ::ng-deep .ql-editor span {
+  line-height: 2 !important;
 }
 
 /* Remove/hide any footer or tooltip elements */
@@ -123,31 +143,36 @@
 }
 
 .quill-editor-wrapper ::ng-deep .ql-editor p {
-  margin: 0 0 8px 0;
+  margin: 0 0 6.67px 0; /* 5pt = 6.67px to match PDFMake paragraph margin */
+  line-height: 2 !important; /* Force line-height to 2 */
 }
 
 .quill-editor-wrapper ::ng-deep .ql-editor h1 {
   font-size: 24px;
   font-weight: 600;
   margin: 16px 0 8px 0;
+  line-height: 2 !important; /* Force line-height to 2 */
 }
 
 .quill-editor-wrapper ::ng-deep .ql-editor h2 {
   font-size: 20px;
   font-weight: 600;
   margin: 14px 0 6px 0;
+  line-height: 2 !important; /* Force line-height to 2 */
 }
 
 .quill-editor-wrapper ::ng-deep .ql-editor h3 {
   font-size: 18px;
   font-weight: 600;
   margin: 12px 0 6px 0;
+  line-height: 2 !important; /* Force line-height to 2 */
 }
 
 .quill-editor-wrapper ::ng-deep .ql-editor ul,
 .quill-editor-wrapper ::ng-deep .ql-editor ol {
   margin: 8px 0;
   padding-left: 24px;
+  line-height: 2 !important; /* Force line-height to 2 */
 }
 
 .quill-editor-wrapper ::ng-deep .ql-editor a {

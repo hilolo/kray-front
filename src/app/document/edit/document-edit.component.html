@@ -72,22 +72,108 @@
             </div>
           </div>
 
-          <!-- Right Half - Additional Content (can be used for preview, metadata, etc.) -->
+          <!-- Right Half - PDF Preview -->
           <div class="flex flex-col min-h-0">
-            <div class="mb-2">
-              <h3 class="text-sm font-medium">Document Details</h3>
-              <p class="text-xs text-muted-foreground">Additional information</p>
-            </div>
-            <div class="flex-1 flex items-center justify-center border border-dashed rounded-lg bg-muted/50 min-h-[200px]">
-              <div class="text-center text-muted-foreground">
-                <p>Additional content area</p>
-                <p class="text-xs mt-2">Preview, metadata, or other information can go here</p>
+            <div class="mb-2 flex items-center justify-between">
+              <div>
+                <h3 class="text-sm font-medium">Document Details</h3>
+                <p class="text-xs text-muted-foreground">PDF Preview</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <z-button 
+                  zType="ghost" 
+                  zSize="sm" 
+                  [disabled]="!pdfDataUrl()" 
+                  (click)="openPdfViewer()"
+                  class="flex items-center gap-1"
+                >
+                  <z-icon zType="eye" zSize="sm" />
+                  View
+                </z-button>
               </div>
             </div>
+            <div class="flex-1 min-h-0 border rounded-lg bg-muted/50 overflow-hidden">
+              @if (isGeneratingPdf()) {
+                <div class="flex items-center justify-center h-full">
+                  <div class="flex flex-col items-center gap-2">
+                    <z-icon zType="loader-circle" zSize="lg" class="animate-spin text-primary" />
+                    <p class="text-sm text-muted-foreground">Generating PDF...</p>
+                  </div>
+                </div>
+              } @else if (pdfDataUrl()) {
+                <!-- PDF Preview with iframe (avoids Vite dynamic import warnings) -->
+                <div class="h-full w-full overflow-auto bg-white">
+                  <iframe
+                    [src]="pdfDataUrlWithZoom() | safe: 'resourceUrl'"
+                    class="w-full h-full border-0"
+                    style="min-height: 600px;"
+                    type="application/pdf"
+                  ></iframe>
+                </div>
+              } @else {
+                <div class="flex items-center justify-center h-full min-h-[200px]">
+                  <div class="text-center text-muted-foreground">
+                    <z-icon zType="file-text" zSize="lg" class="mx-auto mb-2 opacity-50" />
+                    <p>PDF preview will appear here</p>
+                    <p class="text-xs mt-2">Start typing in the editor to generate preview</p>
+                  </div>
+                </div>
+              }
+            </div>
           </div>
+        </div>
+
+        <!-- Debug Section -->
+        <div class="mt-6 border-t pt-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold">Debug Information</h3>
+            <z-button zType="ghost" zSize="sm" (click)="toggleDebug()">
+              @if (showDebug()) {
+                <z-icon zType="chevron-up" zSize="sm" class="mr-1" />
+                Hide
+              } @else {
+                <z-icon zType="chevron-down" zSize="sm" class="mr-1" />
+                Show
+              }
+            </z-button>
+          </div>
+
+          @if (showDebug()) {
+            <div class="space-y-4">
+              <!-- HTML Content -->
+              <div>
+                <h4 class="text-sm font-medium mb-2 flex items-center gap-2">
+                  <z-icon zType="code" zSize="sm" />
+                  HTML Content
+                </h4>
+                <div class="border rounded-lg bg-muted/30 p-4 overflow-auto max-h-[300px]">
+                  <pre class="text-xs font-mono whitespace-pre-wrap break-words">{{ editorContent() || '(empty)' }}</pre>
+                </div>
+              </div>
+
+              <!-- PDFMake JSON -->
+              <div>
+                <h4 class="text-sm font-medium mb-2 flex items-center gap-2">
+                  <z-icon zType="code" zSize="sm" />
+                  PDFMake JSON
+                </h4>
+                <div class="border rounded-lg bg-muted/30 p-4 overflow-auto max-h-[300px]">
+                  <pre class="text-xs font-mono whitespace-pre-wrap break-words">{{ pdfMakeJson() || '(empty)' }}</pre>
+                </div>
+              </div>
+            </div>
+          }
         </div>
       }
     </div>
   </div>
+
+  <!-- PDF Viewer Modal -->
+  <z-pdf-viewer
+    [isOpen]="showPdfViewer()"
+    [pdfUrl]="pdfDataUrl()"
+    [pdfName]="isNew() ? 'New Document' : 'Document'"
+    (close)="closePdfViewer()"
+  />
 </z-page>
 

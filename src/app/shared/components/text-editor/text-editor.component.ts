@@ -75,7 +75,6 @@ export class ZardTextEditorComponent implements AfterViewInit, OnDestroy {
       [{ 'header': [1, 2, 3, false] }],
       ['bold', 'italic', 'underline', 'strike'],
       [{ 'align': '' }, { 'align': 'center' }, { 'align': 'right' }, { 'align': 'justify' }],
-      [{ 'indent': '-1'}, { 'indent': '+1' }],
       [{ 'list': 'ordered'}, { 'list': 'bullet' }],
     ];
 
@@ -96,6 +95,17 @@ export class ZardTextEditorComponent implements AfterViewInit, OnDestroy {
     // Set initial value if provided
     if (this.value()) {
       this.quill.root.innerHTML = this.value();
+    }
+
+    // Force line-height to 2 on the editor element and all children
+    if (this.quill.root) {
+      const editorElement = this.quill.root as HTMLElement;
+      editorElement.style.lineHeight = '2';
+      // Also apply to all child elements
+      const allElements = editorElement.querySelectorAll('*');
+      allElements.forEach((el) => {
+        (el as HTMLElement).style.lineHeight = '2';
+      });
     }
 
     // Add change listener with debouncing
