@@ -56,6 +56,27 @@
         <div class="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-6 min-w-0">
           <!-- Left Half - Text Editor -->
           <div class="flex flex-col min-w-0 overflow-hidden">
+            <!-- Contact Buttons - On top of document content -->
+            <div class="mb-3 flex items-center gap-2 flex-shrink-0">
+              <z-button 
+                zType="outline" 
+                zSize="sm" 
+                (click)="insertContactName()"
+                class="flex items-center gap-1"
+              >
+                <z-icon zType="user" zSize="sm" />
+                {{ contactData.contactName }}
+              </z-button>
+              <z-button 
+                zType="outline" 
+                zSize="sm" 
+                (click)="insertContactAge()"
+                class="flex items-center gap-1"
+              >
+                <z-icon zType="calendar" zSize="sm" />
+                {{ contactData.contactAge }}
+              </z-button>
+            </div>
             <div class="mb-2 flex items-center justify-between flex-shrink-0">
               <div>
                 <h3 class="text-sm font-medium">Document Content</h3>

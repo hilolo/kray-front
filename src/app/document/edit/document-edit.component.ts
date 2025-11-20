@@ -93,6 +93,12 @@ export class DocumentEditComponent implements OnInit {
   // Cleaned HTML (after removing line-height)
   readonly cleanedHtml = signal<string>('');
 
+  // Contact data in JSON format
+  readonly contactData = {
+    contactName: 'ahmed',
+    contactAge: 19
+  };
+
   readonly isFormValid = computed(() => {
     return this.editorContent().trim().length > 0;
   });
@@ -266,6 +272,60 @@ export class DocumentEditComponent implements OnInit {
   }
 
   /**
+   * Recursively replaces placeholders in PDFMake content with actual values
+   */
+  private replacePlaceholders(content: any): any {
+    if (!content) return content;
+
+    // Handle arrays
+    if (Array.isArray(content)) {
+      return content.map(item => this.replacePlaceholders(item));
+    }
+
+    // Handle objects
+    if (typeof content === 'object') {
+      const processed: any = { ...content };
+
+      // Replace placeholders in text property
+      if (typeof processed.text === 'string') {
+        processed.text = processed.text
+          .replace(/#contactname#/g, this.contactData.contactName)
+          .replace(/#contactage#/g, String(this.contactData.contactAge));
+      } else if (Array.isArray(processed.text)) {
+        processed.text = this.replacePlaceholders(processed.text);
+      }
+
+      // Recursively process nested properties
+      if (processed.stack && Array.isArray(processed.stack)) {
+        processed.stack = this.replacePlaceholders(processed.stack);
+      }
+      if (processed.columns && Array.isArray(processed.columns)) {
+        processed.columns = this.replacePlaceholders(processed.columns);
+      }
+      if (processed.table && processed.table.body && Array.isArray(processed.table.body)) {
+        processed.table.body = this.replacePlaceholders(processed.table.body);
+      }
+      if (processed.ul && Array.isArray(processed.ul)) {
+        processed.ul = this.replacePlaceholders(processed.ul);
+      }
+      if (processed.ol && Array.isArray(processed.ol)) {
+        processed.ol = this.replacePlaceholders(processed.ol);
+      }
+
+      return processed;
+    }
+
+    // Handle strings directly
+    if (typeof content === 'string') {
+      return content
+        .replace(/#contactname#/g, this.contactData.contactName)
+        .replace(/#contactage#/g, String(this.contactData.contactAge));
+    }
+
+    return content;
+  }
+
+  /**
    * Recursively processes PDFMake content to convert ql-align-* classes to alignment property
    */
   private processAlignmentClasses(content: any): any {
@@ -399,6 +459,9 @@ export class DocumentEditComponent implements OnInit {
         // Process alignment classes (convert ql-align-* to alignment property)
         pdfContent = this.processAlignmentClasses(pdfContent);
         
+        // Replace placeholders with actual values
+        pdfContent = this.replacePlaceholders(pdfContent);
+        
         // Apply text size multiplier to all font sizes
         const multiplier = this.textSizeMultiplier();
         pdfContent = this.applyTextSizeMultiplier(pdfContent, multiplier);
@@ -520,6 +583,38 @@ export class DocumentEditComponent implements OnInit {
       this.isGeneratingPdf.set(false);
       this.cdr.markForCheck();
     }
+  }
+
+  insertContactName(): void {
+    if (!this.textEditor) {
+      console.warn('Text editor is not ready yet');
+      return;
+    }
+    // Insert "#contactname#" format
+    this.textEditor.insertText('#contactname#');
+    // Update editor content signal
+    const updatedHtml = this.textEditor.getHtml();
+    this.editorContent.set(updatedHtml);
+    // Update PDF preview
+    setTimeout(() => {
+      this.updatePdfPreview();
+    }, 0);
+  }
+
+  insertContactAge(): void {
+    if (!this.textEditor) {
+      console.warn('Text editor is not ready yet');
+      return;
+    }
+    // Insert "#contactage#" format
+    this.textEditor.insertText('#contactage#');
+    // Update editor content signal
+    const updatedHtml = this.textEditor.getHtml();
+    this.editorContent.set(updatedHtml);
+    // Update PDF preview
+    setTimeout(() => {
+      this.updatePdfPreview();
+    }, 0);
   }
 }
 

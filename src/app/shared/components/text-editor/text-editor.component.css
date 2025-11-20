@@ -23,6 +23,35 @@
   margin-right: 8px;
 }
 
+.quill-editor-wrapper ::ng-deep .ql-toolbar .ql-inline-blot {
+  width: 32px;
+  height: 32px;
+  border-radius: calc(var(--radius) - 2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: hsl(var(--foreground));
+  transition: all 0.2s;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.quill-editor-wrapper ::ng-deep .ql-toolbar .ql-inline-blot:hover {
+  background: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+}
+
+.quill-editor-wrapper ::ng-deep .ql-toolbar .ql-inline-blot.ql-active {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+.quill-editor-wrapper ::ng-deep .ql-toolbar .ql-inline-blot svg {
+  width: 16px;
+  height: 16px;
+}
+
 .quill-editor-wrapper ::ng-deep .ql-toolbar button {
   width: 32px;
   height: 32px;
@@ -249,6 +278,19 @@
   border-radius: calc(var(--radius) - 2px);
 }
 
+/* Code element styling - light mode */
+/* Using ViewEncapsulation.None, so styles apply globally */
+.quill-editor-wrapper ::ng-deep .ql-snow .ql-editor code,
+.quill-editor-wrapper ::ng-deep .ql-snow .ql-editor .ql-code-block-container,
+.quill-editor-wrapper ::ng-deep .ql-container .ql-editor code,
+.quill-editor-wrapper ::ng-deep .ql-container .ql-editor .ql-code-block-container,
+.quill-editor-wrapper ::ng-deep .ql-editor code,
+.quill-editor-wrapper ::ng-deep .ql-editor .ql-code-block-container,
+::ng-deep .quill-editor-wrapper .ql-snow .ql-editor code,
+::ng-deep .quill-editor-wrapper .ql-snow .ql-editor .ql-code-block-container {
+  background-color: #e51d1d !important;
+}
+
 /* Error state */
 :host.error .quill-editor-wrapper ::ng-deep .ql-toolbar,
 :host.error .quill-editor-wrapper ::ng-deep .ql-container {
@@ -301,11 +343,41 @@
   fill: white;
 }
 
+:host-context(.dark) .quill-editor-wrapper ::ng-deep .ql-toolbar .ql-inline-blot {
+  color: white;
+}
+
+:host-context(.dark) .quill-editor-wrapper ::ng-deep .ql-toolbar .ql-inline-blot:hover {
+  background: hsl(var(--accent));
+  color: white;
+}
+
+:host-context(.dark) .quill-editor-wrapper ::ng-deep .ql-toolbar .ql-inline-blot.ql-active {
+  background: hsl(var(--primary));
+  color: white;
+}
+
+:host-context(.dark) .quill-editor-wrapper ::ng-deep .ql-toolbar .ql-inline-blot svg {
+  stroke: white;
+}
+
 :host-context(.dark) .quill-editor-wrapper ::ng-deep .ql-container {
   background: hsl(var(--background));
 }
 
 :host-context(.dark) .quill-editor-wrapper ::ng-deep .ql-editor {
   background: hsl(var(--background));
+}
+
+/* Code element styling - dark mode */
+:host-context(.dark) .quill-editor-wrapper ::ng-deep .ql-snow .ql-editor code,
+:host-context(.dark) .quill-editor-wrapper ::ng-deep .ql-snow .ql-editor .ql-code-block-container,
+:host-context(.dark) .quill-editor-wrapper ::ng-deep .ql-container .ql-editor code,
+:host-context(.dark) .quill-editor-wrapper ::ng-deep .ql-container .ql-editor .ql-code-block-container,
+:host-context(.dark) .quill-editor-wrapper ::ng-deep .ql-editor code,
+:host-context(.dark) .quill-editor-wrapper ::ng-deep .ql-editor .ql-code-block-container,
+:host-context(.dark) ::ng-deep .quill-editor-wrapper .ql-snow .ql-editor code,
+:host-context(.dark) ::ng-deep .quill-editor-wrapper .ql-snow .ql-editor .ql-code-block-container {
+  background-color: #e51d1d !important;
 }
 

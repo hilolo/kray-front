@@ -2,6 +2,17 @@
 @plugin "tailwindcss-animate";
 @import 'quill/dist/quill.snow.css';
 
+/* Override Quill code element styles */
+.ql-snow .ql-editor code,
+.ql-snow .ql-editor .ql-code-block-container {
+  background-color: #e51d1d !important;
+}
+
+.dark .ql-snow .ql-editor code,
+.dark .ql-snow .ql-editor .ql-code-block-container {
+  background-color: #e51d1d !important;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 
