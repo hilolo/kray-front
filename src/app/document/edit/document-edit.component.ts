@@ -6,7 +6,7 @@ import { ZardIconComponent } from '@shared/components/icon/icon.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ZardTextEditorComponent } from '@shared/components/text-editor/text-editor.component';
-import { HtmlToPdfmakeService } from '@shared/services/html-to-pdfmake.service';
+import htmlToPdfMake from 'html-to-pdfmake';
 import { SafePipe } from '@shared/pipes/safe.pipe';
 import { ZardPdfViewerComponent } from '@shared/pdf-viewer/pdf-viewer.component';
 import { ZardFormFieldComponent } from '@shared/components/form/form.component';
@@ -55,7 +55,6 @@ export class DocumentEditComponent implements OnInit {
 
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly htmlToPdfmake = inject(HtmlToPdfmakeService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   readonly documentId = signal<string | null>(null);
@@ -134,14 +133,17 @@ export class DocumentEditComponent implements OnInit {
     // Use setTimeout to ensure async processing doesn't block
     setTimeout(() => {
       try {
-        const result = this.htmlToPdfmake.convertHtmlToPdfmake(htmlContent, {
+        const result = htmlToPdfMake(htmlContent, {
           tableAutoSize: true,
           removeExtraBlanks: false  // Preserve spacing
         });
         
+        // Handle both cases: result can be content directly or object with content/images
+        const pdfContent = result.content || result;
+        const images = result.images;
+        
         const docDefinition: any = {
-          content: result.content,
-          styles: result.styles,
+          content: pdfContent,
           pageSize: 'A4',
           pageMargins: [40, 40, 40, 40],
           defaultStyle: {
@@ -152,8 +154,8 @@ export class DocumentEditComponent implements OnInit {
         };
 
         // Add images if present
-        if (result.images) {
-          docDefinition.images = result.images;
+        if (images) {
+          docDefinition.images = images;
         }
 
         // Store PDFMake JSON for debug
