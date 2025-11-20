@@ -309,3 +309,34 @@
   background: hsl(var(--background));
 }
 
+/* Tag styling - Green background highlighting */
+.quill-editor-wrapper ::ng-deep .ql-editor .ql-tag {
+  display: inline-block;
+  background-color: #d1fae5; /* Light green background */
+  color: #065f46; /* Dark green text */
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: default;
+  user-select: none;
+  margin: 0 2px;
+  border: 1px solid #6ee7b7; /* Light green border */
+}
+
+.quill-editor-wrapper ::ng-deep .ql-editor .ql-tag:hover {
+  background-color: #a7f3d0; /* Slightly darker green on hover */
+  border-color: #34d399;
+}
+
+/* Dark mode tag styling */
+:host-context(.dark) .quill-editor-wrapper ::ng-deep .ql-editor .ql-tag {
+  background-color: #064e3b; /* Dark green background for dark mode */
+  color: #6ee7b7; /* Light green text for dark mode */
+  border-color: #10b981;
+}
+
+:host-context(.dark) .quill-editor-wrapper ::ng-deep .ql-editor .ql-tag:hover {
+  background-color: #065f46;
+  border-color: #34d399;
+}
+

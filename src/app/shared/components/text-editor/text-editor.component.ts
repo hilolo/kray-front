@@ -18,6 +18,7 @@ import { textEditorVariants, ZardTextEditorVariants } from './text-editor.varian
 import { ZardButtonComponent } from '../button/button.component';
 import { ZardIconComponent } from '../icon/icon.component';
 import { CommonModule } from '@angular/common';
+import './tag-blot';
 
 @Component({
   selector: 'z-text-editor',
@@ -156,6 +157,92 @@ export class ZardTextEditorComponent implements AfterViewInit, OnDestroy {
     if (this.quill) {
       this.quill.setText('');
     }
+  }
+
+  /**
+   * Insert a tag at the current cursor position
+   * @param fieldName The name of the field (e.g., "Name", "Age", "Date")
+   * @param value The value to store in the tag (e.g., "John Doe", "25", "2024-01-01")
+   */
+  insertTag(fieldName: string, value: string): void {
+    if (!this.quill) {
+      return;
+    }
+
+    // Get current selection or set to end of document
+    let range = this.quill.getSelection();
+    if (!range) {
+      const length = this.quill.getLength();
+      range = { index: length - 1, length: 0 };
+      this.quill.setSelection(range.index, 0);
+    }
+
+    const index = range.index;
+    
+    // Insert text first
+    this.quill.insertText(index, fieldName, 'user');
+    
+    // Apply tag format with the field and value
+    try {
+      this.quill.formatText(index, fieldName.length, 'tag', { field: fieldName, value: value }, 'user');
+    } catch (error) {
+      console.error('Error applying tag format:', error);
+      // Fallback: remove the inserted text if format fails
+      this.quill.deleteText(index, fieldName.length, 'user');
+      return;
+    }
+    
+    // Move cursor after the tag
+    this.quill.setSelection(index + fieldName.length, 0);
+  }
+
+  /**
+   * Extract all tag values from the editor content
+   * @returns A map of field names to their values
+   */
+  getTagValues(): Map<string, string> {
+    const tagValues = new Map<string, string>();
+    
+    if (!this.quill) {
+      return tagValues;
+    }
+
+    const html = this.quill.root.innerHTML;
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const tagElements = doc.querySelectorAll('span.ql-tag[data-field][data-value]');
+
+    tagElements.forEach((tag) => {
+      const field = tag.getAttribute('data-field');
+      const value = tag.getAttribute('data-value');
+      if (field && value) {
+        tagValues.set(field, value);
+      }
+    });
+
+    return tagValues;
+  }
+
+  /**
+   * Replace all tags in the HTML content with their values
+   * @param html The HTML content containing tags
+   * @returns HTML with tags replaced by their values
+   */
+  replaceTagsWithValues(html: string): string {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const tagElements = doc.querySelectorAll('span.ql-tag[data-field][data-value]');
+
+    tagElements.forEach((tag) => {
+      const value = tag.getAttribute('data-value');
+      if (value !== null) {
+        // Replace the tag element with a text node containing the value
+        const textNode = doc.createTextNode(value);
+        tag.parentNode?.replaceChild(textNode, tag);
+      }
+    });
+
+    return doc.body.innerHTML;
   }
 }
 
