@@ -415,22 +415,25 @@ export class ZardTextEditorComponent implements AfterViewInit, OnDestroy {
       this.quill.setSelection(range.index, 0, 'user');
     }
     
+    // Save the original insertion index
+    const originalIndex = range.index;
+    
     // Insert text with format
-    this.quill.insertText(range.index, text, format as any, value, 'user');
+    this.quill.insertText(originalIndex, text, format as any, value, 'api');
     
     // Calculate the position after the inserted text
-    const newPosition = range.index + text.length;
+    const newPosition = originalIndex + text.length;
     
-    // Set cursor position after the inserted text (outside the formatted text)
-    this.quill.setSelection(newPosition, 0, 'user');
+    // Set cursor position after the inserted text and keep it there
+    // Use 'api' source to prevent triggering additional events that might change position
+    this.quill.setSelection(newPosition, 0, 'api');
     
     // Remove the format from the cursor position so future typing is not in that format
-    // This ensures the cursor is "outside" the code block
-    // Format removal needs to happen on the current selection (which is at newPosition)
-    this.quill.format(format, false, 'user');
+    // Use 'api' source to prevent cursor position changes
+    this.quill.format(format, false, 'api');
     
-    // Re-set selection to ensure cursor position is correct and format is cleared
-    this.quill.setSelection(newPosition, 0, 'user');
+    // Ensure cursor stays at the correct position after format removal
+    this.quill.setSelection(newPosition, 0, 'api');
     
     // Update button state
     this.updateButtonState();
@@ -455,7 +458,7 @@ export class ZardTextEditorComponent implements AfterViewInit, OnDestroy {
       // If no selection, set cursor to the end
       const length = this.quill.getLength();
       range = { index: length - 1, length: 0 };
-      this.quill.setSelection(range.index, 0, 'user');
+      this.quill.setSelection(range.index, 0, 'api');
     }
 
     // Check if cursor is inside a code block
@@ -466,7 +469,7 @@ export class ZardTextEditorComponent implements AfterViewInit, OnDestroy {
     if (codeRange.startIndex !== -1 && codeRange.endIndex !== -1) {
       // Move cursor to just after the code block
       insertIndex = codeRange.endIndex;
-      this.quill.setSelection(insertIndex, 0, 'user');
+      this.quill.setSelection(insertIndex, 0, 'api');
     }
 
     // Get protected code blocks and use the first one, or default to 'code'
@@ -482,14 +485,11 @@ export class ZardTextEditorComponent implements AfterViewInit, OnDestroy {
     // Insert code text with code format using 'api' source for better control
     this.quill.insertText(insertIndex, codeText, 'code', true, 'api');
     
-    // Calculate the position 2 characters after the start of the inserted code
-    const cursorPosition = insertIndex + 2;
+    // Calculate the position after the inserted code block
+    const finalCursorPosition = insertIndex + codeText.length;
     
-    // Ensure the position is within the inserted code bounds
-    const maxPosition = insertIndex + codeText.length;
-    const finalCursorPosition = Math.min(cursorPosition, maxPosition);
-    
-    // Set cursor position 2 characters into the inserted code using 'api' source
+    // Set cursor position just after the inserted code block using 'api' source
+    // This keeps the cursor at a fixed position and prevents it from changing
     this.quill.setSelection(finalCursorPosition, 0, 'api');
     
     // Force focus to ensure cursor is visible
