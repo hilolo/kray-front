@@ -161,7 +161,6 @@ export class ZardTextEditorComponent implements AfterViewInit, OnDestroy {
    */
   private applyContainerPadding(): void {
     if (!this.editorElement?.nativeElement) {
-      console.warn('[TextEditor] Editor element not found');
       return;
     }
 
@@ -171,7 +170,6 @@ export class ZardTextEditorComponent implements AfterViewInit, OnDestroy {
     
     const tryApplyPadding = () => {
       attempts++;
-      console.log(`[TextEditor] Attempt ${attempts} to find and apply padding to ql-container`);
 
       // Find the ql-container element - it might be the wrapper itself or a child
       let container = this.editorElement.nativeElement.querySelector('.ql-container');
@@ -183,84 +181,11 @@ export class ZardTextEditorComponent implements AfterViewInit, OnDestroy {
       
       if (container) {
         const htmlElement = container as HTMLElement;
-        console.log('[TextEditor] ✅ Found ql-container:', {
-          element: htmlElement,
-          classes: htmlElement.className,
-          tagName: htmlElement.tagName,
-          currentPaddingBottom: window.getComputedStyle(htmlElement).paddingBottom,
-          currentPaddingTop: window.getComputedStyle(htmlElement).paddingTop,
-          currentPaddingLeft: window.getComputedStyle(htmlElement).paddingLeft,
-          currentPaddingRight: window.getComputedStyle(htmlElement).paddingRight,
-          allComputedStyles: {
-            padding: window.getComputedStyle(htmlElement).padding,
-            paddingBottom: window.getComputedStyle(htmlElement).paddingBottom,
-            marginBottom: window.getComputedStyle(htmlElement).marginBottom,
-          },
-        });
 
         // Force apply padding-bottom via inline style with !important
         htmlElement.style.setProperty('padding-bottom', '25px', 'important');
         htmlElement.style.paddingBottom = '25px';
-
-        // Also check for ql-snow class
-        if (htmlElement.classList.contains('ql-snow')) {
-          console.log('[TextEditor] ✅ ql-container has ql-snow class');
-        }
-
-        // Check parent elements
-        let parent = htmlElement.parentElement;
-        let level = 0;
-        while (parent && level < 3) {
-          console.log(`[TextEditor] Parent level ${level}:`, {
-            tagName: parent.tagName,
-            className: parent.className,
-            paddingBottom: window.getComputedStyle(parent).paddingBottom,
-          });
-          parent = parent.parentElement;
-          level++;
-        }
-
-        // Verify it was applied
-        setTimeout(() => {
-          const appliedPadding = window.getComputedStyle(htmlElement).paddingBottom;
-          console.log('[TextEditor] ✅ Applied padding-bottom:', appliedPadding);
-          if (appliedPadding !== '25px') {
-            console.warn('[TextEditor] ⚠️ WARNING: padding-bottom not applied correctly. Computed:', appliedPadding);
-            console.log('[TextEditor] Element style attribute:', htmlElement.getAttribute('style'));
-            console.log('[TextEditor] All inline styles:', htmlElement.style.cssText);
-          } else {
-            console.log('[TextEditor] ✅ SUCCESS: padding-bottom is correctly applied!');
-          }
-        }, 50);
       } else {
-        console.error(`[TextEditor] ❌ ql-container element not found on attempt ${attempts}!`);
-        console.log('[TextEditor] Available elements in wrapper:', {
-          wrapper: this.editorElement.nativeElement,
-          wrapperClasses: this.editorElement.nativeElement.className,
-          children: Array.from(this.editorElement.nativeElement.children).map((el: Element) => ({
-            tagName: el.tagName,
-            className: el.className,
-            id: el.id,
-            innerHTML: (el as HTMLElement).innerHTML.substring(0, 100),
-          })),
-          allDescendants: Array.from(this.editorElement.nativeElement.querySelectorAll('*')).map((el: Element) => ({
-            tagName: el.tagName,
-            className: el.className,
-          })),
-        });
-
-        // Also check the quill root structure
-        if (this.quill?.root) {
-          const quillRoot = this.quill.root as HTMLElement;
-          console.log('[TextEditor] Quill root element:', {
-            element: quillRoot,
-            parentElement: quillRoot.parentElement,
-            parentClasses: quillRoot.parentElement?.className,
-            parentTagName: quillRoot.parentElement?.tagName,
-            parentPaddingBottom: quillRoot.parentElement ? window.getComputedStyle(quillRoot.parentElement).paddingBottom : 'N/A',
-          });
-        }
-
         // Retry if we haven't exceeded max attempts
         if (attempts < maxAttempts) {
           setTimeout(tryApplyPadding, 200);

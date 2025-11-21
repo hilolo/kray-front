@@ -23,10 +23,18 @@
           </div>
           <!-- Buttons on right -->
           <div class="flex gap-2 items-center ml-auto">
-            <z-button zType="default" zSize="default" class="gap-2" [routerLink]="['/document/add']">
-              <z-icon zType="plus" zSize="sm" />
-              <span>Add Document</span>
-            </z-button>
+            <z-dropdown-menu>
+              <z-button dropdown-trigger zType="default" zSize="default" class="gap-2">
+                <z-icon zType="plus" zSize="sm" />
+                <span>Add Document</span>
+                <z-icon zType="chevron-down" zSize="sm" class="ml-1" />
+              </z-button>
+              @for (option of documentTypeOptions; track option.value) {
+                <z-dropdown-menu-item (click)="onAddDocument(option.value)">
+                  <span>{{ option.label }}</span>
+                </z-dropdown-menu-item>
+              }
+            </z-dropdown-menu>
           </div>
         </div>
       </div>
@@ -43,10 +51,18 @@
           zTitle="No documents found"
           zDescription="Get started by creating a new document."
         >
-          <z-button zType="default" [routerLink]="['/document/add']">
-            <z-icon zType="plus" zSize="sm" />
-            <span>Add Document</span>
-          </z-button>
+          <z-dropdown-menu>
+            <z-button dropdown-trigger zType="default" class="gap-2">
+              <z-icon zType="plus" zSize="sm" />
+              <span>Add Document</span>
+              <z-icon zType="chevron-down" zSize="sm" class="ml-1" />
+            </z-button>
+            @for (option of documentTypeOptions; track option.value) {
+              <z-dropdown-menu-item (click)="onAddDocument(option.value)">
+                <span>{{ option.label }}</span>
+              </z-dropdown-menu-item>
+            }
+          </z-dropdown-menu>
         </z-empty>
       } @else {
         <z-datatable
@@ -67,6 +83,12 @@
             </div>
           </ng-template>
 
+          <ng-template #typeCell let-row>
+            <span class="text-sm text-muted-foreground">
+              {{ getDocumentTypeLabel(row.type) || '-' }}
+            </span>
+          </ng-template>
+
           <ng-template #createdAtCell let-row>
             <span class="text-sm text-muted-foreground">
               {{ row.createdAt ? (row.createdAt | date: 'short') : '-' }}
@@ -84,7 +106,7 @@
               <z-button
                 zType="ghost"
                 zSize="icon"
-                (click)="onEdit(row.id)"
+                (click)="onEdit(row.id, row.type)"
                 [attr.aria-label]="'Edit document'"
               >
                 <z-icon zType="pencil" zSize="sm" />

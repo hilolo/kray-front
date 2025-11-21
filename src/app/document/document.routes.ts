@@ -8,11 +8,11 @@ export const documentRoutes: Routes = [
     component: DocumentListComponent,
   },
   {
-    path: 'add',
+    path: 'add/:type',
     component: DocumentEditComponent,
   },
   {
-    path: ':id',
+    path: ':type/:id',
     component: DocumentEditComponent,
   },
 ];

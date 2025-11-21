@@ -71,7 +71,26 @@ export class DocumentEditComponent implements OnInit {
   private readonly pdfFontsService = inject(PdfFontsService);
 
   readonly documentId = signal<string | null>(null);
+  readonly documentType = signal<string | null>(null);
   readonly isNew = computed(() => !this.documentId());
+
+  readonly documentTypeOptions = [
+    { value: 'lease-agreement', label: 'Lease Agreement' },
+    { value: 'agreement', label: 'Agreement' },
+    { value: 'lease', label: 'Lease' },
+    { value: 'reservationfull', label: 'Reservation Full' },
+    { value: 'reservationpart', label: 'Reservation Part' },
+    { value: 'fees', label: 'Fees' },
+  ];
+
+  readonly pageTitle = computed(() => {
+    const typeLabel = this.getDocumentTypeLabel(this.documentType());
+    const action = this.isNew() ? 'Create' : 'Edit';
+    if (typeLabel) {
+      return `${action} ${typeLabel}`;
+    }
+    return `${action} Document`;
+  });
   readonly editorContent = signal<string>('');
   readonly isLoading = signal(false);
   readonly isSaving = signal(false);
@@ -136,9 +155,18 @@ export class DocumentEditComponent implements OnInit {
     return url + '#zoom=page-fit';
   });
 
+  getDocumentTypeLabel(typeValue: string | null | undefined): string {
+    if (!typeValue) return '';
+    const option = this.documentTypeOptions.find(opt => opt.value === typeValue);
+    return option ? option.label : '';
+  }
+
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
+    const type = this.route.snapshot.paramMap.get('type');
+    
     this.documentId.set(id);
+    this.documentType.set(type);
     
     // Try to load Arial fonts if available
     // Note: You need to provide Arial font files as base64 strings

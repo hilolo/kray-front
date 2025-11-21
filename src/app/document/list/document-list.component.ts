@@ -1,5 +1,5 @@
 import { AfterViewInit, ChangeDetectionStrategy, Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
-import { RouterLink, Router, ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { ZardPageComponent } from '../../page/page.component';
 import { ZardButtonComponent } from '@shared/components/button/button.component';
 import { ZardInputDirective } from '@shared/components/input/input.directive';
@@ -9,6 +9,8 @@ import { FormsModule } from '@angular/forms';
 import { ZardDatatableComponent, DatatableColumn } from '@shared/components/datatable/datatable.component';
 import { ZardDatatablePaginationComponent } from '@shared/components/datatable/datatable-pagination.component';
 import { ZardEmptyComponent } from '@shared/components/empty/empty.component';
+import { ZardDropdownMenuComponent } from '@shared/components/dropdown/dropdown.component';
+import { ZardDropdownMenuItemComponent } from '@shared/components/dropdown/dropdown-item.component';
 import { CommonModule } from '@angular/common';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 
@@ -17,7 +19,6 @@ import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
   standalone: true,
   imports: [
     CommonModule,
-    RouterLink,
     ZardPageComponent,
     ZardButtonComponent,
     ZardInputDirective,
@@ -25,6 +26,8 @@ import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
     ZardDatatableComponent,
     ZardDatatablePaginationComponent,
     ZardEmptyComponent,
+    ZardDropdownMenuComponent,
+    ZardDropdownMenuItemComponent,
     TranslateModule,
     FormsModule,
   ],
@@ -51,10 +54,24 @@ export class DocumentListComponent implements OnInit, OnDestroy {
   readonly hasData = computed(() => this.documents().length > 0);
   readonly hasSelectedDocuments = computed(() => this.selectedRows().size > 0);
 
+  readonly documentTypeOptions = [
+    { value: 'lease-agreement', label: 'Lease Agreement' },
+    { value: 'agreement', label: 'Agreement' },
+    { value: 'lease', label: 'Lease' },
+    { value: 'reservationfull', label: 'Reservation Full' },
+    { value: 'reservationpart', label: 'Reservation Part' },
+    { value: 'fees', label: 'Fees' },
+  ];
+
   readonly columns: DatatableColumn[] = [
     {
       key: 'name',
       label: 'Name',
+      sortable: true,
+    },
+    {
+      key: 'type',
+      label: 'Type',
       sortable: true,
     },
     {
@@ -148,8 +165,21 @@ export class DocumentListComponent implements OnInit, OnDestroy {
     this.selectedRows.set(selected);
   }
 
-  onEdit(id: string): void {
-    this.router.navigate(['/document', id]);
+  onAddDocument(type: string): void {
+    this.router.navigate(['/document/add', type]);
+  }
+
+  getDocumentTypeLabel(typeValue: string | null | undefined): string {
+    if (!typeValue) return '';
+    const option = this.documentTypeOptions.find(opt => opt.value === typeValue);
+    return option ? option.label : typeValue;
+  }
+
+  onEdit(id: string, type?: string): void {
+    // If type is not provided, try to get it from the document
+    // For now, we'll use a default type if not available
+    const documentType = type || 'lease-agreement'; // Default fallback
+    this.router.navigate(['/document', documentType, id]);
   }
 
   onDelete(id: string): void {
