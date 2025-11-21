@@ -447,29 +447,53 @@ export class ZardTextEditorComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
-    const range = this.quill.getSelection(true);
+    // Focus the editor to ensure it's active
+    this.quill.focus();
+
+    let range = this.quill.getSelection(true);
     if (!range) {
-      return;
+      // If no selection, set cursor to the end
+      const length = this.quill.getLength();
+      range = { index: length - 1, length: 0 };
+      this.quill.setSelection(range.index, 0, 'user');
     }
 
-    // Check if the selected text already has the highlight format
-    const format = this.quill.getFormat(range);
+    // Check if cursor is inside a code block
+    const codeRange = this.findCodeFormatRange(range.index);
+    let insertIndex = range.index;
     
-    if (format['highlight']) {
-      // Remove the format if it's already applied
-      this.quill.formatText(range.index, range.length, 'highlight', false, 'user');
-    } else {
-      // Apply the highlight format to selected text
-      if (range.length > 0) {
-        // Text is selected, apply format
-        this.quill.formatText(range.index, range.length, 'highlight', true, 'user');
-      } else {
-        // No text selected, insert example text with format
-        const exampleText = 'inline example';
-        this.quill.insertText(range.index, exampleText, 'highlight', true, 'user');
-        this.quill.setSelection(range.index + exampleText.length, 0);
-      }
+    // If cursor is inside a code block, move it to just after the code block
+    if (codeRange.startIndex !== -1 && codeRange.endIndex !== -1) {
+      // Move cursor to just after the code block
+      insertIndex = codeRange.endIndex;
+      this.quill.setSelection(insertIndex, 0, 'user');
     }
+
+    // Get protected code blocks and use the first one, or default to 'code'
+    const protectedCodeBlocks = this.protectedCodeBlocks();
+    const codeText = protectedCodeBlocks.length > 0 ? protectedCodeBlocks[0] : 'code';
+
+    // Add a space at the insertion index to separate code blocks (if not at the start)
+    if (insertIndex > 0) {
+      this.quill.insertText(insertIndex, ' ', 'api');
+      insertIndex += 1; // Adjust insert index after adding space
+    }
+    
+    // Insert code text with code format using 'api' source for better control
+    this.quill.insertText(insertIndex, codeText, 'code', true, 'api');
+    
+    // Calculate the position 2 characters after the start of the inserted code
+    const cursorPosition = insertIndex + 2;
+    
+    // Ensure the position is within the inserted code bounds
+    const maxPosition = insertIndex + codeText.length;
+    const finalCursorPosition = Math.min(cursorPosition, maxPosition);
+    
+    // Set cursor position 2 characters into the inserted code using 'api' source
+    this.quill.setSelection(finalCursorPosition, 0, 'api');
+    
+    // Force focus to ensure cursor is visible
+    this.quill.focus();
 
     // Update button active state
     this.updateButtonState();

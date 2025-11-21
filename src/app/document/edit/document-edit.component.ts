@@ -569,7 +569,7 @@ export class DocumentEditComponent implements OnInit {
           defaultStyle: {
             fontSize: Math.round(baseFontSize * multiplier * 100) / 100,  // Apply multiplier to default font size
             font: fontFamily,
-            lineHeight: 0.1
+            lineHeight: 1
           }
         };
 
