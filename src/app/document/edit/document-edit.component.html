@@ -30,10 +30,10 @@
           </div>
         </div>
       } @else {
-        <!-- Two Column Layout -->
-        <div class="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-6 min-w-0">
+        <!-- Resizable Two Column Layout -->
+        <z-resizable zLayout="horizontal" class="min-h-[600px]">
           <!-- Left Half - Text Editor -->
-          <div class="flex flex-col min-w-0 overflow-hidden">
+          <z-resizable-panel [zDefaultSize]="40" [zMin]="20" [zMax]="80" class="flex flex-col min-w-0 overflow-hidden pr-3">
             <!-- Toggle Options -->
             <div class="mb-4 flex items-center gap-6 flex-shrink-0">
               <z-switch 
@@ -67,7 +67,7 @@
             </div>
             <div class="mb-2 flex items-center justify-between flex-shrink-0">
               <div>
-                <h3 class="text-sm font-medium">Document Content</h3>
+                <h3 class="text-sm font-medium cursor-pointer hover:text-primary transition-colors" (click)="onDocumentContentTitleClick()">Document Content</h3>
                 <p class="text-xs text-muted-foreground">Edit your document content</p>
               </div>
               <div class="flex items-center gap-3">
@@ -84,7 +84,7 @@
                 />
               </div>
             </div>
-            <div class="flex-shrink-0 border rounded-lg overflow-hidden min-w-0" [style.font-size]="(textSizeMultiplier() * 100) + '%'" style="height: 600px;">
+            <div class="flex-1 min-h-0 border rounded-lg overflow-hidden" [style.font-size]="(textSizeMultiplier() * 100) + '%'">
               <z-text-editor
                 #textEditor
                 [value]="editorContent()"
@@ -96,11 +96,14 @@
                 class="h-full"
               />
             </div>
-          </div>
+          </z-resizable-panel>
+
+          <!-- Resizer Handle -->
+          <z-resizable-handle [zHandleIndex]="0" [zWithHandle]="true"></z-resizable-handle>
 
           <!-- Right Half - PDF Preview -->
-          <div class="flex flex-col min-h-0 min-w-0 overflow-hidden">
-            <div class="mb-2 flex items-center justify-between">
+          <z-resizable-panel [zDefaultSize]="60" [zMin]="20" [zMax]="80" class="flex flex-col min-h-0 min-w-0 overflow-hidden pl-3">
+            <div class="mb-2 flex items-center justify-between flex-shrink-0">
               <div>
                 <h3 class="text-sm font-medium">Document Details</h3>
                 <p class="text-xs text-muted-foreground">PDF Preview</p>
@@ -147,25 +150,20 @@
                 </div>
               }
             </div>
-          </div>
-        </div>
+          </z-resizable-panel>
+        </z-resizable>
 
-        <!-- Debug Section -->
-        <div class="mt-6 border-t pt-6">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold">Debug Information</h3>
-            <z-button zType="ghost" zSize="sm" (click)="toggleDebug()">
-              @if (showDebug()) {
+        <!-- Debug Section (Hidden by default, shown after 5 clicks on "Document Content" title) -->
+        @if (showDebug()) {
+          <div class="mt-6 border-t pt-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-semibold">Debug Information</h3>
+              <z-button zType="ghost" zSize="sm" (click)="toggleDebug()">
                 <z-icon zType="chevron-up" zSize="sm" class="mr-1" />
                 Hide
-              } @else {
-                <z-icon zType="chevron-down" zSize="sm" class="mr-1" />
-                Show
-              }
-            </z-button>
-          </div>
+              </z-button>
+            </div>
 
-          @if (showDebug()) {
             <div class="space-y-4">
               <!-- HTML and PDFMake JSON Input Section -->
               <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -253,8 +251,8 @@
                 </div>
               </div>
             </div>
-          }
-        </div>
+          </div>
+        }
       }
     </div>
   </div>

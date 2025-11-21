@@ -15,6 +15,9 @@ import { ZardFormLabelComponent } from '@shared/components/form/form.component';
 import { ZardInputDirective } from '@shared/components/input/input.directive';
 import { ZardSegmentedComponent } from '@shared/components/segmented/segmented.component';
 import { ZardSwitchComponent } from '@shared/components/switch/switch.component';
+import { ZardResizableComponent } from '@shared/components/resizable/resizable.component';
+import { ZardResizablePanelComponent } from '@shared/components/resizable/resizable-panel.component';
+import { ZardResizableHandleComponent } from '@shared/components/resizable/resizable-handle.component';
 import { ChangeDetectorRef } from '@angular/core';
 import pdfMake from 'pdfmake/build/pdfmake';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
@@ -51,6 +54,9 @@ import { PdfFontsService } from '@shared/services/pdf-fonts.service';
     ZardInputDirective,
     ZardSegmentedComponent,
     ZardSwitchComponent,
+    ZardResizableComponent,
+    ZardResizablePanelComponent,
+    ZardResizableHandleComponent,
     SafePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -87,6 +93,7 @@ export class DocumentEditComponent implements OnInit {
   readonly isGeneratingPdf = signal(false);
   readonly showDebug = signal(false);
   readonly showPdfViewer = signal(false);
+  readonly debugClickCount = signal(0);
   
   // Display options
   readonly displayLogo = signal<boolean>(false);
@@ -600,6 +607,17 @@ export class DocumentEditComponent implements OnInit {
 
   toggleDebug(): void {
     this.showDebug.set(!this.showDebug());
+  }
+
+  onDocumentContentTitleClick(): void {
+    const newCount = this.debugClickCount() + 1;
+    this.debugClickCount.set(newCount);
+    
+    if (newCount >= 5) {
+      this.showDebug.set(true);
+      // Reset counter after showing debug
+      this.debugClickCount.set(0);
+    }
   }
 
   openPdfViewer(): void {

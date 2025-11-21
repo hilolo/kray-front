@@ -599,11 +599,13 @@ export class ZardTextEditorComponent implements AfterViewInit, OnDestroy {
       event.preventDefault();
       event.stopPropagation();
 
-      // Completely remove the entire code block and its content
-      this.quill.deleteText(startIndex, endIndex - startIndex, 'user');
+      // Use Quill's deleteText method to delete only the specific range at cursor position
+      // This will only delete the code block at the cursor, not all matching blocks
+      const scrollTop = this.quill.root.scrollTop;
       
-      // Clean up any remaining code tags from HTML
-      this.cleanupCodeTags();
+      // Delete the specific range - this will only affect the code block at the cursor position
+      // Quill's deleteText correctly handles deletion of a specific range in its delta model
+      this.quill.deleteText(startIndex, endIndex - startIndex, 'user');
       
       // Get the character to insert
       const charToInsert = event.key === 'Enter' ? '\n' : event.key;
@@ -612,7 +614,9 @@ export class ZardTextEditorComponent implements AfterViewInit, OnDestroy {
       this.quill.insertText(startIndex, charToInsert, 'user');
       
       // Set cursor position after the inserted character
-      this.quill.setSelection(startIndex + charToInsert.length, 0, 'user');
+      const newPosition = startIndex + charToInsert.length;
+      this.quill.setSelection(newPosition, 0, 'user');
+      this.quill.root.scrollTop = scrollTop;
       
       this.onEditorChange();
       return;
