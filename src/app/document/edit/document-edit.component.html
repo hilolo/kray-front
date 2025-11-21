@@ -1,45 +1,23 @@
 <z-page [zTitle]="isNew() ? 'Create Document' : 'Edit Document'">
   <div class="flex flex-col min-h-0 h-full overflow-hidden">
-    <!-- Header Section -->
-    <div class="space-y-4 pb-6 flex-shrink-0">
-      <div class="flex items-center justify-between">
-        <div>
-          <h2 class="text-3xl font-bold mb-2">
-            @if (isNew()) {
-              Add New Document
-            } @else {
-              Edit Document
-            }
-          </h2>
-          <p class="text-muted-foreground">
-            @if (isNew()) {
-              Create a new document by filling in the information below
-            } @else {
-              Update the document information below
-            }
-          </p>
-        </div>
-        <div class="flex gap-2">
-          <z-button zType="outline" zSize="default" [disabled]="isSaving()" (click)="!isSaving() && onCancel()">
-            Cancel
-          </z-button>
-          <z-button [zType]="isSaving() || !isFormValid() ? 'ghost' : 'default'" [disabled]="isSaving()" (click)="!isSaving() && onSave()">
-            @if (isSaving()) {
-              <span class="flex items-center gap-2">
-                <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
-                Saving...
-              </span>
-            } @else {
-              <z-icon zType="check" zSize="sm" class="mr-2" />
-              @if (isNew()) {
-                Create Document
-              } @else {
-                Update Document
-              }
-            }
-          </z-button>
-        </div>
-      </div>
+    <!-- Top Section with Save Button -->
+    <div class="flex items-center justify-end gap-4 pb-6 flex-shrink-0">
+      <!-- Save Button -->
+      <z-button [zType]="isSaving() || !isFormValid() ? 'ghost' : 'default'" [disabled]="isSaving()" (click)="!isSaving() && onSave()">
+        @if (isSaving()) {
+          <span class="flex items-center gap-2">
+            <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+            Saving...
+          </span>
+        } @else {
+          <z-icon zType="check" zSize="sm" class="mr-2" />
+          @if (isNew()) {
+            Create Document
+          } @else {
+            Update Document
+          }
+        }
+      </z-button>
     </div>
 
     <!-- Main Content -->
@@ -56,6 +34,23 @@
         <div class="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-6 min-w-0">
           <!-- Left Half - Text Editor -->
           <div class="flex flex-col min-w-0 overflow-hidden">
+            <!-- Toggle Options -->
+            <div class="mb-4 flex items-center gap-6 flex-shrink-0">
+              <z-switch 
+                [ngModel]="displayLogo()" 
+                (ngModelChange)="onDisplayLogoChange($event)"
+              >
+                Display Logo in Page
+              </z-switch>
+              
+              <z-switch 
+                [ngModel]="displayCache()" 
+                (ngModelChange)="onDisplayCacheChange($event)"
+              >
+                Display Cache in Page
+              </z-switch>
+            </div>
+            
             <!-- Contact Buttons - On top of document content -->
             <div class="mb-3 flex items-center gap-2 flex-shrink-0 flex-wrap">
               @for (key of dataKeys(); track key) {

@@ -548,40 +548,19 @@ export class ZardTextEditorComponent implements AfterViewInit, OnDestroy {
       event.preventDefault();
       event.stopPropagation();
 
-      // Get the current HTML and directly remove the code block from HTML
-      let html = this.quill.root.innerHTML;
+      // Use Quill's deleteText method to delete only the specific range at cursor position
+      // This will only delete the code block at the cursor, not all matching blocks
+      const scrollTop = this.quill.root.scrollTop;
       
-      // Create a temporary DOM element to parse and manipulate the HTML
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = html;
+      // Delete the specific range - this will only affect the code block at the cursor position
+      // Quill's deleteText correctly handles deletion of a specific range in its delta model
+      this.quill.deleteText(startIndex, endIndex - startIndex, 'user');
       
-      // Find all code elements and remove the ones matching our protected code blocks
-      const codeElements = tempDiv.querySelectorAll('code');
-      codeElements.forEach((codeEl) => {
-        const textContent = codeEl.textContent?.trim() || '';
-        if (protectedCodeBlocks.includes(textContent)) {
-          // Completely remove the code element (don't keep the text)
-          codeEl.remove();
-        }
-      });
-      
-      // Update the HTML
-      const cleanedHtml = tempDiv.innerHTML;
-      if (cleanedHtml !== html) {
-        const scrollTop = this.quill.root.scrollTop;
-        this.quill.root.innerHTML = cleanedHtml;
-        
-        // Set cursor position where the code block was (adjusted for length change)
-        const length = this.quill.getLength();
-        const adjustedIndex = Math.min(startIndex, Math.max(0, length - 1));
-        this.quill.setSelection(adjustedIndex, 0, 'user');
-        this.quill.root.scrollTop = scrollTop;
-      } else {
-        // Fallback: use deleteText if HTML manipulation didn't work
-        this.quill.deleteText(startIndex, endIndex - startIndex, 'user');
-        this.cleanupCodeTags();
-        this.quill.setSelection(startIndex, 0, 'user');
-      }
+      // Set cursor position where the code block was (adjusted for length change)
+      const length = this.quill.getLength();
+      const adjustedIndex = Math.min(startIndex, Math.max(0, length - 1));
+      this.quill.setSelection(adjustedIndex, 0, 'user');
+      this.quill.root.scrollTop = scrollTop;
       
       this.onEditorChange();
       return;
