@@ -40,103 +40,175 @@
       </div>
     </div>
 
-    <!-- Data Table -->
-    <div class="flex-1 min-h-0">
-      @if (isLoading()) {
-        <div class="flex items-center justify-center h-full">
-          <div class="text-muted-foreground">Loading...</div>
-        </div>
-      } @else if (!hasData()) {
-        <z-empty
-          zTitle="No documents found"
-          zDescription="Get started by creating a new document."
-        >
-          <z-dropdown-menu>
-            <z-button dropdown-trigger zType="default" class="gap-2">
-              <z-icon zType="plus" zSize="sm" />
-              <span>Add Document</span>
-              <z-icon zType="chevron-down" zSize="sm" class="ml-1" />
-            </z-button>
-            @for (option of documentTypeOptions; track option.value) {
-              <z-dropdown-menu-item (click)="onAddDocument(option.value)">
-                <span>{{ option.label }}</span>
-              </z-dropdown-menu-item>
+    <!-- Tabs Section -->
+    <div class="flex-1 min-h-0 flex flex-col">
+      <z-tab-group zTabsPosition="top" zActivePosition="bottom" class="flex flex-col flex-1 min-h-0">
+        <!-- Document Tab -->
+        <z-tab label="Document">
+          <div class="flex flex-col h-full min-h-0 pt-4">
+            <!-- Data Table -->
+            <div class="flex-1 min-h-0">
+              @if (isLoading()) {
+                <div class="flex items-center justify-center h-full">
+                  <div class="text-muted-foreground">Loading...</div>
+                </div>
+              } @else if (!hasData()) {
+                <z-empty
+                  zTitle="No documents found"
+                  zDescription="Get started by creating a new document."
+                >
+                  <z-dropdown-menu>
+                    <z-button dropdown-trigger zType="default" class="gap-2">
+                      <z-icon zType="plus" zSize="sm" />
+                      <span>Add Document</span>
+                      <z-icon zType="chevron-down" zSize="sm" class="ml-1" />
+                    </z-button>
+                    @for (option of documentTypeOptions; track option.value) {
+                      <z-dropdown-menu-item (click)="onAddDocument(option.value)">
+                        <span>{{ option.label }}</span>
+                      </z-dropdown-menu-item>
+                    }
+                  </z-dropdown-menu>
+                </z-empty>
+              } @else {
+                <z-datatable
+                  [zColumns]="columns"
+                  [zData]="documents()"
+                  [zViewMode]="'list'"
+                  [zSelectable]="true"
+                  [zSelectedRows]="selectedRows()"
+                  (zSelectionChange)="onRowSelect($event)"
+                >
+                  <ng-template #nameCell let-row>
+                    <div class="flex items-center gap-3">
+                      <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-muted">
+                        <z-icon zType="file-text" zSize="sm" class="text-muted-foreground" />
+                      </div>
+                      <div class="flex flex-col">
+                        <span class="text-sm font-medium">{{ row.name || 'Untitled Document' }}</span>
+                      </div>
+                    </div>
+                  </ng-template>
+
+                  <ng-template #typeCell let-row>
+                    <span class="text-sm text-muted-foreground">
+                      {{ getDocumentTypeLabel(row.type) || '-' }}
+                    </span>
+                  </ng-template>
+
+                  <ng-template #createdAtCell let-row>
+                    <span class="text-sm text-muted-foreground">
+                      {{ formatDate(row.createdAt) }}
+                    </span>
+                  </ng-template>
+
+                  <ng-template #updatedAtCell let-row>
+                    <span class="text-sm text-muted-foreground">
+                      {{ formatDate(row.updatedAt) }}
+                    </span>
+                  </ng-template>
+
+                  <ng-template #actionsCell let-row>
+                    <div class="flex items-center gap-2">
+                      <z-button
+                        zType="ghost"
+                        zSize="icon"
+                        (click)="onEdit(row.id, row.type)"
+                        [attr.aria-label]="'Edit document'"
+                      >
+                        <z-icon zType="pencil" zSize="sm" />
+                      </z-button>
+                      <z-button
+                        zType="ghost"
+                        zSize="icon"
+                        (click)="onDelete(row.id)"
+                        [attr.aria-label]="'Delete document'"
+                      >
+                        <z-icon zType="x" zSize="sm" class="text-destructive" />
+                      </z-button>
+                    </div>
+                  </ng-template>
+                </z-datatable>
+              }
+            </div>
+
+            <!-- Pagination Footer -->
+            @if (hasData()) {
+              <z-datatable-pagination
+                [zCurrentPage]="currentPage()"
+                [zTotalPages]="totalPages()"
+                [zPageSize]="pageSize()"
+                [zPageSizeOptions]="pageSizeOptions()"
+                [zShow]="hasData()"
+                (zPageChange)="onPageChange($event)"
+                (zPageSizeChange)="onPageSizeChange($event)"
+              />
             }
-          </z-dropdown-menu>
-        </z-empty>
-      } @else {
-        <z-datatable
-          [zColumns]="columns"
-          [zData]="documents()"
-          [zSelectable]="true"
-          [zSelectedRows]="selectedRows()"
-          (zSelectionChange)="onRowSelect($event)"
-        >
-          <ng-template #nameCell let-row>
-            <div class="flex items-center gap-3">
-              <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-muted">
-                <z-icon zType="file-text" zSize="sm" class="text-muted-foreground" />
+          </div>
+        </z-tab>
+
+        <!-- Template Tab -->
+        <z-tab label="Template">
+          <div class="flex flex-col h-full min-h-0 pt-4">
+            @if (isLoadingTemplates()) {
+              <div class="flex items-center justify-center h-full">
+                <div class="text-muted-foreground">Loading templates...</div>
               </div>
-              <div class="flex flex-col">
-                <span class="text-sm font-medium">{{ row.name || 'Untitled Document' }}</span>
+            } @else if (!hasTemplates()) {
+              <z-empty
+                zTitle="No templates found"
+                zDescription="Templates will appear here once created."
+              />
+            } @else {
+              <div class="flex-1 min-h-0 overflow-y-auto">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-4">
+                  @for (template of templates(); track template.id) {
+                    <z-card class="hover:shadow-md transition-shadow cursor-pointer group" (click)="onCreateFromTemplate(template)">
+                      <div class="flex flex-col items-center gap-3 p-4">
+                        <!-- Document Icon -->
+                        <div class="flex items-center justify-center w-16 h-16 rounded-lg bg-muted group-hover:bg-muted/80 transition-colors">
+                          <z-icon zType="file-text" zSize="lg" class="text-muted-foreground" />
+                        </div>
+                        
+                        <!-- Template Info -->
+                        <div class="flex flex-col items-center gap-1 text-center w-full">
+                          <span class="text-xs text-muted-foreground">{{ template.category }}</span>
+                          <span class="text-sm font-medium">{{ template.name }}</span>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex items-center gap-2 w-full justify-center pt-2" (click)="$event.stopPropagation()">
+                          <z-button
+                            zType="default"
+                            zSize="sm"
+                            (click)="onEditTemplate(template)"
+                            [attr.aria-label]="'Edit template'"
+                            class="flex-1"
+                          >
+                            <z-icon zType="pencil" zSize="sm" />
+                            <span class="hidden sm:inline">Edit</span>
+                          </z-button>
+                          <z-button
+                            zType="default"
+                            zSize="sm"
+                            (click)="onShowExample(template)"
+                            [attr.aria-label]="'Show example'"
+                            class="flex-1"
+                          >
+                            <z-icon zType="eye" zSize="sm" />
+                            <span class="hidden sm:inline">Example</span>
+                          </z-button>
+                        </div>
+                      </div>
+                    </z-card>
+                  }
+                </div>
               </div>
-            </div>
-          </ng-template>
-
-          <ng-template #typeCell let-row>
-            <span class="text-sm text-muted-foreground">
-              {{ getDocumentTypeLabel(row.type) || '-' }}
-            </span>
-          </ng-template>
-
-          <ng-template #createdAtCell let-row>
-            <span class="text-sm text-muted-foreground">
-              {{ row.createdAt ? (row.createdAt | date: 'short') : '-' }}
-            </span>
-          </ng-template>
-
-          <ng-template #updatedAtCell let-row>
-            <span class="text-sm text-muted-foreground">
-              {{ row.updatedAt ? (row.updatedAt | date: 'short') : '-' }}
-            </span>
-          </ng-template>
-
-          <ng-template #actionsCell let-row>
-            <div class="flex items-center gap-2">
-              <z-button
-                zType="ghost"
-                zSize="icon"
-                (click)="onEdit(row.id, row.type)"
-                [attr.aria-label]="'Edit document'"
-              >
-                <z-icon zType="pencil" zSize="sm" />
-              </z-button>
-              <z-button
-                zType="ghost"
-                zSize="icon"
-                (click)="onDelete(row.id)"
-                [attr.aria-label]="'Delete document'"
-              >
-                <z-icon zType="x" zSize="sm" class="text-destructive" />
-              </z-button>
-            </div>
-          </ng-template>
-        </z-datatable>
-      }
+            }
+          </div>
+        </z-tab>
+      </z-tab-group>
     </div>
-
-    <!-- Pagination Footer -->
-    @if (hasData()) {
-      <z-datatable-pagination
-        [zCurrentPage]="currentPage()"
-        [zTotalPages]="totalPages()"
-        [zPageSize]="pageSize()"
-        [zPageSizeOptions]="pageSizeOptions()"
-        [zShow]="hasData()"
-        (zPageChange)="onPageChange($event)"
-        (zPageSizeChange)="onPageSizeChange($event)"
-      />
-    }
   </div>
 </z-page>
 

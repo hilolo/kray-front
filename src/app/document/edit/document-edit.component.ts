@@ -22,6 +22,7 @@ import { ChangeDetectorRef } from '@angular/core';
 import pdfMake from 'pdfmake/build/pdfmake';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
 import { PdfFontsService } from '@shared/services/pdf-fonts.service';
+import { DocumentDataField, COMMON_FIELDS, DOCUMENT_TYPE_FIELDS } from './document-type.models';
 
 // Set up pdfMake with fonts
 (pdfMake as any).vfs = pdfFonts;
@@ -127,20 +128,63 @@ export class DocumentEditComponent implements OnInit {
   // Cleaned HTML (after removing line-height)
   readonly cleanedHtml = signal<string>('');
 
-  // Contact data in JSON format
-  readonly Data = {
-    contactName: 'ahmed',
-    contactAge: 19
-  };
+  // Get all fields for current document type
+  readonly documentFields = computed((): DocumentDataField[] => {
+    const type = this.documentType();
+    const typeFields = type ? DOCUMENT_TYPE_FIELDS[type] || [] : [];
+    return [...COMMON_FIELDS, ...typeFields];
+  });
 
-  // Get all keys from Data as an array
+  // Get all keys from document fields
   readonly dataKeys = computed(() => {
-    return Object.keys(this.Data);
+    return this.documentFields().map(field => field.key);
   });
 
   // Protected code blocks - dynamically generated from Data keys
   readonly protectedCodeBlocks = computed(() => {
-    return Object.keys(this.Data);
+    return this.dataKeys();
+  });
+
+  // Format date as dd/mm/yyyy
+  private formatDate(date: Date): string {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
+  // Get default city from localStorage settings
+  private getDefaultCity(): string {
+    try {
+      const settingsStr = localStorage.getItem('settings');
+      if (settingsStr) {
+        const settings = JSON.parse(settingsStr);
+        return settings.defaultCity || '';
+      }
+    } catch (error) {
+      console.error('Error loading default city from localStorage:', error);
+    }
+    return '';
+  }
+
+  // Document data object (will be populated from actual data later)
+  readonly Data = computed(() => {
+    const data: Record<string, any> = {};
+    const today = new Date();
+    
+    this.documentFields().forEach(field => {
+      if (field.key === 'todayDate') {
+        // Format today's date as dd/mm/yyyy
+        data[field.key] = this.formatDate(today);
+      } else if (field.key === 'city') {
+        // Get city from localStorage settings
+        data[field.key] = this.getDefaultCity();
+      } else {
+        // Initialize with placeholder values - will be replaced with actual data
+        data[field.key] = `{{${field.key}}}`;
+      }
+    });
+    return data;
   });
 
   readonly isFormValid = computed(() => {
@@ -380,9 +424,10 @@ export class DocumentEditComponent implements OnInit {
         }
         
         // Check if the code text matches a key in Data
-        if (codeText && this.Data.hasOwnProperty(codeText)) {
+        const data = this.Data();
+        if (codeText && data && data.hasOwnProperty(codeText)) {
           // Replace CODE node with the actual value from Data
-          const value = (this.Data as any)[codeText];
+          const value = (data as any)[codeText];
           // Return just the text value (PDFMake can handle string directly in arrays)
           // This makes it cleaner when CODE node is in a text array
           return typeof value === 'string' ? value : String(value);

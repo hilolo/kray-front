@@ -51,17 +51,17 @@
               </z-switch>
             </div>
             
-            <!-- Contact Buttons - On top of document content -->
+            <!-- Document Field Buttons - On top of document content -->
             <div class="mb-3 flex items-center gap-2 flex-shrink-0 flex-wrap">
-              @for (key of dataKeys(); track key) {
+              @for (field of documentFields(); track field.key) {
                 <z-button 
                   zType="outline" 
                   zSize="sm" 
-                  (click)="insertDataKey(key)"
+                  (click)="insertDataKey(field.key)"
                   class="flex items-center gap-1"
                 >
                   <z-icon zType="code" zSize="sm" />
-                  {{ key }}
+                  {{ field.label }}
                 </z-button>
               }
             </div>

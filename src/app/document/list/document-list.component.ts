@@ -11,6 +11,8 @@ import { ZardDatatablePaginationComponent } from '@shared/components/datatable/d
 import { ZardEmptyComponent } from '@shared/components/empty/empty.component';
 import { ZardDropdownMenuComponent } from '@shared/components/dropdown/dropdown.component';
 import { ZardDropdownMenuItemComponent } from '@shared/components/dropdown/dropdown-item.component';
+import { ZardTabGroupComponent, ZardTabComponent } from '@shared/components/tabs/tabs.component';
+import { ZardCardComponent } from '@shared/components/card/card.component';
 import { CommonModule } from '@angular/common';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 
@@ -28,6 +30,9 @@ import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
     ZardEmptyComponent,
     ZardDropdownMenuComponent,
     ZardDropdownMenuItemComponent,
+    ZardTabGroupComponent,
+    ZardTabComponent,
+    ZardCardComponent,
     TranslateModule,
     FormsModule,
   ],
@@ -51,8 +56,13 @@ export class DocumentListComponent implements OnInit, OnDestroy {
   readonly totalPages = signal(1);
   readonly totalItems = signal(0);
 
+  // Template data
+  readonly templates = signal<any[]>([]);
+  readonly isLoadingTemplates = signal(false);
+
   readonly hasData = computed(() => this.documents().length > 0);
   readonly hasSelectedDocuments = computed(() => this.selectedRows().size > 0);
+  readonly hasTemplates = computed(() => this.templates().length > 0);
 
   readonly documentTypeOptions = [
     { value: 'lease-agreement', label: 'Lease Agreement' },
@@ -113,6 +123,7 @@ export class DocumentListComponent implements OnInit, OnDestroy {
       });
 
     this.loadDocuments();
+    this.loadTemplates();
   }
 
   ngOnDestroy(): void {
@@ -184,6 +195,58 @@ export class DocumentListComponent implements OnInit, OnDestroy {
 
   onDelete(id: string): void {
     // TODO: Implement delete
+  }
+
+  formatDate(dateString: string | null | undefined): string {
+    if (!dateString) return '-';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    } catch {
+      return '-';
+    }
+  }
+
+  loadTemplates(): void {
+    this.isLoadingTemplates.set(true);
+    // TODO: Implement actual API call for templates
+    setTimeout(() => {
+      // Mock template data based on document types
+      const mockTemplates = this.documentTypeOptions.map(option => ({
+        id: `template-${option.value}`,
+        type: option.value,
+        name: `${option.label} Template`,
+        category: this.getCategoryFromType(option.value),
+        createdAt: new Date().toISOString(),
+      }));
+      this.templates.set(mockTemplates);
+      this.isLoadingTemplates.set(false);
+    }, 300);
+  }
+
+  getCategoryFromType(type: string): string {
+    if (type.includes('agreement')) return 'Tenant agreement';
+    if (type.includes('lease')) return 'Tenant agreement';
+    if (type.includes('reservation')) return 'Tenant agreement';
+    if (type.includes('fees')) return 'Tenant notice';
+    return 'Document';
+  }
+
+  onCreateFromTemplate(template: any): void {
+    this.router.navigate(['/document/add', template.type]);
+  }
+
+  onEditTemplate(template: any): void {
+    // TODO: Navigate to template editor
+    console.log('Edit template:', template);
+  }
+
+  onShowExample(template: any): void {
+    // TODO: Show template example/preview
+    // This could open a modal or navigate to a preview page
+    console.log('Show example for template:', template);
+    // For now, navigate to create document from template as an example
+    this.router.navigate(['/document/add', template.type]);
   }
 }
 
