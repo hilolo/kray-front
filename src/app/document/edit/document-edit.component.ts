@@ -14,9 +14,6 @@ import { ZardFormLabelComponent } from '@shared/components/form/form.component';
 import { ZardInputDirective } from '@shared/components/input/input.directive';
 import { ZardSegmentedComponent } from '@shared/components/segmented/segmented.component';
 import { ZardSwitchComponent } from '@shared/components/switch/switch.component';
-import { ZardResizableComponent } from '@shared/components/resizable/resizable.component';
-import { ZardResizablePanelComponent } from '@shared/components/resizable/resizable-panel.component';
-import { ZardResizableHandleComponent } from '@shared/components/resizable/resizable-handle.component';
 import { ChangeDetectorRef } from '@angular/core';
 import { PdfFontsService } from '@shared/services/pdf-fonts.service';
 import { PdfGenerationService } from '@shared/services/pdf-generation.service';
@@ -39,9 +36,6 @@ import { DocumentDataField, COMMON_FIELDS, DOCUMENT_TYPE_FIELDS } from './docume
     ZardInputDirective,
     ZardSegmentedComponent,
     ZardSwitchComponent,
-    ZardResizableComponent,
-    ZardResizablePanelComponent,
-    ZardResizableHandleComponent,
     SafePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
