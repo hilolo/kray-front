@@ -32,6 +32,7 @@ namespace ImmoGest.Application.MappingProfiles
             MaintenanceMapper();
             TaskMapper();
             TransactionMapper();
+            DocumentMapper();
         }
 
         private void UserMapper()
@@ -663,6 +664,45 @@ namespace ImmoGest.Application.MappingProfiles
                     if (propertyName == "Category" || propertyName == "RevenueType" || propertyName == "ExpenseType" || propertyName == "Date")
                         return false; // These are handled by explicit MapFrom above
 
+                    // Skip null values for other properties (partial update)
+                    return srcMember != null;
+                }));
+        }
+
+        private void DocumentMapper()
+        {
+            CreateMap<Document, DocumentDto>()
+                .ReverseMap();
+            
+            CreateMap<CreateDocumentDto, Document>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.Company, opt => opt.Ignore())
+                .ForMember(dest => dest.Leasee, opt => opt.Ignore())
+                .ForMember(dest => dest.Transaction, opt => opt.Ignore())
+                .ForMember(dest => dest.IsDeleted, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedOn, opt => opt.Ignore())
+                .ForMember(dest => dest.LastModifiedOn, opt => opt.Ignore())
+                .ForMember(dest => dest.SearchTerms, opt => opt.Ignore());
+            
+            CreateMap<UpdateDocumentDto, Document>()
+                .ForMember(dest => dest.Company, opt => opt.Ignore())
+                .ForMember(dest => dest.Leasee, opt => opt.Ignore())
+                .ForMember(dest => dest.Transaction, opt => opt.Ignore())
+                .ForMember(dest => dest.IsDeleted, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedOn, opt => opt.Ignore())
+                .ForMember(dest => dest.LastModifiedOn, opt => opt.Ignore())
+                .ForMember(dest => dest.SearchTerms, opt => opt.Ignore())
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => 
+                {
+                    var propertyName = opts.DestinationMember.Name;
+                    // Don't update Id, CompanyId if they're null/default
+                    if (propertyName == "Id" || propertyName == "CompanyId")
+                        return srcMember != null && !srcMember.Equals(Guid.Empty);
+                    
+                    // For nullable Guid properties, allow null
+                    if (propertyName == "LeaseeId" || propertyName == "TransactionId")
+                        return true; // Always map, including null
+                    
                     // Skip null values for other properties (partial update)
                     return srcMember != null;
                 }));

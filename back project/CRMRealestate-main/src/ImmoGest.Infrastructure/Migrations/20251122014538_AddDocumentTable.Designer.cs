@@ -4,6 +4,7 @@ using ImmoGest.Infrastructure.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ImmoGest.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251122014538_AddDocumentTable")]
+    partial class AddDocumentTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -300,11 +303,11 @@ namespace ImmoGest.Infrastructure.Migrations
                             Id = new Guid("687d9fd5-2752-4a96-93d5-0f33a49913c1"),
                             Address = "bassatine",
                             City = "tanger",
-                            CreatedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 54, 11, 128, DateTimeKind.Unspecified).AddTicks(5992), new TimeSpan(0, 0, 0, 0, 0)),
+                            CreatedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 45, 38, 28, DateTimeKind.Unspecified).AddTicks(5390), new TimeSpan(0, 0, 0, 0, 0)),
                             Email = "contact@immosyncpro.com",
                             Ice = "51259111",
                             IsDeleted = false,
-                            LastModifiedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 54, 11, 128, DateTimeKind.Unspecified).AddTicks(5996), new TimeSpan(0, 0, 0, 0, 0)),
+                            LastModifiedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 45, 38, 28, DateTimeKind.Unspecified).AddTicks(5391), new TimeSpan(0, 0, 0, 0, 0)),
                             Name = "IMMOSYNCPRO",
                             Phone = "0605934495",
                             Rc = "41414111",
@@ -438,11 +441,6 @@ namespace ImmoGest.Infrastructure.Migrations
 
                     b.Property<Guid?>("LeaseeId")
                         .HasColumnType("char(36)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("varchar(200)");
 
                     b.Property<string>("SearchTerms")
                         .HasColumnType("longtext");
@@ -782,13 +780,13 @@ namespace ImmoGest.Infrastructure.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("80d2d50f-e6df-4a72-bf65-5dca1fe41bce"),
-                            CreatedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 54, 11, 137, DateTimeKind.Unspecified).AddTicks(9921), new TimeSpan(0, 0, 0, 0, 0)),
+                            Id = new Guid("10df1ea7-c9bf-443e-887f-d053d27cb310"),
+                            CreatedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 45, 38, 38, DateTimeKind.Unspecified).AddTicks(8952), new TimeSpan(0, 0, 0, 0, 0)),
                             Icon = "heroicons_outline:home",
                             IsActive = true,
                             IsDeleted = false,
                             ItemId = "dashboard",
-                            LastModifiedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 54, 11, 137, DateTimeKind.Unspecified).AddTicks(9922), new TimeSpan(0, 0, 0, 0, 0)),
+                            LastModifiedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 45, 38, 38, DateTimeKind.Unspecified).AddTicks(8953), new TimeSpan(0, 0, 0, 0, 0)),
                             Link = "/dashboard",
                             Order = 1,
                             Title = "Dashboard",
@@ -798,13 +796,13 @@ namespace ImmoGest.Infrastructure.Migrations
                         },
                         new
                         {
-                            Id = new Guid("faa50496-73d5-4fd9-a641-d8bea23ed2f2"),
-                            CreatedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 54, 11, 137, DateTimeKind.Unspecified).AddTicks(9931), new TimeSpan(0, 0, 0, 0, 0)),
+                            Id = new Guid("5273a02a-86a3-4696-a02c-187f87e7d241"),
+                            CreatedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 45, 38, 38, DateTimeKind.Unspecified).AddTicks(8959), new TimeSpan(0, 0, 0, 0, 0)),
                             Icon = "heroicons_outline:user-group",
                             IsActive = true,
                             IsDeleted = false,
                             ItemId = "contacts",
-                            LastModifiedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 54, 11, 137, DateTimeKind.Unspecified).AddTicks(9931), new TimeSpan(0, 0, 0, 0, 0)),
+                            LastModifiedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 45, 38, 38, DateTimeKind.Unspecified).AddTicks(8960), new TimeSpan(0, 0, 0, 0, 0)),
                             Order = 2,
                             Title = "Contacts",
                             TitleEn = "Contacts",
@@ -813,16 +811,16 @@ namespace ImmoGest.Infrastructure.Migrations
                         },
                         new
                         {
-                            Id = new Guid("04d7de0e-1e63-4a86-8d61-76f512a7c116"),
-                            CreatedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 54, 11, 137, DateTimeKind.Unspecified).AddTicks(9933), new TimeSpan(0, 0, 0, 0, 0)),
+                            Id = new Guid("fa084a6d-54d9-44d2-bdb2-6b7982fb9f41"),
+                            CreatedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 45, 38, 38, DateTimeKind.Unspecified).AddTicks(8961), new TimeSpan(0, 0, 0, 0, 0)),
                             Icon = "heroicons_outline:user",
                             IsActive = true,
                             IsDeleted = false,
                             ItemId = "tenants",
-                            LastModifiedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 54, 11, 137, DateTimeKind.Unspecified).AddTicks(9933), new TimeSpan(0, 0, 0, 0, 0)),
+                            LastModifiedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 45, 38, 38, DateTimeKind.Unspecified).AddTicks(8962), new TimeSpan(0, 0, 0, 0, 0)),
                             Link = "/contacts/tenants",
                             Order = 1,
-                            ParentId = new Guid("faa50496-73d5-4fd9-a641-d8bea23ed2f2"),
+                            ParentId = new Guid("5273a02a-86a3-4696-a02c-187f87e7d241"),
                             Title = "Tenants",
                             TitleEn = "Tenants",
                             TitleFr = "Locataires",
@@ -830,16 +828,16 @@ namespace ImmoGest.Infrastructure.Migrations
                         },
                         new
                         {
-                            Id = new Guid("8b050a34-9f2b-4c9d-a254-faf57707ea2e"),
-                            CreatedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 54, 11, 137, DateTimeKind.Unspecified).AddTicks(9937), new TimeSpan(0, 0, 0, 0, 0)),
+                            Id = new Guid("163bd33f-0ee3-485c-a5c1-08930f4d1f37"),
+                            CreatedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 45, 38, 38, DateTimeKind.Unspecified).AddTicks(8966), new TimeSpan(0, 0, 0, 0, 0)),
                             Icon = "heroicons_outline:user-circle",
                             IsActive = true,
                             IsDeleted = false,
                             ItemId = "owners",
-                            LastModifiedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 54, 11, 137, DateTimeKind.Unspecified).AddTicks(9938), new TimeSpan(0, 0, 0, 0, 0)),
+                            LastModifiedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 45, 38, 38, DateTimeKind.Unspecified).AddTicks(8966), new TimeSpan(0, 0, 0, 0, 0)),
                             Link = "/contacts/owners",
                             Order = 2,
-                            ParentId = new Guid("faa50496-73d5-4fd9-a641-d8bea23ed2f2"),
+                            ParentId = new Guid("5273a02a-86a3-4696-a02c-187f87e7d241"),
                             Title = "Owners",
                             TitleEn = "Owners",
                             TitleFr = "Propriétaires",
@@ -847,16 +845,16 @@ namespace ImmoGest.Infrastructure.Migrations
                         },
                         new
                         {
-                            Id = new Guid("5203d945-76fa-4589-a6b8-1e8888f2de17"),
-                            CreatedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 54, 11, 137, DateTimeKind.Unspecified).AddTicks(9940), new TimeSpan(0, 0, 0, 0, 0)),
+                            Id = new Guid("4d10d43c-f0a8-419d-8abb-08f398a800fe"),
+                            CreatedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 45, 38, 38, DateTimeKind.Unspecified).AddTicks(8968), new TimeSpan(0, 0, 0, 0, 0)),
                             Icon = "heroicons_outline:wrench-screwdriver",
                             IsActive = true,
                             IsDeleted = false,
                             ItemId = "service-pros",
-                            LastModifiedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 54, 11, 137, DateTimeKind.Unspecified).AddTicks(9941), new TimeSpan(0, 0, 0, 0, 0)),
+                            LastModifiedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 45, 38, 38, DateTimeKind.Unspecified).AddTicks(8969), new TimeSpan(0, 0, 0, 0, 0)),
                             Link = "/contacts/service-pros",
                             Order = 3,
-                            ParentId = new Guid("faa50496-73d5-4fd9-a641-d8bea23ed2f2"),
+                            ParentId = new Guid("5273a02a-86a3-4696-a02c-187f87e7d241"),
                             Title = "Service Providers",
                             TitleEn = "Service Providers",
                             TitleFr = "Fournisseurs de services",
@@ -864,13 +862,13 @@ namespace ImmoGest.Infrastructure.Migrations
                         },
                         new
                         {
-                            Id = new Guid("ce2ac84c-cb58-453b-9506-3426702fe75f"),
-                            CreatedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 54, 11, 137, DateTimeKind.Unspecified).AddTicks(9943), new TimeSpan(0, 0, 0, 0, 0)),
+                            Id = new Guid("0e50a5c6-3327-470c-a33d-86bb2898f23b"),
+                            CreatedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 45, 38, 38, DateTimeKind.Unspecified).AddTicks(8971), new TimeSpan(0, 0, 0, 0, 0)),
                             Icon = "heroicons_outline:building-office-2",
                             IsActive = true,
                             IsDeleted = false,
                             ItemId = "properties",
-                            LastModifiedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 54, 11, 137, DateTimeKind.Unspecified).AddTicks(9944), new TimeSpan(0, 0, 0, 0, 0)),
+                            LastModifiedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 45, 38, 38, DateTimeKind.Unspecified).AddTicks(8971), new TimeSpan(0, 0, 0, 0, 0)),
                             Link = "/property",
                             Order = 3,
                             Title = "Properties",
@@ -880,13 +878,13 @@ namespace ImmoGest.Infrastructure.Migrations
                         },
                         new
                         {
-                            Id = new Guid("65c36bc8-249b-4ada-9df6-e536323842fd"),
-                            CreatedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 54, 11, 137, DateTimeKind.Unspecified).AddTicks(9946), new TimeSpan(0, 0, 0, 0, 0)),
+                            Id = new Guid("28202a8c-1f22-4f02-9ec2-eaa7261e8c20"),
+                            CreatedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 45, 38, 38, DateTimeKind.Unspecified).AddTicks(8973), new TimeSpan(0, 0, 0, 0, 0)),
                             Icon = "heroicons_outline:building-office",
                             IsActive = true,
                             IsDeleted = false,
                             ItemId = "buildings",
-                            LastModifiedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 54, 11, 137, DateTimeKind.Unspecified).AddTicks(9946), new TimeSpan(0, 0, 0, 0, 0)),
+                            LastModifiedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 45, 38, 38, DateTimeKind.Unspecified).AddTicks(8973), new TimeSpan(0, 0, 0, 0, 0)),
                             Link = "/building",
                             Order = 4,
                             Title = "Buildings",
@@ -896,13 +894,13 @@ namespace ImmoGest.Infrastructure.Migrations
                         },
                         new
                         {
-                            Id = new Guid("fee49e47-4bc8-429a-a0e5-d7454c67d3b1"),
-                            CreatedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 54, 11, 137, DateTimeKind.Unspecified).AddTicks(9948), new TimeSpan(0, 0, 0, 0, 0)),
+                            Id = new Guid("4673366a-48d0-47ae-98af-b981da7a5715"),
+                            CreatedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 45, 38, 38, DateTimeKind.Unspecified).AddTicks(8975), new TimeSpan(0, 0, 0, 0, 0)),
                             Icon = "heroicons_outline:key",
                             IsActive = true,
                             IsDeleted = false,
                             ItemId = "keys",
-                            LastModifiedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 54, 11, 137, DateTimeKind.Unspecified).AddTicks(9949), new TimeSpan(0, 0, 0, 0, 0)),
+                            LastModifiedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 45, 38, 38, DateTimeKind.Unspecified).AddTicks(8976), new TimeSpan(0, 0, 0, 0, 0)),
                             Link = "/keys",
                             Order = 5,
                             Title = "Keys",
@@ -912,13 +910,13 @@ namespace ImmoGest.Infrastructure.Migrations
                         },
                         new
                         {
-                            Id = new Guid("086deb43-183f-4506-ab95-73b141bfcb8e"),
-                            CreatedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 54, 11, 137, DateTimeKind.Unspecified).AddTicks(9951), new TimeSpan(0, 0, 0, 0, 0)),
+                            Id = new Guid("9bc713c3-995d-488c-b5a5-34bbbbe07f37"),
+                            CreatedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 45, 38, 38, DateTimeKind.Unspecified).AddTicks(8993), new TimeSpan(0, 0, 0, 0, 0)),
                             Icon = "heroicons_outline:document-text",
                             IsActive = true,
                             IsDeleted = false,
                             ItemId = "leasing",
-                            LastModifiedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 54, 11, 137, DateTimeKind.Unspecified).AddTicks(9951), new TimeSpan(0, 0, 0, 0, 0)),
+                            LastModifiedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 45, 38, 38, DateTimeKind.Unspecified).AddTicks(8993), new TimeSpan(0, 0, 0, 0, 0)),
                             Link = "/leasing",
                             Order = 6,
                             Title = "Leasing",
@@ -928,13 +926,13 @@ namespace ImmoGest.Infrastructure.Migrations
                         },
                         new
                         {
-                            Id = new Guid("9bb296b6-bd98-486c-a142-06f2775300ea"),
-                            CreatedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 54, 11, 137, DateTimeKind.Unspecified).AddTicks(9956), new TimeSpan(0, 0, 0, 0, 0)),
+                            Id = new Guid("34c20e4e-19cc-4872-96cd-9a89a639f39b"),
+                            CreatedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 45, 38, 38, DateTimeKind.Unspecified).AddTicks(8995), new TimeSpan(0, 0, 0, 0, 0)),
                             Icon = "heroicons_outline:calendar",
                             IsActive = true,
                             IsDeleted = false,
                             ItemId = "reservations",
-                            LastModifiedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 54, 11, 137, DateTimeKind.Unspecified).AddTicks(9956), new TimeSpan(0, 0, 0, 0, 0)),
+                            LastModifiedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 45, 38, 38, DateTimeKind.Unspecified).AddTicks(8996), new TimeSpan(0, 0, 0, 0, 0)),
                             Link = "/reservation",
                             Order = 7,
                             Title = "Reservations",
@@ -944,13 +942,13 @@ namespace ImmoGest.Infrastructure.Migrations
                         },
                         new
                         {
-                            Id = new Guid("7b2d0836-770c-4924-b3c0-cea8b3038505"),
-                            CreatedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 54, 11, 137, DateTimeKind.Unspecified).AddTicks(9965), new TimeSpan(0, 0, 0, 0, 0)),
+                            Id = new Guid("4c6f93da-c62e-4dbd-b57d-e12f56a41240"),
+                            CreatedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 45, 38, 38, DateTimeKind.Unspecified).AddTicks(9000), new TimeSpan(0, 0, 0, 0, 0)),
                             Icon = "heroicons_outline:folder",
                             IsActive = true,
                             IsDeleted = false,
                             ItemId = "file-manager",
-                            LastModifiedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 54, 11, 137, DateTimeKind.Unspecified).AddTicks(9965), new TimeSpan(0, 0, 0, 0, 0)),
+                            LastModifiedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 45, 38, 38, DateTimeKind.Unspecified).AddTicks(9000), new TimeSpan(0, 0, 0, 0, 0)),
                             Link = "/gestionnaire-fichiers",
                             Order = 8,
                             Title = "File Manager",
@@ -960,13 +958,13 @@ namespace ImmoGest.Infrastructure.Migrations
                         },
                         new
                         {
-                            Id = new Guid("16c906fb-7928-484b-917c-d8135538f166"),
-                            CreatedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 54, 11, 137, DateTimeKind.Unspecified).AddTicks(9968), new TimeSpan(0, 0, 0, 0, 0)),
+                            Id = new Guid("e29988e7-6625-40e4-9ab6-d37e1d405cc0"),
+                            CreatedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 45, 38, 38, DateTimeKind.Unspecified).AddTicks(9002), new TimeSpan(0, 0, 0, 0, 0)),
                             Icon = "heroicons_outline:cog-6-tooth",
                             IsActive = true,
                             IsDeleted = false,
                             ItemId = "settings",
-                            LastModifiedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 54, 11, 137, DateTimeKind.Unspecified).AddTicks(9968), new TimeSpan(0, 0, 0, 0, 0)),
+                            LastModifiedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 45, 38, 38, DateTimeKind.Unspecified).AddTicks(9003), new TimeSpan(0, 0, 0, 0, 0)),
                             Link = "/settings",
                             Order = 9,
                             Title = "Settings",
@@ -1242,15 +1240,15 @@ namespace ImmoGest.Infrastructure.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("eb5c9320-2be9-4e95-968c-6d2c906a0f22"),
+                            Id = new Guid("0f4a0360-ead1-4eb2-8d92-3641d6ac739c"),
                             AmenitiesJson = "[\"Parking\",\"Laundry\",\"Air conditioning\",\"Heating\",\"Swimming pool\",\"Gym\",\"Security\",\"Elevator\",\"Balcony\",\"Garden\",\"Garage\",\"Pet friendly\"]",
                             CategoriesJson = "[{\"Key\":\"location\",\"Reference\":\"AL\"},{\"Key\":\"vente\",\"Reference\":\"AV\"},{\"Key\":\"vacance\",\"Reference\":\"VC\"}]",
                             CompanyId = "687d9fd5-2752-4a96-93d5-0f33a49913c1",
-                            CreatedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 54, 11, 138, DateTimeKind.Unspecified).AddTicks(2369), new TimeSpan(0, 0, 0, 0, 0)),
+                            CreatedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 45, 38, 39, DateTimeKind.Unspecified).AddTicks(1315), new TimeSpan(0, 0, 0, 0, 0)),
                             DefaultCity = "Tanger",
                             FeaturesJson = "[\"Alarm\",\"Furnished\",\"Renovated\",\"Hardwood floors\",\"Fireplace\",\"Fresh paint\",\"Dishwasher\",\"Walk-in closets\",\"Balcony, Deck, Patio\",\"Internet\",\"Fenced yard\",\"Tile\",\"Carpet\",\"Storage\",\"Unfurnished\"]",
                             IsDeleted = false,
-                            LastModifiedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 54, 11, 138, DateTimeKind.Unspecified).AddTicks(1788), new TimeSpan(0, 0, 0, 0, 0)),
+                            LastModifiedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 45, 38, 39, DateTimeKind.Unspecified).AddTicks(737), new TimeSpan(0, 0, 0, 0, 0)),
                             PropertyTypesJson = "[\"Residential\",\"Commercial\",\"Industrial\",\"Mixed Use\",\"Vacation Rental\",\"Investment Property\",\"Luxury\",\"Affordable Housing\",\"Student Housing\",\"Senior Living\",\"Retail Space\",\"Office Space\",\"Warehouse\",\"Land\"]"
                         });
                 });
@@ -1472,22 +1470,22 @@ namespace ImmoGest.Infrastructure.Migrations
                         {
                             Id = new Guid("687d9fd5-2752-4a96-93d5-0f33a49913c1"),
                             CompanyId = new Guid("687d9fd5-2752-4a96-93d5-0f33a49913c1"),
-                            CreatedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 54, 10, 911, DateTimeKind.Unspecified).AddTicks(6804), new TimeSpan(0, 0, 0, 0, 0)),
+                            CreatedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 45, 37, 808, DateTimeKind.Unspecified).AddTicks(3593), new TimeSpan(0, 0, 0, 0, 0)),
                             Email = "admin@admin.com",
                             IsDeleted = false,
-                            LastModifiedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 54, 10, 911, DateTimeKind.Unspecified).AddTicks(6805), new TimeSpan(0, 0, 0, 0, 0)),
-                            Password = "$2a$11$lNaUT.L5/JU0Yp041qutpOVksIAVaSb6Bpl5sYXczzlt/nlIOjJ.y",
+                            LastModifiedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 45, 37, 808, DateTimeKind.Unspecified).AddTicks(3594), new TimeSpan(0, 0, 0, 0, 0)),
+                            Password = "$2a$11$Xd6laBTXEA99Q.CvHEXy/uOTZOILeGhBedT8vpwqsZrBQWKP0cVaW",
                             Role = "Admin"
                         },
                         new
                         {
                             Id = new Guid("687d9fd5-2752-4a96-93d5-0f33a49913c2"),
                             CompanyId = new Guid("687d9fd5-2752-4a96-93d5-0f33a49913c1"),
-                            CreatedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 54, 11, 15, DateTimeKind.Unspecified).AddTicks(5589), new TimeSpan(0, 0, 0, 0, 0)),
+                            CreatedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 45, 37, 918, DateTimeKind.Unspecified).AddTicks(6701), new TimeSpan(0, 0, 0, 0, 0)),
                             Email = "user@boilerplate.com",
                             IsDeleted = false,
-                            LastModifiedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 54, 11, 15, DateTimeKind.Unspecified).AddTicks(5598), new TimeSpan(0, 0, 0, 0, 0)),
-                            Password = "$2a$11$Rn2Wz9UE6EWetB5Af0g3uORDnTx5mBebTOXfNVSpcllJFYnhXFUGm",
+                            LastModifiedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 45, 37, 918, DateTimeKind.Unspecified).AddTicks(6704), new TimeSpan(0, 0, 0, 0, 0)),
+                            Password = "$2a$11$l2gc.Uw7qPFW7kcmQm3sXuYdBgZA8DkPQpykKKyo3bSfWklYL3fQm",
                             Role = "User"
                         });
                 });
@@ -1525,16 +1523,16 @@ namespace ImmoGest.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("787d9fd5-2752-4a96-93d5-0f33a49913c1"),
-                            CreatedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 54, 11, 139, DateTimeKind.Unspecified).AddTicks(5627), new TimeSpan(0, 0, 0, 0, 0)),
-                            LastModifiedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 54, 11, 139, DateTimeKind.Unspecified).AddTicks(5620), new TimeSpan(0, 0, 0, 0, 0)),
+                            CreatedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 45, 38, 40, DateTimeKind.Unspecified).AddTicks(5418), new TimeSpan(0, 0, 0, 0, 0)),
+                            LastModifiedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 45, 38, 40, DateTimeKind.Unspecified).AddTicks(5410), new TimeSpan(0, 0, 0, 0, 0)),
                             PermissionsJson = "{\n                        \"dashboard\": {\"view\": true, \"edit\": true, \"delete\": true},\n                        \"properties\": {\"view\": true, \"edit\": true, \"delete\": true},\n                        \"buildings\": {\"view\": true, \"edit\": true, \"delete\": true},\n                        \"leasing\": {\"view\": true, \"edit\": true, \"delete\": true},\n                        \"reservations\": {\"view\": true, \"edit\": true, \"delete\": true},\n                        \"maintenance\": {\"view\": true, \"edit\": true, \"delete\": true},\n                        \"contacts\": {\"view\": true, \"edit\": true, \"delete\": true},\n                        \"keys\": {\"view\": true, \"edit\": true, \"delete\": true},\n                        \"banks\": {\"view\": true, \"edit\": true, \"delete\": true},\n                        \"payments\": {\"view\": true, \"edit\": true, \"delete\": true},\n                        \"file-manager\": {\"view\": true, \"edit\": true, \"delete\": true},\n                        \"reports\": {\"view\": true, \"edit\": true, \"delete\": true},\n                        \"settings\": {\"view\": true, \"edit\": true, \"delete\": true}\n                    }",
                             UserId = new Guid("687d9fd5-2752-4a96-93d5-0f33a49913c1")
                         },
                         new
                         {
                             Id = new Guid("787d9fd5-2752-4a96-93d5-0f33a49913c2"),
-                            CreatedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 54, 11, 139, DateTimeKind.Unspecified).AddTicks(5632), new TimeSpan(0, 0, 0, 0, 0)),
-                            LastModifiedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 54, 11, 139, DateTimeKind.Unspecified).AddTicks(5629), new TimeSpan(0, 0, 0, 0, 0)),
+                            CreatedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 45, 38, 40, DateTimeKind.Unspecified).AddTicks(5422), new TimeSpan(0, 0, 0, 0, 0)),
+                            LastModifiedOn = new DateTimeOffset(new DateTime(2025, 11, 22, 1, 45, 38, 40, DateTimeKind.Unspecified).AddTicks(5419), new TimeSpan(0, 0, 0, 0, 0)),
                             PermissionsJson = "{\n                        \"dashboard\": {\"view\": true, \"edit\": false, \"delete\": false},\n                        \"properties\": {\"view\": true, \"edit\": false, \"delete\": false},\n                        \"buildings\": {\"view\": true, \"edit\": false, \"delete\": false},\n                        \"leasing\": {\"view\": true, \"edit\": false, \"delete\": false},\n                        \"reservations\": {\"view\": true, \"edit\": false, \"delete\": false},\n                        \"maintenance\": {\"view\": true, \"edit\": false, \"delete\": false},\n                        \"contacts\": {\"view\": true, \"edit\": false, \"delete\": false},\n                        \"keys\": {\"view\": false, \"edit\": false, \"delete\": false},\n                        \"banks\": {\"view\": false, \"edit\": false, \"delete\": false},\n                        \"payments\": {\"view\": true, \"edit\": false, \"delete\": false},\n                        \"file-manager\": {\"view\": true, \"edit\": false, \"delete\": false},\n                        \"reports\": {\"view\": false, \"edit\": false, \"delete\": false},\n                        \"settings\": {\"view\": false, \"edit\": false, \"delete\": false}\n                    }",
                             UserId = new Guid("687d9fd5-2752-4a96-93d5-0f33a49913c2")
                         });

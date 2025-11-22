@@ -59,6 +59,7 @@ namespace ImmoGest.Api
             services.AddScoped<IUserPermissionsRepository, UserPermissionsRepository>();
             services.AddScoped<ITaskRepository, TaskRepository>();
             services.AddScoped<ITransactionRepository, TransactionRepository>();
+            services.AddScoped<IDocumentRepository, DocumentRepository>();
 
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IHeroService, HeroService>();
@@ -76,6 +77,7 @@ namespace ImmoGest.Api
             services.AddScoped<IUserPermissionsService, UserPermissionsService>();
             services.AddScoped<ITaskService, TaskService>();
             services.AddScoped<ITransactionService, TransactionService>();
+            services.AddScoped<IDocumentService, DocumentService>();
 
             services.AddScoped<ISession, Session>();
 

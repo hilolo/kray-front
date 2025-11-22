@@ -30,6 +30,7 @@ namespace ImmoGest.Infrastructure.Context
         public DbSet<UserPermissions> UserPermissions { get; set; }
         public DbSet<TaskItem> Tasks { get; set; }
         public DbSet<Transaction> Transactions { get; set; }
+        public DbSet<Document> Documents { get; set; }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
@@ -63,6 +64,7 @@ namespace ImmoGest.Infrastructure.Context
             modelBuilder.ApplyConfiguration(new UserPermissionsConfiguration());
             modelBuilder.ApplyConfiguration(new TaskConfiguration());
             modelBuilder.ApplyConfiguration(new TransactionConfiguration());
+            modelBuilder.ApplyConfiguration(new DocumentConfiguration());
         }
     }
 }
