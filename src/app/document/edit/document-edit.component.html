@@ -1,8 +1,7 @@
 <z-page [zTitle]="pageTitle()">
   <div class="flex flex-col min-h-0 h-full overflow-hidden">
     <!-- Top Section with Save Button -->
-    <div class="flex items-center justify-end gap-4 pb-6 flex-shrink-0">
-      <!-- Save Button -->
+    <div class="flex items-center justify-end gap-4 pb-4 flex-shrink-0">
       <z-button [zType]="isSaving() || !isFormValid() ? 'ghost' : 'default'" [disabled]="isSaving()" (click)="!isSaving() && onSave()">
         @if (isSaving()) {
           <span class="flex items-center gap-2">
@@ -21,7 +20,7 @@
     </div>
 
     <!-- Main Content -->
-    <div class="flex-1 min-h-0 overflow-y-auto">
+    <div class="flex-1 min-h-0 overflow-hidden overflow-x-hidden">
       @if (isLoading()) {
         <div class="flex items-center justify-center h-full">
           <div class="flex flex-col items-center gap-2">
@@ -30,131 +29,132 @@
           </div>
         </div>
       } @else {
-        <!-- Resizable Two Column Layout -->
-        <z-resizable zLayout="horizontal" class="min-h-[600px]">
-          <!-- Left Half - Text Editor -->
-          <z-resizable-panel [zDefaultSize]="40" [zMin]="20" [zMax]="80" class="flex flex-col min-w-0 overflow-hidden pr-3">
-            <!-- Toggle Options -->
-            <div class="mb-4 flex items-center gap-6 flex-shrink-0">
-              <z-switch 
-                [ngModel]="displayLogo()" 
-                (ngModelChange)="onDisplayLogoChange($event)"
-              >
-                Display Logo in Page
-              </z-switch>
-              
-              <z-switch 
-                [ngModel]="displayCache()" 
-                (ngModelChange)="onDisplayCacheChange($event)"
-              >
-                Display Cache in Page
-              </z-switch>
-            </div>
-            
-            <!-- Document Field Buttons - On top of document content -->
-            <div class="mb-3 flex items-center gap-2 flex-shrink-0 flex-wrap">
-              @for (field of documentFields(); track field.key) {
-                <z-button 
-                  zType="outline" 
-                  zSize="sm" 
-                  (click)="insertDataKey(field.key)"
-                  class="flex items-center gap-1"
+        <div class="flex flex-col h-full min-h-0 overflow-hidden">
+          <!-- Two Column Layout -->
+          <div class="flex gap-4 flex-1 min-h-0 overflow-hidden overflow-x-hidden w-full max-w-full">
+            <!-- Left Column - PDF Preview (40%) -->
+            <div class="w-[calc(40%-0.5rem)] flex-shrink-0 flex flex-col overflow-hidden min-w-0">
+              <!-- Toggle Options -->
+              <div class="mb-4 flex items-center gap-6 flex-shrink-0">
+                <z-switch 
+                  [ngModel]="displayLogo()" 
+                  (ngModelChange)="onDisplayLogoChange($event)"
                 >
-                  <z-icon zType="code" zSize="sm" />
-                  {{ field.label }}
-                </z-button>
-              }
-            </div>
-            <div class="mb-2 flex items-center justify-between flex-shrink-0">
-              <div>
-                <h3 class="text-sm font-medium cursor-pointer hover:text-primary transition-colors" (click)="onDocumentContentTitleClick()">Document Content</h3>
-                <p class="text-xs text-muted-foreground">Edit your document content</p>
+                  Display Logo in Page
+                </z-switch>
+                
+                <z-switch 
+                  [ngModel]="displayCache()" 
+                  (ngModelChange)="onDisplayCacheChange($event)"
+                >
+                  Display Cache in Page
+                </z-switch>
               </div>
-              <div class="flex items-center gap-3">
-                <span class="text-xs text-muted-foreground">Text Size:</span>
-                <z-segmented
-                  [zOptions]="[
-                    { value: 'normal', label: 'Normal' },
-                    { value: 'large', label: 'Large' },
-                    { value: 'extralarge', label: 'Extra Large' }
-                  ]"
-                  [zDefaultValue]="textSize()"
-                  (zChange)="onTextSizeChange($event)"
-                  zSize="sm"
+
+              <!-- PDF Preview -->
+              <div class="flex-1 min-h-0 flex flex-col overflow-hidden">
+                <div class="mb-2 flex items-center justify-between flex-shrink-0">
+                  <div>
+                    <h3 class="text-sm font-medium">Document Details</h3>
+                    <p class="text-xs text-muted-foreground">PDF Preview</p>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <z-button 
+                      zType="ghost" 
+                      zSize="sm" 
+                      [disabled]="!pdfDataUrl()" 
+                      (click)="openPdfViewer()"
+                      class="flex items-center gap-1"
+                    >
+                      <z-icon zType="eye" zSize="sm" />
+                      View
+                    </z-button>
+                  </div>
+                </div>
+                <div class="flex-1 min-h-0 border rounded-lg bg-muted/50 overflow-hidden">
+                  @if (isGeneratingPdf()) {
+                    <div class="flex items-center justify-center h-full">
+                      <div class="flex flex-col items-center gap-2">
+                        <z-icon zType="loader-circle" zSize="lg" class="animate-spin text-primary" />
+                        <p class="text-sm text-muted-foreground">Generating PDF...</p>
+                      </div>
+                    </div>
+                  } @else if (pdfDataUrl()) {
+                    <!-- PDF Preview with iframe (avoids Vite dynamic import warnings) -->
+                    <div class="h-full w-full overflow-auto bg-white">
+                      <iframe
+                        [src]="pdfDataUrlWithZoom() | safe: 'resourceUrl'"
+                        class="w-full h-full border-0"
+                        style="min-height: 600px; width: 100%; height: 100%;"
+                        type="application/pdf"
+                        allow="fullscreen"
+                      ></iframe>
+                    </div>
+                  } @else {
+                    <div class="flex items-center justify-center h-full min-h-[200px]">
+                      <div class="text-center text-muted-foreground">
+                        <z-icon zType="file-text" zSize="lg" class="mx-auto mb-2 opacity-50" />
+                        <p>PDF preview will appear here</p>
+                        <p class="text-xs mt-2">Start typing in the editor to generate preview</p>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Column - Document Content Editor (60%) -->
+            <div class="w-[calc(60%-0.5rem)] flex-shrink-0 min-h-0 flex flex-col overflow-hidden min-w-0">
+              <!-- Document Field Buttons - On top of document content -->
+              <div class="mb-3 flex items-center gap-2 flex-shrink-0 flex-wrap">
+                @for (field of documentFields(); track field.key) {
+                  <z-button 
+                    zType="outline" 
+                    zSize="sm" 
+                    (click)="insertDataKey(field.key)"
+                    class="flex items-center gap-1"
+                  >
+                    <z-icon zType="code" zSize="sm" />
+                    {{ field.label }}
+                  </z-button>
+                }
+              </div>
+              <div class="mb-2 flex items-center justify-between flex-shrink-0 min-w-0 gap-2">
+                <div class="min-w-0">
+                  <h3 class="text-sm font-medium cursor-pointer hover:text-primary transition-colors truncate" (click)="onDocumentContentTitleClick()">Document Content</h3>
+                  <p class="text-xs text-muted-foreground truncate">Edit your document content</p>
+                </div>
+                <div class="flex items-center gap-3 flex-shrink-0">
+                  <span class="text-xs text-muted-foreground whitespace-nowrap">Text Size:</span>
+                  <z-segmented
+                    [zOptions]="[
+                      { value: 'normal', label: 'Normal' },
+                      { value: 'large', label: 'Large' },
+                      { value: 'extralarge', label: 'Extra Large' }
+                    ]"
+                    [zDefaultValue]="textSize()"
+                    (zChange)="onTextSizeChange($event)"
+                    zSize="sm"
+                  />
+                </div>
+              </div>
+              <div class="flex-1 min-h-0 border rounded-lg overflow-hidden" [style.font-size]="(textSizeMultiplier() * 100) + '%'">
+                <z-text-editor
+                  #textEditor
+                  [value]="editorContent()"
+                  [zSize]="'lg'"
+                  [protectedCodeBlocks]="protectedCodeBlocks()"
+                  placeholder="Start typing your document content here..."
+                  (valueChange)="onEditorChange($event)"
+                  (htmlChange)="onEditorChange($event)"
+                  class="h-full"
                 />
               </div>
             </div>
-            <div class="flex-1 min-h-0 border rounded-lg overflow-hidden" [style.font-size]="(textSizeMultiplier() * 100) + '%'">
-              <z-text-editor
-                #textEditor
-                [value]="editorContent()"
-                [zSize]="'lg'"
-                [protectedCodeBlocks]="protectedCodeBlocks()"
-                placeholder="Start typing your document content here..."
-                (valueChange)="onEditorChange($event)"
-                (htmlChange)="onEditorChange($event)"
-                class="h-full"
-              />
-            </div>
-          </z-resizable-panel>
+          </div>
 
-          <!-- Resizer Handle -->
-          <z-resizable-handle [zHandleIndex]="0" [zWithHandle]="true"></z-resizable-handle>
-
-          <!-- Right Half - PDF Preview -->
-          <z-resizable-panel [zDefaultSize]="60" [zMin]="20" [zMax]="80" class="flex flex-col min-h-0 min-w-0 overflow-hidden pl-3">
-            <div class="mb-2 flex items-center justify-between flex-shrink-0">
-              <div>
-                <h3 class="text-sm font-medium">Document Details</h3>
-                <p class="text-xs text-muted-foreground">PDF Preview</p>
-              </div>
-              <div class="flex items-center gap-2">
-                <z-button 
-                  zType="ghost" 
-                  zSize="sm" 
-                  [disabled]="!pdfDataUrl()" 
-                  (click)="openPdfViewer()"
-                  class="flex items-center gap-1"
-                >
-                  <z-icon zType="eye" zSize="sm" />
-                  View
-                </z-button>
-              </div>
-            </div>
-            <div class="flex-1 min-h-0 border rounded-lg bg-muted/50 overflow-hidden">
-              @if (isGeneratingPdf()) {
-                <div class="flex items-center justify-center h-full">
-                  <div class="flex flex-col items-center gap-2">
-                    <z-icon zType="loader-circle" zSize="lg" class="animate-spin text-primary" />
-                    <p class="text-sm text-muted-foreground">Generating PDF...</p>
-                  </div>
-                </div>
-              } @else if (pdfDataUrl()) {
-                <!-- PDF Preview with iframe (avoids Vite dynamic import warnings) -->
-                <div class="h-full w-full overflow-auto bg-white">
-                  <iframe
-                    [src]="pdfDataUrlWithZoom() | safe: 'resourceUrl'"
-                    class="w-full h-full border-0"
-                    style="min-height: 600px; width: 100%; height: 100%;"
-                    type="application/pdf"
-                    allow="fullscreen"
-                  ></iframe>
-                </div>
-              } @else {
-                <div class="flex items-center justify-center h-full min-h-[200px]">
-                  <div class="text-center text-muted-foreground">
-                    <z-icon zType="file-text" zSize="lg" class="mx-auto mb-2 opacity-50" />
-                    <p>PDF preview will appear here</p>
-                    <p class="text-xs mt-2">Start typing in the editor to generate preview</p>
-                  </div>
-                </div>
-              }
-            </div>
-          </z-resizable-panel>
-        </z-resizable>
-
-        <!-- Debug Section (Hidden by default, shown after 5 clicks on "Document Content" title) -->
-        @if (showDebug()) {
+          <!-- Debug Section (Hidden by default, shown after 5 clicks on "Document Content" title) -->
+          @if (showDebug()) {
           <div class="mt-6 border-t pt-6">
             <div class="flex items-center justify-between mb-4">
               <h3 class="text-lg font-semibold">Debug Information</h3>
@@ -252,7 +252,8 @@
               </div>
             </div>
           </div>
-        }
+          }
+        </div>
       }
     </div>
   </div>
