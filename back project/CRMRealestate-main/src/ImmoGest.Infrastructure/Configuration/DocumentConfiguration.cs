@@ -37,6 +37,13 @@ namespace ImmoGest.Infrastructure.Configuration
             builder.Property(d => d.HtmlBody)
                 .HasColumnType("text"); // Use text type for large strings
 
+            builder.Property(d => d.IsLocked)
+                .IsRequired()
+                .HasDefaultValue(false);
+
+            builder.Property(d => d.Pdfmake)
+                .HasColumnType("text"); // Use text type for large strings
+
             // Configure Example with automatic JSON serialization/deserialization
             var exampleConverter = new ValueConverter<Dictionary<string, string>, string>(
                 v => v == null ? null : JsonSerializer.Serialize(v, (JsonSerializerOptions)null),

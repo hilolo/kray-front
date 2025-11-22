@@ -27,6 +27,11 @@ namespace ImmoGest.Domain.Entities
 
         public string HtmlBody { get; set; }
 
+        [Required]
+        public bool IsLocked { get; set; }
+
+        public string Pdfmake { get; set; }
+
         // Example data stored as JSON (nullable)
         // Format: Dictionary<string, string> where key is field key and value is the actual value
         public Dictionary<string, string> Example { get; set; }

@@ -13,6 +13,8 @@ import { ZardDropdownMenuComponent } from '@shared/components/dropdown/dropdown.
 import { ZardDropdownMenuItemComponent } from '@shared/components/dropdown/dropdown-item.component';
 import { ZardTabGroupComponent, ZardTabComponent } from '@shared/components/tabs/tabs.component';
 import { ZardCardComponent } from '@shared/components/card/card.component';
+import { ZardSelectComponent } from '@shared/components/select/select.component';
+import { ZardSelectItemComponent } from '@shared/components/select/select-item.component';
 import { CommonModule } from '@angular/common';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { DocumentService, Document, DocumentType } from '@shared/services/document.service';
@@ -36,6 +38,8 @@ import { ToastService } from '@shared/services/toast.service';
     ZardTabGroupComponent,
     ZardTabComponent,
     ZardCardComponent,
+    ZardSelectComponent,
+    ZardSelectItemComponent,
     TranslateModule,
     FormsModule,
   ],
@@ -67,6 +71,7 @@ export class DocumentListComponent implements OnInit, OnDestroy {
   // Template data
   readonly templates = signal<Document[]>([]);
   readonly isLoadingTemplates = signal(false);
+  readonly selectedTemplateType = signal<string>(''); // Empty string means "All"
 
   readonly hasData = computed(() => {
     const docs = this.documents();
@@ -78,6 +83,18 @@ export class DocumentListComponent implements OnInit, OnDestroy {
     return tmpls && Array.isArray(tmpls) && tmpls.length > 0;
   });
 
+  readonly filteredTemplates = computed(() => {
+    const allTemplates = this.templates();
+    const selectedType = this.selectedTemplateType();
+    
+    if (!selectedType || selectedType === '') {
+      return allTemplates;
+    }
+    
+    const typeNum = parseInt(selectedType);
+    return allTemplates.filter(template => template.type === typeNum);
+  });
+
   readonly documentTypeOptions = [
     { value: 'lease-agreement', label: 'Lease Agreement', enum: DocumentType.LeaseAgreement },
     { value: 'reservation-agreement', label: 'Reservation Agreement', enum: DocumentType.ReservationAgreement },
@@ -85,6 +102,11 @@ export class DocumentListComponent implements OnInit, OnDestroy {
     { value: 'reservationfull', label: 'Reservation Full', enum: DocumentType.ReservationFull },
     { value: 'reservationpart', label: 'Reservation Part', enum: DocumentType.ReservationPart },
     { value: 'fees', label: 'Fees', enum: DocumentType.Fees },
+  ];
+
+  readonly templateTypeFilterOptions = [
+    { value: '', label: 'All Types' },
+    ...this.documentTypeOptions.map(opt => ({ value: opt.enum.toString(), label: opt.label }))
   ];
 
   readonly columns: DatatableColumn[] = [
@@ -372,6 +394,10 @@ export class DocumentListComponent implements OnInit, OnDestroy {
   onShowExample(template: Document): void {
     // Generate PDF preview for template
     this.onGeneratePdf(template);
+  }
+
+  onTemplateTypeFilterChange(value: string): void {
+    this.selectedTemplateType.set(value);
   }
 }
 

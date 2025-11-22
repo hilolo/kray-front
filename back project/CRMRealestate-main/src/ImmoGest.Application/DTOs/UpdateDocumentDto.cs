@@ -23,6 +23,10 @@ namespace ImmoGest.Application.DTOs
 
         public string HtmlBody { get; set; }
 
+        public bool? IsLocked { get; set; }
+
+        public string Pdfmake { get; set; }
+
         public Dictionary<string, string> Example { get; set; }
 
         public Guid? LeaseeId { get; set; }
