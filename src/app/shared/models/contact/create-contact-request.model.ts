@@ -26,6 +26,5 @@ export interface CreateContactRequest {
   phones?: string[];
   avatar?: string;
   attachments?: AttachmentInput[];
-  companyId: string; // Required
 }
 

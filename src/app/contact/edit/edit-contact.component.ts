@@ -8,7 +8,6 @@ import type { ContactFormData } from '@shared/models/contact/contact-form.model'
 import type { CreateContactRequest, AttachmentInput } from '@shared/models/contact/create-contact-request.model';
 import type { UpdateContactRequest } from '@shared/models/contact/update-contact-request.model';
 import { ContactService } from '@shared/services/contact.service';
-import { UserService } from '@shared/services/user.service';
 import { ZardDialogRef } from '@shared/components/dialog/dialog-ref';
 import { Z_MODAL_DATA } from '@shared/components/dialog/dialog.service';
 import { ZardPageComponent } from '../../page/page.component';
@@ -67,7 +66,6 @@ export class EditContactComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly contactService = inject(ContactService);
-  private readonly userService = inject(UserService);
   readonly dialogRef = inject(ZardDialogRef, { optional: true });
   private readonly dialogData = inject<{ contactType?: ContactType }>(Z_MODAL_DATA, { optional: true });
   private readonly destroy$ = new Subject<void>();
@@ -686,13 +684,6 @@ export class EditContactComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Get company ID from user service
-    const currentUser = this.userService.getCurrentUser();
-    if (!currentUser || !currentUser.companyId) {
-      console.error('User or company ID not found');
-      return;
-    }
-
     // Set loading state
     this.isSaving.set(true);
 
@@ -712,7 +703,7 @@ export class EditContactComponent implements OnInit, OnDestroy {
     // Check if we're in edit mode
     if (contactId && this.isEditMode()) {
       // Update existing contact
-      this.prepareUpdateRequest(data, contactId, currentUser.companyId)
+      this.prepareUpdateRequest(data, contactId)
         .then((request) => {
           // Call the API
           this.contactService.update(contactId, request)
@@ -744,7 +735,7 @@ export class EditContactComponent implements OnInit, OnDestroy {
         });
     } else {
       // Create new contact
-      this.prepareCreateRequest(data, contactType, currentUser.companyId)
+      this.prepareCreateRequest(data, contactType)
         .then((request) => {
           // Call the API
           this.contactService.create(request)
@@ -786,14 +777,12 @@ export class EditContactComponent implements OnInit, OnDestroy {
    */
   private async prepareCreateRequest(
     formData: ContactFormData,
-    contactType: ContactType,
-    companyId: string
+    contactType: ContactType
   ): Promise<CreateContactRequest> {
     const request: CreateContactRequest = {
       identifier: formData.identifier.trim(),
       type: contactType,
       isACompany: formData.isCompany,
-      companyId: companyId,
     };
 
     // Add personal or company fields
@@ -858,8 +847,7 @@ export class EditContactComponent implements OnInit, OnDestroy {
    */
   private async prepareUpdateRequest(
     formData: ContactFormData,
-    contactId: string,
-    companyId: string
+    contactId: string
   ): Promise<UpdateContactRequest> {
     const request: UpdateContactRequest = {
       id: contactId,

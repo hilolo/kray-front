@@ -18,6 +18,5 @@ export interface UpdateContactRequest {
   removeAvatar?: boolean; // Flag to indicate if avatar should be removed
   attachmentsToAdd?: AttachmentInput[]; // New attachments to add
   attachmentsToDelete?: string[]; // Attachment IDs to delete
-  companyId?: string;
 }
 

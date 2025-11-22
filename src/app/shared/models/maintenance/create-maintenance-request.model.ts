@@ -6,7 +6,6 @@ import { MaintenancePriority, MaintenanceStatus } from './maintenance.model';
  */
 export interface CreateMaintenanceRequest {
   propertyId: string;
-  companyId?: string;
   priority: MaintenancePriority;
   contactId: string;
   status: MaintenanceStatus;

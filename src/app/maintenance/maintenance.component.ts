@@ -68,12 +68,6 @@ export class MaintenanceComponent implements OnInit, OnDestroy {
       status: 'done',
       tasks: [],
     },
-    {
-      id: 'cancelled',
-      title: 'Cancelled',
-      status: 'planned',
-      tasks: [],
-    },
   ]);
 
   ngOnInit(): void {
@@ -134,9 +128,14 @@ export class MaintenanceComponent implements OnInit, OnDestroy {
     const waiting: KanbanTask[] = [];
     const inProgress: KanbanTask[] = [];
     const done: KanbanTask[] = [];
-    const cancelled: KanbanTask[] = [];
 
     maintenances.forEach((maintenance) => {
+      // Skip cancelled maintenances - they won't appear in kanban
+      const status = maintenance.status as MaintenanceStatus;
+      if (status === MaintenanceStatus.Cancelled) {
+        return;
+      }
+
       // Get contact avatar URL directly from maintenance (now included in API response)
       const contactAvatarUrl = maintenance.contactImageUrl || null;
       
@@ -168,8 +167,7 @@ export class MaintenanceComponent implements OnInit, OnDestroy {
       };
 
       // Backend now returns status as number directly
-      const status = maintenance.status as MaintenanceStatus;
-      
+      // Note: Cancelled items are already filtered out above
       switch (status) {
         case MaintenanceStatus.Waiting:
           waiting.push(task);
@@ -179,9 +177,6 @@ export class MaintenanceComponent implements OnInit, OnDestroy {
           break;
         case MaintenanceStatus.Done:
           done.push(task);
-          break;
-        case MaintenanceStatus.Cancelled:
-          cancelled.push(task);
           break;
         default:
           // Default to waiting if status is unknown
@@ -210,12 +205,6 @@ export class MaintenanceComponent implements OnInit, OnDestroy {
         title: 'Done',
         status: 'done',
         tasks: done.map(t => ({ ...t })), // Deep copy tasks
-      },
-      {
-        id: 'cancelled',
-        title: 'Cancelled',
-        status: 'planned',
-        tasks: cancelled.map(t => ({ ...t })), // Deep copy tasks
       },
     ];
     
@@ -257,8 +246,6 @@ export class MaintenanceComponent implements OnInit, OnDestroy {
         return MaintenanceStatus.InProgress;
       case 'done':
         return MaintenanceStatus.Done;
-      case 'cancelled':
-        return MaintenanceStatus.Cancelled;
       default:
         return MaintenanceStatus.Waiting;
     }
@@ -407,21 +394,15 @@ export class MaintenanceComponent implements OnInit, OnDestroy {
 
 
   onTaskDropped(event: { taskId: string; newStatus: 'planned' | 'in-progress' | 'done'; previousStatus: 'planned' | 'in-progress' | 'done'; newColumnId?: string; previousColumnId?: string }): void {
-    // Map column ID to maintenance status (handles cancelled column which also has status 'planned')
+    // Map column ID to maintenance status
     let newMaintenanceStatus: MaintenanceStatus;
     
     if (event.newColumnId) {
-      // Use column ID from event to get the correct status (handles cancelled vs waiting)
+      // Use column ID from event to get the correct status
       newMaintenanceStatus = this.mapKanbanColumnIdToMaintenanceStatus(event.newColumnId);
     } else {
       // Fallback: use the event's newStatus
-      // If newStatus is 'planned', we need to check if it's waiting or cancelled
-      // Since we can't determine from status alone, default to waiting
-      if (event.newStatus === 'planned') {
-        newMaintenanceStatus = MaintenanceStatus.Waiting;
-      } else {
-        newMaintenanceStatus = this.mapKanbanStatusToMaintenanceStatus(event.newStatus);
-      }
+      newMaintenanceStatus = this.mapKanbanStatusToMaintenanceStatus(event.newStatus);
     }
     
     // Send update to API

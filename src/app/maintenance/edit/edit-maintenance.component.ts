@@ -18,7 +18,6 @@ import { MaintenanceService } from '@shared/services/maintenance.service';
 import { PropertyService } from '@shared/services/property.service';
 import { ContactService } from '@shared/services/contact.service';
 import { ToastService } from '@shared/services/toast.service';
-import { UserService } from '@shared/services/user.service';
 import type { Maintenance } from '@shared/models/maintenance/maintenance.model';
 import { MaintenanceStatus, MaintenancePriority } from '@shared/models/maintenance/maintenance.model';
 import type { CreateMaintenanceRequest } from '@shared/models/maintenance/create-maintenance-request.model';
@@ -53,7 +52,6 @@ export class EditMaintenanceComponent implements OnInit, OnDestroy {
   private readonly maintenanceService = inject(MaintenanceService);
   private readonly propertyService = inject(PropertyService);
   private readonly contactService = inject(ContactService);
-  private readonly userService = inject(UserService);
   private readonly toastService = inject(ToastService);
   readonly dialogRef = inject(ZardDialogRef, { optional: true });
   private readonly dialogData = inject<{ maintenanceId?: string }>(Z_MODAL_DATA, { optional: true });
@@ -86,9 +84,6 @@ export class EditMaintenanceComponent implements OnInit, OnDestroy {
   readonly contacts = signal<Contact[]>([]);
   readonly contactOptions = signal<ZardComboboxOption[]>([]);
   readonly isLoadingContacts = signal(false);
-
-  // Company ID
-  readonly companyId = signal<string>('');
 
   // Priority options with icons
   readonly priorityOptions = [
@@ -197,7 +192,6 @@ export class EditMaintenanceComponent implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
-    this.loadCompanyId();
     this.loadProperties();
     this.loadContacts();
     
@@ -219,13 +213,6 @@ export class EditMaintenanceComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
-  }
-
-  loadCompanyId(): void {
-    const currentUser = this.userService.getCurrentUser();
-    if (currentUser && currentUser.companyId) {
-      this.companyId.set(currentUser.companyId);
-    }
   }
 
   loadMaintenance(): void {
@@ -441,7 +428,6 @@ export class EditMaintenanceComponent implements OnInit, OnDestroy {
     this.isSaving.set(true);
 
     const formData = this.formData();
-    const companyId = this.companyId();
 
     // Ensure priority and status are numbers (not strings)
     const priority = typeof formData.priority === 'number' 
@@ -462,7 +448,6 @@ export class EditMaintenanceComponent implements OnInit, OnDestroy {
       const request: UpdateMaintenanceRequest = {
         id,
         propertyId: formData.propertyId,
-        companyId,
         priority: priority,
         contactId: formData.contactId,
         status: status,
@@ -490,7 +475,6 @@ export class EditMaintenanceComponent implements OnInit, OnDestroy {
       // Backend now expects enum as number (JsonStringEnumConverter removed)
       const request: CreateMaintenanceRequest = {
         propertyId: formData.propertyId,
-        companyId,
         priority: priority,
         contactId: formData.contactId,
         status: status,
