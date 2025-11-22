@@ -17,6 +17,7 @@ import { ZardSwitchComponent } from '@shared/components/switch/switch.component'
 import { ChangeDetectorRef } from '@angular/core';
 import { PdfFontsService } from '@shared/services/pdf-fonts.service';
 import { PdfGenerationService } from '@shared/services/pdf-generation.service';
+import { DocumentService, UpdateDocumentRequest } from '@shared/services/document.service';
 import { DocumentDataField, COMMON_FIELDS, DOCUMENT_TYPE_FIELDS } from './document-type.models';
 
 @Component({
@@ -49,6 +50,7 @@ export class DocumentEditComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly pdfFontsService = inject(PdfFontsService);
   private readonly pdfGenerationService = inject(PdfGenerationService);
+  private readonly documentService = inject(DocumentService);
 
   readonly documentId = signal<string | null>(null);
   readonly documentType = signal<string | null>(null);
@@ -230,10 +232,45 @@ export class DocumentEditComponent implements OnInit {
 
   loadDocument(id: string): void {
     this.isLoading.set(true);
-    // TODO: Implement actual API call to load document
-    setTimeout(() => {
-      this.isLoading.set(false);
-    }, 500);
+    
+    this.documentService.getById(id).subscribe({
+      next: (document) => {
+        // Set editor content from htmlBody
+        if (document.htmlBody) {
+          this.editorContent.set(document.htmlBody);
+          
+          // If editor is already initialized, manually set the content
+          // Otherwise, the value binding will handle it when the editor initializes
+          if (this.textEditor && this.textEditor.isReady()) {
+            this.textEditor.setHtml(document.htmlBody);
+          } else {
+            // Wait a bit for editor to initialize, then set content
+            setTimeout(() => {
+              if (this.textEditor && this.textEditor.isReady()) {
+                this.textEditor.setHtml(document.htmlBody);
+              }
+            }, 300);
+          }
+        }
+        
+        // Set display options
+        this.displayLogo.set(document.isLogo || false);
+        this.displayCache.set(document.isCachet || false);
+        
+        // Update PDF preview after loading
+        setTimeout(() => {
+          this.updatePdfPreview();
+        }, 200);
+        
+        this.isLoading.set(false);
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        console.error('Error loading document:', error);
+        this.isLoading.set(false);
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   onEditorChange(html: string): void {
@@ -356,11 +393,48 @@ export class DocumentEditComponent implements OnInit {
     }
 
     this.isSaving.set(true);
-    // TODO: Implement actual API call to save document
-    setTimeout(() => {
+
+    // Get the latest HTML from the editor
+    let htmlBody = this.editorContent();
+    
+    // If editor is available, get the latest HTML directly from it
+    if (this.textEditor && this.textEditor.isReady()) {
+      htmlBody = this.textEditor.getHtml();
+      // Update editorContent signal with the latest HTML
+      this.editorContent.set(htmlBody);
+    }
+
+    const documentId = this.documentId();
+    
+    if (!documentId) {
+      console.error('Document ID is missing');
       this.isSaving.set(false);
-      this.router.navigate(['/document']);
-    }, 1000);
+      return;
+    }
+
+    // Prepare update request
+    const updateRequest: UpdateDocumentRequest = {
+      id: documentId,
+      htmlBody: htmlBody,
+      isLogo: this.displayLogo(),
+      isCachet: this.displayCache(),
+    };
+
+    // Call update API
+    this.documentService.update(documentId, updateRequest).subscribe({
+      next: (updatedDocument) => {
+        console.log('Document updated successfully:', updatedDocument);
+        this.isSaving.set(false);
+        this.router.navigate(['/document']);
+      },
+      error: (error) => {
+        console.error('Error updating document:', error);
+        this.isSaving.set(false);
+        // Show error message to user (you can add a toast/alert here)
+        alert('Failed to update document. Please try again.');
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   insertHtmlIntoEditor(): void {

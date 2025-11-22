@@ -92,6 +92,15 @@ namespace ImmoGest.Infrastructure.Configuration
                 .HasForeignKey(l => l.CompanyId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // Document relationship (optional one-to-one)
+            builder.HasOne(l => l.Document)
+                .WithOne()
+                .HasForeignKey<Lease>(l => l.DocumentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Property(l => l.DocumentId)
+                .IsRequired(false);
+
             // Transactions relationship is configured in TransactionConfiguration
             // Attachments relationship will be handled in AttachmentConfiguration
         }

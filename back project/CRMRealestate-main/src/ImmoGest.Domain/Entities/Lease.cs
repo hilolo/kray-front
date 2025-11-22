@@ -41,6 +41,8 @@ namespace ImmoGest.Domain.Entities
 
         // Documents
         public ICollection<Attachment> Attachments { get; set; }
+        public Document Document { get; set; }
+        public Guid? DocumentId { get; set; }
 
         // Transactions
         public ICollection<Transaction> Transactions { get; set; }

@@ -98,13 +98,13 @@
 
                   <ng-template #createdAtCell let-row>
                     <span class="text-sm text-muted-foreground">
-                      {{ formatDate(row.createdAt) }}
+                      {{ formatDate(row.createdOn) }}
                     </span>
                   </ng-template>
 
                   <ng-template #updatedAtCell let-row>
                     <span class="text-sm text-muted-foreground">
-                      {{ formatDate(row.updatedAt) }}
+                      {{ formatDate(row.lastModifiedOn) }}
                     </span>
                   </ng-template>
 
@@ -113,10 +113,19 @@
                       <z-button
                         zType="ghost"
                         zSize="icon"
-                        (click)="onEdit(row.id, row.type)"
+                        (click)="onEdit(row)"
                         [attr.aria-label]="'Edit document'"
                       >
                         <z-icon zType="pencil" zSize="sm" />
+                      </z-button>
+                      <z-button
+                        zType="ghost"
+                        zSize="icon"
+                        (click)="onGeneratePdf(row)"
+                        [disabled]="isGeneratingPdf()"
+                        [attr.aria-label]="'Generate PDF'"
+                      >
+                        <z-icon zType="file-text" zSize="sm" />
                       </z-button>
                       <z-button
                         zType="ghost"
@@ -172,7 +181,7 @@
                         
                         <!-- Template Info -->
                         <div class="flex flex-col items-center gap-1 text-center w-full">
-                          <span class="text-xs text-muted-foreground">{{ template.category }}</span>
+                          <span class="text-xs text-muted-foreground">{{ getCategoryFromType(template.type) }}</span>
                           <span class="text-sm font-medium">{{ template.name }}</span>
                         </div>
 
@@ -192,11 +201,12 @@
                             zType="default"
                             zSize="sm"
                             (click)="onShowExample(template)"
-                            [attr.aria-label]="'Show example'"
+                            [disabled]="isGeneratingPdf()"
+                            [attr.aria-label]="'Generate PDF'"
                             class="flex-1"
                           >
-                            <z-icon zType="eye" zSize="sm" />
-                            <span class="hidden sm:inline">Example</span>
+                            <z-icon zType="file-text" zSize="sm" />
+                            <span class="hidden sm:inline">PDF</span>
                           </z-button>
                         </div>
                       </div>
