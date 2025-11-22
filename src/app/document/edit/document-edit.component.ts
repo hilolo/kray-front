@@ -6,7 +6,6 @@ import { ZardIconComponent } from '@shared/components/icon/icon.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ZardTextEditorComponent } from '@shared/components/text-editor/text-editor.component';
-import htmlToPdfMake from 'html-to-pdfmake';
 import { SafePipe } from '@shared/pipes/safe.pipe';
 import { ZardPdfViewerComponent } from '@shared/pdf-viewer/pdf-viewer.component';
 import { ZardFormFieldComponent } from '@shared/components/form/form.component';
@@ -19,24 +18,9 @@ import { ZardResizableComponent } from '@shared/components/resizable/resizable.c
 import { ZardResizablePanelComponent } from '@shared/components/resizable/resizable-panel.component';
 import { ZardResizableHandleComponent } from '@shared/components/resizable/resizable-handle.component';
 import { ChangeDetectorRef } from '@angular/core';
-import pdfMake from 'pdfmake/build/pdfmake';
-import pdfFonts from 'pdfmake/build/vfs_fonts';
 import { PdfFontsService } from '@shared/services/pdf-fonts.service';
+import { PdfGenerationService } from '@shared/services/pdf-generation.service';
 import { DocumentDataField, COMMON_FIELDS, DOCUMENT_TYPE_FIELDS } from './document-type.models';
-
-// Set up pdfMake with fonts
-(pdfMake as any).vfs = pdfFonts;
-
-// Configure fonts - Arial will be added via PdfFontsService if available
-// Fallback to Roboto if Arial fonts are not provided
-(pdfMake as any).fonts = {
-  Roboto: {
-    normal: 'Roboto-Regular.ttf',
-    bold: 'Roboto-Medium.ttf',
-    italics: 'Roboto-Italic.ttf',
-    bolditalics: 'Roboto-MediumItalic.ttf'
-  }
-};
 
 @Component({
   selector: 'app-document-edit',
@@ -70,6 +54,7 @@ export class DocumentEditComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly pdfFontsService = inject(PdfFontsService);
+  private readonly pdfGenerationService = inject(PdfGenerationService);
 
   readonly documentId = signal<string | null>(null);
   readonly documentType = signal<string | null>(null);
@@ -292,279 +277,6 @@ export class DocumentEditComponent implements OnInit {
     }, 0);
   }
 
-  /**
-   * Recursively processes PDFMake content to apply text size multiplier to all font sizes
-   */
-  private applyTextSizeMultiplier(content: any, multiplier: number): any {
-    if (!content) return content;
-
-    // Handle arrays
-    if (Array.isArray(content)) {
-      return content.map(item => this.applyTextSizeMultiplier(item, multiplier));
-    }
-
-    // Handle objects
-    if (typeof content === 'object') {
-      const processed: any = { ...content };
-
-      // Apply multiplier to fontSize if it exists
-      if (typeof processed.fontSize === 'number') {
-        processed.fontSize = Math.round(processed.fontSize * multiplier * 100) / 100;
-      }
-
-      // Recursively process nested properties
-      if (processed.text && Array.isArray(processed.text)) {
-        processed.text = this.applyTextSizeMultiplier(processed.text, multiplier);
-      }
-      if (processed.stack && Array.isArray(processed.stack)) {
-        processed.stack = this.applyTextSizeMultiplier(processed.stack, multiplier);
-      }
-      if (processed.columns && Array.isArray(processed.columns)) {
-        processed.columns = this.applyTextSizeMultiplier(processed.columns, multiplier);
-      }
-      if (processed.table && processed.table.body && Array.isArray(processed.table.body)) {
-        processed.table.body = this.applyTextSizeMultiplier(processed.table.body, multiplier);
-      }
-      if (processed.ul && Array.isArray(processed.ul)) {
-        processed.ul = this.applyTextSizeMultiplier(processed.ul, multiplier);
-      }
-      if (processed.ol && Array.isArray(processed.ol)) {
-        processed.ol = this.applyTextSizeMultiplier(processed.ol, multiplier);
-      }
-
-      return processed;
-    }
-
-    return content;
-  }
-
-  /**
-   * Recursively removes lineHeight from all elements to use only defaultStyle lineHeight
-   */
-  private removeLineHeightFromElements(content: any): any {
-    if (!content) return content;
-
-    // Handle arrays
-    if (Array.isArray(content)) {
-      return content.map(item => this.removeLineHeightFromElements(item));
-    }
-
-    // Handle objects
-    if (typeof content === 'object') {
-      const processed: any = { ...content };
-
-      // Remove lineHeight if it exists
-      if ('lineHeight' in processed) {
-        delete processed.lineHeight;
-      }
-
-      // Recursively process nested properties
-      if (processed.text && Array.isArray(processed.text)) {
-        processed.text = this.removeLineHeightFromElements(processed.text);
-      }
-      if (processed.stack && Array.isArray(processed.stack)) {
-        processed.stack = this.removeLineHeightFromElements(processed.stack);
-      }
-      if (processed.columns && Array.isArray(processed.columns)) {
-        processed.columns = this.removeLineHeightFromElements(processed.columns);
-      }
-      if (processed.table && processed.table.body && Array.isArray(processed.table.body)) {
-        processed.table.body = this.removeLineHeightFromElements(processed.table.body);
-      }
-      if (processed.ul && Array.isArray(processed.ul)) {
-        processed.ul = this.removeLineHeightFromElements(processed.ul);
-      }
-      if (processed.ol && Array.isArray(processed.ol)) {
-        processed.ol = this.removeLineHeightFromElements(processed.ol);
-      }
-
-      return processed;
-    }
-
-    return content;
-  }
-
-  /**
-   * Recursively replaces CODE nodes in PDFMake content with values from Data
-   */
-  private replacePlaceholders(content: any): any {
-    if (!content) return content;
-
-    // Handle arrays
-    if (Array.isArray(content)) {
-      return content.map(item => this.replacePlaceholders(item));
-    }
-
-    // Handle objects
-    if (typeof content === 'object') {
-      const processed: any = { ...content };
-
-      // Check if this is a CODE node and replace with Data value
-      if (processed.nodeName === 'CODE') {
-        let codeText: string | null = null;
-        
-        // Extract text from CODE node - handle different structures
-        if (typeof processed.text === 'string') {
-          codeText = processed.text.trim();
-        } else if (Array.isArray(processed.text)) {
-          // If text is an array, recursively process to find CODE nodes inside
-          // First try to find a string element
-          const firstText = processed.text.find((item: any) => typeof item === 'string');
-          if (firstText) {
-            codeText = firstText.trim();
-          } else if (processed.text.length > 0) {
-            // Process nested elements (might contain nested CODE nodes)
-            processed.text = this.replacePlaceholders(processed.text);
-            return processed;
-          }
-        } else if (typeof processed.text === 'object' && processed.text !== null) {
-          // Recursively process nested object (might contain nested CODE nodes)
-          processed.text = this.replacePlaceholders(processed.text);
-          return processed;
-        }
-        
-        // Check if the code text matches a key in Data
-        const data = this.Data();
-        if (codeText && data && data.hasOwnProperty(codeText)) {
-          // Replace CODE node with the actual value from Data
-          const value = (data as any)[codeText];
-          // Return just the text value (PDFMake can handle string directly in arrays)
-          // This makes it cleaner when CODE node is in a text array
-          return typeof value === 'string' ? value : String(value);
-        }
-        
-        // If no match found, keep processing nested content
-        if (processed.text && Array.isArray(processed.text)) {
-          processed.text = this.replacePlaceholders(processed.text);
-        } else if (processed.text && typeof processed.text === 'object') {
-          processed.text = this.replacePlaceholders(processed.text);
-        }
-        return processed;
-      } else {
-        // Recursively process nested properties for non-CODE nodes
-        if (processed.text) {
-          if (Array.isArray(processed.text)) {
-            processed.text = this.replacePlaceholders(processed.text);
-          } else if (typeof processed.text === 'object') {
-            processed.text = this.replacePlaceholders(processed.text);
-          }
-        }
-        if (processed.stack && Array.isArray(processed.stack)) {
-          processed.stack = this.replacePlaceholders(processed.stack);
-        }
-        if (processed.columns && Array.isArray(processed.columns)) {
-          processed.columns = this.replacePlaceholders(processed.columns);
-        }
-        if (processed.table && processed.table.body && Array.isArray(processed.table.body)) {
-          processed.table.body = this.replacePlaceholders(processed.table.body);
-        }
-        if (processed.ul && Array.isArray(processed.ul)) {
-          processed.ul = this.replacePlaceholders(processed.ul);
-        }
-        if (processed.ol && Array.isArray(processed.ol)) {
-          processed.ol = this.replacePlaceholders(processed.ol);
-        }
-      }
-
-      return processed;
-    }
-
-    return content;
-  }
-
-  /**
-   * Recursively processes PDFMake content to convert ql-align-* classes to alignment property
-   */
-  private processAlignmentClasses(content: any): any {
-    if (!content) return content;
-
-    // Handle arrays
-    if (Array.isArray(content)) {
-      return content.map(item => this.processAlignmentClasses(item));
-    }
-
-    // Handle objects
-    if (typeof content === 'object') {
-      const processed: any = { ...content };
-
-      // Process style array to extract alignment classes
-      if (Array.isArray(processed.style)) {
-        const styleArray = processed.style;
-        
-        // Check for ql-align-* classes and convert to alignment property
-        if (styleArray.includes('ql-align-center')) {
-          processed.alignment = 'center';
-        } else if (styleArray.includes('ql-align-right')) {
-          processed.alignment = 'right';
-        } else if (styleArray.includes('ql-align-left')) {
-          processed.alignment = 'left';
-        } else if (styleArray.includes('ql-align-justify')) {
-          processed.alignment = 'justify';
-        }
-
-        // Remove ql-align-* classes from style array (optional, keeps it cleaner)
-        processed.style = styleArray.filter((style: string) => 
-          !style.startsWith('ql-align-')
-        );
-
-        // Remove style array if it's empty
-        if (processed.style.length === 0) {
-          delete processed.style;
-        }
-      }
-
-      // Recursively process nested properties
-      if (processed.text && Array.isArray(processed.text)) {
-        processed.text = this.processAlignmentClasses(processed.text);
-      }
-      if (processed.stack && Array.isArray(processed.stack)) {
-        processed.stack = this.processAlignmentClasses(processed.stack);
-      }
-      if (processed.columns && Array.isArray(processed.columns)) {
-        processed.columns = this.processAlignmentClasses(processed.columns);
-      }
-      if (processed.table && processed.table.body && Array.isArray(processed.table.body)) {
-        processed.table.body = this.processAlignmentClasses(processed.table.body);
-      }
-      if (processed.ul && Array.isArray(processed.ul)) {
-        processed.ul = this.processAlignmentClasses(processed.ul);
-      }
-      if (processed.ol && Array.isArray(processed.ol)) {
-        processed.ol = this.processAlignmentClasses(processed.ol);
-      }
-
-      return processed;
-    }
-
-    return content;
-  }
-
-  /**
-   * Removes line-height from all style attributes in HTML content
-   */
-  private removeLineHeightFromHtml(html: string): string {
-    if (!html) return html;
-    
-    // Remove line-height from style attributes (handles both double and single quotes)
-    const result = html.replace(/style\s*=\s*(["'])([^"']*)\1/gi, (match, quote, styleContent) => {
-      // Remove line-height property from style content (handles various formats)
-      // Pattern matches: line-height: followed by any value (number, percentage, etc.) and optional semicolon
-      let cleanedStyle = styleContent
-        .replace(/line-height\s*:\s*[^;]+;?/gi, '') // Remove line-height: value; or line-height: value
-        .replace(/;\s*;/g, ';') // Remove double semicolons
-        .replace(/^\s*;\s*|\s*;\s*$/g, '') // Remove leading/trailing semicolons
-        .trim();
-      
-      // If style is empty after cleaning, remove the style attribute entirely
-      if (!cleanedStyle) {
-        return '';
-      }
-      
-      return `style=${quote}${cleanedStyle}${quote}`;
-    });
-    
-    return result;
-  }
 
   updatePdfPreview(): void {
     if (this.isGeneratingPdf()) return;
@@ -572,7 +284,7 @@ export class DocumentEditComponent implements OnInit {
     let htmlContent = this.editorContent();
     
     // Remove line-height from HTML style attributes before converting to PDFMake
-    htmlContent = this.removeLineHeightFromHtml(htmlContent);
+    htmlContent = this.pdfGenerationService.removeLineHeightFromHtml(htmlContent);
     
     // Store cleaned HTML for debug display
     this.cleanedHtml.set(htmlContent);
@@ -590,90 +302,27 @@ export class DocumentEditComponent implements OnInit {
     
     // Use setTimeout to ensure async processing doesn't block
     setTimeout(() => {
-      try {
-        const result = htmlToPdfMake(htmlContent, {
-          tableAutoSize: true,
-          removeExtraBlanks: false  // Preserve spacing
-        });
-        
-        // Handle both cases: result can be content directly or object with content/images
-        let pdfContent = result.content || result;
-        const images = result.images;
-
-        // Remove lineHeight from all elements first (so only defaultStyle lineHeight is used)
-        pdfContent = this.removeLineHeightFromElements(pdfContent);
-
-        // Process alignment classes (convert ql-align-* to alignment property)
-        pdfContent = this.processAlignmentClasses(pdfContent);
-        
-        // Replace placeholders with actual values
-        pdfContent = this.replacePlaceholders(pdfContent);
-        
-        // Apply text size multiplier to all font sizes
-        const multiplier = this.textSizeMultiplier();
-        pdfContent = this.applyTextSizeMultiplier(pdfContent, multiplier);
-        
-        // Ensure pdfContent is an array
-        if (!Array.isArray(pdfContent)) {
-          pdfContent = [pdfContent];
-        }
-        
-        // Add logo as first element if displayLogo is enabled
-        if (this.displayLogo()) {
-          const logoElement = {
-            image: this.logoBase64() || '',
-            width: 200,
-            alignment: 'center'
-          };
-          pdfContent = [logoElement, ...pdfContent];
-        }
-        
-        // Add cache as last element if displayCache is enabled
-        if (this.displayCache()) {
-          const cacheElement = {
-            image: this.cacheBase64() || '',
-            width: 200,
-            alignment: 'right'
-          };
-          pdfContent = [...pdfContent, cacheElement];
-        }
-        
-        const baseFontSize = 8;
-        // Use Arial if available, otherwise fallback to Roboto
-        const fontFamily = (pdfMake as any).fonts?.Arial ? 'Arial' : 'Roboto';
-        
-        const docDefinition: any = {
-          content: pdfContent,
-          pageSize: 'A4',
-          pageMargins: [40, 40, 40, 40],
-          defaultStyle: {
-            fontSize: Math.round(baseFontSize * multiplier * 100) / 100,  // Apply multiplier to default font size
-            font: fontFamily,
-            lineHeight: 1
-          }
-        };
-
-        // Add images if present
-        if (images) {
-          docDefinition.images = images;
-        }
-
-        // Store PDFMake JSON for debug
-        this.pdfMakeJson.set(JSON.stringify(docDefinition, null, 2));
-
-        pdfMake.createPdf(docDefinition).getDataUrl((dataUrl: string) => {
-          if (dataUrl) {
-            this.pdfDataUrl.set(dataUrl);
-          }
-          this.isGeneratingPdf.set(false);
-          this.cdr.markForCheck();
-        });
-      } catch (error) {
+      this.pdfGenerationService.generatePdfFromHtml(htmlContent, {
+        textSize: this.textSize(),
+        displayLogo: this.displayLogo(),
+        logoBase64: this.logoBase64(),
+        displayCache: this.displayCache(),
+        cacheBase64: this.cacheBase64(),
+        placeholderData: this.Data(),
+        baseFontSize: 10,
+        pageSize: 'A4',
+        pageMargins: [40, 40, 40, 40]
+      }).then((result) => {
+        this.pdfDataUrl.set(result.dataUrl);
+        this.pdfMakeJson.set(result.pdfMakeJson);
+        this.isGeneratingPdf.set(false);
+        this.cdr.markForCheck();
+      }).catch((error) => {
         console.error('Error generating PDF preview:', error);
         this.isGeneratingPdf.set(false);
         this.pdfDataUrl.set('');
         this.cdr.markForCheck();
-      }
+      });
     }, 100);
   }
 
@@ -745,27 +394,21 @@ export class DocumentEditComponent implements OnInit {
     const jsonString = this.pdfMakeJsonInput().trim();
     if (!jsonString) return;
 
-    try {
-      const docDefinition = JSON.parse(jsonString);
-      
-      this.isGeneratingPdf.set(true);
-      
-      // Store the JSON
-      this.pdfMakeJson.set(JSON.stringify(docDefinition, null, 2));
-
-      pdfMake.createPdf(docDefinition).getDataUrl((dataUrl: string) => {
-        if (dataUrl) {
-          this.pdfDataUrl.set(dataUrl);
-        }
+    this.isGeneratingPdf.set(true);
+    
+    this.pdfGenerationService.generatePdfFromJson(jsonString)
+      .then((result) => {
+        this.pdfDataUrl.set(result.dataUrl);
+        this.pdfMakeJson.set(result.pdfMakeJson);
+        this.isGeneratingPdf.set(false);
+        this.cdr.markForCheck();
+      })
+      .catch((error) => {
+        console.error('Error parsing PDFMake JSON:', error);
+        alert('Invalid JSON format. Please check your PDFMake JSON.');
         this.isGeneratingPdf.set(false);
         this.cdr.markForCheck();
       });
-    } catch (error) {
-      console.error('Error parsing PDFMake JSON:', error);
-      alert('Invalid JSON format. Please check your PDFMake JSON.');
-      this.isGeneratingPdf.set(false);
-      this.cdr.markForCheck();
-    }
   }
 
   /**
