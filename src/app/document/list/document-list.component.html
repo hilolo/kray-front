@@ -169,27 +169,10 @@
                 zDescription="Templates will appear here once created."
               />
             } @else {
-              <!-- Filter Section -->
-              <div class="flex items-center gap-4 pb-4 flex-shrink-0">
-                <div class="w-[200px]">
-                  <z-select
-                    [zValue]="selectedTemplateType()"
-                    zPlaceholder="Filter by type"
-                    (zSelectionChange)="onTemplateTypeFilterChange($event)"
-                  >
-                    @for (option of templateTypeFilterOptions; track option.value) {
-                      <z-select-item [zValue]="option.value">
-                        {{ option.label }}
-                      </z-select-item>
-                    }
-                  </z-select>
-                </div>
-              </div>
-
               <div class="flex-1 min-h-0 overflow-y-auto">
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-4">
-                  @for (template of filteredTemplates(); track template.id) {
-                    <z-card class="hover:shadow-md transition-shadow cursor-pointer group" (click)="onCreateFromTemplate(template)">
+                  @for (template of templates(); track template.id) {
+                    <z-card class="hover:shadow-md transition-shadow group">
                       <div class="flex flex-col items-center gap-3 p-4">
                         <!-- Document Icon -->
                         <div class="flex items-center justify-center w-16 h-16 rounded-lg bg-muted group-hover:bg-muted/80 transition-colors">
@@ -203,7 +186,7 @@
                         </div>
 
                         <!-- Action Buttons -->
-                        <div class="flex items-center gap-2 w-full justify-center pt-2" (click)="$event.stopPropagation()">
+                        <div class="flex items-center gap-2 w-full justify-center pt-2">
                           <z-button
                             zType="default"
                             zSize="sm"

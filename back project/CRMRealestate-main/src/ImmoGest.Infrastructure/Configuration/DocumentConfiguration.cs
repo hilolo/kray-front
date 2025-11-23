@@ -83,20 +83,6 @@ namespace ImmoGest.Infrastructure.Configuration
             builder.HasData(
                 new Document
                 {
-                    Id = new Guid("a1b2c3d4-e5f6-4789-a012-345678901234"),
-                    Name = "Reservation Agreement",
-                    Type = DocumentType.ReservationAgreement,
-                    Generate = false,
-                    IsLogo = false,
-                    IsCachet = false,
-                    IsLocked = true,
-                    CompanyId = null,
-                    IsDeleted = false,
-                    CreatedOn = now,
-                    LastModifiedOn = now
-                },
-                new Document
-                {
                     Id = new Guid("b2c3d4e5-f6a7-4890-b123-456789012345"),
                     Name = "Lease",
                     Type = DocumentType.Lease,
@@ -142,6 +128,20 @@ namespace ImmoGest.Infrastructure.Configuration
                     Id = new Guid("e5f6a7b8-c9d0-4123-e456-789012345678"),
                     Name = "Fees",
                     Type = DocumentType.Fees,
+                    Generate = false,
+                    IsLogo = false,
+                    IsCachet = false,
+                    IsLocked = true,
+                    CompanyId = null,
+                    IsDeleted = false,
+                    CreatedOn = now,
+                    LastModifiedOn = now
+                },
+                new Document
+                {
+                    Id = new Guid("f6a7b8c9-d0e1-4234-f567-890123456789"),
+                    Name = "Deposit",
+                    Type = DocumentType.Deposit,
                     Generate = false,
                     IsLogo = false,
                     IsCachet = false,
