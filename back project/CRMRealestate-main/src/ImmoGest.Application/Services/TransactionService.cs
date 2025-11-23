@@ -23,6 +23,9 @@ namespace ImmoGest.Application.Services
         private readonly IAttachmentService _attachmentService;
         private readonly IPropertyRepository _propertyRepository;
         private readonly IContactRepository _contactRepository;
+        private readonly IDocumentRepository _documentRepository;
+        private readonly IDocumentService _documentService;
+        private readonly ICompanyRepository _companyRepository;
         private readonly IMapper _mapper;
         private readonly ISession _session;
         private readonly IS3StorageService _s3StorageService;
@@ -40,6 +43,9 @@ namespace ImmoGest.Application.Services
             IAttachmentService attachmentService,
             IPropertyRepository propertyRepository,
             IContactRepository contactRepository,
+            IDocumentRepository documentRepository,
+            IDocumentService documentService,
+            ICompanyRepository companyRepository,
             ISession session,
             IS3StorageService s3StorageService,
             IConfiguration configuration,
@@ -51,6 +57,9 @@ namespace ImmoGest.Application.Services
             _attachmentService = attachmentService;
             _propertyRepository = propertyRepository;
             _contactRepository = contactRepository;
+            _documentRepository = documentRepository;
+            _documentService = documentService;
+            _companyRepository = companyRepository;
             _mapper = mapper;
             _session = session;
             _s3StorageService = s3StorageService;
@@ -720,6 +729,177 @@ namespace ImmoGest.Application.Services
             {
                 return Result.Failure<TransactionDto>().WithMessage($"Error updating transaction status: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// Generate leasing receipt PDF for a transaction with RevenueType = Loyer
+        /// Uses document template with Type = Lease (2), IsLocked = true, CompanyId = null
+        /// </summary>
+        /// <param name="transactionId">Transaction ID</param>
+        /// <returns>Processed PDFMake JSON object with placeholders replaced with transaction data</returns>
+        public async Task<Result<object>> GenerateLeasingReceiptAsync(Guid transactionId)
+        {
+            try
+            {
+                // Get transaction
+                var transactionResult = await _transactionRepository.GetByIdAsync(transactionId);
+                if (!transactionResult.IsSuccess() || transactionResult.Data == null)
+                {
+                    return Result.Failure<object>().WithMessage("Transaction not found");
+                }
+
+                var transaction = transactionResult.Data;
+
+                // Check if user has access to this transaction's company
+                if (transaction.CompanyId != _session.CompanyId)
+                {
+                    return Result.Failure<object>().WithMessage("Access denied");
+                }
+
+                // Check if transaction is of type Loyer (RevenueType = 0)
+                if (transaction.Category != TransactionCategory.Revenue || transaction.RevenueType != RevenueType.Loyer)
+                {
+                    return Result.Failure<object>().WithMessage("Transaction must be of type Loyer (rent) to generate leasing receipt");
+                }
+
+                // Find document template with Type = Lease (2), IsLocked = true, CompanyId = null
+                // Use repository GetAllFilter to query templates
+                var documentFilter = new GetDocumentsFilter
+                {
+                    Type = DocumentType.Lease,
+                    IsLocked = true,
+                    CompanyId = null, // Templates don't have company ID
+                    Ignore = true // Ignore pagination to get all templates
+                };
+
+                // Get queryable from repository
+                var templateQueryResult = _documentRepository.GetAllFilter(documentFilter);
+                if (!templateQueryResult.IsSuccess())
+                {
+                    return Result.Failure<object>().WithMessage("Error querying leasing receipt templates");
+                }
+
+                // Filter for CompanyId == null and execute query  
+                var templates = templateQueryResult.Data
+                    .Where(d => d.CompanyId == null)
+                    .ToList();
+                
+                if (templates == null || templates.Count == 0)
+                {
+                    return Result.Failure<object>().WithMessage("Leasing receipt template not found. Please create a document template with Type = Lease and IsLocked = true");
+                }
+
+                // Get first template (there should typically be only one template)
+                var template = templates.FirstOrDefault();
+                if (template == null || string.IsNullOrWhiteSpace(template.Pdfmake))
+                {
+                    return Result.Failure<object>().WithMessage("Leasing receipt template does not have PDFMake data");
+                }
+
+                // Get company website from Company entity using session CompanyId
+                string companyWebsite = "";
+                if (_session.CompanyId != Guid.Empty)
+                {
+                    var companyResult = await _companyRepository.GetByIdAsync(_session.CompanyId);
+                    if (companyResult.Data != null)
+                    {
+                        companyWebsite = companyResult.Data.Website ?? "";
+                    }
+                }
+
+                // Map transaction data to placeholder dictionary
+                // Transaction already includes Property with Contact (owner) and Lease with Contact (tenant) from GetByIdAsync
+                var placeholderData = MapTransactionToPlaceholders(transaction, companyWebsite);
+
+                // Get processed PDFMake with placeholders replaced
+                return await _documentService.GetProcessedPdfMakeAsync(template.Id, placeholderData);
+            }
+            catch (Exception ex)
+            {
+                return Result.Failure<object>().WithMessage($"Error generating leasing receipt: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Maps transaction data to placeholder dictionary for document template
+        /// Uses the exact placeholder names from the template example
+        /// Transaction already includes Property with Contact (owner) and Lease with Contact (tenant) from repository
+        /// </summary>
+        private Dictionary<string, string> MapTransactionToPlaceholders(Transaction transaction, string companyWebsite)
+        {
+            var placeholders = new Dictionary<string, string>();
+
+            // Company website
+            placeholders["companyWebsite"] = companyWebsite ?? "";
+
+            // Property owner name (from Property.Contact - already included in transaction from repository)
+            if (transaction.Property != null && transaction.Property.Contact != null)
+            {
+                placeholders["PropertyOwnerName"] = transaction.Property.Contact.IsACompany ? 
+                    (transaction.Property.Contact.CompanyName ?? "") : 
+                    ($"{transaction.Property.Contact.FirstName} {transaction.Property.Contact.LastName}".Trim());
+            }
+            else
+            {
+                placeholders["PropertyOwnerName"] = "";
+            }
+
+            // Tenant name (from Lease.Contact - already included in transaction from repository)
+            string tenantName = "";
+            string tenantReference = "";
+            if (transaction.Lease != null && transaction.Lease.Contact != null)
+            {
+                var leaseTenant = transaction.Lease.Contact;
+                tenantName = leaseTenant.IsACompany ? 
+                    (leaseTenant.CompanyName ?? "") : 
+                    ($"{leaseTenant.FirstName} {leaseTenant.LastName}".Trim());
+                tenantReference = leaseTenant.Identifier ?? "";
+            }
+            else if (transaction.Contact != null)
+            {
+                tenantName = transaction.Contact.IsACompany ? 
+                    (transaction.Contact.CompanyName ?? "") : 
+                    ($"{transaction.Contact.FirstName} {transaction.Contact.LastName}".Trim());
+                tenantReference = transaction.Contact.Identifier ?? "";
+            }
+            else
+            {
+                tenantName = transaction.OtherContactName ?? "";
+                tenantReference = "";
+            }
+            placeholders["TenantName"] = tenantName;
+            placeholders["TenantRefrence"] = tenantReference;
+
+            // Property information (from transaction.Property - already included)
+            if (transaction.Property != null)
+            {
+                placeholders["PropertyAdresse"] = transaction.Property.Address ?? "";
+                placeholders["PropertyRefrence"] = transaction.Property.Identifier ?? "";
+            }
+            else
+            {
+                placeholders["PropertyAdresse"] = "";
+                placeholders["PropertyRefrence"] = "";
+            }
+
+            // Transaction information
+            placeholders["TransactionTotalPrice"] = transaction.TotalAmount.ToString("F2");
+            placeholders["TransactionDate"] = transaction.Date.ToString("dd/MM/yyyy");
+            
+            // Transaction date in "Month Year" format (e.g., "Janvier 2025")
+            var culture = new System.Globalization.CultureInfo("fr-FR");
+            var monthYear = transaction.Date.ToString("MMMM yyyy", culture);
+            placeholders["TransactionDateMonhYear"] = monthYear;
+
+            return placeholders;
+        }
+
+        /// <summary>
+        /// Format amount with currency symbol (can be customized)
+        /// </summary>
+        private string FormatAmount(decimal amount)
+        {
+            return $"{amount:F2} MAD"; // Assuming MAD currency, adjust as needed
         }
     }
 }

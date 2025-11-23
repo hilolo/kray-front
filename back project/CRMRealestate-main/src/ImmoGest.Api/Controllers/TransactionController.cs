@@ -103,6 +103,20 @@ namespace ImmoGest.Api.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<Result<TransactionDto>>> UpdateStatus(Guid id, [FromBody] UpdateTransactionStatusDto request)
             => ActionResultFor(await _transactionService.UpdateStatusAsync(id, request.Status));
+
+        /// <summary>
+        /// Generate leasing receipt PDF for a transaction with RevenueType = Loyer
+        /// Uses document template with Type = Lease (2), IsLocked = true, CompanyId = null
+        /// </summary>
+        /// <param name="id">The transaction's ID</param>
+        /// <returns>Processed PDFMake JSON object with placeholders replaced with transaction data</returns>
+        [HttpPost]
+        [Route("{id}/leasingreceipt")]
+        [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(Result), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<Result<object>>> GenerateLeasingReceipt(Guid id)
+            => ActionResultFor(await _transactionService.GenerateLeasingReceiptAsync(id));
     }
 }
 

@@ -78,5 +78,15 @@ export class TransactionService {
   updateStatus(id: string, status: TransactionStatus): Observable<Transaction> {
     return this.apiService.put<Transaction>(`Transaction/${id}/status`, { status });
   }
+
+  /**
+   * Generate leasing receipt PDF for a transaction with RevenueType = Loyer
+   * POST api/Transaction/{id}/leasingreceipt
+   * @param id Transaction ID
+   * @returns Observable of processed PDFMake JSON object with placeholders replaced
+   */
+  generateLeasingReceipt(id: string): Observable<any> {
+    return this.apiService.post<any>(`Transaction/${id}/leasingreceipt`, {});
+  }
 }
 

@@ -34,6 +34,8 @@ import type { Property } from '@shared/models/property/property.model';
 import type { Contact } from '@shared/models/contact/contact.model';
 import { ContactType } from '@shared/models/contact/contact.model';
 import { TranslateService } from '@ngx-translate/core';
+import { ZardPdfViewerComponent } from '@shared/pdf-viewer/pdf-viewer.component';
+import { PdfGenerationService } from '@shared/services/pdf-generation.service';
 
 @Component({
   selector: 'app-transaction-list',
@@ -57,6 +59,7 @@ import { TranslateService } from '@ngx-translate/core';
     ZardInputGroupComponent,
     ZardInputDirective,
     FormsModule,
+    ZardPdfViewerComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './transaction-list.component.html',
@@ -72,6 +75,7 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
   private readonly userService = inject(UserService);
   private readonly preferencesService = inject(RoutePreferencesService);
   private readonly translateService = inject(TranslateService);
+  private readonly pdfGenerationService = inject(PdfGenerationService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroy$ = new Subject<void>();
 
@@ -90,6 +94,12 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
   readonly totalPages = signal(1);
   readonly totalItems = signal(0);
   readonly selectedType = signal<TransactionType>(TransactionType.Revenue);
+  
+  // PDF Viewer state
+  readonly showPdfViewer = signal(false);
+  readonly pdfViewerUrl = signal<string>('');
+  readonly pdfViewerName = signal<string>('');
+  readonly isGeneratingReceipt = signal(false);
   
   // Search query
   readonly searchQuery = signal<string>('');
@@ -830,18 +840,95 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
     });
   }
 
+  /**
+   * Generate and display leasing receipt for a transaction
+   * Only available for Paid Loyer transactions
+   */
   onGenerateRentReceipt(transaction: Transaction): void {
-    // TODO: Implement rent receipt generation
-    // This could navigate to a receipt page or call an API endpoint
-    this.toastService.info('Rent receipt generation will be available soon');
-    console.log('Generate rent receipt for transaction:', transaction.id);
+    if (this.isGeneratingReceipt()) {
+      return;
+    }
+
+    // Validate transaction type and status
+    const transactionType = transaction.type ?? transaction.category;
+    if (transactionType !== TransactionType.Revenue || 
+        transaction.revenueType !== RevenueType.Loyer ||
+        transaction.status !== TransactionStatus.Paid) {
+      this.toastService.error('Receipt can only be generated for paid rent transactions');
+      return;
+    }
+
+    this.isGeneratingReceipt.set(true);
+    this.cdr.markForCheck();
+
+    this.transactionService.generateLeasingReceipt(transaction.id).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: async (pdfMakeData) => {
+        try {
+          // Handle response format (may be wrapped in data property)
+          let dataToProcess: any = pdfMakeData;
+          if (typeof pdfMakeData === 'object' && pdfMakeData !== null && 'data' in pdfMakeData) {
+            dataToProcess = (pdfMakeData as any).data;
+          }
+
+          // Parse PDFMake JSON if needed
+          let pdfMakeJson: any;
+          if (typeof dataToProcess === 'string') {
+            pdfMakeJson = JSON.parse(dataToProcess);
+          } else if (typeof dataToProcess === 'object' && dataToProcess !== null) {
+            pdfMakeJson = dataToProcess;
+          } else {
+            throw new Error('Invalid PDFMake data format');
+          }
+
+          // Validate PDFMake structure
+          if (!pdfMakeJson || (!pdfMakeJson.content && !pdfMakeJson.text)) {
+            throw new Error('PDFMake data is missing required content property');
+          }
+
+          // Convert PDFMake JSON to PDF data URL
+          const pdfResult = await this.pdfGenerationService.generatePdfFromJson(pdfMakeJson);
+
+          // Show PDF in viewer
+          this.pdfViewerUrl.set(pdfResult.dataUrl);
+          this.pdfViewerName.set(`Leasing Receipt - ${transaction.propertyIdentifier || transaction.propertyName || 'Transaction'} - ${this.formatDate(transaction)}`);
+          this.showPdfViewer.set(true);
+          this.isGeneratingReceipt.set(false);
+          this.cdr.markForCheck();
+        } catch (error: any) {
+          console.error('Error generating leasing receipt:', error);
+          const errorMessage = error?.message || 'Failed to generate leasing receipt';
+          this.toastService.error(errorMessage);
+          this.isGeneratingReceipt.set(false);
+          this.cdr.markForCheck();
+        }
+      },
+      error: (error) => {
+        console.error('Error fetching leasing receipt:', error);
+        const errorMessage = error?.error?.message || error?.message || 'Failed to generate leasing receipt';
+        this.toastService.error(errorMessage);
+        this.isGeneratingReceipt.set(false);
+        this.cdr.markForCheck();
+      }
+    });
   }
 
+  /**
+   * Generate deposit receipt (placeholder for future implementation)
+   */
   onGenerateDepositReceipt(transaction: Transaction): void {
     // TODO: Implement deposit receipt generation
-    // This could navigate to a receipt page or call an API endpoint
-    this.toastService.info('Deposit receipt generation will be available soon');
-    console.log('Generate deposit receipt for transaction:', transaction.id);
+    this.toastService.info('Deposit receipt generation coming soon');
+  }
+
+  /**
+   * Close PDF viewer
+   */
+  closePdfViewer(): void {
+    this.showPdfViewer.set(false);
+    this.pdfViewerUrl.set('');
+    this.pdfViewerName.set('');
   }
 
   formatCurrency(amount: number): string {
@@ -892,5 +979,6 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
       year: 'numeric',
     });
   }
+
 }
 

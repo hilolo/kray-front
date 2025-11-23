@@ -28,9 +28,10 @@ namespace ImmoGest.Infrastructure.Repositories
             // Include all related entities like in list queries
             var entity = await DbSet
                 .Include(t => t.Property)
+                    .ThenInclude(p => p.Contact) // Include Property Owner (Contact)
                 .Include(t => t.Contact)
                 .Include(t => t.Lease)
-                    .ThenInclude(l => l.Contact)
+                    .ThenInclude(l => l.Contact) // Include Lease Tenant (Contact)
                 .Include(t => t.Attachments)
                 .FirstOrDefaultAsync(e => e.Id == id);
 
@@ -48,9 +49,10 @@ namespace ImmoGest.Infrastructure.Repositories
             var entity = await DbSet
                 .AsNoTracking()
                 .Include(t => t.Property)
+                    .ThenInclude(p => p.Contact) // Include Property Owner (Contact)
                 .Include(t => t.Contact)
                 .Include(t => t.Lease)
-                    .ThenInclude(l => l.Contact)
+                    .ThenInclude(l => l.Contact) // Include Lease Tenant (Contact)
                 .Include(t => t.Attachments)
                 .FirstOrDefaultAsync(e => e.Id == id);
 
@@ -64,9 +66,10 @@ namespace ImmoGest.Infrastructure.Repositories
             // Always include related entities for transaction lists
             query = query
                 .Include(t => t.Property)
+                    .ThenInclude(p => p.Contact) // Include Property Owner (Contact)
                 .Include(t => t.Contact)
                 .Include(t => t.Lease)
-                    .ThenInclude(l => l.Contact)
+                    .ThenInclude(l => l.Contact) // Include Lease Tenant (Contact)
                 .Include(t => t.Reservation)
                 .Include(t => t.Attachments);
 

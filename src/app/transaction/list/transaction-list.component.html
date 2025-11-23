@@ -370,11 +370,11 @@
               <z-icon zType="pencil" zSize="sm" class="mr-2" />
               <span>Edit</span>
             </z-dropdown-menu-item>
-            @if (row.status === TransactionStatus.Paid && row.type === TransactionType.Revenue) {
+            @if (row.status === TransactionStatus.Paid && (row.type === TransactionType.Revenue || row.category === TransactionType.Revenue)) {
               @if (row.revenueType === RevenueType.Loyer) {
                 <z-dropdown-menu-item (click)="onGenerateRentReceipt(row)">
                   <z-icon zType="file-text" zSize="sm" class="mr-2" />
-                  <span>Rent Receipt</span>
+                  <span>Leasing Receipt</span>
                 </z-dropdown-menu-item>
               }
               @if (row.revenueType === RevenueType.Caution) {
@@ -405,4 +405,12 @@
       (zPageSizeChange)="onPageSizeChange($event)"
     />
   </div>
+
+  <!-- PDF Viewer for Leasing Receipt -->
+  <z-pdf-viewer
+    [isOpen]="showPdfViewer()"
+    [pdfUrl]="pdfViewerUrl()"
+    [pdfName]="pdfViewerName()"
+    (close)="closePdfViewer()"
+  />
 </z-page>

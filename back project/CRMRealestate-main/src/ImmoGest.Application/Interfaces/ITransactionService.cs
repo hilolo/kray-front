@@ -19,6 +19,14 @@ namespace ImmoGest.Application.Interfaces
         /// <param name="status">New status</param>
         /// <returns>Updated transaction</returns>
         Task<Result<TransactionDto>> UpdateStatusAsync(Guid id, TransactionStatus status);
+
+        /// <summary>
+        /// Generate leasing receipt PDF for a transaction with RevenueType = Loyer
+        /// Uses document template with Type = Lease (2), IsLocked = true, CompanyId = null
+        /// </summary>
+        /// <param name="transactionId">Transaction ID</param>
+        /// <returns>Processed PDFMake JSON object with placeholders replaced with transaction data</returns>
+        Task<Result<object>> GenerateLeasingReceiptAsync(Guid transactionId);
     }
 }
 

@@ -60,6 +60,7 @@ namespace ImmoGest.Api
             services.AddScoped<ITaskRepository, TaskRepository>();
             services.AddScoped<ITransactionRepository, TransactionRepository>();
             services.AddScoped<IDocumentRepository, DocumentRepository>();
+            services.AddScoped<ICompanyRepository, CompanyRepository>();
 
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IHeroService, HeroService>();
