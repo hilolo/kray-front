@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using ImmoGest.Application.DTOs;
 using ImmoGest.Application.Filters;
@@ -87,6 +88,20 @@ namespace ImmoGest.Api.Controllers
         [ProducesResponseType(typeof(PaginatedList<DocumentDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<Result<PaginatedList<DocumentDto>>>> GetDocuments([FromBody] GetDocumentsFilter filter)
             => ActionResultFor(await _documentService.GetAsPagedResultAsync<DocumentDto, GetDocumentsFilter>(filter));
+
+        /// <summary>
+        /// Get processed PDFMake data with placeholders replaced from example data
+        /// </summary>
+        /// <param name="id">The document's ID</param>
+        /// <param name="exampleData">Optional example data. If not provided, uses document's Example property. Format: { "PropertyOwnerName": "Mehdi", "TenantName": "Ahmed", ... }</param>
+        /// <returns>Processed PDFMake JSON object with placeholders replaced</returns>
+        [HttpPost]
+        [Route("{id}/template-examples")]
+        [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(Result), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<Result<object>>> GetTemplateExamples(Guid id, [FromBody] Dictionary<string, string> exampleData = null)
+            => ActionResultFor(await _documentService.GetProcessedPdfMakeAsync(id, exampleData));
     }
 }
 

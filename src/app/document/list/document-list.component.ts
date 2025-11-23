@@ -13,6 +13,7 @@ import { ZardDropdownMenuComponent } from '@shared/components/dropdown/dropdown.
 import { ZardDropdownMenuItemComponent } from '@shared/components/dropdown/dropdown-item.component';
 import { ZardTabGroupComponent, ZardTabComponent } from '@shared/components/tabs/tabs.component';
 import { ZardCardComponent } from '@shared/components/card/card.component';
+import { ZardPdfViewerComponent } from '@shared/pdf-viewer/pdf-viewer.component';
 import { CommonModule } from '@angular/common';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { DocumentService, Document, DocumentType } from '@shared/services/document.service';
@@ -36,6 +37,7 @@ import { ToastService } from '@shared/services/toast.service';
     ZardTabGroupComponent,
     ZardTabComponent,
     ZardCardComponent,
+    ZardPdfViewerComponent,
     TranslateModule,
     FormsModule,
   ],
@@ -67,6 +69,11 @@ export class DocumentListComponent implements OnInit, OnDestroy {
   // Template data
   readonly templates = signal<Document[]>([]);
   readonly isLoadingTemplates = signal(false);
+
+  // PDF Viewer state
+  readonly showPdfViewer = signal(false);
+  readonly pdfViewerUrl = signal<string>('');
+  readonly pdfViewerName = signal<string>('');
 
   readonly hasData = computed(() => {
     const docs = this.documents();
@@ -365,8 +372,88 @@ export class DocumentListComponent implements OnInit, OnDestroy {
   }
 
   onShowExample(template: Document): void {
-    // Generate PDF preview for template
-    this.onGeneratePdf(template);
+    if (!template.id) {
+      this.toastService.error('Template ID is missing');
+      return;
+    }
+
+    this.isGeneratingPdf.set(true);
+    
+    // Call backend to get processed PDFMake JSON with placeholders replaced
+    this.documentService.getTemplateExamples(template.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: async (pdfMakeData) => {
+          try {
+            // Log the received data for debugging
+            console.log('Received PDFMake data:', pdfMakeData);
+            console.log('Type:', typeof pdfMakeData);
+            
+            // Extract the actual data from the response object if needed
+            let dataToProcess: any = pdfMakeData;
+            
+            // Check if the response is wrapped in an object with a 'data' property
+            if (typeof pdfMakeData === 'object' && pdfMakeData !== null && 'data' in pdfMakeData) {
+              dataToProcess = (pdfMakeData as any).data;
+              console.log('Extracted data from response object:', dataToProcess);
+            }
+            
+            // Handle the data - it might be a JSON string that needs parsing
+            let pdfMakeJson: any;
+            
+            if (typeof dataToProcess === 'string') {
+              // If it's a string, try to parse it as JSON
+              try {
+                pdfMakeJson = JSON.parse(dataToProcess);
+                console.log('Parsed JSON successfully:', pdfMakeJson);
+              } catch (parseError) {
+                console.error('Failed to parse JSON string:', parseError);
+                console.error('JSON string content:', dataToProcess);
+                throw new Error('Invalid JSON format in response');
+              }
+            } else if (typeof dataToProcess === 'object' && dataToProcess !== null) {
+              // If it's already an object, use it directly
+              pdfMakeJson = dataToProcess;
+            } else {
+              throw new Error('Invalid PDFMake data format');
+            }
+            
+            // Validate that we have valid PDFMake content
+            if (!pdfMakeJson || (!pdfMakeJson.content && !pdfMakeJson.text)) {
+              console.error('Invalid PDFMake structure:', pdfMakeJson);
+              throw new Error('PDFMake data is missing required content property');
+            }
+            
+            // Convert PDFMake JSON to PDF data URL
+            const pdfResult = await this.pdfGenerationService.generatePdfFromJson(pdfMakeJson);
+            
+            // Show PDF in viewer
+            this.pdfViewerUrl.set(pdfResult.dataUrl);
+            this.pdfViewerName.set(template.name || 'Document Example');
+            this.showPdfViewer.set(true);
+            this.isGeneratingPdf.set(false);
+            this.cdr.markForCheck();
+          } catch (error: any) {
+            console.error('Error generating PDF from template:', error);
+            const errorMessage = error?.message || 'Failed to generate PDF from template';
+            this.toastService.error(errorMessage);
+            this.isGeneratingPdf.set(false);
+            this.cdr.markForCheck();
+          }
+        },
+        error: (error) => {
+          console.error('Error fetching template examples:', error);
+          this.toastService.error('Failed to load template example');
+          this.isGeneratingPdf.set(false);
+          this.cdr.markForCheck();
+        }
+      });
+  }
+
+  closePdfViewer(): void {
+    this.showPdfViewer.set(false);
+    this.pdfViewerUrl.set('');
+    this.pdfViewerName.set('');
   }
 }
 

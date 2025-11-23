@@ -210,5 +210,13 @@
       </z-tab-group>
     </div>
   </div>
+
+  <!-- PDF Viewer Modal -->
+  <z-pdf-viewer
+    [isOpen]="showPdfViewer()"
+    [pdfUrl]="pdfViewerUrl()"
+    [pdfName]="pdfViewerName()"
+    (close)="closePdfViewer()"
+  />
 </z-page>
 

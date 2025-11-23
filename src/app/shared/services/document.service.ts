@@ -133,5 +133,15 @@ export class DocumentService {
   delete(id: string): Observable<void> {
     return this.apiService.delete<void>(`Document/${id}`);
   }
+
+  /**
+   * Get processed PDFMake data with placeholders replaced from example data
+   * POST api/Document/{id}/template-examples
+   * @param id Document ID
+   * @returns Observable of processed PDFMake JSON object (uses document's Example property)
+   */
+  getTemplateExamples(id: string): Observable<any> {
+    return this.apiService.post<any>(`Document/${id}/template-examples`, null);
+  }
 }
 

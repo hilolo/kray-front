@@ -1,9 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using AutoMapper;
 using ImmoGest.Application.DTOs;
 using ImmoGest.Application.Filters;
 using ImmoGest.Application.Interfaces;
+using ImmoGest.Domain;
 using ImmoGest.Domain.Entities;
 using ImmoGest.Domain.Repositories;
 using ImmoGest.Domain.Auth.Interfaces;
@@ -87,6 +89,59 @@ namespace ImmoGest.Application.Services
             }
             return base.InPagedResult_BeforeListRetrievalAsync(filterOption);
         }
+
+        public async Task<Result<object>> GetProcessedPdfMakeAsync(Guid id, Dictionary<string, string> exampleData = null)
+        {
+            try
+            {
+                // Get the document
+                var documentResult = await _documentRepository.GetByIdAsync(id);
+                if (documentResult == null || documentResult.Data == null)
+                {
+                    return Result.Failure<object>().WithCode(MessageCode.NotFound);
+                }
+
+                var document = documentResult.Data;
+
+                // Use provided example data or document's example data
+                var dataToUse = exampleData ?? document.Example ?? new Dictionary<string, string>();
+
+                // Check if Pdfmake exists
+                if (string.IsNullOrWhiteSpace(document.Pdfmake))
+                {
+                    return Result.Failure<object>().WithMessage("Document does not have PDFMake data");
+                }
+
+                // Treat content as text and replace placeholders
+                var processedText = ReplacePlaceholdersInText(document.Pdfmake, dataToUse);
+                return Result.Success(processedText);
+            }
+            catch (Exception ex)
+            {
+                return Result.Failure<object>().WithMessage($"Error processing PDFMake data: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Replaces placeholders in text format #PropertyName# with values from the dictionary
+        /// </summary>
+        private string ReplacePlaceholdersInText(string text, Dictionary<string, string> replacementData)
+        {
+            if (string.IsNullOrEmpty(text))
+                return text;
+
+            var result = text;
+            foreach (var kvp in replacementData)
+            {
+                var placeholder = $"#{kvp.Key}#";
+                if (result.Contains(placeholder))
+                {
+                    result = result.Replace(placeholder, kvp.Value ?? string.Empty);
+                }
+            }
+            return result;
+        }
+
     }
 }
 

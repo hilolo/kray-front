@@ -571,11 +571,22 @@ export class PdfGenerationService {
 
   /**
    * Generates PDF from PDFMake JSON definition
+   * @param jsonOrObject Can be a JSON string or already parsed PDFMake document definition object
    */
-  async generatePdfFromJson(jsonString: string): Promise<PdfGenerationResult> {
+  async generatePdfFromJson(jsonOrObject: string | any): Promise<PdfGenerationResult> {
     return new Promise((resolve, reject) => {
       try {
-        const docDefinition = JSON.parse(jsonString);
+        let docDefinition: any;
+        
+        // Handle both string and object inputs
+        if (typeof jsonOrObject === 'string') {
+          docDefinition = JSON.parse(jsonOrObject);
+        } else if (typeof jsonOrObject === 'object' && jsonOrObject !== null) {
+          docDefinition = jsonOrObject;
+        } else {
+          reject(new Error('Invalid input: expected JSON string or object'));
+          return;
+        }
         
         // Store the JSON
         const pdfMakeJson = JSON.stringify(docDefinition, null, 2);

@@ -93,7 +93,19 @@ namespace ImmoGest.Infrastructure.Configuration
                     CompanyId = null,
                     IsDeleted = false,
                     CreatedOn = now,
-                    LastModifiedOn = now
+                    LastModifiedOn = now,
+                    Example = new Dictionary<string, string>
+                    {
+                        { "companyWebsite", "https://www.kray.ma" },
+                        { "PropertyOwnerName", "Mehdi" },
+                        { "TenantName", "Ahmed" },
+                        { "TenantRefrence", "K555555" },
+                        { "PropertyAdresse", "Souani 4 Imb A51 N 51" },
+                        { "PropertyRefrence", "ALL51595" },
+                        { "TransactionTotalPrice", "2500" },
+                        { "TransactionDate", "10/10/2025" },
+                        { "TransactionDateMonhYear", "Janvier 2025" }
+                    }
                 },
                 new Document
                 {
