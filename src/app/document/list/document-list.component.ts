@@ -173,7 +173,8 @@ export class DocumentListComponent implements OnInit, OnDestroy {
       page: this.currentPage(),
       pageSize: this.pageSize(),
       search: this.searchQuery() || undefined,
-      generate: true, // Only show actual documents (not templates)
+      // Show actual documents (exclude locked templates)
+      isLocked: false,
     };
 
     this.documentService.list(request)
@@ -339,7 +340,8 @@ export class DocumentListComponent implements OnInit, OnDestroy {
     const request = {
       page: 1,
       pageSize: 1000, // Get all templates
-      generate: false, // Only show templates
+      isLocked: true, // Only show locked documents (templates)
+      // Explicitly don't include companyId to return all templates without company filter
     };
 
     this.documentService.list(request)

@@ -36,6 +36,7 @@ export interface DocumentListRequest {
   generate?: boolean;
   isLogo?: boolean;
   isCachet?: boolean;
+  isLocked?: boolean;
   leaseeId?: string;
   transactionId?: string;
 }

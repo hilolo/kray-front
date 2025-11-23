@@ -207,23 +207,13 @@
                           <z-button
                             zType="default"
                             zSize="sm"
-                            (click)="onEditTemplate(template)"
-                            [attr.aria-label]="'Edit template'"
-                            class="flex-1"
-                          >
-                            <z-icon zType="pencil" zSize="sm" />
-                            <span class="hidden sm:inline">Edit</span>
-                          </z-button>
-                          <z-button
-                            zType="default"
-                            zSize="sm"
                             (click)="onShowExample(template)"
                             [disabled]="isGeneratingPdf()"
                             [attr.aria-label]="'Generate PDF'"
-                            class="flex-1"
+                            class="w-full"
                           >
                             <z-icon zType="file-text" zSize="sm" />
-                            <span class="hidden sm:inline">PDF</span>
+                            <span class="hidden sm:inline">PDF Example</span>
                           </z-button>
                         </div>
                       </div>

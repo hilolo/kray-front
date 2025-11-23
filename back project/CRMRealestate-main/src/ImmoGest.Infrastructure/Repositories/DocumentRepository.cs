@@ -111,6 +111,12 @@ namespace ImmoGest.Infrastructure.Repositories
                     query = query.Where(d => d.IsCachet == filter.IsCachet.Value);
                 }
 
+                // Filter by IsLocked
+                if (filter.IsLocked.HasValue)
+                {
+                    query = query.Where(d => d.IsLocked == filter.IsLocked.Value);
+                }
+
                 // Filter by LeaseeId
                 if (filter.LeaseeId.HasValue)
                 {

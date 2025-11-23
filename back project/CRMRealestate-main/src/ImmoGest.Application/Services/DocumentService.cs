@@ -73,7 +73,18 @@ namespace ImmoGest.Application.Services
 
         protected override Task InPagedResult_BeforeListRetrievalAsync<IFilter>(IFilter filterOption)
         {
-            filterOption.CompanyId = _session.CompanyId;
+            // For template tab (IsLocked: true), return all templates without companyId filter
+            // For other queries, apply companyId filter as usual
+            if (filterOption is GetDocumentsFilter filter && filter.IsLocked.HasValue && filter.IsLocked.Value == true)
+            {
+                // Don't set CompanyId - return all templates regardless of company
+                filterOption.CompanyId = null;
+            }
+            else
+            {
+                // Set CompanyId from session for regular queries (documents)
+                filterOption.CompanyId = _session.CompanyId;
+            }
             return base.InPagedResult_BeforeListRetrievalAsync(filterOption);
         }
     }
