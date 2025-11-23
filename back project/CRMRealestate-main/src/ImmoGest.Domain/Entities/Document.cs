@@ -39,11 +39,7 @@ namespace ImmoGest.Domain.Entities
         public Guid? LeaseeId { get; set; }
         public Lease Leasee { get; set; }
 
-        public Guid? TransactionId { get; set; }
-        public Transaction Transaction { get; set; }
-
-        [Required]
-        public Guid CompanyId { get; set; }
+        public Guid? CompanyId { get; set; }
         public Company Company { get; set; }
 
         public bool IsDeleted { get; set; }

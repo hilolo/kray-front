@@ -17,8 +17,7 @@ namespace ImmoGest.Application.DTOs
         public string Pdfmake { get; set; }
         public Dictionary<string, string> Example { get; set; }
         public Guid? LeaseeId { get; set; }
-        public Guid? TransactionId { get; set; }
-        public Guid CompanyId { get; set; }
+        public Guid? CompanyId { get; set; }
         public DateTimeOffset CreatedOn { get; set; }
         public DateTimeOffset? LastModifiedOn { get; set; }
     }

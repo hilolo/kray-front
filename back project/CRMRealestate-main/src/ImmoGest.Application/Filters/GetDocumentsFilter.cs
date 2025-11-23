@@ -12,7 +12,6 @@ namespace ImmoGest.Application.Filters
         public bool? IsLogo { get; set; }
         public bool? IsCachet { get; set; }
         public Guid? LeaseeId { get; set; }
-        public Guid? TransactionId { get; set; }
     }
 }
 

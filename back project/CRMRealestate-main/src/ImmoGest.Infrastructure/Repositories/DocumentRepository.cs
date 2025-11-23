@@ -117,12 +117,6 @@ namespace ImmoGest.Infrastructure.Repositories
                     query = query.Where(d => d.LeaseeId == filter.LeaseeId.Value);
                 }
 
-                // Filter by TransactionId
-                if (filter.TransactionId.HasValue)
-                {
-                    query = query.Where(d => d.TransactionId == filter.TransactionId.Value);
-                }
-
                 // Note: Deleted documents are automatically filtered by global query filter
             }
 

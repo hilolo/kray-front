@@ -678,7 +678,6 @@ namespace ImmoGest.Application.MappingProfiles
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
                 .ForMember(dest => dest.Company, opt => opt.Ignore())
                 .ForMember(dest => dest.Leasee, opt => opt.Ignore())
-                .ForMember(dest => dest.Transaction, opt => opt.Ignore())
                 .ForMember(dest => dest.IsDeleted, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedOn, opt => opt.Ignore())
                 .ForMember(dest => dest.LastModifiedOn, opt => opt.Ignore())
@@ -687,7 +686,6 @@ namespace ImmoGest.Application.MappingProfiles
             CreateMap<UpdateDocumentDto, Document>()
                 .ForMember(dest => dest.Company, opt => opt.Ignore())
                 .ForMember(dest => dest.Leasee, opt => opt.Ignore())
-                .ForMember(dest => dest.Transaction, opt => opt.Ignore())
                 .ForMember(dest => dest.IsDeleted, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedOn, opt => opt.Ignore())
                 .ForMember(dest => dest.LastModifiedOn, opt => opt.Ignore())
@@ -700,7 +698,7 @@ namespace ImmoGest.Application.MappingProfiles
                         return srcMember != null && !srcMember.Equals(Guid.Empty);
                     
                     // For nullable Guid properties, allow null
-                    if (propertyName == "LeaseeId" || propertyName == "TransactionId")
+                    if (propertyName == "LeaseeId")
                         return true; // Always map, including null
                     
                     // Skip null values for other properties (partial update)

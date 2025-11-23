@@ -34,10 +34,7 @@ namespace ImmoGest.Application.DTOs
 
         public Guid? LeaseeId { get; set; }
 
-        public Guid? TransactionId { get; set; }
-
-        [Required]
-        public Guid CompanyId { get; set; }
+        public Guid? CompanyId { get; set; }
     }
 }
 

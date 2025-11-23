@@ -1,7 +1,9 @@
 using ImmoGest.Domain.Entities;
+using ImmoGest.Domain.Entities.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using System;
 using System.Collections.Generic;
 using System.Text.Json;
 
@@ -57,17 +59,14 @@ namespace ImmoGest.Infrastructure.Configuration
             builder.Property(d => d.LeaseeId)
                 .IsRequired(false);
 
-            builder.Property(d => d.TransactionId)
-                .IsRequired(false);
-
             builder.Property(d => d.CompanyId)
-                .IsRequired();
+                .IsRequired(false);
 
             builder.Property(d => d.IsDeleted)
                 .IsRequired()
                 .HasDefaultValue(false);
 
-            // Configure relationship with Company
+            // Configure relationship with Company (optional)
             builder.HasOne(d => d.Company)
                 .WithMany()
                 .HasForeignKey(d => d.CompanyId)
@@ -79,11 +78,80 @@ namespace ImmoGest.Infrastructure.Configuration
                 .HasForeignKey(d => d.LeaseeId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Configure relationship with Transaction (optional)
-            builder.HasOne(d => d.Transaction)
-                .WithMany()
-                .HasForeignKey(d => d.TransactionId)
-                .OnDelete(DeleteBehavior.Restrict);
+            // Seed default documents for each DocumentType
+            var now = DateTimeOffset.UtcNow;
+            builder.HasData(
+                new Document
+                {
+                    Id = new Guid("a1b2c3d4-e5f6-4789-a012-345678901234"),
+                    Name = "Reservation Agreement",
+                    Type = DocumentType.ReservationAgreement,
+                    Generate = false,
+                    IsLogo = false,
+                    IsCachet = false,
+                    IsLocked = true,
+                    CompanyId = null,
+                    IsDeleted = false,
+                    CreatedOn = now,
+                    LastModifiedOn = now
+                },
+                new Document
+                {
+                    Id = new Guid("b2c3d4e5-f6a7-4890-b123-456789012345"),
+                    Name = "Lease",
+                    Type = DocumentType.Lease,
+                    Generate = false,
+                    IsLogo = false,
+                    IsCachet = false,
+                    IsLocked = true,
+                    CompanyId = null,
+                    IsDeleted = false,
+                    CreatedOn = now,
+                    LastModifiedOn = now
+                },
+                new Document
+                {
+                    Id = new Guid("c3d4e5f6-a7b8-4901-c234-567890123456"),
+                    Name = "Reservation Full",
+                    Type = DocumentType.ReservationFull,
+                    Generate = false,
+                    IsLogo = false,
+                    IsCachet = false,
+                    IsLocked = true,
+                    CompanyId = null,
+                    IsDeleted = false,
+                    CreatedOn = now,
+                    LastModifiedOn = now
+                },
+                new Document
+                {
+                    Id = new Guid("d4e5f6a7-b8c9-4012-d345-678901234567"),
+                    Name = "Reservation Part",
+                    Type = DocumentType.ReservationPart,
+                    Generate = false,
+                    IsLogo = false,
+                    IsCachet = false,
+                    IsLocked = true,
+                    CompanyId = null,
+                    IsDeleted = false,
+                    CreatedOn = now,
+                    LastModifiedOn = now
+                },
+                new Document
+                {
+                    Id = new Guid("e5f6a7b8-c9d0-4123-e456-789012345678"),
+                    Name = "Fees",
+                    Type = DocumentType.Fees,
+                    Generate = false,
+                    IsLogo = false,
+                    IsCachet = false,
+                    IsLocked = true,
+                    CompanyId = null,
+                    IsDeleted = false,
+                    CreatedOn = now,
+                    LastModifiedOn = now
+                }
+            );
         }
     }
 }
