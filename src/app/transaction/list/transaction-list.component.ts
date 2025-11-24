@@ -915,11 +915,77 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
   }
 
   /**
-   * Generate deposit receipt (placeholder for future implementation)
+   * Generate and display deposit receipt for a transaction
+   * Only available for Paid Caution transactions
    */
   onGenerateDepositReceipt(transaction: Transaction): void {
-    // TODO: Implement deposit receipt generation
-    this.toastService.info('Deposit receipt generation coming soon');
+    if (this.isGeneratingReceipt()) {
+      return;
+    }
+
+    // Validate transaction type and status
+    const transactionType = transaction.type ?? transaction.category;
+    if (transactionType !== TransactionType.Revenue || 
+        transaction.revenueType !== RevenueType.Caution ||
+        transaction.status !== TransactionStatus.Paid) {
+      this.toastService.error('Receipt can only be generated for paid deposit (Caution) transactions');
+      return;
+    }
+
+    this.isGeneratingReceipt.set(true);
+    this.cdr.markForCheck();
+
+    this.transactionService.generateDepositReceipt(transaction.id).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: async (pdfMakeData) => {
+        try {
+          // Handle response format (may be wrapped in data property)
+          let dataToProcess: any = pdfMakeData;
+          if (typeof pdfMakeData === 'object' && pdfMakeData !== null && 'data' in pdfMakeData) {
+            dataToProcess = (pdfMakeData as any).data;
+          }
+
+          // Parse PDFMake JSON if needed
+          let pdfMakeJson: any;
+          if (typeof dataToProcess === 'string') {
+            pdfMakeJson = JSON.parse(dataToProcess);
+          } else if (typeof dataToProcess === 'object' && dataToProcess !== null) {
+            pdfMakeJson = dataToProcess;
+          } else {
+            throw new Error('Invalid PDFMake data format');
+          }
+
+          // Validate PDFMake structure
+          if (!pdfMakeJson || (!pdfMakeJson.content && !pdfMakeJson.text)) {
+            throw new Error('PDFMake data is missing required content property');
+          }
+
+          // Convert PDFMake JSON to PDF data URL
+          const pdfResult = await this.pdfGenerationService.generatePdfFromJson(pdfMakeJson);
+
+          // Show PDF in viewer
+          this.pdfViewerUrl.set(pdfResult.dataUrl);
+          this.pdfViewerName.set(`Deposit Receipt - ${transaction.propertyIdentifier || transaction.propertyName || 'Transaction'} - ${this.formatDate(transaction)}`);
+          this.showPdfViewer.set(true);
+          this.isGeneratingReceipt.set(false);
+          this.cdr.markForCheck();
+        } catch (error: any) {
+          console.error('Error generating deposit receipt:', error);
+          const errorMessage = error?.message || 'Failed to generate deposit receipt';
+          this.toastService.error(errorMessage);
+          this.isGeneratingReceipt.set(false);
+          this.cdr.markForCheck();
+        }
+      },
+      error: (error) => {
+        console.error('Error fetching deposit receipt:', error);
+        const errorMessage = error?.error?.message || error?.message || 'Failed to generate deposit receipt';
+        this.toastService.error(errorMessage);
+        this.isGeneratingReceipt.set(false);
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   /**

@@ -27,6 +27,14 @@ namespace ImmoGest.Application.Interfaces
         /// <param name="transactionId">Transaction ID</param>
         /// <returns>Processed PDFMake JSON object with placeholders replaced with transaction data</returns>
         Task<Result<object>> GenerateLeasingReceiptAsync(Guid transactionId);
+
+        /// <summary>
+        /// Generate deposit receipt PDF for a transaction with RevenueType = Caution
+        /// Uses document template with Type = Deposit (6), IsLocked = true, CompanyId = null
+        /// </summary>
+        /// <param name="transactionId">Transaction ID</param>
+        /// <returns>Processed PDFMake JSON object with placeholders replaced with transaction data</returns>
+        Task<Result<object>> GenerateDepositReceiptAsync(Guid transactionId);
     }
 }
 

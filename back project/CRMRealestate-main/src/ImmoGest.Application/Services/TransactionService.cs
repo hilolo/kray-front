@@ -895,6 +895,95 @@ namespace ImmoGest.Application.Services
         }
 
         /// <summary>
+        /// Generate deposit receipt PDF for a transaction with RevenueType = Caution
+        /// Uses document template with Type = Deposit (6), IsLocked = true, CompanyId = null
+        /// </summary>
+        /// <param name="transactionId">Transaction ID</param>
+        /// <returns>Processed PDFMake JSON object with placeholders replaced with transaction data</returns>
+        public async Task<Result<object>> GenerateDepositReceiptAsync(Guid transactionId)
+        {
+            try
+            {
+                // Get transaction
+                var transactionResult = await _transactionRepository.GetByIdAsync(transactionId);
+                if (!transactionResult.IsSuccess() || transactionResult.Data == null)
+                {
+                    return Result.Failure<object>().WithMessage("Transaction not found");
+                }
+
+                var transaction = transactionResult.Data;
+
+                // Check if user has access to this transaction's company
+                if (transaction.CompanyId != _session.CompanyId)
+                {
+                    return Result.Failure<object>().WithMessage("Access denied");
+                }
+
+                // Check if transaction is of type Caution (RevenueType = 1)
+                if (transaction.Category != TransactionCategory.Revenue || transaction.RevenueType != RevenueType.Caution)
+                {
+                    return Result.Failure<object>().WithMessage("Transaction must be of type Caution (deposit) to generate deposit receipt");
+                }
+
+                // Find document template with Type = Deposit (6), IsLocked = true, CompanyId = null
+                // Use repository GetAllFilter to query templates
+                var documentFilter = new GetDocumentsFilter
+                {
+                    Type = DocumentType.Deposit,
+                    IsLocked = true,
+                    CompanyId = null, // Templates don't have company ID
+                    Ignore = true // Ignore pagination to get all templates
+                };
+
+                // Get queryable from repository
+                var templateQueryResult = _documentRepository.GetAllFilter(documentFilter);
+                if (!templateQueryResult.IsSuccess())
+                {
+                    return Result.Failure<object>().WithMessage("Error querying deposit receipt templates");
+                }
+
+                // Filter for CompanyId == null and execute query  
+                var templates = templateQueryResult.Data
+                    .Where(d => d.CompanyId == null)
+                    .ToList();
+                
+                if (templates == null || templates.Count == 0)
+                {
+                    return Result.Failure<object>().WithMessage("Deposit receipt template not found. Please create a document template with Type = Deposit and IsLocked = true");
+                }
+
+                // Get first template (there should typically be only one template)
+                var template = templates.FirstOrDefault();
+                if (template == null || string.IsNullOrWhiteSpace(template.Pdfmake))
+                {
+                    return Result.Failure<object>().WithMessage("Deposit receipt template does not have PDFMake data");
+                }
+
+                // Get company website from Company entity using session CompanyId
+                string companyWebsite = "";
+                if (_session.CompanyId != Guid.Empty)
+                {
+                    var companyResult = await _companyRepository.GetByIdAsync(_session.CompanyId);
+                    if (companyResult.Data != null)
+                    {
+                        companyWebsite = companyResult.Data.Website ?? "";
+                    }
+                }
+
+                // Map transaction data to placeholder dictionary
+                // Transaction already includes Property with Contact (owner) and Lease with Contact (tenant) from GetByIdAsync
+                var placeholderData = MapTransactionToPlaceholders(transaction, companyWebsite);
+
+                // Get processed PDFMake with placeholders replaced
+                return await _documentService.GetProcessedPdfMakeAsync(template.Id, placeholderData);
+            }
+            catch (Exception ex)
+            {
+                return Result.Failure<object>().WithMessage($"Error generating deposit receipt: {ex.Message}");
+            }
+        }
+
+        /// <summary>
         /// Format amount with currency symbol (can be customized)
         /// </summary>
         private string FormatAmount(decimal amount)

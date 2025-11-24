@@ -88,5 +88,15 @@ export class TransactionService {
   generateLeasingReceipt(id: string): Observable<any> {
     return this.apiService.post<any>(`Transaction/${id}/leasingreceipt`, {});
   }
+
+  /**
+   * Generate deposit receipt PDF for a transaction with RevenueType = Caution
+   * POST api/Transaction/{id}/depositreceipt
+   * @param id Transaction ID
+   * @returns Observable of processed PDFMake JSON object with placeholders replaced
+   */
+  generateDepositReceipt(id: string): Observable<any> {
+    return this.apiService.post<any>(`Transaction/${id}/depositreceipt`, {});
+  }
 }
 
