@@ -34,7 +34,30 @@ To build the project run:
 ng build
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+Or for explicit production build:
+
+```bash
+npm run build
+```
+
+This will compile your project and store the build artifacts in the `dist/admintemmplate/browser/` directory. By default, the production build optimizes your application for performance and speed.
+
+## Deployment to Coolify (Static Site)
+
+For deploying to Coolify as a static site:
+
+1. **Build Command**: `npm run build` (or `ng build --configuration production`)
+2. **Publish Directory**: `dist/admintemmplate/browser`
+3. **Static Site**: ✅ Check "Is it a static site?" checkbox
+4. **Start Command**: Leave empty (Coolify will use Nginx to serve the static files)
+5. **Port**: Not needed for static sites
+
+**Important**: The build output is in `dist/admintemmplate/browser/`, not `dist/admintemmplate/`. Make sure to set the correct publish directory in Coolify.
+
+This configuration allows Coolify to:
+- Build the Angular app using the production configuration
+- Serve the static files using Nginx (high-performance, no Node server needed)
+- Handle routing correctly for Angular's client-side routing
 
 ## Running unit tests
 
