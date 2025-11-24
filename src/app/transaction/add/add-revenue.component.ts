@@ -543,17 +543,13 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
       // Pre-fill lease after leases are loaded
       if (queryParams['leaseId']) {
         console.log('[AddRevenue] Will set leaseId after leases load:', queryParams['leaseId']);
-        // Wait for leases to load, then set leaseId
+        // Wait for leases to load, then set leaseId using updateLeaseId to trigger auto-fill logic
         const checkLeases = setInterval(() => {
           if (this.leases().length > 0 && !this.isLoadingLeases()) {
             clearInterval(checkLeases);
-            console.log('[AddRevenue] Leases loaded, setting leaseId:', queryParams['leaseId']);
-            this.formData.update(data => ({
-              ...data,
-              leaseId: queryParams['leaseId'],
-            }));
-            console.log('[AddRevenue] LeaseId set:', this.formData().leaseId);
-            this.cdr.markForCheck();
+            console.log('[AddRevenue] Leases loaded, setting leaseId via updateLeaseId:', queryParams['leaseId']);
+            // Use updateLeaseId to trigger auto-fill of contact and payment amount
+            this.updateLeaseId(queryParams['leaseId']);
           }
         }, 100);
 
@@ -563,12 +559,15 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
         }, 3000);
       }
     } else if (queryParams['leaseId']) {
-      // If no propertyId, set leaseId immediately
+      // If no propertyId, we still need to load leases to get the lease data
+      // For now, just set the leaseId - the payment amount will be set when lease is selected via updateLeaseId
       console.log('[AddRevenue] Setting leaseId (no property):', queryParams['leaseId']);
       this.formData.update(data => ({
         ...data,
         leaseId: queryParams['leaseId'],
       }));
+      // Load leases to enable updateLeaseId to work properly
+      this.loadLeases();
     }
 
     // Pre-fill deposit price if provided
@@ -817,14 +816,43 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
     // Auto-fill contact from lease for Loyer, Caution, FraisAgence
     if (value && this.isPropertyAndLeaseRequired()) {
       const lease = this.leases().find(l => l.id === value);
-      if (lease && lease.contactId) {
-        this.formData.update(data => ({
-          ...data,
-          leaseId: value,
-          contactId: lease.contactId,
-          isOtherContact: false,
-          otherContactName: ''
-        }));
+      if (lease) {
+        // Update form data with lease ID and contact
+        if (lease.contactId) {
+          this.formData.update(data => ({
+            ...data,
+            leaseId: value,
+            contactId: lease.contactId,
+            isOtherContact: false,
+            otherContactName: ''
+          }));
+        } else {
+          this.formData.update(data => ({ ...data, leaseId: value || '' }));
+        }
+
+        // Auto-fill payment amount with lease rentPrice
+        if (lease.rentPrice && lease.rentPrice > 0) {
+          const currentPayments = this.payments();
+          if (currentPayments.length > 0) {
+            // Update first payment amount if it's 0 or empty, otherwise keep existing
+            const firstPayment = currentPayments[0];
+            if (firstPayment.amount === 0 || firstPayment.amount === null || firstPayment.amount === undefined) {
+              this.payments.update(payments => {
+                const newPayments = [...payments];
+                newPayments[0] = {
+                  ...newPayments[0],
+                  amount: lease.rentPrice
+                };
+                return newPayments;
+              });
+            }
+          } else {
+            // Create a new payment with the lease rentPrice
+            this.payments.set([
+              { amount: lease.rentPrice, vatPercent: 0, description: '' }
+            ]);
+          }
+        }
       } else {
         this.formData.update(data => ({ ...data, leaseId: value || '' }));
       }
