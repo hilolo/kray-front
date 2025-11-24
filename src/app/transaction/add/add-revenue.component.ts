@@ -2,7 +2,8 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, Elemen
 import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject, takeUntil, forkJoin } from 'rxjs';
+import { Subject, takeUntil, forkJoin, Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { ZardPageComponent } from '../../page/page.component';
 import { ZardButtonComponent } from '@shared/components/button/button.component';
 import { ZardInputDirective } from '@shared/components/input/input.directive';
@@ -35,6 +36,7 @@ import { PropertyCategory } from '@shared/models/property/property.model';
 import type { Lease } from '@shared/models/lease/lease.model';
 import type { Contact } from '@shared/models/contact/contact.model';
 import { ContactType } from '@shared/models/contact/contact.model';
+import type { ContactListResponse } from '@shared/models/contact/contact-list-response.model';
 
 interface UploadedFile {
   id: string;
@@ -173,10 +175,10 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
     return type === RevenueType.ReservationFull || type === RevenueType.ReservationPart;
   });
 
-  // Check if property should be filtered by Location category (for Loyer, Caution, FraisAgence)
+  // Check if property should be filtered by Location category (for Loyer, Caution only - not FraisAgence)
   readonly shouldFilterByLocationCategory = computed(() => {
     const type = this.formData().revenueType;
-    return type === RevenueType.Loyer || type === RevenueType.Caution || type === RevenueType.FraisAgence;
+    return type === RevenueType.Loyer || type === RevenueType.Caution;
   });
 
   // Check if property should be filtered by LocationVacances category (for Reservation types)
@@ -190,18 +192,19 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
     return this.isReservationType() || type === RevenueType.Maintenance || type === RevenueType.Autre;
   });
 
-  // Check if property select should be hidden (never hide for reservation types - property should be visible)
+  // Check if property select should be hidden (hide for FraisAgence type)
   readonly shouldHidePropertySelect = computed(() => {
-    return false; // Always show property field
+    const type = this.formData().revenueType;
+    return type === RevenueType.FraisAgence;
   });
 
-  // Check if property and lease are required (for Loyer, Caution, FraisAgence)
+  // Check if property and lease are required (for Loyer, Caution only - not FraisAgence)
   readonly isPropertyAndLeaseRequired = computed(() => {
     const type = this.formData().revenueType;
-    return type === RevenueType.Loyer || type === RevenueType.Caution || type === RevenueType.FraisAgence;
+    return type === RevenueType.Loyer || type === RevenueType.Caution;
   });
 
-  // Check if property is required (for reservation types and Loyer, Caution, FraisAgence)
+  // Check if property is required (for reservation types and Loyer, Caution - not FraisAgence)
   readonly isPropertyRequired = computed(() => {
     const type = this.formData().revenueType;
     return this.isPropertyAndLeaseRequired() || this.isReservationType();
@@ -392,7 +395,7 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
       isArchived: false,
     };
 
-    // Filter by Location category for Loyer, Caution, and FraisAgence
+    // Filter by Location category for Loyer, Caution (not FraisAgence - property is hidden)
     if (this.shouldFilterByLocationCategory()) {
       propertiesRequest.category = PropertyCategory.Location;
     }
@@ -401,7 +404,16 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
       propertiesRequest.category = PropertyCategory.LocationVacances;
     }
 
-    const contactsRequest = {
+    // Load both Owner and Tenant contacts
+    const ownerRequest = {
+      currentPage: 1,
+      pageSize: 10000,
+      ignore: true,
+      type: ContactType.Owner,
+      isArchived: false,
+    };
+
+    const tenantRequest = {
       currentPage: 1,
       pageSize: 10000,
       ignore: true,
@@ -411,11 +423,13 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
 
     forkJoin({
       properties: this.propertyService.list(propertiesRequest),
-      contacts: this.contactService.list(contactsRequest),
+      owners: this.contactService.list(ownerRequest),
+      tenants: this.contactService.list(tenantRequest),
     }).pipe(takeUntil(this.destroy$)).subscribe({
-      next: ({ properties, contacts }) => {
+      next: ({ properties, owners, tenants }) => {
         console.log('[AddRevenue] Properties loaded:', properties.result.length);
-        console.log('[AddRevenue] Contacts loaded:', contacts.result.length);
+        console.log('[AddRevenue] Owners loaded:', owners.result.length);
+        console.log('[AddRevenue] Tenants loaded:', tenants.result.length);
 
         // Set properties
         this.properties.set(properties.result);
@@ -432,10 +446,11 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
         this.propertyOptions.set(propertyOptions);
         this.isLoadingProperties.set(false);
 
-        // Filter contacts by companyId if available
+        // Combine owners and tenants, then filter by companyId if available
+        const allContacts = [...(owners.result || []), ...(tenants.result || [])];
         const filteredContacts = companyId
-          ? (contacts.result || []).filter(contact => contact.companyId === companyId)
-          : (contacts.result || []);
+          ? allContacts.filter(contact => contact.companyId === companyId)
+          : allContacts;
 
         this.contacts.set(filteredContacts);
         const contactOptions: ZardComboboxOption[] = filteredContacts.map((contact) => {
@@ -623,7 +638,7 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
       isArchived: false,
     };
 
-    // Filter by Location category for Loyer, Caution, and FraisAgence
+    // Filter by Location category for Loyer, Caution (not FraisAgence - property is hidden)
     if (this.shouldFilterByLocationCategory()) {
       request.category = PropertyCategory.Location;
     }
@@ -703,47 +718,110 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
   loadContacts(type?: ContactType): void {
     this.isLoadingContacts.set(true);
 
-    const request: any = {
-      currentPage: 1,
-      pageSize: 1000,
-      ignore: true,
-      isArchived: false,
-    };
-
+    // If specific type is provided (e.g., Service for Maintenance), use it
+    // Otherwise, load both Owner and Tenant
     if (type !== undefined) {
-      request.type = type;
-    }
+      const request: any = {
+        currentPage: 1,
+        pageSize: 1000,
+        ignore: true,
+        type: type,
+        isArchived: false,
+      };
 
-    setTimeout(() => {
-      this.contactService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
-        next: (response) => {
-          this.contacts.set(response.result);
-          const options: ZardComboboxOption[] = response.result.map((contact) => {
-            let name = '';
-            if (contact.isACompany) {
-              name = contact.companyName || '';
-            } else {
-              name = `${contact.firstName || ''} ${contact.lastName || ''}`.trim();
-            }
-            const parts: string[] = [];
-            if (name) parts.push(name);
-            if (contact.identifier) parts.push(contact.identifier);
-            return {
-              value: contact.id,
-              label: parts.join(' - '),
-            };
-          });
-          this.contactOptions.set(options);
-          this.isLoadingContacts.set(false);
-          this.cdr.markForCheck();
-        },
-        error: (error) => {
-          console.error('Error loading contacts:', error);
-          this.isLoadingContacts.set(false);
-          this.cdr.markForCheck();
-        },
-      });
-    }, 0);
+      setTimeout(() => {
+        this.contactService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
+          next: (response) => {
+            const companyId = this.userService.getCurrentUser()?.companyId;
+            const filteredContacts = companyId
+              ? (response.result || []).filter(contact => contact.companyId === companyId)
+              : (response.result || []);
+
+            this.contacts.set(filteredContacts);
+            const options: ZardComboboxOption[] = filteredContacts.map((contact) => {
+              let name = '';
+              if (contact.isACompany) {
+                name = contact.companyName || '';
+              } else {
+                name = `${contact.firstName || ''} ${contact.lastName || ''}`.trim();
+              }
+              const parts: string[] = [];
+              if (name) parts.push(name);
+              if (contact.identifier) parts.push(contact.identifier);
+              return {
+                value: contact.id,
+                label: parts.join(' - '),
+              };
+            });
+            this.contactOptions.set(options);
+            this.isLoadingContacts.set(false);
+            this.cdr.markForCheck();
+          },
+          error: (error) => {
+            console.error('Error loading contacts:', error);
+            this.isLoadingContacts.set(false);
+            this.cdr.markForCheck();
+          },
+        });
+      }, 0);
+    } else {
+      // Load both Owner and Tenant
+      const ownerRequest = {
+        currentPage: 1,
+        pageSize: 1000,
+        ignore: true,
+        type: ContactType.Owner,
+        isArchived: false,
+      };
+
+      const tenantRequest = {
+        currentPage: 1,
+        pageSize: 1000,
+        ignore: true,
+        type: ContactType.Tenant,
+        isArchived: false,
+      };
+
+      setTimeout(() => {
+        forkJoin({
+          owners: this.contactService.list(ownerRequest),
+          tenants: this.contactService.list(tenantRequest),
+        }).pipe(takeUntil(this.destroy$)).subscribe({
+          next: ({ owners, tenants }) => {
+            const companyId = this.userService.getCurrentUser()?.companyId;
+            const allContacts = [...(owners.result || []), ...(tenants.result || [])];
+            const filteredContacts = companyId
+              ? allContacts.filter(contact => contact.companyId === companyId)
+              : allContacts;
+
+            this.contacts.set(filteredContacts);
+            const options: ZardComboboxOption[] = filteredContacts.map((contact) => {
+              let name = '';
+              if (contact.isACompany) {
+                name = contact.companyName || '';
+              } else {
+                name = `${contact.firstName || ''} ${contact.lastName || ''}`.trim();
+              }
+              const parts: string[] = [];
+              if (name) parts.push(name);
+              if (contact.identifier) parts.push(contact.identifier);
+              return {
+                value: contact.id,
+                label: parts.join(' - '),
+              };
+            });
+            this.contactOptions.set(options);
+            this.isLoadingContacts.set(false);
+            this.cdr.markForCheck();
+          },
+          error: (error) => {
+            console.error('Error loading contacts:', error);
+            this.isLoadingContacts.set(false);
+            this.cdr.markForCheck();
+          },
+        });
+      }, 0);
+    }
   }
 
   loadReservations(): void {
@@ -992,15 +1070,44 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
 
         // Load properties and contacts first, then set selected values
 
-        const contactRequest: any = {
-          currentPage: 1,
-          pageSize: 1000,
-          ignore: true,
-          isArchived: false,
-        };
-
+        // Load contacts based on revenue type
+        let contactsObservable: Observable<ContactListResponse>;
         if (transaction.revenueType === RevenueType.Maintenance) {
-          contactRequest.type = ContactType.Service;
+          const contactRequest = {
+            currentPage: 1,
+            pageSize: 1000,
+            ignore: true,
+            type: ContactType.Service,
+            isArchived: false,
+          };
+          contactsObservable = this.contactService.list(contactRequest);
+        } else {
+          // Load both Owner and Tenant
+          const ownerRequest = {
+            currentPage: 1,
+            pageSize: 1000,
+            ignore: true,
+            type: ContactType.Owner,
+            isArchived: false,
+          };
+          const tenantRequest = {
+            currentPage: 1,
+            pageSize: 1000,
+            ignore: true,
+            type: ContactType.Tenant,
+            isArchived: false,
+          };
+          contactsObservable = forkJoin({
+            owners: this.contactService.list(ownerRequest),
+            tenants: this.contactService.list(tenantRequest),
+          }).pipe(
+            map(({ owners, tenants }): ContactListResponse => ({
+              currentPage: 1,
+              totalPages: 1,
+              totalItems: (owners.result?.length || 0) + (tenants.result?.length || 0),
+              result: [...(owners.result || []), ...(tenants.result || [])]
+            }))
+          );
         }
 
         const propertiesRequest: any = {
@@ -1011,10 +1118,10 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
           isArchived: false,
         };
 
-        // Filter by Location category for Loyer, Caution, and FraisAgence
+        // Filter by Location category for Loyer, Caution (not FraisAgence)
         // Filter by LocationVacances category for Reservation types
         const revenueType = transaction.revenueType || RevenueType.Loyer;
-        if (revenueType === RevenueType.Loyer || revenueType === RevenueType.Caution || revenueType === RevenueType.FraisAgence) {
+        if (revenueType === RevenueType.Loyer || revenueType === RevenueType.Caution) {
           propertiesRequest.category = PropertyCategory.Location;
         } else if (revenueType === RevenueType.ReservationFull || revenueType === RevenueType.ReservationPart) {
           propertiesRequest.category = PropertyCategory.LocationVacances;
@@ -1022,7 +1129,7 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
 
         forkJoin({
           properties: this.propertyService.list(propertiesRequest),
-          contacts: this.contactService.list(contactRequest),
+          contacts: contactsObservable,
         }).pipe(takeUntil(this.destroy$)).subscribe({
           next: ({ properties, contacts }) => {
             // Set properties
