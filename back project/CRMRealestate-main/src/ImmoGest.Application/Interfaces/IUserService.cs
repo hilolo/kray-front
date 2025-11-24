@@ -17,5 +17,7 @@ namespace ImmoGest.Application.Interfaces
         Task<Result<GetTeamMemberDto[]>> GetTeamMembersAsync(Guid companyId);
         Task<Result<GetUserDto>> UpdateCurrentUserAsync(Guid userId, UpdateUserDto dto);
         Task<string> TestAvatarUrlGeneration(Guid userId);
+        Task<Result> ForgotPasswordAsync(ForgotPasswordDto dto, string resetUrlBase);
+        Task<Result> ResetPasswordAsync(ResetPasswordDto dto);
     }
 }

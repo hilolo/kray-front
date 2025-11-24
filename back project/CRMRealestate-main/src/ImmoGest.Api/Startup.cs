@@ -131,6 +131,9 @@ namespace ImmoGest.Api
             // AWS S3 Storage Configuration
             services.AddScoped<IS3StorageService, S3StorageService>();
             
+            // Email Service (MailerSend)
+            services.AddHttpClient<IEmailService, MailerSendEmailService>();
+            
             // File Attachment Helper
             services.AddScoped<FileAttachmentHelper>();
 

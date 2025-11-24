@@ -35,6 +35,7 @@ namespace ImmoGest.Application.Services
         private readonly IS3StorageService _s3StorageService;
         private readonly IConfiguration _configuration;
         private readonly IUserPermissionsRepository _userPermissionsRepository;
+        private readonly IEmailService _emailService;
 
         public UserService(
             IMapper mapper, 
@@ -43,7 +44,8 @@ namespace ImmoGest.Application.Services
             ISession session,
             IS3StorageService s3StorageService,
             IConfiguration configuration,
-            IUserPermissionsRepository userPermissionsRepository)
+            IUserPermissionsRepository userPermissionsRepository,
+            IEmailService emailService)
             : base(mapper, userRepository)
         {
             _userRepository = userRepository;
@@ -53,6 +55,7 @@ namespace ImmoGest.Application.Services
             _s3StorageService = s3StorageService;
             _configuration = configuration;
             _userPermissionsRepository = userPermissionsRepository;
+            _emailService = emailService;
         }
 
         public async Task<Result<UserLogin>> Authenticate(string email, string password)
@@ -77,6 +80,85 @@ namespace ImmoGest.Application.Services
 
             originalUser.Data.Password = BC.HashPassword(dto.newPassword);
             await _userRepository.Update(originalUser.Data);
+            await _userRepository.SaveChangesAsync();
+
+            return Result.Success();
+        }
+
+        public async Task<Result> ForgotPasswordAsync(ForgotPasswordDto dto, string resetUrlBase)
+        {
+            // Get user by email
+            var userResult = await _userRepository.GetUserByEmailAsync(dto.Email);
+            if (userResult.IsFailure())
+            {
+                // Don't reveal if email exists or not for security reasons
+                // Return success even if user doesn't exist
+                return Result.Success();
+            }
+
+            var user = userResult.Data;
+
+            // Generate reset token - use 24 random bytes to get exactly 32 base64 characters
+            var tokenBytes = new byte[24];
+            using (var rng = System.Security.Cryptography.RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(tokenBytes);
+            }
+            
+            // Convert to base64 and replace URL-unsafe characters
+            var base64Token = Convert.ToBase64String(tokenBytes)
+                .Replace("+", "-")
+                .Replace("/", "_")
+                .Replace("=", "");
+            
+            // Base64 of 24 bytes = 32 characters (no padding needed)
+            // Take first 32 characters to be safe
+            var resetToken = base64Token.Length >= 32 
+                ? base64Token.Substring(0, 32) 
+                : base64Token.PadRight(32, '0'); // Fallback padding if somehow shorter
+
+            // Set token and expiry (1 hour from now)
+            user.PasswordResetToken = resetToken;
+            user.PasswordResetTokenExpiry = DateTime.UtcNow.AddHours(1);
+
+            await _userRepository.Update(user);
+            await _userRepository.SaveChangesAsync();
+
+            // Build reset URL
+            var resetUrl = $"{resetUrlBase}?token={resetToken}";
+
+            // Send email
+            var emailResult = await _emailService.SendPasswordResetEmailAsync(user.Email, resetToken, resetUrl);
+            if (emailResult.IsFailure())
+            {
+                // Log error but don't fail the request
+                // The token is already saved, user can request again if needed
+            }
+
+            return Result.Success();
+        }
+
+        public async Task<Result> ResetPasswordAsync(ResetPasswordDto dto)
+        {
+            // Get user by reset token
+            var userResult = await _userRepository.GetUserByResetTokenAsync(dto.Token);
+            if (userResult.IsFailure())
+            {
+                return Result.Failure()
+                    .WithCode("invalid_token")
+                    .WithMessage("Invalid or expired reset token. Please request a new password reset.");
+            }
+
+            var user = userResult.Data;
+
+            // Update password
+            user.Password = BC.HashPassword(dto.NewPassword);
+            
+            // Clear reset token
+            user.PasswordResetToken = null;
+            user.PasswordResetTokenExpiry = null;
+
+            await _userRepository.Update(user);
             await _userRepository.SaveChangesAsync();
 
             return Result.Success();

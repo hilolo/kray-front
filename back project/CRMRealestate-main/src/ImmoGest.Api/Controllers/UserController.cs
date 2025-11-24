@@ -10,6 +10,7 @@ using ImmoGest.Domain.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using ResultNet;
 using ISession = ImmoGest.Domain.Auth.Interfaces.ISession;
 
@@ -22,11 +23,13 @@ namespace ImmoGest.Api.Controllers
     {
         private readonly IUserService _userService;
         private readonly ISession _session;
+        private readonly IConfiguration _configuration;
 
-        public UserController(IUserService userService, ISession session)
+        public UserController(IUserService userService, ISession session, IConfiguration configuration)
         {
             _userService = userService;
             _session = session;
+            _configuration = configuration;
         }
 
         /// <summary>
@@ -41,6 +44,37 @@ namespace ImmoGest.Api.Controllers
         [ProducesResponseType(typeof(JwtDto), StatusCodes.Status200OK)]
         public async Task<ActionResult<Result<UserLogin>>> Authenticate([FromBody] LoginDto loginInfo)
         => ActionResultFor(await _userService.Authenticate(loginInfo.Email, loginInfo.Password));
+
+        /// <summary>
+        /// Request password reset. Sends a password reset email to the user.
+        /// </summary>
+        /// <param name="dto">Email address</param>
+        /// <returns>Success result (always returns success for security reasons)</returns>
+        [HttpPost]
+        [Route("forgot-password")]
+        [AllowAnonymous]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult<Result>> ForgotPassword([FromBody] ForgotPasswordDto dto)
+        {
+            // Get frontend URL from configuration or use default
+            var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:4200";
+            var resetUrlBase = $"{frontendUrl}/reset-password";
+            
+            return ActionResultFor(await _userService.ForgotPasswordAsync(dto, resetUrlBase));
+        }
+
+        /// <summary>
+        /// Reset password using the reset token from email.
+        /// </summary>
+        /// <param name="dto">Reset token and new password</param>
+        /// <returns>Success result</returns>
+        [HttpPost]
+        [Route("reset-password")]
+        [AllowAnonymous]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<Result>> ResetPassword([FromBody] ResetPasswordDto dto)
+        => ActionResultFor(await _userService.ResetPasswordAsync(dto));
 
         /// <summary>
         /// Replace the access token with the new one if it's available on

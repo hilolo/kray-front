@@ -19,6 +19,8 @@ namespace ImmoGest.Domain.Entities
         public bool IsDeleted { get; set; }
         public Company Company { get; set; }
         public Guid CompanyId { get; set; }
+        public string PasswordResetToken { get; set; }
+        public DateTime? PasswordResetTokenExpiry { get; set; }
         public override void BuildSearchTerms()
            => SearchTerms = $"D".ToLower();
     }

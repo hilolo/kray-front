@@ -11,5 +11,7 @@ namespace ImmoGest.Domain.Repositories
         Result<User> GetUserByEmailAndPassword(string email, string password);
         Result<User> GetUserByIdAndPassword(Guid Id, string password);
         Task<Result<User[]>> GetUsersByCompanyIdAsync(Guid companyId);
+        Task<Result<User>> GetUserByEmailAsync(string email);
+        Task<Result<User>> GetUserByResetTokenAsync(string token);
     }
 }

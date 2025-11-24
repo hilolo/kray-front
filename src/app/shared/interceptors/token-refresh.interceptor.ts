@@ -20,8 +20,18 @@ export const tokenRefreshInterceptor: HttpInterceptorFn = (req, next) => {
   }
 
   // Skip interceptor for public endpoints (no authentication required)
-  const isPublicEndpoint = url.includes('/public/');
+  const isPublicEndpoint = url.includes('/public/') || 
+                           url.includes('/forgot-password') || 
+                           url.includes('/reset-password');
   if (isPublicEndpoint) {
+    return next(req);
+  }
+
+  // Skip interceptor for anonymous endpoints (forgot-password, reset-password, sign-in)
+  const isAnonymousEndpoint = url.includes('/forgot-password') || 
+                               url.includes('/reset-password') ||
+                               url.includes('/sign-in');
+  if (isAnonymousEndpoint) {
     return next(req);
   }
 
@@ -64,7 +74,9 @@ export const tokenRefreshInterceptor: HttpInterceptorFn = (req, next) => {
       }
 
       // Skip interceptor for public endpoints (no authentication required)
-      const isPublicEndpoint = url.includes('/public/');
+      const isPublicEndpoint = url.includes('/public/') || 
+                               url.includes('/forgot-password') || 
+                               url.includes('/reset-password');
       if (isPublicEndpoint) {
         return throwError(() => error);
       }

@@ -58,23 +58,30 @@ export class ApiService {
    */
   post<T = any>(endpoint: string, body: any, options?: { headers?: HttpHeaders }): Observable<T> {
     const url = this.getUrl(endpoint);
-    return this.http.post<ApiResponse<T>>(url, body, options).pipe(
+    return this.http.post<ApiResponse<T> | any>(url, body, options).pipe(
       map((response) => {
-        // Check if response has error status even with 200 OK
-        if (response.status === 'Failed') {
-          // Create error object with code and data for company_restricted handling
-          const error: any = new Error(response.message || 'Request failed');
-          error.code = response.code;
-          error.data = response.data;
-          error.message = response.message;
-          error.errors = response.errors;
-          // Don't show toast for company_restricted - let login component handle it
-          if (response.code !== 'company_restricted' && response.message) {
-            this.toastService.error(response.message);
+        // Handle case where response is the Result object directly (no wrapper)
+        // Check if response has status property (Result object structure)
+        if (response && typeof response === 'object' && 'status' in response) {
+          // Check if response has error status even with 200 OK
+          if (response.status === 'Failed') {
+            // Create error object with code and data for company_restricted handling
+            const error: any = new Error(response.message || 'Request failed');
+            error.code = response.code;
+            error.data = response.data;
+            error.message = response.message;
+            error.errors = response.errors;
+            // Don't show toast for company_restricted - let login component handle it
+            if (response.code !== 'company_restricted' && response.message) {
+              this.toastService.error(response.message);
+            }
+            throw error;
           }
-          throw error;
+          // If response has data property, return it; otherwise return the response itself
+          return response.data !== undefined ? response.data : response;
         }
-        return response.data; // Extract data from standard response
+        // Fallback: return response as-is if it doesn't match expected structure
+        return response;
       }),
       catchError(this.handleError)
     );

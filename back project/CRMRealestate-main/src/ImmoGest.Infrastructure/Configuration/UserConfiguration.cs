@@ -32,6 +32,10 @@ namespace ImmoGest.Infrastructure.Configuration
                 .IsRequired()
                 .HasDefaultValue(false);
 
+            builder.Property(x => x.PasswordResetToken)
+                .HasMaxLength(500);
+
+            builder.Property(x => x.PasswordResetTokenExpiry);
 
             // Configure relationship with Company
             builder.HasOne(t => t.Company)

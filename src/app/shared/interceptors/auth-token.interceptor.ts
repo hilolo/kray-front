@@ -15,7 +15,10 @@ export const authTokenInterceptor: HttpInterceptorFn = (req, next) => {
   }
 
   // Skip interceptor for public endpoints (no authentication required)
-  const isPublicEndpoint = url.includes('/public/');
+  const isPublicEndpoint = url.includes('/public/') || 
+                           url.includes('/forgot-password') || 
+                           url.includes('/reset-password') ||
+                           url.includes('/sign-in');
   if (isPublicEndpoint) {
     return next(req);
   }

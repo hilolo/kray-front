@@ -76,6 +76,38 @@ namespace ImmoGest.Infrastructure.Repositories
             return Result.Success(users);
         }
 
+        public virtual async Task<Result<User>> GetUserByEmailAsync(string email)
+        {
+            var user = await DbSet
+                .AsNoTracking()
+                .Include(x => x.Company)
+                .FirstOrDefaultAsync(x => x.Email.ToLower() == email.ToLower());
+
+            if (user != null)
+            {
+                return Result.Success(user);
+            }
+
+            return Result.Failure<User>();
+        }
+
+        public virtual async Task<Result<User>> GetUserByResetTokenAsync(string token)
+        {
+            var user = await DbSet
+                .AsNoTracking()
+                .Include(x => x.Company)
+                .FirstOrDefaultAsync(x => x.PasswordResetToken == token && 
+                                         x.PasswordResetTokenExpiry.HasValue && 
+                                         x.PasswordResetTokenExpiry.Value > DateTime.UtcNow);
+
+            if (user != null)
+            {
+                return Result.Success(user);
+            }
+
+            return Result.Failure<User>();
+        }
+
 
         public override async Task<Result<User>> GetByIdAsync(Guid id)
         {
