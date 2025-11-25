@@ -23,14 +23,14 @@
           </div>
           <!-- Buttons on right -->
           <div class="flex gap-2 items-center ml-auto">
-            <z-dropdown-menu>
-              <z-button dropdown-trigger zType="default" zSize="default" class="gap-2">
+            <z-dropdown-menu [disabled]="true">
+              <z-button dropdown-trigger zType="default" zSize="default" class="gap-2" [disabled]="true">
                 <z-icon zType="plus" zSize="sm" />
                 <span>Add Document</span>
                 <z-icon zType="chevron-down" zSize="sm" class="ml-1" />
               </z-button>
               @for (option of documentTypeOptions; track option.value) {
-                <z-dropdown-menu-item (click)="onAddDocument(option.value)">
+                <z-dropdown-menu-item (click)="onAddDocument(option.value)" [disabled]="true">
                   <span>{{ option.label }}</span>
                 </z-dropdown-menu-item>
               }
@@ -57,14 +57,14 @@
                   zTitle="No documents found"
                   zDescription="Get started by creating a new document."
                 >
-                  <z-dropdown-menu>
-                    <z-button dropdown-trigger zType="default" class="gap-2">
+                  <z-dropdown-menu [disabled]="true">
+                    <z-button dropdown-trigger zType="default" class="gap-2" [disabled]="true">
                       <z-icon zType="plus" zSize="sm" />
                       <span>Add Document</span>
                       <z-icon zType="chevron-down" zSize="sm" class="ml-1" />
                     </z-button>
                     @for (option of documentTypeOptions; track option.value) {
-                      <z-dropdown-menu-item (click)="onAddDocument(option.value)">
+                      <z-dropdown-menu-item (click)="onAddDocument(option.value)" [disabled]="true">
                         <span>{{ option.label }}</span>
                       </z-dropdown-menu-item>
                     }
