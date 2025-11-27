@@ -5,12 +5,9 @@
       <div class="w-64 flex-shrink-0">
         <h2 class="text-lg font-semibold mb-4">Settings</h2>
         <div class="space-y-0.5">
-          <button
-            type="button"
-            (click)="activeSection.set('account')"
+          <button type="button" (click)="activeSection.set('account')"
             [class]="activeSection() === 'account' ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'"
-            class="w-full flex items-center gap-2 px-3 py-2 rounded-md transition-colors text-left"
-          >
+            class="w-full flex items-center gap-2 px-3 py-2 rounded-md transition-colors text-left">
             <z-icon zType="user" zSize="default" />
             <div class="flex-1 min-w-0">
               <div class="text-sm font-medium truncate">Account</div>
@@ -18,25 +15,20 @@
             </div>
           </button>
 
-          <button
-            type="button"
-            (click)="activeSection.set('security')"
+          <button type="button" (click)="activeSection.set('security')"
             [class]="activeSection() === 'security' ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'"
-            class="w-full flex items-center gap-2 px-3 py-2 rounded-md transition-colors text-left"
-          >
+            class="w-full flex items-center gap-2 px-3 py-2 rounded-md transition-colors text-left">
             <z-icon zType="lock" zSize="default" />
             <div class="flex-1 min-w-0">
               <div class="text-sm font-medium truncate">Security</div>
-              <div class="text-xs opacity-80 line-clamp-2">Manage your password and 2-step verification preferences</div>
+              <div class="text-xs opacity-80 line-clamp-2">Manage your password and 2-step verification preferences
+              </div>
             </div>
           </button>
 
-          <button
-            type="button"
-            (click)="activeSection.set('team')"
+          <button type="button" (click)="activeSection.set('team')"
             [class]="activeSection() === 'team' ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'"
-            class="w-full flex items-center gap-2 px-3 py-2 rounded-md transition-colors text-left"
-          >
+            class="w-full flex items-center gap-2 px-3 py-2 rounded-md transition-colors text-left">
             <z-icon zType="users" zSize="default" />
             <div class="flex-1 min-w-0">
               <div class="text-sm font-medium truncate">Team</div>
@@ -44,12 +36,9 @@
             </div>
           </button>
 
-          <button
-            type="button"
-            (click)="activeSection.set('application')"
+          <button type="button" (click)="activeSection.set('application')"
             [class]="activeSection() === 'application' ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'"
-            class="w-full flex items-center gap-2 px-3 py-2 rounded-md transition-colors text-left"
-          >
+            class="w-full flex items-center gap-2 px-3 py-2 rounded-md transition-colors text-left">
             <z-icon zType="settings" zSize="default" />
             <div class="flex-1 min-w-0">
               <div class="text-sm font-medium truncate">Application</div>
@@ -85,757 +74,709 @@
         </ng-template>
 
         @switch (activeSection()) {
-          @case ('account') {
-            <div class="space-y-8">
-              <h1 class="text-3xl font-bold">Account</h1>
+        @case ('account') {
+        <div class="space-y-8">
+          <h1 class="text-3xl font-bold">Account</h1>
 
-              <!-- User Information -->
-              <z-card zTitle="User Information" zDescription="Manage your personal profile information">
-                <div class="flex gap-6">
-                  <!-- Profile Picture -->
-                  <div class="flex-shrink-0">
-                    <div class="relative">
-                      @if (profileImageUrl()) {
-                        <img
-                          [src]="profileImageUrl()"
-                          alt="Profile picture"
-                          class="w-40 h-40 rounded-lg object-cover border border-border"
-                        />
+          <!-- User Information -->
+          <z-card zTitle="User Information" zDescription="Manage your personal profile information">
+            <div class="flex gap-6">
+              <!-- Profile Picture -->
+              <div class="flex-shrink-0">
+                <div class="relative">
+                  @if (profileImageUrl()) {
+                  <img [src]="profileImageUrl()" alt="Profile picture"
+                    class="w-40 h-40 rounded-lg object-cover border border-border" />
+                  } @else {
+                  <div
+                    class="w-40 h-40 rounded-lg bg-primary text-primary-foreground flex items-center justify-center text-4xl font-semibold border border-border">
+                    {{ userInfo.fullName() ? userInfo.fullName().charAt(0).toUpperCase() : 'U' }}
+                  </div>
+                  }
+                  <button type="button" (click)="onImageClick()"
+                    class="absolute -bottom-1 -right-1 bg-primary text-primary-foreground rounded-full p-2 hover:bg-primary/90 transition-colors"
+                    title="Change profile picture">
+                    <z-icon zType="camera" zSize="sm" />
+                  </button>
+                  <input #fileInput type="file" accept="image/*" (change)="onFileSelected($event)" class="hidden" />
+                </div>
+              </div>
+
+              <!-- Form Fields -->
+              <div class="flex-1 space-y-4">
+                <z-form-field>
+                  <z-form-label zRequired>Full name</z-form-label>
+                  <z-form-control [errorMessage]="fullNameError()">
+                    <z-input-group [zPrefix]="userIconTemplate">
+                      <input z-input type="text" [ngModel]="userInfo.fullName()"
+                        (ngModelChange)="userInfo.fullName.set($event)" name="fullName"
+                        placeholder="Enter your full name" [zStatus]="fullNameHasError() ? 'error' : undefined"
+                        class="w-full" />
+                    </z-input-group>
+                  </z-form-control>
+                </z-form-field>
+
+                <z-form-field>
+                  <z-form-label>Phone</z-form-label>
+                  <z-form-control>
+                    <z-input-group [zPrefix]="phoneIconTemplate">
+                      <input z-input type="tel" [ngModel]="userInfo.phone()"
+                        (ngModelChange)="userInfo.phone.set($event)" name="phone" placeholder="Enter your phone number"
+                        class="w-full" />
+                    </z-input-group>
+                  </z-form-control>
+                </z-form-field>
+
+                <!-- Action Buttons -->
+                <div class="flex gap-3 justify-end pt-2">
+                  <z-button zType="outline" [disabled]="isSaving()"
+                    (click)="!isSaving() && onCancel()">Cancel</z-button>
+                  <z-button [zType]="isSaving() || !isAccountFormValid() ? 'ghost' : 'default'" [disabled]="isSaving()"
+                    (click)="!isSaving() && onSaveUserInfo()">
+                    @if (isSaving()) {
+                    <span class="flex items-center gap-2">
+                      <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+                      Saving...
+                    </span>
+                    } @else {
+                    Save User Info
+                    }
+                  </z-button>
+                </div>
+              </div>
+            </div>
+          </z-card>
+
+          <!-- Company Information -->
+          <z-card zTitle="Company Information"
+            zDescription="Company details are managed by administrators and cannot be modified here">
+            <div class="flex gap-6">
+              <!-- Company Logo -->
+              <div class="flex-shrink-0">
+                <div class="w-40 h-40 border border-border rounded-lg flex items-center justify-center bg-muted">
+                  <z-icon zType="file" zSize="lg" class="text-muted-foreground" />
+                </div>
+              </div>
+
+              <!-- Read-only Fields -->
+              <div class="flex-1 min-w-0">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <z-form-field>
+                    <z-form-label>Company Name</z-form-label>
+                    <z-form-control>
+                      <z-input-group [zPrefix]="buildingIconTemplate">
+                        <input z-input type="text" [value]="companyInfo.name" disabled class="w-full truncate" />
+                      </z-input-group>
+                    </z-form-control>
+                  </z-form-field>
+
+                  <z-form-field>
+                    <z-form-label>Address</z-form-label>
+                    <z-form-control>
+                      <z-input-group [zPrefix]="mapPinIconTemplate">
+                        <input z-input type="text" [value]="companyInfo.address" disabled class="w-full truncate" />
+                      </z-input-group>
+                    </z-form-control>
+                  </z-form-field>
+
+                  <z-form-field>
+                    <z-form-label>City</z-form-label>
+                    <z-form-control>
+                      <z-input-group [zPrefix]="building2IconTemplate">
+                        <input z-input type="text" [value]="companyInfo.city" disabled class="w-full truncate" />
+                      </z-input-group>
+                    </z-form-control>
+                  </z-form-field>
+
+                  <z-form-field>
+                    <z-form-label>Phone</z-form-label>
+                    <z-form-control>
+                      <z-input-group [zPrefix]="phoneIconTemplate">
+                        <input z-input type="tel" [value]="companyInfo.phone" disabled class="w-full truncate" />
+                      </z-input-group>
+                    </z-form-control>
+                  </z-form-field>
+
+                  <z-form-field>
+                    <z-form-label>Website</z-form-label>
+                    <z-form-control>
+                      <z-input-group [zPrefix]="globeIconTemplate">
+                        <input z-input type="url" [value]="companyInfo.website" disabled class="w-full truncate" />
+                      </z-input-group>
+                    </z-form-control>
+                  </z-form-field>
+
+                  <z-form-field>
+                    <z-form-label>RC (Registration Number)</z-form-label>
+                    <z-form-control>
+                      <input z-input type="text" [value]="companyInfo.rc" disabled class="w-full truncate" />
+                    </z-form-control>
+                  </z-form-field>
+
+                  <z-form-field>
+                    <z-form-label>ICE (Tax ID)</z-form-label>
+                    <z-form-control>
+                      <input z-input type="text" [value]="companyInfo.ice" disabled class="w-full truncate" />
+                    </z-form-control>
+                  </z-form-field>
+                </div>
+              </div>
+            </div>
+          </z-card>
+        </div>
+        }
+
+        @case ('security') {
+        <div class="space-y-8">
+          <h1 class="text-3xl font-bold">Security</h1>
+
+          <z-card zTitle="Change your password" zDescription="You can only change your password twice within 24 hours!">
+            <div class="space-y-4">
+              <z-form-field>
+                <z-form-label zRequired>Current password</z-form-label>
+                <z-form-control [errorMessage]="currentPasswordError()">
+                  <div class="relative">
+                    <z-input-group [zPrefix]="lockIconTemplate">
+                      <input z-input [type]="showCurrentPassword() ? 'text' : 'password'"
+                        [ngModel]="passwordForm.currentPassword()"
+                        (ngModelChange)="passwordForm.currentPassword.set($event)" name="currentPassword"
+                        placeholder="Enter your current password"
+                        [zStatus]="currentPasswordHasError() ? 'error' : undefined" class="w-full pr-10" />
+                    </z-input-group>
+                    <button type="button" (click)="toggleCurrentPassword()"
+                      class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      [attr.aria-label]="showCurrentPassword() ? 'Hide password' : 'Show password'">
+                      @if (showCurrentPassword()) {
+                      <z-icon zType="eye-off" zSize="sm" />
                       } @else {
-                        <div class="w-40 h-40 rounded-lg bg-primary text-primary-foreground flex items-center justify-center text-4xl font-semibold border border-border">
-                          {{ userInfo.fullName() ? userInfo.fullName().charAt(0).toUpperCase() : 'U' }}
-                        </div>
+                      <z-icon zType="eye" zSize="sm" />
                       }
-                      <button
-                        type="button"
-                        (click)="onImageClick()"
-                        class="absolute -bottom-1 -right-1 bg-primary text-primary-foreground rounded-full p-2 hover:bg-primary/90 transition-colors"
-                        title="Change profile picture"
-                      >
-                        <z-icon zType="camera" zSize="sm" />
-                      </button>
-                      <input
-                        #fileInput
-                        type="file"
-                        accept="image/*"
-                        (change)="onFileSelected($event)"
-                        class="hidden"
-                      />
+                    </button>
+                  </div>
+                </z-form-control>
+              </z-form-field>
+
+              <z-form-field>
+                <z-form-label zRequired>New password</z-form-label>
+                <z-form-control [errorMessage]="newPasswordError()">
+                  <div class="relative">
+                    <z-input-group [zPrefix]="lockIconTemplate">
+                      <input z-input [type]="showNewPassword() ? 'text' : 'password'"
+                        [ngModel]="passwordForm.newPassword()" (ngModelChange)="passwordForm.newPassword.set($event)"
+                        name="newPassword" placeholder="Enter your new password"
+                        [zStatus]="newPasswordHasError() ? 'error' : undefined" class="w-full pr-10" />
+                    </z-input-group>
+                    <button type="button" (click)="toggleNewPassword()"
+                      class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      [attr.aria-label]="showNewPassword() ? 'Hide password' : 'Show password'">
+                      @if (showNewPassword()) {
+                      <z-icon zType="eye-off" zSize="sm" />
+                      } @else {
+                      <z-icon zType="eye" zSize="sm" />
+                      }
+                    </button>
+                  </div>
+                </z-form-control>
+              </z-form-field>
+
+              <z-form-field>
+                <z-form-label zRequired>Confirm password</z-form-label>
+                <z-form-control [errorMessage]="confirmPasswordError()">
+                  <div class="relative">
+                    <z-input-group [zPrefix]="lockIconTemplate">
+                      <input z-input [type]="showConfirmPassword() ? 'text' : 'password'"
+                        [ngModel]="passwordForm.confirmPassword()"
+                        (ngModelChange)="passwordForm.confirmPassword.set($event)" name="confirmPassword"
+                        placeholder="Confirm your new password"
+                        [zStatus]="confirmPasswordHasError() ? 'error' : undefined" class="w-full pr-10" />
+                    </z-input-group>
+                    <button type="button" (click)="toggleConfirmPassword()"
+                      class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      [attr.aria-label]="showConfirmPassword() ? 'Hide password' : 'Show password'">
+                      @if (showConfirmPassword()) {
+                      <z-icon zType="eye-off" zSize="sm" />
+                      } @else {
+                      <z-icon zType="eye" zSize="sm" />
+                      }
+                    </button>
+                  </div>
+                </z-form-control>
+              </z-form-field>
+
+              <div class="flex gap-3 justify-end pt-2">
+                <z-button [zType]="isUpdatingPassword() || !isPasswordFormValid() ? 'ghost' : 'default'"
+                  [disabled]="isUpdatingPassword()" (click)="!isUpdatingPassword() && onSavePassword()">
+                  @if (isUpdatingPassword()) {
+                  <span class="flex items-center gap-2">
+                    <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+                    Updating...
+                  </span>
+                  } @else {
+                  Save Password
+                  }
+                </z-button>
+              </div>
+            </div>
+          </z-card>
+        </div>
+        }
+
+        @case ('team') {
+        <div class="space-y-8">
+          <div>
+            <h1 class="text-3xl font-bold">Team</h1>
+            <h2 class="text-xl font-semibold mt-2">Team Members</h2>
+            <p class="text-muted-foreground mt-1">Manage your team members and their permissions</p>
+          </div>
+
+          <!-- Invite Team Member -->
+          <z-card zTitle="Invite Team Member" zDescription="Invite a new member to join your team (Max 3 invitations)">
+            <div class="flex items-end gap-4">
+              <div class="flex-1">
+                <z-form-field>
+                  <z-form-label zRequired>Email Address</z-form-label>
+                  <z-form-control [errorMessage]="invitationEmailError()">
+                    <z-input-group [zPrefix]="userIconTemplate">
+                      <input z-input type="email" [ngModel]="invitationForm.email()"
+                        (ngModelChange)="invitationForm.email.set($event)" placeholder="mail@company.com"
+                        [zStatus]="invitationEmailHasError() ? 'error' : undefined" class="w-full" />
+                    </z-input-group>
+                  </z-form-control>
+                </z-form-field>
+              </div>
+              <div class="w-48">
+                <z-form-field>
+                  <z-form-label zRequired>Role</z-form-label>
+                  <z-form-control>
+                    <z-select [zValue]="invitationForm.role()" [zLabel]="invitationForm.role()"
+                      (zSelectionChange)="invitationForm.role.set($event)" class="w-full">
+                      <z-select-item zValue="User">User</z-select-item>
+                      <z-select-item zValue="Admin">Admin</z-select-item>
+                    </z-select>
+                  </z-form-control>
+                </z-form-field>
+              </div>
+              <div>
+                <z-button [zType]="isInviting() || !isInvitationFormValid() ? 'ghost' : 'default'"
+                  [disabled]="isInviting()" (click)="!isInviting() && inviteMember()">
+                  @if (isInviting()) {
+                  <span class="flex items-center gap-2">
+                    <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+                    Sending...
+                  </span>
+                  } @else {
+                  <span class="flex items-center gap-2">
+                    <z-icon zType="mail" zSize="sm" />
+                    Invite
+                  </span>
+                  }
+                </z-button>
+              </div>
+            </div>
+          </z-card>
+
+          @if (isLoadingTeamMembers()) {
+          <div class="flex items-center justify-center p-8">
+            <div class="text-muted-foreground">Loading team members...</div>
+          </div>
+          } @else if (teamMembers().length === 0) {
+          <div class="flex items-center justify-center p-8">
+            <div class="text-muted-foreground">No team members found</div>
+          </div>
+          } @else {
+          <div class="space-y-4">
+            @for (member of teamMembers(); track member.id) {
+            <z-card>
+              <div class="space-y-4">
+                <!-- User Card Header -->
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-4">
+                    <z-avatar zSize="lg" zType="default"
+                      [zImage]="member.avatar ? { url: member.avatar, fallback: (member.name || member.email).charAt(0).toUpperCase() } : { fallback: (member.name || member.email).charAt(0).toUpperCase() }" />
+                    <div>
+                      <div class="font-semibold">{{ member.name || 'No name' }}</div>
+                      <div class="text-sm text-muted-foreground">{{ member.email }}</div>
+                      @if (member.phone) {
+                      <div class="flex items-center gap-2 mt-1">
+                        <z-icon zType="smartphone" zSize="sm" class="text-muted-foreground" />
+                        <span class="text-xs text-muted-foreground">{{ member.phone }}</span>
+                      </div>
+                      }
+                      @if (member.status === 'Pending') {
+                      <z-badge zType="outline" class="mt-1 text-yellow-600 border-yellow-600 bg-yellow-50">Pending
+                        Invitation</z-badge>
+                      }
                     </div>
                   </div>
-
-                  <!-- Form Fields -->
-                  <div class="flex-1 space-y-4">
-                    <z-form-field>
-                      <z-form-label zRequired>Full name</z-form-label>
-                      <z-form-control [errorMessage]="fullNameError()">
-                        <z-input-group [zPrefix]="userIconTemplate">
-                          <input z-input type="text" [ngModel]="userInfo.fullName()" (ngModelChange)="userInfo.fullName.set($event)" name="fullName" placeholder="Enter your full name" [zStatus]="fullNameHasError() ? 'error' : undefined" class="w-full" />
-                        </z-input-group>
-                      </z-form-control>
-                    </z-form-field>
-
-                    <z-form-field>
-                      <z-form-label>Phone</z-form-label>
-                      <z-form-control>
-                        <z-input-group [zPrefix]="phoneIconTemplate">
-                          <input z-input type="tel" [ngModel]="userInfo.phone()" (ngModelChange)="userInfo.phone.set($event)" name="phone" placeholder="Enter your phone number" class="w-full" />
-                        </z-input-group>
-                      </z-form-control>
-                    </z-form-field>
-
-                    <!-- Action Buttons -->
-                    <div class="flex gap-3 justify-end pt-2">
-                      <z-button zType="outline" [disabled]="isSaving()" (click)="!isSaving() && onCancel()">Cancel</z-button>
-                      <z-button [zType]="isSaving() || !isAccountFormValid() ? 'ghost' : 'default'" [disabled]="isSaving()" (click)="!isSaving() && onSaveUserInfo()">
-                        @if (isSaving()) {
-                          <span class="flex items-center gap-2">
-                            <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
-                            Saving...
-                          </span>
+                  <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-2">
+                      <div class="relative flex-shrink-0">
+                        <z-icon [zType]="getRoleIcon(member.role || '')" zSize="sm" class="text-muted-foreground" />
+                        <div
+                          class="absolute -top-1 -right-1 size-3 rounded-full bg-primary border-2 border-background flex items-center justify-center">
+                          <svg class="size-1.5 text-primary-foreground" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd"
+                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                              clip-rule="evenodd" />
+                          </svg>
+                        </div>
+                      </div>
+                      <span class="text-sm font-medium">{{ member.role || 'No role' }}</span>
+                    </div>
+                    @if (!isCurrentUser(member)) {
+                    <div class="flex items-center gap-2">
+                      <z-button zType="outline" zSize="sm" (click)="togglePermissions(member)">
+                        @if (editingUserId() === member.id) {
+                        <z-icon zType="x" zSize="sm" />
+                        Close
                         } @else {
-                          Save User Info
+                        <z-icon zType="pencil" zSize="sm" />
+                        Modify
+                        }
+                      </z-button>
+                      <z-button zType="outline" zSize="sm" (click)="deleteTeamMember(member)" class="text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/50">
+                        <z-icon zType="x" zSize="sm" />
+                        Delete
+                      </z-button>
+                    </div>
+                    }
+                  </div>
+                </div>
+
+                <!-- Permissions Section -->
+                @if (editingUserId() === member.id) {
+                <div class="border-t pt-4 space-y-4">
+                  <!-- User Name and Email Display -->
+                  <div class="space-y-1">
+                    <div class="text-sm font-semibold">User: {{ member.name || 'No name' }}</div>
+                    <div class="text-sm text-muted-foreground">Email: {{ member.email }}</div>
+                  </div>
+
+                  @if (isUserPermissionsLoading(member.id)) {
+                  <div class="flex items-center justify-center p-8">
+                    <div class="text-muted-foreground">Loading permissions...</div>
+                  </div>
+                  } @else if (getUserPermissions(member.id)) {
+                  <div class="space-y-4">
+                    <!-- Select All Permissions Header -->
+                    <div
+                      class="flex items-center gap-3 p-4 rounded-lg border bg-card cursor-pointer hover:bg-accent transition-colors"
+                      (click)="toggleSelectAll(member.id)">
+                      <div class="w-8 h-8 rounded bg-primary flex items-center justify-center flex-shrink-0">
+                        <z-icon zType="check" zSize="sm" class="text-primary-foreground" />
+                      </div>
+                      <span class="font-medium">Select All Permissions</span>
+                    </div>
+
+                    <!-- Permissions List -->
+                    <div class="space-y-1">
+                      <div class="text-sm font-semibold mb-3">Permissions:</div>
+                      <div class="border rounded-lg divide-y">
+                        @for (module of modules; track module.key) {
+                        <div class="flex items-center gap-4 p-3 hover:bg-accent/50 transition-colors">
+                          <!-- Module Name with Icon -->
+                          <div class="flex items-center gap-2 min-w-[200px] flex-shrink-0">
+                            <z-icon [zType]="$any(module.icon)" zSize="sm"
+                              class="text-muted-foreground flex-shrink-0" />
+                            <span class="text-sm font-medium">{{ module.label }}</span>
+                          </div>
+
+                          <!-- Permissions Checkboxes (Horizontal) -->
+                          <div class="flex items-center gap-6 flex-1">
+                            <div class="flex items-center gap-2">
+                              <span class="text-xs text-muted-foreground min-w-[40px]">View</span>
+                              <z-checkbox [ngModel]="getPermission(member.id, module.key, 'view')"
+                                (ngModelChange)="updatePermission(member.id, module.key, 'view', $event)" />
+                            </div>
+                            <div class="flex items-center gap-2">
+                              <span class="text-xs text-muted-foreground min-w-[40px]">Edit</span>
+                              <z-checkbox [ngModel]="getPermission(member.id, module.key, 'edit')"
+                                (ngModelChange)="updatePermission(member.id, module.key, 'edit', $event)" />
+                            </div>
+                            <div class="flex items-center gap-2">
+                              <span class="text-xs text-muted-foreground min-w-[50px]">Delete</span>
+                              <z-checkbox zType="destructive" [ngModel]="getPermission(member.id, module.key, 'delete')"
+                                (ngModelChange)="updatePermission(member.id, module.key, 'delete', $event)" />
+                            </div>
+                            <div class="flex items-center gap-2 ml-auto">
+                              <span class="text-xs font-medium min-w-[30px]">All</span>
+                              <z-checkbox [ngModel]="getAllPermission(member.id, module.key)"
+                                (ngModelChange)="updateAllPermission(member.id, module.key, $event)" />
+                            </div>
+                          </div>
+                        </div>
+                        }
+                      </div>
+                    </div>
+
+                    <!-- Save Button -->
+                    <div class="flex justify-end pt-2">
+                      <z-button [zType]="isUserPermissionsSaving(member.id) ? 'ghost' : 'default'"
+                        [disabled]="isUserPermissionsSaving(member.id)"
+                        (click)="!isUserPermissionsSaving(member.id) && saveUserPermissions(member.id)">
+                        @if (isUserPermissionsSaving(member.id)) {
+                        <span class="flex items-center gap-2">
+                          <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+                          Saving...
+                        </span>
+                        } @else {
+                        Save Permissions
                         }
                       </z-button>
                     </div>
                   </div>
-                </div>
-              </z-card>
-
-              <!-- Company Information -->
-              <z-card zTitle="Company Information" zDescription="Company details are managed by administrators and cannot be modified here">
-                <div class="flex gap-6">
-                  <!-- Company Logo -->
-                  <div class="flex-shrink-0">
-                    <div class="w-40 h-40 border border-border rounded-lg flex items-center justify-center bg-muted">
-                      <z-icon zType="file" zSize="lg" class="text-muted-foreground" />
-                    </div>
-                  </div>
-
-                  <!-- Read-only Fields -->
-                  <div class="flex-1 min-w-0">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <z-form-field>
-                        <z-form-label>Company Name</z-form-label>
-                        <z-form-control>
-                          <z-input-group [zPrefix]="buildingIconTemplate">
-                            <input z-input type="text" [value]="companyInfo.name" disabled class="w-full truncate" />
-                          </z-input-group>
-                        </z-form-control>
-                      </z-form-field>
-
-                      <z-form-field>
-                        <z-form-label>Address</z-form-label>
-                        <z-form-control>
-                          <z-input-group [zPrefix]="mapPinIconTemplate">
-                            <input z-input type="text" [value]="companyInfo.address" disabled class="w-full truncate" />
-                          </z-input-group>
-                        </z-form-control>
-                      </z-form-field>
-
-                      <z-form-field>
-                        <z-form-label>City</z-form-label>
-                        <z-form-control>
-                          <z-input-group [zPrefix]="building2IconTemplate">
-                            <input z-input type="text" [value]="companyInfo.city" disabled class="w-full truncate" />
-                          </z-input-group>
-                        </z-form-control>
-                      </z-form-field>
-
-                      <z-form-field>
-                        <z-form-label>Phone</z-form-label>
-                        <z-form-control>
-                          <z-input-group [zPrefix]="phoneIconTemplate">
-                            <input z-input type="tel" [value]="companyInfo.phone" disabled class="w-full truncate" />
-                          </z-input-group>
-                        </z-form-control>
-                      </z-form-field>
-
-                      <z-form-field>
-                        <z-form-label>Website</z-form-label>
-                        <z-form-control>
-                          <z-input-group [zPrefix]="globeIconTemplate">
-                            <input z-input type="url" [value]="companyInfo.website" disabled class="w-full truncate" />
-                          </z-input-group>
-                        </z-form-control>
-                      </z-form-field>
-
-                      <z-form-field>
-                        <z-form-label>RC (Registration Number)</z-form-label>
-                        <z-form-control>
-                          <input z-input type="text" [value]="companyInfo.rc" disabled class="w-full truncate" />
-                        </z-form-control>
-                      </z-form-field>
-
-                      <z-form-field>
-                        <z-form-label>ICE (Tax ID)</z-form-label>
-                        <z-form-control>
-                          <input z-input type="text" [value]="companyInfo.ice" disabled class="w-full truncate" />
-                        </z-form-control>
-                      </z-form-field>
-                    </div>
-                  </div>
-                </div>
-              </z-card>
-            </div>
-          }
-
-          @case ('security') {
-            <div class="space-y-8">
-              <h1 class="text-3xl font-bold">Security</h1>
-
-              <z-card zTitle="Change your password" zDescription="You can only change your password twice within 24 hours!">
-                <div class="space-y-4">
-                  <z-form-field>
-                    <z-form-label zRequired>Current password</z-form-label>
-                    <z-form-control [errorMessage]="currentPasswordError()">
-                      <div class="relative">
-                        <z-input-group [zPrefix]="lockIconTemplate">
-                          <input
-                            z-input
-                            [type]="showCurrentPassword() ? 'text' : 'password'"
-                            [ngModel]="passwordForm.currentPassword()"
-                            (ngModelChange)="passwordForm.currentPassword.set($event)"
-                            name="currentPassword"
-                            placeholder="Enter your current password"
-                            [zStatus]="currentPasswordHasError() ? 'error' : undefined"
-                            class="w-full pr-10"
-                          />
-                        </z-input-group>
-                        <button
-                          type="button"
-                          (click)="toggleCurrentPassword()"
-                          class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                          [attr.aria-label]="showCurrentPassword() ? 'Hide password' : 'Show password'"
-                        >
-                          @if (showCurrentPassword()) {
-                            <z-icon zType="eye-off" zSize="sm" />
-                          } @else {
-                            <z-icon zType="eye" zSize="sm" />
-                          }
-                        </button>
-                      </div>
-                    </z-form-control>
-                  </z-form-field>
-
-                  <z-form-field>
-                    <z-form-label zRequired>New password</z-form-label>
-                    <z-form-control [errorMessage]="newPasswordError()">
-                      <div class="relative">
-                        <z-input-group [zPrefix]="lockIconTemplate">
-                          <input
-                            z-input
-                            [type]="showNewPassword() ? 'text' : 'password'"
-                            [ngModel]="passwordForm.newPassword()"
-                            (ngModelChange)="passwordForm.newPassword.set($event)"
-                            name="newPassword"
-                            placeholder="Enter your new password"
-                            [zStatus]="newPasswordHasError() ? 'error' : undefined"
-                            class="w-full pr-10"
-                          />
-                        </z-input-group>
-                        <button
-                          type="button"
-                          (click)="toggleNewPassword()"
-                          class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                          [attr.aria-label]="showNewPassword() ? 'Hide password' : 'Show password'"
-                        >
-                          @if (showNewPassword()) {
-                            <z-icon zType="eye-off" zSize="sm" />
-                          } @else {
-                            <z-icon zType="eye" zSize="sm" />
-                          }
-                        </button>
-                      </div>
-                    </z-form-control>
-                  </z-form-field>
-
-                  <z-form-field>
-                    <z-form-label zRequired>Confirm password</z-form-label>
-                    <z-form-control [errorMessage]="confirmPasswordError()">
-                      <div class="relative">
-                        <z-input-group [zPrefix]="lockIconTemplate">
-                          <input
-                            z-input
-                            [type]="showConfirmPassword() ? 'text' : 'password'"
-                            [ngModel]="passwordForm.confirmPassword()"
-                            (ngModelChange)="passwordForm.confirmPassword.set($event)"
-                            name="confirmPassword"
-                            placeholder="Confirm your new password"
-                            [zStatus]="confirmPasswordHasError() ? 'error' : undefined"
-                            class="w-full pr-10"
-                          />
-                        </z-input-group>
-                        <button
-                          type="button"
-                          (click)="toggleConfirmPassword()"
-                          class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                          [attr.aria-label]="showConfirmPassword() ? 'Hide password' : 'Show password'"
-                        >
-                          @if (showConfirmPassword()) {
-                            <z-icon zType="eye-off" zSize="sm" />
-                          } @else {
-                            <z-icon zType="eye" zSize="sm" />
-                          }
-                        </button>
-                      </div>
-                    </z-form-control>
-                  </z-form-field>
-
-                  <div class="flex gap-3 justify-end pt-2">
-                    <z-button 
-                      [zType]="isUpdatingPassword() || !isPasswordFormValid() ? 'ghost' : 'default'" 
-                      [disabled]="isUpdatingPassword()" 
-                      (click)="!isUpdatingPassword() && onSavePassword()"
-                    >
-                      @if (isUpdatingPassword()) {
-                        <span class="flex items-center gap-2">
-                          <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
-                          Updating...
-                        </span>
-                      } @else {
-                        Save Password
-                      }
-                    </z-button>
-                  </div>
-                </div>
-              </z-card>
-            </div>
-          }
-
-          @case ('team') {
-            <div class="space-y-8">
-              <div>
-                <h1 class="text-3xl font-bold">Team</h1>
-                <h2 class="text-xl font-semibold mt-2">Team Members</h2>
-                <p class="text-muted-foreground mt-1">Manage your team members and their permissions</p>
-              </div>
-
-              @if (isLoadingTeamMembers()) {
-                <div class="flex items-center justify-center p-8">
-                  <div class="text-muted-foreground">Loading team members...</div>
-                </div>
-              } @else if (teamMembers().length === 0) {
-                <div class="flex items-center justify-center p-8">
-                  <div class="text-muted-foreground">No team members found</div>
-                </div>
-              } @else {
-                <div class="space-y-4">
-                  @for (member of teamMembers(); track member.id) {
-                    <z-card>
-                      <div class="space-y-4">
-                        <!-- User Card Header -->
-                        <div class="flex items-center justify-between">
-                          <div class="flex items-center gap-4">
-                            <z-avatar 
-                              zSize="lg" 
-                              zType="default" 
-                              [zImage]="member.avatar ? { url: member.avatar, fallback: (member.name || member.email).charAt(0).toUpperCase() } : { fallback: (member.name || member.email).charAt(0).toUpperCase() }" 
-                            />
-                            <div>
-                              <div class="font-semibold">{{ member.name || 'No name' }}</div>
-                              <div class="text-sm text-muted-foreground">{{ member.email }}</div>
-                              @if (member.phone) {
-                                <div class="flex items-center gap-2 mt-1">
-                                  <z-icon zType="smartphone" zSize="sm" class="text-muted-foreground" />
-                                  <span class="text-xs text-muted-foreground">{{ member.phone }}</span>
-                                </div>
-                              }
-                            </div>
-                          </div>
-                          <div class="flex items-center gap-3">
-                            <div class="flex items-center gap-2">
-                              <div class="relative flex-shrink-0">
-                                <z-icon [zType]="getRoleIcon(member.role || '')" zSize="sm" class="text-muted-foreground" />
-                                <div class="absolute -top-1 -right-1 size-3 rounded-full bg-primary border-2 border-background flex items-center justify-center">
-                                  <svg class="size-1.5 text-primary-foreground" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                  </svg>
-                                </div>
-                              </div>
-                              <span class="text-sm font-medium">{{ member.role || 'No role' }}</span>
-                            </div>
-                            @if (!isCurrentUser(member)) {
-                              <z-button 
-                                zType="outline" 
-                                zSize="sm"
-                                (click)="togglePermissions(member)"
-                              >
-                                @if (editingUserId() === member.id) {
-                                  <z-icon zType="x" zSize="sm" />
-                                  Close
-                                } @else {
-                                  <z-icon zType="pencil" zSize="sm" />
-                                  Modify
-                                }
-                              </z-button>
-                            }
-                          </div>
-                        </div>
-
-                        <!-- Permissions Section -->
-                        @if (editingUserId() === member.id) {
-                          <div class="border-t pt-4 space-y-4">
-                            <!-- User Name and Email Display -->
-                            <div class="space-y-1">
-                              <div class="text-sm font-semibold">User: {{ member.name || 'No name' }}</div>
-                              <div class="text-sm text-muted-foreground">Email: {{ member.email }}</div>
-                            </div>
-
-                            @if (isUserPermissionsLoading(member.id)) {
-                              <div class="flex items-center justify-center p-8">
-                                <div class="text-muted-foreground">Loading permissions...</div>
-                              </div>
-                            } @else if (getUserPermissions(member.id)) {
-                              <div class="space-y-4">
-                                <!-- Select All Permissions Header -->
-                                <div class="flex items-center gap-3 p-4 rounded-lg border bg-card cursor-pointer hover:bg-accent transition-colors" (click)="toggleSelectAll(member.id)">
-                                  <div class="w-8 h-8 rounded bg-primary flex items-center justify-center flex-shrink-0">
-                                    <z-icon zType="check" zSize="sm" class="text-primary-foreground" />
-                                  </div>
-                                  <span class="font-medium">Select All Permissions</span>
-                                </div>
-
-                                <!-- Permissions List -->
-                                <div class="space-y-1">
-                                  <div class="text-sm font-semibold mb-3">Permissions:</div>
-                                  <div class="border rounded-lg divide-y">
-                                    @for (module of modules; track module.key) {
-                                      <div class="flex items-center gap-4 p-3 hover:bg-accent/50 transition-colors">
-                                        <!-- Module Name with Icon -->
-                                        <div class="flex items-center gap-2 min-w-[200px] flex-shrink-0">
-                                          <z-icon [zType]="$any(module.icon)" zSize="sm" class="text-muted-foreground flex-shrink-0" />
-                                          <span class="text-sm font-medium">{{ module.label }}</span>
-                                        </div>
-                                        
-                                        <!-- Permissions Checkboxes (Horizontal) -->
-                                        <div class="flex items-center gap-6 flex-1">
-                                          <div class="flex items-center gap-2">
-                                            <span class="text-xs text-muted-foreground min-w-[40px]">View</span>
-                                            <z-checkbox 
-                                              [ngModel]="getPermission(member.id, module.key, 'view')"
-                                              (ngModelChange)="updatePermission(member.id, module.key, 'view', $event)"
-                                            />
-                                          </div>
-                                          <div class="flex items-center gap-2">
-                                            <span class="text-xs text-muted-foreground min-w-[40px]">Edit</span>
-                                            <z-checkbox 
-                                              [ngModel]="getPermission(member.id, module.key, 'edit')"
-                                              (ngModelChange)="updatePermission(member.id, module.key, 'edit', $event)"
-                                            />
-                                          </div>
-                                          <div class="flex items-center gap-2">
-                                            <span class="text-xs text-muted-foreground min-w-[50px]">Delete</span>
-                                            <z-checkbox 
-                                              zType="destructive"
-                                              [ngModel]="getPermission(member.id, module.key, 'delete')"
-                                              (ngModelChange)="updatePermission(member.id, module.key, 'delete', $event)"
-                                            />
-                                          </div>
-                                          <div class="flex items-center gap-2 ml-auto">
-                                            <span class="text-xs font-medium min-w-[30px]">All</span>
-                                            <z-checkbox 
-                                              [ngModel]="getAllPermission(member.id, module.key)"
-                                              (ngModelChange)="updateAllPermission(member.id, module.key, $event)"
-                                            />
-                                          </div>
-                                        </div>
-                                      </div>
-                                    }
-                                  </div>
-                                </div>
-
-                                <!-- Save Button -->
-                                <div class="flex justify-end pt-2">
-                                  <z-button 
-                                    [zType]="isUserPermissionsSaving(member.id) ? 'ghost' : 'default'" 
-                                    [disabled]="isUserPermissionsSaving(member.id)" 
-                                    (click)="!isUserPermissionsSaving(member.id) && saveUserPermissions(member.id)"
-                                  >
-                                    @if (isUserPermissionsSaving(member.id)) {
-                                      <span class="flex items-center gap-2">
-                                        <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
-                                        Saving...
-                                      </span>
-                                    } @else {
-                                      Save Permissions
-                                    }
-                                  </z-button>
-                                </div>
-                              </div>
-                            }
-                          </div>
-                        }
-                      </div>
-                    </z-card>
                   }
                 </div>
-              }
-            </div>
+                }
+              </div>
+            </z-card>
+            }
+          </div>
           }
+        </div>
+        }
 
-          @case ('application') {
-            <div class="space-y-8">
-              <h1 class="text-3xl font-bold">Application</h1>
+        @case ('application') {
+        <div class="space-y-8">
+          <h1 class="text-3xl font-bold">Application</h1>
 
-              <!-- Settings Accordion -->
-              <div class="space-y-4">
-                <!-- Layout Settings -->
-                <div class="bg-card border border-border rounded-lg shadow-sm overflow-hidden">
-                  <z-accordion zType="single" class="border-0">
-                    <z-accordion-item 
-                      zTitle="Layout Settings" 
-                      zValue="layout-settings"
-                      class="!px-6 !py-5 border-b-0 !text-lg"
-                    >
-                      <div class="mb-6">
-                        <h3 class="text-sm font-medium mb-2">Preset</h3>
-                        <p class="text-sm text-muted-foreground mb-4">Choose a color theme for your dashboard</p>
-                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                          @for (preset of themePresets; track preset.value) {
-                            <button
-                              type="button"
-                              (click)="onThemeChange(preset.value)"
-                              [class]="currentTheme() === preset.value 
+          <!-- Settings Accordion -->
+          <div class="space-y-4">
+            <!-- Layout Settings -->
+            <div class="bg-card border border-border rounded-lg shadow-sm overflow-hidden">
+              <z-accordion zType="single" class="border-0">
+                <z-accordion-item zTitle="Layout Settings" zValue="layout-settings"
+                  class="!px-6 !py-5 border-b-0 !text-lg">
+                  <div class="mb-6">
+                    <h3 class="text-sm font-medium mb-2">Preset</h3>
+                    <p class="text-sm text-muted-foreground mb-4">Choose a color theme for your dashboard</p>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                      @for (preset of themePresets; track preset.value) {
+                      <button type="button" (click)="onThemeChange(preset.value)" [class]="currentTheme() === preset.value 
                                 ? 'border-2 border-primary bg-primary/5 ring-2 ring-primary/20'
                                 : 'border border-border hover:border-primary/50 hover:bg-accent/50'"
-                              class="relative flex flex-col items-center gap-3 p-4 rounded-lg bg-card transition-all cursor-pointer group"
-                            >
-                              <!-- Color Swatch -->
-                              <div 
-                                class="size-12 rounded-lg flex-shrink-0 shadow-sm border border-border/50"
-                                [style.background]="preset.color"
-                              ></div>
-                              
-                              <!-- Label -->
-                              <span class="text-sm font-medium text-center">{{ preset.label }}</span>
-                              
-                              <!-- Selected Indicator -->
-                              @if (currentTheme() === preset.value) {
-                                <div class="absolute top-2 right-2">
-                                  <div class="size-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
-                                    <z-icon zType="check" zSize="sm" />
-                                  </div>
-                                </div>
-                              }
-                              
-                              <!-- Hover Effect -->
-                              <div class="absolute inset-0 rounded-lg bg-primary/0 group-hover:bg-primary/5 transition-colors pointer-events-none"></div>
-                            </button>
-                          }
-                        </div>
-                      </div>
-                    </z-accordion-item>
-                  </z-accordion>
-                </div>
+                        class="relative flex flex-col items-center gap-3 p-4 rounded-lg bg-card transition-all cursor-pointer group">
+                        <!-- Color Swatch -->
+                        <div class="size-12 rounded-lg flex-shrink-0 shadow-sm border border-border/50"
+                          [style.background]="preset.color"></div>
 
-                <!-- Property Settings -->
-                <div class="bg-card border border-border rounded-lg shadow-sm overflow-hidden">
-                  <z-accordion zType="single" class="border-0">
-                    <z-accordion-item 
-                      zTitle="Property" 
-                      zValue="property"
-                      class="!px-6 !py-5 border-b-0 !text-lg"
-                    >
-                      @if (isLoadingPropertySettings()) {
-                        <div class="flex items-center justify-center p-8">
-                          <div class="text-muted-foreground">Loading property settings...</div>
-                        </div>
-                      } @else {
-                        <div class="space-y-8">
-                      <!-- Default City -->
-                          <div>
-                        <h3 class="text-xl font-semibold mb-2">Ville par Défaut</h3>
-                        <p class="text-sm text-muted-foreground mb-4">Définir la ville par défaut pour les nouvelles propriétés</p>
-                            <z-form-field>
-                              <z-form-label zRequired>Ville par Défaut</z-form-label>
-                              <z-form-control>
-                                <z-select 
-                                  [zValue]="propertySettings.defaultCity()" 
-                                  [zLabel]="propertySettings.defaultCity() || 'Select a city'"
-                                  zPlaceholder="Select a city"
-                                  (zSelectionChange)="propertySettings.defaultCity.set($event)"
-                                  class="w-full"
-                                >
-                                  <z-select-item zValue="Tanger">Tanger</z-select-item>
-                                  <z-select-item zValue="Casablanca">Casablanca</z-select-item>
-                                  <z-select-item zValue="Rabat">Rabat</z-select-item>
-                                  <z-select-item zValue="Kenitra">Kenitra</z-select-item>
-                                  <z-select-item zValue="Agadir">Agadir</z-select-item>
-                                </z-select>
-                              </z-form-control>
-                            </z-form-field>
-                          </div>
+                        <!-- Label -->
+                        <span class="text-sm font-medium text-center">{{ preset.label }}</span>
 
-                          <!-- Default Categories -->
-                          <div>
-                            <h3 class="text-xl font-semibold mb-2">Catégories par Défaut</h3>
-                            <p class="text-sm text-muted-foreground mb-4">Gérer les catégories par défaut avec leur clé et référence</p>
-                            <div class="grid grid-cols-3 gap-3 mb-4">
-                              @for (category of propertySettings.categories(); track category.key) {
-                                <div class="p-3 border rounded-lg bg-card">
-                                  <z-form-field>
-                                    <z-form-label zRequired>{{ category.key }}</z-form-label>
-                                    <z-form-control>
-                                      <input
-                                        z-input
-                                        type="text"
-                                        [value]="category.reference"
-                                        (blur)="updateCategoryReference(category.key, $event)"
-                                        class="w-full"
-                                      />
-                                    </z-form-control>
-                                  </z-form-field>
-                                </div>
-                              }
-                            </div>
-                          </div>
-
-                          <!-- Property Types -->
-                          <div>
-                            <h3 class="text-xl font-semibold mb-2">Types de Propriété</h3>
-                            <p class="text-sm text-muted-foreground mb-4">Gérer les types de propriété disponibles</p>
-                            <div class="flex flex-wrap gap-2 mb-4">
-                              @for (type of propertySettings.propertyTypes(); track type) {
-                                <z-badge zType="outline" class="flex items-center gap-1.5 px-3 py-1">
-                                  <span>{{ type }}</span>
-                                  <button
-                                    type="button"
-                                    (click)="removePropertyType(type)"
-                                    class="hover:text-destructive transition-colors"
-                                    aria-label="Remove property type"
-                                  >
-                                    <z-icon zType="x" zSize="sm" />
-                                  </button>
-                                </z-badge>
-                              }
-                              @if (showAddPropertyTypeInput()) {
-                                <div class="flex items-center gap-2">
-                                  <input
-                                    z-input
-                                    type="text"
-                                    [ngModel]="newPropertyType()"
-                                    (ngModelChange)="newPropertyType.set($event)"
-                                    (keyup.enter)="addPropertyType()"
-                                    (keyup.escape)="showAddPropertyTypeInput.set(false); newPropertyType.set('')"
-                                    placeholder="Enter property type"
-                                    class="w-48"
-                                    autofocus
-                                  />
-                                  <z-button zType="default" zSize="sm" (click)="addPropertyType()">
-                                    <z-icon zType="check" zSize="sm" />
-                                  </z-button>
-                                  <z-button zType="outline" zSize="sm" (click)="showAddPropertyTypeInput.set(false); newPropertyType.set('')">
-                                    <z-icon zType="x" zSize="sm" />
-                                  </z-button>
-                                </div>
-                              } @else {
-                                <z-button 
-                                  zType="outline" 
-                                  zSize="sm"
-                                  (click)="showAddPropertyTypeInput.set(true)"
-                                  class="border-dashed border-primary/50 text-primary hover:bg-primary/5"
-                                >
-                                  <z-icon zType="plus" zSize="sm" />
-                                  Ajouter un Type de Propriété
-                                </z-button>
-                              }
-                            </div>
-                          </div>
-
-                          <!-- Property Characteristics (Features) -->
-                          <div>
-                            <h3 class="text-xl font-semibold mb-2">Caractéristiques de Propriété</h3>
-                            <p class="text-sm text-muted-foreground mb-4">Gérer les caractéristiques de propriété disponibles</p>
-                            <div class="flex flex-wrap gap-2 mb-4">
-                              @for (feature of propertySettings.features(); track feature) {
-                                <z-badge zType="outline" class="flex items-center gap-1.5 px-3 py-1">
-                                  <span>{{ feature }}</span>
-                                  <button
-                                    type="button"
-                                    (click)="removeFeature(feature)"
-                                    class="hover:text-destructive transition-colors"
-                                    aria-label="Remove feature"
-                                  >
-                                    <z-icon zType="x" zSize="sm" />
-                                  </button>
-                                </z-badge>
-                              }
-                              @if (showAddFeatureInput()) {
-                                <div class="flex items-center gap-2">
-                                  <input
-                                    z-input
-                                    type="text"
-                                    [ngModel]="newFeature()"
-                                    (ngModelChange)="newFeature.set($event)"
-                                    (keyup.enter)="addFeature()"
-                                    (keyup.escape)="showAddFeatureInput.set(false); newFeature.set('')"
-                                    placeholder="Enter feature"
-                                    class="w-48"
-                                    autofocus
-                                  />
-                                  <z-button zType="default" zSize="sm" (click)="addFeature()">
-                                    <z-icon zType="check" zSize="sm" />
-                                  </z-button>
-                                  <z-button zType="outline" zSize="sm" (click)="showAddFeatureInput.set(false); newFeature.set('')">
-                                    <z-icon zType="x" zSize="sm" />
-                                  </z-button>
-                                </div>
-                              } @else {
-                                <z-button 
-                                  zType="outline" 
-                                  zSize="sm"
-                                  (click)="showAddFeatureInput.set(true)"
-                                  class="border-dashed border-primary/50 text-primary hover:bg-primary/5"
-                                >
-                                  <z-icon zType="plus" zSize="sm" />
-                                  Ajouter une Caractéristique
-                                </z-button>
-                              }
-                            </div>
-                          </div>
-
-                          <!-- Property Amenities -->
-                          <div>
-                            <h3 class="text-xl font-semibold mb-2">Équipements de Propriété</h3>
-                            <p class="text-sm text-muted-foreground mb-4">Gérer les équipements de propriété disponibles</p>
-                            <div class="flex flex-wrap gap-2 mb-4">
-                              @for (amenity of propertySettings.amenities(); track amenity) {
-                                <z-badge zType="outline" class="flex items-center gap-1.5 px-3 py-1">
-                                  <span>{{ amenity }}</span>
-                                  <button
-                                    type="button"
-                                    (click)="removeAmenity(amenity)"
-                                    class="hover:text-destructive transition-colors"
-                                    aria-label="Remove amenity"
-                                  >
-                                    <z-icon zType="x" zSize="sm" />
-                                  </button>
-                                </z-badge>
-                              }
-                              @if (showAddAmenityInput()) {
-                                <div class="flex items-center gap-2">
-                                  <input
-                                    z-input
-                                    type="text"
-                                    [ngModel]="newAmenity()"
-                                    (ngModelChange)="newAmenity.set($event)"
-                                    (keyup.enter)="addAmenity()"
-                                    (keyup.escape)="showAddAmenityInput.set(false); newAmenity.set('')"
-                                    placeholder="Enter amenity"
-                                    class="w-48"
-                                    autofocus
-                                  />
-                                  <z-button zType="default" zSize="sm" (click)="addAmenity()">
-                                    <z-icon zType="check" zSize="sm" />
-                                  </z-button>
-                                  <z-button zType="outline" zSize="sm" (click)="showAddAmenityInput.set(false); newAmenity.set('')">
-                                    <z-icon zType="x" zSize="sm" />
-                                  </z-button>
-                                </div>
-                              } @else {
-                                <z-button 
-                                  zType="outline" 
-                                  zSize="sm"
-                                  (click)="showAddAmenityInput.set(true)"
-                                  class="border-dashed border-primary/50 text-primary hover:bg-primary/5"
-                                >
-                                  <z-icon zType="plus" zSize="sm" />
-                                  Ajouter un Équipement
-                                </z-button>
-                              }
-                            </div>
-                          </div>
-
-                          <!-- Save Button -->
-                          <div class="flex justify-end pt-4">
-                            <z-button 
-                              [zType]="isSavingPropertySettings() ? 'ghost' : 'default'" 
-                              [disabled]="isSavingPropertySettings()" 
-                              (click)="!isSavingPropertySettings() && onSavePropertySettings()"
-                            >
-                              @if (isSavingPropertySettings()) {
-                                <span class="flex items-center gap-2">
-                                  <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
-                                  Saving...
-                                </span>
-                              } @else {
-                                Save Property Settings
-                              }
-                            </z-button>
+                        <!-- Selected Indicator -->
+                        @if (currentTheme() === preset.value) {
+                        <div class="absolute top-2 right-2">
+                          <div
+                            class="size-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
+                            <z-icon zType="check" zSize="sm" />
                           </div>
                         </div>
+                        }
+
+                        <!-- Hover Effect -->
+                        <div
+                          class="absolute inset-0 rounded-lg bg-primary/0 group-hover:bg-primary/5 transition-colors pointer-events-none">
+                        </div>
+                      </button>
                       }
-                    </z-accordion-item>
-                  </z-accordion>
-                </div>
-              </div>
+                    </div>
+                  </div>
+                </z-accordion-item>
+              </z-accordion>
             </div>
-          }
+
+            <!-- Property Settings -->
+            <div class="bg-card border border-border rounded-lg shadow-sm overflow-hidden">
+              <z-accordion zType="single" class="border-0">
+                <z-accordion-item zTitle="Property" zValue="property" class="!px-6 !py-5 border-b-0 !text-lg">
+                  @if (isLoadingPropertySettings()) {
+                  <div class="flex items-center justify-center p-8">
+                    <div class="text-muted-foreground">Loading property settings...</div>
+                  </div>
+                  } @else {
+                  <div class="space-y-8">
+                    <!-- Default City -->
+                    <div>
+                      <h3 class="text-xl font-semibold mb-2">Ville par Défaut</h3>
+                      <p class="text-sm text-muted-foreground mb-4">Définir la ville par défaut pour les nouvelles
+                        propriétés</p>
+                      <z-form-field>
+                        <z-form-label zRequired>Ville par Défaut</z-form-label>
+                        <z-form-control>
+                          <z-select [zValue]="propertySettings.defaultCity()"
+                            [zLabel]="propertySettings.defaultCity() || 'Select a city'" zPlaceholder="Select a city"
+                            (zSelectionChange)="propertySettings.defaultCity.set($event)" class="w-full">
+                            <z-select-item zValue="Tanger">Tanger</z-select-item>
+                            <z-select-item zValue="Casablanca">Casablanca</z-select-item>
+                            <z-select-item zValue="Rabat">Rabat</z-select-item>
+                            <z-select-item zValue="Kenitra">Kenitra</z-select-item>
+                            <z-select-item zValue="Agadir">Agadir</z-select-item>
+                          </z-select>
+                        </z-form-control>
+                      </z-form-field>
+                    </div>
+
+                    <!-- Default Categories -->
+                    <div>
+                      <h3 class="text-xl font-semibold mb-2">Catégories par Défaut</h3>
+                      <p class="text-sm text-muted-foreground mb-4">Gérer les catégories par défaut avec leur clé et
+                        référence</p>
+                      <div class="grid grid-cols-3 gap-3 mb-4">
+                        @for (category of propertySettings.categories(); track category.key) {
+                        <div class="p-3 border rounded-lg bg-card">
+                          <z-form-field>
+                            <z-form-label zRequired>{{ category.key }}</z-form-label>
+                            <z-form-control>
+                              <input z-input type="text" [value]="category.reference"
+                                (blur)="updateCategoryReference(category.key, $event)" class="w-full" />
+                            </z-form-control>
+                          </z-form-field>
+                        </div>
+                        }
+                      </div>
+                    </div>
+
+                    <!-- Property Types -->
+                    <div>
+                      <h3 class="text-xl font-semibold mb-2">Types de Propriété</h3>
+                      <p class="text-sm text-muted-foreground mb-4">Gérer les types de propriété disponibles</p>
+                      <div class="flex flex-wrap gap-2 mb-4">
+                        @for (type of propertySettings.propertyTypes(); track type) {
+                        <z-badge zType="outline" class="flex items-center gap-1.5 px-3 py-1">
+                          <span>{{ type }}</span>
+                          <button type="button" (click)="removePropertyType(type)"
+                            class="hover:text-destructive transition-colors" aria-label="Remove property type">
+                            <z-icon zType="x" zSize="sm" />
+                          </button>
+                        </z-badge>
+                        }
+                        @if (showAddPropertyTypeInput()) {
+                        <div class="flex items-center gap-2">
+                          <input z-input type="text" [ngModel]="newPropertyType()"
+                            (ngModelChange)="newPropertyType.set($event)" (keyup.enter)="addPropertyType()"
+                            (keyup.escape)="showAddPropertyTypeInput.set(false); newPropertyType.set('')"
+                            placeholder="Enter property type" class="w-48" autofocus />
+                          <z-button zType="default" zSize="sm" (click)="addPropertyType()">
+                            <z-icon zType="check" zSize="sm" />
+                          </z-button>
+                          <z-button zType="outline" zSize="sm"
+                            (click)="showAddPropertyTypeInput.set(false); newPropertyType.set('')">
+                            <z-icon zType="x" zSize="sm" />
+                          </z-button>
+                        </div>
+                        } @else {
+                        <z-button zType="outline" zSize="sm" (click)="showAddPropertyTypeInput.set(true)"
+                          class="border-dashed border-primary/50 text-primary hover:bg-primary/5">
+                          <z-icon zType="plus" zSize="sm" />
+                          Ajouter un Type de Propriété
+                        </z-button>
+                        }
+                      </div>
+                    </div>
+
+                    <!-- Property Characteristics (Features) -->
+                    <div>
+                      <h3 class="text-xl font-semibold mb-2">Caractéristiques de Propriété</h3>
+                      <p class="text-sm text-muted-foreground mb-4">Gérer les caractéristiques de propriété disponibles
+                      </p>
+                      <div class="flex flex-wrap gap-2 mb-4">
+                        @for (feature of propertySettings.features(); track feature) {
+                        <z-badge zType="outline" class="flex items-center gap-1.5 px-3 py-1">
+                          <span>{{ feature }}</span>
+                          <button type="button" (click)="removeFeature(feature)"
+                            class="hover:text-destructive transition-colors" aria-label="Remove feature">
+                            <z-icon zType="x" zSize="sm" />
+                          </button>
+                        </z-badge>
+                        }
+                        @if (showAddFeatureInput()) {
+                        <div class="flex items-center gap-2">
+                          <input z-input type="text" [ngModel]="newFeature()" (ngModelChange)="newFeature.set($event)"
+                            (keyup.enter)="addFeature()"
+                            (keyup.escape)="showAddFeatureInput.set(false); newFeature.set('')"
+                            placeholder="Enter feature" class="w-48" autofocus />
+                          <z-button zType="default" zSize="sm" (click)="addFeature()">
+                            <z-icon zType="check" zSize="sm" />
+                          </z-button>
+                          <z-button zType="outline" zSize="sm"
+                            (click)="showAddFeatureInput.set(false); newFeature.set('')">
+                            <z-icon zType="x" zSize="sm" />
+                          </z-button>
+                        </div>
+                        } @else {
+                        <z-button zType="outline" zSize="sm" (click)="showAddFeatureInput.set(true)"
+                          class="border-dashed border-primary/50 text-primary hover:bg-primary/5">
+                          <z-icon zType="plus" zSize="sm" />
+                          Ajouter une Caractéristique
+                        </z-button>
+                        }
+                      </div>
+                    </div>
+
+                    <!-- Property Amenities -->
+                    <div>
+                      <h3 class="text-xl font-semibold mb-2">Équipements de Propriété</h3>
+                      <p class="text-sm text-muted-foreground mb-4">Gérer les équipements de propriété disponibles</p>
+                      <div class="flex flex-wrap gap-2 mb-4">
+                        @for (amenity of propertySettings.amenities(); track amenity) {
+                        <z-badge zType="outline" class="flex items-center gap-1.5 px-3 py-1">
+                          <span>{{ amenity }}</span>
+                          <button type="button" (click)="removeAmenity(amenity)"
+                            class="hover:text-destructive transition-colors" aria-label="Remove amenity">
+                            <z-icon zType="x" zSize="sm" />
+                          </button>
+                        </z-badge>
+                        }
+                        @if (showAddAmenityInput()) {
+                        <div class="flex items-center gap-2">
+                          <input z-input type="text" [ngModel]="newAmenity()" (ngModelChange)="newAmenity.set($event)"
+                            (keyup.enter)="addAmenity()"
+                            (keyup.escape)="showAddAmenityInput.set(false); newAmenity.set('')"
+                            placeholder="Enter amenity" class="w-48" autofocus />
+                          <z-button zType="default" zSize="sm" (click)="addAmenity()">
+                            <z-icon zType="check" zSize="sm" />
+                          </z-button>
+                          <z-button zType="outline" zSize="sm"
+                            (click)="showAddAmenityInput.set(false); newAmenity.set('')">
+                            <z-icon zType="x" zSize="sm" />
+                          </z-button>
+                        </div>
+                        } @else {
+                        <z-button zType="outline" zSize="sm" (click)="showAddAmenityInput.set(true)"
+                          class="border-dashed border-primary/50 text-primary hover:bg-primary/5">
+                          <z-icon zType="plus" zSize="sm" />
+                          Ajouter un Équipement
+                        </z-button>
+                        }
+                      </div>
+                    </div>
+
+                    <!-- Save Button -->
+                    <div class="flex justify-end pt-4">
+                      <z-button [zType]="isSavingPropertySettings() ? 'ghost' : 'default'"
+                        [disabled]="isSavingPropertySettings()"
+                        (click)="!isSavingPropertySettings() && onSavePropertySettings()">
+                        @if (isSavingPropertySettings()) {
+                        <span class="flex items-center gap-2">
+                          <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+                          Saving...
+                        </span>
+                        } @else {
+                        Save Property Settings
+                        }
+                      </z-button>
+                    </div>
+                  </div>
+                  }
+                </z-accordion-item>
+              </z-accordion>
+            </div>
+          </div>
+        </div>
+        }
 
         }
       </div>
     </div>
   </div>
 </z-page>
-

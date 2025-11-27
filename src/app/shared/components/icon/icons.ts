@@ -1,4 +1,5 @@
 import {
+  AlertCircle,
   ArrowRight,
   Ban,
   Bell,
@@ -119,6 +120,7 @@ export const ZARD_ICONS = {
   check: Check,
   x: X,
   info: Info,
+  'alert-circle': AlertCircle,
   'triangle-alert': TriangleAlert,
   circle: Circle,
   'circle-check': CircleCheck,

@@ -1,0 +1,126 @@
+<div class="min-h-screen flex items-center justify-center bg-muted/30 p-4">
+    <div class="w-full max-w-[400px] space-y-6">
+        <!-- Icon Templates -->
+        <ng-template #userIcon>
+            <z-icon zType="user" zSize="sm" class="text-muted-foreground" />
+        </ng-template>
+        <ng-template #phoneIcon>
+            <z-icon zType="smartphone" zSize="sm" class="text-muted-foreground" />
+        </ng-template>
+        <ng-template #lockIcon>
+            <z-icon zType="lock" zSize="sm" class="text-muted-foreground" />
+        </ng-template>
+
+        <!-- Header -->
+        <div class="text-center space-y-2">
+            <div class="flex justify-center mb-6">
+                <div class="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
+                    <z-icon zType="users" class="text-primary-foreground w-6 h-6" />
+                </div>
+            </div>
+            <h1 class="text-2xl font-semibold tracking-tight">Join the Team</h1>
+            <p class="text-sm text-muted-foreground">
+                Create your account to accept the invitation
+            </p>
+        </div>
+
+        <!-- Form -->
+        <div class="bg-card border rounded-xl p-6 shadow-sm space-y-6">
+            @if (errorMessage()) {
+            <div class="p-3 rounded-lg bg-destructive/10 text-destructive text-sm font-medium flex items-center gap-2">
+                <z-icon zType="alert-circle" zSize="sm" />
+                {{ errorMessage() }}
+            </div>
+            }
+
+            <form (ngSubmit)="onSubmit($event)" class="space-y-4">
+                <!-- Name (Optional) -->
+                <z-form-field>
+                    <z-form-label>Full Name (Optional)</z-form-label>
+                    <z-form-control>
+                        <z-input-group [zPrefix]="userIcon">
+                            <input z-input type="text" [ngModel]="form.name()" (ngModelChange)="form.name.set($event)"
+                                name="name" placeholder="John Doe" class="w-full" />
+                        </z-input-group>
+                    </z-form-control>
+                </z-form-field>
+
+                <!-- Phone (Optional) -->
+                <z-form-field>
+                    <z-form-label>Phone (Optional)</z-form-label>
+                    <z-form-control>
+                        <z-input-group [zPrefix]="phoneIcon">
+                            <input z-input type="tel" [ngModel]="form.phone()" (ngModelChange)="form.phone.set($event)"
+                                name="phone" placeholder="+1 234 567 890" class="w-full" />
+                        </z-input-group>
+                    </z-form-control>
+                </z-form-field>
+
+                <!-- Password -->
+                <z-form-field>
+                    <z-form-label zRequired>Create Password</z-form-label>
+                    <z-form-control [errorMessage]="passwordError()">
+                        <div class="relative">
+                            <z-input-group [zPrefix]="lockIcon">
+                                <input z-input [type]="showPassword() ? 'text' : 'password'" [ngModel]="form.password()"
+                                    (ngModelChange)="form.password.set($event)" name="password"
+                                    placeholder="At least 8 characters"
+                                    [zStatus]="passwordError() ? 'error' : undefined" class="w-full pr-10" />
+                            </z-input-group>
+                            <button type="button" (click)="togglePasswordVisibility()"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'">
+                                @if (showPassword()) {
+                                <z-icon zType="eye-off" zSize="sm" />
+                                } @else {
+                                <z-icon zType="eye" zSize="sm" />
+                                }
+                            </button>
+                        </div>
+                    </z-form-control>
+                </z-form-field>
+
+                <!-- Confirm Password -->
+                <z-form-field>
+                    <z-form-label zRequired>Confirm Password</z-form-label>
+                    <z-form-control [errorMessage]="confirmPasswordError()">
+                        <div class="relative">
+                            <z-input-group [zPrefix]="lockIcon">
+                                <input z-input [type]="showConfirmPassword() ? 'text' : 'password'"
+                                    [ngModel]="form.confirmPassword()"
+                                    (ngModelChange)="form.confirmPassword.set($event)" name="confirmPassword"
+                                    placeholder="Confirm your password"
+                                    [zStatus]="confirmPasswordError() ? 'error' : undefined" class="w-full pr-10" />
+                            </z-input-group>
+                            <button type="button" (click)="toggleConfirmPasswordVisibility()"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                [attr.aria-label]="showConfirmPassword() ? 'Hide password' : 'Show password'">
+                                @if (showConfirmPassword()) {
+                                <z-icon zType="eye-off" zSize="sm" />
+                                } @else {
+                                <z-icon zType="eye" zSize="sm" />
+                                }
+                            </button>
+                        </div>
+                    </z-form-control>
+                </z-form-field>
+
+                <button type="submit" [disabled]="isLoading()"
+                    class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2 w-full">
+                    @if (isLoading()) {
+                    <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+                    Creating Account...
+                    } @else {
+                    Create Account & Join Team
+                    }
+                </button>
+            </form>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center text-sm text-muted-foreground">
+            Already have an account?
+            <a routerLink="/login" class="font-medium text-primary hover:underline">Sign in</a>
+        </div>
+    </div>
+</div>

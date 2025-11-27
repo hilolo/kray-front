@@ -22,15 +22,17 @@ export const tokenRefreshInterceptor: HttpInterceptorFn = (req, next) => {
   // Skip interceptor for public endpoints (no authentication required)
   const isPublicEndpoint = url.includes('/public/') || 
                            url.includes('/forgot-password') || 
-                           url.includes('/reset-password');
+                           url.includes('/reset-password') ||
+                           url.includes('/accept-invitation');
   if (isPublicEndpoint) {
     return next(req);
   }
 
-  // Skip interceptor for anonymous endpoints (forgot-password, reset-password, sign-in)
+  // Skip interceptor for anonymous endpoints (forgot-password, reset-password, sign-in, accept-invitation)
   const isAnonymousEndpoint = url.includes('/forgot-password') || 
                                url.includes('/reset-password') ||
-                               url.includes('/sign-in');
+                               url.includes('/sign-in') ||
+                               url.includes('/accept-invitation');
   if (isAnonymousEndpoint) {
     return next(req);
   }
@@ -38,7 +40,7 @@ export const tokenRefreshInterceptor: HttpInterceptorFn = (req, next) => {
   // Check if token is empty before making the request
   const currentToken = authService.getToken();
   if (!currentToken || currentToken.trim() === '') {
-    const isSignInEndpoint = url.includes('/sign-in') || url.includes('/sign-in-with-token');
+    const isSignInEndpoint = url.includes('/sign-in') || url.includes('/sign-in-with-token') || url.includes('/accept-invitation');
     
     // If token is empty and not a sign-in endpoint, try to refresh first
     if (!isSignInEndpoint && !tokenRefreshService.getIsRefreshing()) {
@@ -76,12 +78,13 @@ export const tokenRefreshInterceptor: HttpInterceptorFn = (req, next) => {
       // Skip interceptor for public endpoints (no authentication required)
       const isPublicEndpoint = url.includes('/public/') || 
                                url.includes('/forgot-password') || 
-                               url.includes('/reset-password');
+                               url.includes('/reset-password') ||
+                               url.includes('/accept-invitation');
       if (isPublicEndpoint) {
         return throwError(() => error);
       }
 
-      const isSignInEndpoint = url.includes('/sign-in') || url.includes('/sign-in-with-token');
+      const isSignInEndpoint = url.includes('/sign-in') || url.includes('/sign-in-with-token') || url.includes('/accept-invitation');
       const hasToken = !!authService.getToken();
       
       // Handle 401 Unauthorized errors

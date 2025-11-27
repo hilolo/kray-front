@@ -29,6 +29,10 @@ export const routes: Routes = [
     loadComponent: () => import('./reset-password/reset-password.component').then((m) => m.ResetPasswordComponent),
   },
   {
+    path: 'accept-invitation',
+    loadComponent: () => import('./accept-invitation/accept-invitation.component').then((m) => m.AcceptInvitationComponent),
+  },
+  {
     path: 'locked',
     component: LockedComponent,
   },

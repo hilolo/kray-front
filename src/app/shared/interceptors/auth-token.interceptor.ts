@@ -18,6 +18,7 @@ export const authTokenInterceptor: HttpInterceptorFn = (req, next) => {
   const isPublicEndpoint = url.includes('/public/') || 
                            url.includes('/forgot-password') || 
                            url.includes('/reset-password') ||
+                           url.includes('/accept-invitation') ||
                            url.includes('/sign-in');
   if (isPublicEndpoint) {
     return next(req);

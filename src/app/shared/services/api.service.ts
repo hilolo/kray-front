@@ -58,13 +58,39 @@ export class ApiService {
    */
   post<T = any>(endpoint: string, body: any, options?: { headers?: HttpHeaders }): Observable<T> {
     const url = this.getUrl(endpoint);
+    console.log('[ApiService] POST request:', {
+      url: url,
+      endpoint: endpoint,
+      body: endpoint.includes('accept-invitation') 
+        ? { ...body, password: '***', token: body.token ? body.token.substring(0, 10) + '...' : 'missing' }
+        : body
+    });
+    
+    const startTime = Date.now();
+    
     return this.http.post<ApiResponse<T> | any>(url, body, options).pipe(
       map((response) => {
+        const duration = Date.now() - startTime;
+        console.log(`[ApiService] POST response (${duration}ms):`, {
+          url: url,
+          hasResponse: !!response,
+          responseType: typeof response,
+          hasStatus: response && typeof response === 'object' && 'status' in response,
+          status: response?.status,
+          hasData: response?.data !== undefined
+        });
+        
         // Handle case where response is the Result object directly (no wrapper)
         // Check if response has status property (Result object structure)
         if (response && typeof response === 'object' && 'status' in response) {
           // Check if response has error status even with 200 OK
           if (response.status === 'Failed') {
+            console.error('[ApiService] Request failed with status Failed:', {
+              code: response.code,
+              message: response.message,
+              errors: response.errors
+            });
+            
             // Create error object with code and data for company_restricted handling
             const error: any = new Error(response.message || 'Request failed');
             error.code = response.code;
@@ -78,12 +104,25 @@ export class ApiService {
             throw error;
           }
           // If response has data property, return it; otherwise return the response itself
-          return response.data !== undefined ? response.data : response;
+          const result = response.data !== undefined ? response.data : response;
+          console.log('[ApiService] Returning response data');
+          return result;
         }
         // Fallback: return response as-is if it doesn't match expected structure
+        console.log('[ApiService] Returning response as-is (no status property)');
         return response;
       }),
-      catchError(this.handleError)
+      catchError((error) => {
+        const duration = Date.now() - startTime;
+        console.error(`[ApiService] POST error (${duration}ms):`, {
+          url: url,
+          error: error,
+          status: error?.status,
+          statusText: error?.statusText,
+          errorBody: error?.error
+        });
+        return this.handleError(error);
+      })
     );
   }
 

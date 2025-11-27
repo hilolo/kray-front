@@ -135,16 +135,49 @@ export class SettingsComponent implements OnInit, OnDestroy {
   showCurrentPassword = signal(false);
   showNewPassword = signal(false);
   showConfirmPassword = signal(false);
-  
+
   // Password form validation state
   passwordFormSubmitted = signal(false);
-  
+
   // Loading state for password update
   isUpdatingPassword = signal(false);
 
   // Team Members
   teamMembers = signal<TeamMember[]>([]);
   isLoadingTeamMembers = signal(false);
+
+  // Invitation Form
+  invitationForm = {
+    email: signal(''),
+    role: signal('User'), // Default role
+  };
+  isInviting = signal(false);
+  invitationFormSubmitted = signal(false);
+
+  // Computed signal to check if invitation form is valid
+  readonly isInvitationFormValid = computed(() => {
+    const email = this.invitationForm.email();
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return email && email.trim() !== '' && emailRegex.test(email);
+  });
+
+  // Computed signals for invitation error messages
+  readonly invitationEmailError = computed(() => {
+    if (!this.invitationFormSubmitted()) return '';
+    const email = this.invitationForm.email();
+    if (!email || email.trim() === '') {
+      return 'Email is required';
+    }
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) {
+      return 'Please enter a valid email address';
+    }
+    return '';
+  });
+
+  readonly invitationEmailHasError = computed(() => {
+    return this.invitationFormSubmitted() && !!this.invitationEmailError();
+  });
 
   // Permissions state for each user
   userPermissions = signal<Map<string, UserPermissions | null>>(new Map());
@@ -217,7 +250,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.userInfo.email = user.email || '';
         this.userInfo.fullName.set(user.name || '');
         this.userInfo.phone.set(user.phone || '');
-        
+
         // Update profile image if avatar exists
         if (user.avatar && !this.profileImageUrl()) {
           this.profileImageUrl.set(user.avatar);
@@ -248,13 +281,13 @@ export class SettingsComponent implements OnInit, OnDestroy {
       this.userInfo.email = user.email || '';
       this.userInfo.fullName.set(user.name || '');
       this.userInfo.phone.set(user.phone || '');
-      
+
       // Set profile image if avatar exists
       if (user.avatar) {
         this.profileImageUrl.set(user.avatar);
       }
     }
-    
+
     const company = this.currentCompany();
     if (company) {
       this.companyInfo = {
@@ -296,6 +329,100 @@ export class SettingsComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Delete a team member
+   */
+  deleteTeamMember(member: TeamMember): void {
+    if (this.isCurrentUser(member)) {
+      this.toastService.error('You cannot delete your own account');
+      return;
+    }
+
+    const dialogRef = this.alertDialogService.confirm({
+      zTitle: 'Delete Team Member',
+      zDescription: `Are you sure you want to delete ${member.name || member.email}? This action cannot be undone.`,
+      zOkText: 'Delete',
+      zCancelText: 'Cancel',
+      zOkDestructive: true,
+      zViewContainerRef: this.viewContainerRef,
+    });
+
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((confirmed) => {
+      if (confirmed) {
+        this.userService.deleteUser(member.id)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: () => {
+              this.toastService.success('Team member deleted successfully');
+              // Reload team members to refresh the list
+              this.loadTeamMembers();
+              // Close permissions if this user was being edited
+              if (this.editingUserId() === member.id) {
+                this.editingUserId.set(null);
+              }
+            },
+            error: (error) => {
+              console.error('Error deleting team member:', error);
+              this.toastService.error('Failed to delete team member');
+            }
+          });
+      }
+    });
+  }
+
+  /**
+   * Invite a new team member
+   */
+  inviteMember(): void {
+    this.invitationFormSubmitted.set(true);
+
+    if (!this.isInvitationFormValid()) {
+      return;
+    }
+
+    // Check limit (max 2 extra users + 1 admin = 3 total)
+    if (this.teamMembers().length >= 3) {
+      this.toastService.error('You can only invite up to 2 additional team members (maximum 3 total users including admin)');
+      return;
+    }
+
+    this.isInviting.set(true);
+
+    const inviteData = {
+      email: this.invitationForm.email().trim(),
+      role: this.invitationForm.role(),
+    };
+
+    this.userService.inviteTeamMember(inviteData)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (newMember) => {
+          this.isInviting.set(false);
+          this.invitationFormSubmitted.set(false);
+          this.invitationForm.email.set('');
+          this.invitationForm.role.set('User');
+
+          this.toastService.success(`Invitation sent to ${inviteData.email}`);
+
+          // Add new member to the list
+          this.teamMembers.update(members => [...members, newMember]);
+        },
+        error: (error) => {
+          this.isInviting.set(false);
+          console.error('Error inviting team member:', error);
+
+          if (error.error?.code === 'user_already_exists') {
+            this.toastService.error('A user with this email already exists');
+          } else if (error.error?.code === 'team_limit_reached') {
+            const errorMessage = error.error?.message || 'Team limit reached';
+            this.toastService.error(errorMessage);
+          } else {
+            this.toastService.error('Failed to send invitation');
+          }
+        }
+      });
+  }
+
+  /**
    * Toggle permissions editing for a team member
    */
   togglePermissions(member: TeamMember): void {
@@ -328,7 +455,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
           const permsMap = new Map(this.userPermissions());
           permsMap.set(userId, permissions);
           this.userPermissions.set(permsMap);
-          
+
           const loadingMap = new Map(this.isLoadingPermissions());
           loadingMap.set(userId, false);
           this.isLoadingPermissions.set(loadingMap);
@@ -426,9 +553,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
     const perms = this.getUserPermissions(userId);
     if (!perms) return;
 
-    const allSelected = this.modules.every(module => 
-      this.getPermission(userId, module.key, 'view') && 
-      this.getPermission(userId, module.key, 'edit') && 
+    const allSelected = this.modules.every(module =>
+      this.getPermission(userId, module.key, 'view') &&
+      this.getPermission(userId, module.key, 'edit') &&
       this.getPermission(userId, module.key, 'delete')
     );
 
@@ -460,14 +587,14 @@ export class SettingsComponent implements OnInit, OnDestroy {
           const permsMap = new Map(this.userPermissions());
           permsMap.set(userId, updatedPermissions);
           this.userPermissions.set(permsMap);
-          
+
           const savingMap = new Map(this.isSavingPermissions());
           savingMap.set(userId, false);
           this.isSavingPermissions.set(savingMap);
-          
+
           // Close the permissions section after successful save
           this.editingUserId.set(null);
-          
+
           this.toastService.success('Permissions updated successfully');
           // Reload team members to reflect any role changes
           this.loadTeamMembers();
@@ -500,7 +627,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     const currentPassword = this.passwordForm.currentPassword();
     const newPassword = this.passwordForm.newPassword();
     const confirmPassword = this.passwordForm.confirmPassword();
-    
+
     return (
       currentPassword.trim() !== '' &&
       newPassword.trim() !== '' &&
@@ -574,7 +701,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    
+
     if (file) {
       // Validate file type
       if (!file.type.startsWith('image/')) {
@@ -663,7 +790,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.isSaving.set(false);
         this.formSubmitted.set(false); // Reset form validation state on success
         this.toastService.success('Account information updated successfully');
-        
+
         // Clear the file reference after successful update
         this.profileImageFile.set(null);
       },
@@ -701,12 +828,12 @@ export class SettingsComponent implements OnInit, OnDestroy {
       next: () => {
         this.isUpdatingPassword.set(false);
         this.passwordFormSubmitted.set(false); // Reset form validation state on success
-        
+
         // Reset form fields
         this.passwordForm.currentPassword.set('');
         this.passwordForm.newPassword.set('');
         this.passwordForm.confirmPassword.set('');
-        
+
         this.toastService.success('Password updated successfully');
       },
       error: (error) => {
@@ -792,7 +919,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
             this.propertySettings.features.set(settings.features || []);
             this.propertySettings.amenities.set(settings.amenities || []);
             this.propertySettings.propertyTypes.set(settings.propertyTypes || []);
-            
+
             // Update localStorage with the updated settings
             localStorage.setItem('settings', JSON.stringify(settings));
           }
@@ -870,9 +997,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
   updateCategoryReference(key: string, event: Event): void {
     const input = event.target as HTMLInputElement;
     const reference = input.value.trim();
-    
+
     if (reference) {
-      this.propertySettings.categories.update(categories => 
+      this.propertySettings.categories.update(categories =>
         categories.map(cat => cat.key === key ? { ...cat, reference } : cat)
       );
     } else {

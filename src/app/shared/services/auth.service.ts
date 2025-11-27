@@ -39,11 +39,11 @@ export class AuthService {
         // Store user and token
         this.setUser(response.user);
         this.setToken(response.jwt.token);
-        
+
         // Save to localStorage
         this.saveUserToStorage(response.user);
         this.saveTokenToStorage(response.jwt.token);
-        
+
         // Update authentication state
         this.isAuthenticated.set(true);
       })
@@ -60,11 +60,32 @@ export class AuthService {
         // Update user and token with fresh data
         this.setUser(response.user);
         this.setToken(response.jwt.token);
-        
+
         // Save to localStorage
         this.saveUserToStorage(response.user);
         this.saveTokenToStorage(response.jwt.token);
-        
+
+        // Update authentication state
+        this.isAuthenticated.set(true);
+      })
+    );
+  }
+
+  /**
+   * Accept invitation
+   * POST https://localhost:5001/api/user/accept-invitation
+   */
+  acceptInvitation(data: { token: string; password: string; name?: string; phone?: string }): Observable<LoginResponseData> {
+    return this.apiService.post<LoginResponseData>('user/accept-invitation', data).pipe(
+      tap((response) => {
+        // Store user and token
+        this.setUser(response.user);
+        this.setToken(response.jwt.token);
+
+        // Save to localStorage
+        this.saveUserToStorage(response.user);
+        this.saveTokenToStorage(response.jwt.token);
+
         // Update authentication state
         this.isAuthenticated.set(true);
       })
@@ -79,11 +100,11 @@ export class AuthService {
     this.currentUser.set(null);
     this.token.set(null);
     this.isAuthenticated.set(false);
-    
+
     // Clear localStorage
     localStorage.removeItem('user');
     localStorage.removeItem('token');
-    
+
     // Navigate to login
     this.router.navigate(['/login']).then(
       (success) => {
@@ -105,7 +126,7 @@ export class AuthService {
       // Merge company data from existing user if not in updated user
       user = { ...user, company: currentUser.company };
     }
-    
+
     this.currentUser.set(user);
     // Save to localStorage to persist the update
     this.saveUserToStorage(user);
@@ -152,7 +173,7 @@ export class AuthService {
   private loadUserFromStorage(): void {
     const userStr = localStorage.getItem('user');
     const tokenStr = localStorage.getItem('token');
-    
+
     if (userStr && tokenStr) {
       try {
         const user = JSON.parse(userStr) as User;

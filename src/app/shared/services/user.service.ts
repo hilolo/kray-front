@@ -129,5 +129,21 @@ export class UserService {
     });
   }
 
+  /**
+   * Invite team member
+   * POST api/user/invite
+   */
+  inviteTeamMember(inviteData: { email: string; role: string }): Observable<TeamMember> {
+    return this.apiService.post<TeamMember>('user/invite', inviteData);
+  }
+
+  /**
+   * Delete user
+   * DELETE api/user/{id}
+   */
+  deleteUser(userId: string): Observable<any> {
+    return this.apiService.delete(`user/${userId}`);
+  }
+
 }
 
