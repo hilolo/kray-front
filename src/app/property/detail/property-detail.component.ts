@@ -265,12 +265,12 @@ export class PropertyDetailComponent implements OnInit {
   readonly calendarLink = computed(() => {
     const prop = this.property();
     if (!prop) return '';
-    return `https://kray.ma/reservations/${prop.id}`;
+    return `https://app.kray.ma/reservations/${prop.id}`;
   });
   readonly publicProfileLink = computed(() => {
     const prop = this.property();
     if (!prop) return '';
-    return `http://kray.ma/property/detail/${prop.id}/public`;
+    return `http://app.kray.ma/property/detail/${prop.id}/public`;
   });
 
   readonly isPublicProfileDisabled = computed(() => {
