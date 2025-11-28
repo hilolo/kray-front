@@ -868,8 +868,20 @@ export class PropertyDetailComponent implements OnInit {
     };
 
     const icalContent = generateICalFile(eventData);
-    const filename = `property-calendar-${property.id}.ics`;
-    downloadICalFile(icalContent, filename);
+    const propertyReference = property.identifier || property.id;
+    const filename = `property-calendar-${propertyReference}.ics`;
+    const blob = downloadICalFile(icalContent, filename);
+    
+    // Trigger download
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
     this.toastService.success('Calendar file downloaded successfully');
   }
 

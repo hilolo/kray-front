@@ -97,18 +97,12 @@ export function generateICalFile(data: ICalEventData): string {
 }
 
 /**
- * Download iCal file
+ * Create iCal file blob from content
+ * Returns the blob instead of downloading it
  */
-export function downloadICalFile(icalContent: string, filename: string = 'reservation.ics'): void {
+export function downloadICalFile(icalContent: string, filename: string = 'reservation.ics'): Blob {
   const blob = new Blob([icalContent], { type: 'text/calendar;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  return blob;
 }
 
 /**
