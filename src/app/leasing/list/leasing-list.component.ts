@@ -8,7 +8,7 @@ import { ZardCheckboxComponent } from '@shared/components/checkbox/checkbox.comp
 import { ZardIconComponent } from '@shared/components/icon/icon.component';
 import type { ZardIcon } from '@shared/components/icon/icons';
 import { ZardAvatarComponent } from '@shared/components/avatar/avatar.component';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
 import { ZardAlertDialogService } from '@shared/components/alert-dialog/alert-dialog.service';
 import { ZardDatatableComponent, DatatableColumn } from '@shared/components/datatable/datatable.component';
@@ -79,6 +79,7 @@ export class LeasingListComponent implements OnInit, OnDestroy {
   private readonly contactService = inject(ContactService);
   private readonly propertyService = inject(PropertyService);
   private readonly transactionService = inject(TransactionService);
+  private readonly translateService = inject(TranslateService);
   private readonly destroy$ = new Subject<void>();
   private readonly searchInputSubject = new Subject<string>();
 
@@ -190,9 +191,12 @@ export class LeasingListComponent implements OnInit, OnDestroy {
 
   readonly emptyMessage = computed(() => {
     if (this.showArchived()) {
-      return 'No archived leases found';
+      return this.translateService.instant('leasing.list.emptyArchived');
     }
-    return 'No leases found';
+    if (this.searchQuery()) {
+      return this.translateService.instant('leasing.list.emptySearch');
+    }
+    return this.translateService.instant('leasing.list.empty');
   });
 
   readonly filteredLeases = computed(() => {

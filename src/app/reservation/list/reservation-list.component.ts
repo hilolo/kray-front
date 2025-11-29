@@ -23,6 +23,7 @@ import { ZardSwitchComponent } from '@shared/components/switch/switch.component'
 import { ZardComboboxComponent, ZardComboboxOption } from '@shared/components/combobox/combobox.component';
 import { ZardCalendarYearViewComponent, CalendarYearViewReservation } from '@shared/components/calendar-year-view/calendar-year-view.component';
 import { ZardCheckboxComponent } from '@shared/components/checkbox/checkbox.component';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { PropertyPricePipe } from '@shared/pipes/property-price.pipe';
 import type { Reservation } from '@shared/models/reservation/reservation.model';
 import { ReservationStatus } from '@shared/models/reservation/reservation.model';
@@ -62,6 +63,7 @@ import { TransactionType, RevenueType, TransactionStatus, type Transaction } fro
     ZardImageHoverPreviewDirective,
     ZardSwitchComponent,
     ZardCalendarYearViewComponent,
+    TranslateModule,
     PropertyPricePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -79,6 +81,7 @@ export class ReservationListComponent implements OnInit, OnDestroy {
   private readonly userService = inject(UserService);
   private readonly contactService = inject(ContactService);
   private readonly propertyService = inject(PropertyService);
+  private readonly translateService = inject(TranslateService);
   private readonly destroy$ = new Subject<void>();
   private readonly searchInputSubject = new Subject<string>();
 
@@ -179,7 +182,10 @@ export class ReservationListComponent implements OnInit, OnDestroy {
   ]);
 
   readonly emptyMessage = computed(() => {
-    return 'No reservations found';
+    if (this.searchQuery()) {
+      return this.translateService.instant('reservation.list.emptySearch');
+    }
+    return this.translateService.instant('reservation.list.empty');
   });
 
   readonly filteredReservations = computed(() => {

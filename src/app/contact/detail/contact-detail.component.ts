@@ -32,7 +32,7 @@ import { TransactionType, TransactionStatus, RevenueType, ExpenseType } from '@s
 import { ZardDatatableComponent, DatatableColumn } from '@shared/components/datatable/datatable.component';
 import type { ZardIcon } from '@shared/components/icon/icons';
 import { TemplateRef, viewChild } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-contact-detail',
@@ -53,6 +53,7 @@ import { TranslateService } from '@ngx-translate/core';
     ZardImageHoverPreviewDirective,
     PropertyPricePipe,
     ZardDatatableComponent,
+    TranslateModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './contact-detail.component.html',
@@ -334,29 +335,29 @@ export class ContactDetailComponent implements OnInit {
     return [
       {
         key: 'date',
-        label: 'Date',
+        label: this.translateService.instant('contact.detail.columns.date'),
         sortable: true,
         cellTemplate: dateCell || undefined,
       },
       {
         key: 'property',
-        label: 'Property',
+        label: this.translateService.instant('contact.detail.columns.property'),
         cellTemplate: propertyCell || undefined,
       },
       {
         key: 'type',
-        label: 'Type',
+        label: this.translateService.instant('contact.detail.columns.type'),
         cellTemplate: typeCell || undefined,
       },
       {
         key: 'amount',
-        label: 'Amount',
+        label: this.translateService.instant('contact.detail.columns.amount'),
         sortable: true,
         cellTemplate: amountCell || undefined,
       },
       {
         key: 'status',
-        label: 'Status',
+        label: this.translateService.instant('contact.detail.columns.status'),
         cellTemplate: statusCell || undefined,
       },
     ];
@@ -373,29 +374,29 @@ export class ContactDetailComponent implements OnInit {
     return [
       {
         key: 'date',
-        label: 'Date',
+        label: this.translateService.instant('contact.detail.columns.date'),
         sortable: true,
         cellTemplate: dateCell || undefined,
       },
       {
         key: 'property',
-        label: 'Property',
+        label: this.translateService.instant('contact.detail.columns.property'),
         cellTemplate: propertyCell || undefined,
       },
       {
         key: 'type',
-        label: 'Type',
+        label: this.translateService.instant('contact.detail.columns.type'),
         cellTemplate: typeCell || undefined,
       },
       {
         key: 'amount',
-        label: 'Amount',
+        label: this.translateService.instant('contact.detail.columns.amount'),
         sortable: true,
         cellTemplate: amountCell || undefined,
       },
       {
         key: 'status',
-        label: 'Status',
+        label: this.translateService.instant('contact.detail.columns.status'),
         cellTemplate: statusCell || undefined,
       },
     ];

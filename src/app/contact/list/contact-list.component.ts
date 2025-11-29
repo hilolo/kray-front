@@ -7,7 +7,7 @@ import { ZardBadgeComponent } from '@shared/components/badge/badge.component';
 import { ZardCheckboxComponent } from '@shared/components/checkbox/checkbox.component';
 import { ZardIconComponent } from '@shared/components/icon/icon.component';
 import { ZardAvatarComponent } from '@shared/components/avatar/avatar.component';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
 import type { ZardIcon } from '@shared/components/icon/icons';
 import { ZardAlertDialogService } from '@shared/components/alert-dialog/alert-dialog.service';
@@ -58,6 +58,7 @@ export class ContactListComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly contactService = inject(ContactService);
   private readonly preferencesService = inject(RoutePreferencesService);
+  private readonly translateService = inject(TranslateService);
   private readonly destroy$ = new Subject<void>();
   private readonly searchInputSubject = new Subject<string>();
 
@@ -241,12 +242,12 @@ export class ContactListComponent implements OnInit, OnDestroy {
 
   readonly emptyMessage = computed(() => {
     if (this.showArchived()) {
-      return 'No archived contacts found';
+      return this.translateService.instant('contact.list.emptyArchived');
     }
     if (this.searchQuery()) {
-      return 'No contacts match your search';
+      return this.translateService.instant('contact.list.emptySearch');
     }
-    return 'No contacts available';
+    return this.translateService.instant('contact.list.empty');
   });
 
   readonly hasData = computed(() => {

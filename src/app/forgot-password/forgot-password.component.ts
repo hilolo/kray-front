@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ZardFormFieldComponent } from '@shared/components/form/form.component';
 import { ZardFormControlComponent } from '@shared/components/form/form.component';
 import { ZardFormLabelComponent } from '@shared/components/form/form.component';
@@ -15,6 +16,7 @@ import { PasswordResetService } from '@shared/services/password-reset.service';
   imports: [
     FormsModule,
     RouterLink,
+    TranslateModule,
     ZardFormFieldComponent,
     ZardFormControlComponent,
     ZardFormLabelComponent,
@@ -27,6 +29,7 @@ import { PasswordResetService } from '@shared/services/password-reset.service';
 export class ForgotPasswordComponent {
   readonly router = inject(Router);
   private readonly passwordResetService = inject(PasswordResetService);
+  private readonly translateService = inject(TranslateService);
 
   email = signal('');
   isLoading = signal(false);
@@ -51,13 +54,13 @@ export class ForgotPasswordComponent {
 
     // Validation
     if (!emailValue) {
-      this.emailError.set('Email is required');
+      this.emailError.set(this.translateService.instant('login.emailRequired'));
       console.log('Validation failed: Email is required');
       return;
     }
 
     if (!this.isValidEmail(emailValue)) {
-      this.emailError.set('Please enter a valid email address');
+      this.emailError.set(this.translateService.instant('login.invalidEmail'));
       console.log('Validation failed: Invalid email format');
       return;
     }

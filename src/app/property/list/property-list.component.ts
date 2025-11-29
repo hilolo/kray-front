@@ -7,7 +7,7 @@ import { ZardBadgeComponent } from '@shared/components/badge/badge.component';
 import { ZardCheckboxComponent } from '@shared/components/checkbox/checkbox.component';
 import { ZardIconComponent } from '@shared/components/icon/icon.component';
 import { ZardAvatarComponent } from '@shared/components/avatar/avatar.component';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
 import { ZardAlertDialogService } from '@shared/components/alert-dialog/alert-dialog.service';
 import { ZardDatatableComponent, DatatableColumn } from '@shared/components/datatable/datatable.component';
@@ -64,6 +64,7 @@ export class PropertyListComponent implements OnInit, OnDestroy {
   private readonly propertyService = inject(PropertyService);
   private readonly contactService = inject(ContactService);
   private readonly preferencesService = inject(RoutePreferencesService);
+  private readonly translateService = inject(TranslateService);
   private readonly destroy$ = new Subject<void>();
   private readonly searchInputSubject = new Subject<string>();
 
@@ -97,7 +98,7 @@ export class PropertyListComponent implements OnInit, OnDestroy {
     const selected = this.selectedPropertyTypes();
     if (selected.length === 0) return '';
     if (selected.length === 1) return selected[0];
-    return `${selected.length} types selected`;
+    return `${selected.length} ${this.translateService.instant('property.list.typesSelected')}`;
   });
 
   // Category
@@ -119,30 +120,30 @@ export class PropertyListComponent implements OnInit, OnDestroy {
   readonly columns = computed<DatatableColumn<Property>[]>(() => [
     {
       key: 'id',
-      label: 'Image',
+      label: this.translateService.instant('property.list.columns.image'),
       cellTemplate: this.propertyIdCell(),
     },
     {
       key: 'reference',
-      label: 'Reference',
+      label: this.translateService.instant('property.list.columns.reference'),
       sortable: true,
       cellTemplate: this.referenceCell(),
     },
     {
       key: 'address',
-      label: 'Address',
+      label: this.translateService.instant('property.list.columns.address'),
       sortable: true,
       cellTemplate: this.addressCell(),
     },
     {
       key: 'price',
-      label: 'Price',
+      label: this.translateService.instant('property.list.columns.price'),
       sortable: true,
       cellTemplate: this.priceCell(),
     },
     {
       key: 'type',
-      label: 'Type',
+      label: this.translateService.instant('property.list.columns.type'),
       sortable: true,
       cellTemplate: this.typeCell(),
     },
@@ -160,12 +161,12 @@ export class PropertyListComponent implements OnInit, OnDestroy {
 
   readonly emptyMessage = computed(() => {
     if (this.showArchived()) {
-      return 'No archived properties found';
+      return this.translateService.instant('property.list.emptyArchived');
     }
     if (this.searchQuery()) {
-      return 'No properties match your search';
+      return this.translateService.instant('property.list.emptySearch');
     }
-    return 'No properties available';
+    return this.translateService.instant('property.list.empty');
   });
 
   readonly hasData = computed(() => {
@@ -309,7 +310,7 @@ export class PropertyListComponent implements OnInit, OnDestroy {
     if (contact.identifier) {
       return name ? `${name} (${contact.identifier})` : contact.identifier;
     }
-    return name || 'Unnamed Owner';
+    return name || this.translateService.instant('common.unnamedOwner');
   }
 
   onOwnerChange(ownerId: string | null): void {
@@ -334,9 +335,9 @@ export class PropertyListComponent implements OnInit, OnDestroy {
 
   loadCategories(): void {
     const options: ZardComboboxOption[] = [
-      { value: PropertyCategory.Location.toString(), label: 'Location' },
-      { value: PropertyCategory.Vente.toString(), label: 'Vente' },
-      { value: PropertyCategory.LocationVacances.toString(), label: 'Location Vacances' },
+      { value: PropertyCategory.Location.toString(), label: this.translateService.instant('property.categories.location') },
+      { value: PropertyCategory.Vente.toString(), label: this.translateService.instant('property.categories.vente') },
+      { value: PropertyCategory.LocationVacances.toString(), label: this.translateService.instant('property.categories.locationVacances') },
     ];
     this.categoryOptions.set(options);
   }
@@ -467,11 +468,12 @@ export class PropertyListComponent implements OnInit, OnDestroy {
 
   showArchiveConfirmation(): void {
     const selectedCount = this.selectedCount();
+    const plural = selectedCount > 1 ? 'ies' : 'y';
     const dialogRef = this.alertDialogService.confirm({
-      zTitle: 'Archive Properties',
-      zDescription: `Are you sure you want to archive ${selectedCount} propert${selectedCount > 1 ? 'ies' : 'y'}?`,
-      zOkText: 'Archive',
-      zCancelText: 'Cancel',
+      zTitle: this.translateService.instant('property.list.confirmArchive.title'),
+      zDescription: this.translateService.instant('property.list.confirmArchive.description', { count: selectedCount, plural }),
+      zOkText: this.translateService.instant('property.list.confirmArchive.ok'),
+      zCancelText: this.translateService.instant('common.cancel'),
       zOkDestructive: true,
       zViewContainerRef: this.viewContainerRef,
     });
@@ -485,11 +487,12 @@ export class PropertyListComponent implements OnInit, OnDestroy {
 
   showUnarchiveConfirmation(): void {
     const selectedCount = this.selectedCount();
+    const plural = selectedCount > 1 ? 'ies' : 'y';
     const dialogRef = this.alertDialogService.confirm({
-      zTitle: 'Unarchive Properties',
-      zDescription: `Are you sure you want to unarchive ${selectedCount} propert${selectedCount > 1 ? 'ies' : 'y'}?`,
-      zOkText: 'Unarchive',
-      zCancelText: 'Cancel',
+      zTitle: this.translateService.instant('property.list.confirmUnarchive.title'),
+      zDescription: this.translateService.instant('property.list.confirmUnarchive.description', { count: selectedCount, plural }),
+      zOkText: this.translateService.instant('property.list.confirmUnarchive.ok'),
+      zCancelText: this.translateService.instant('common.cancel'),
       zOkDestructive: false,
       zViewContainerRef: this.viewContainerRef,
     });
@@ -554,12 +557,12 @@ export class PropertyListComponent implements OnInit, OnDestroy {
   }
 
   onDeleteProperty(property: Property): void {
-    const propertyName = property.name || property.identifier;
+    const propertyName = property.name || property.identifier || this.translateService.instant('common.unnamedProperty');
     const dialogRef = this.alertDialogService.confirm({
-      zTitle: 'Delete Property',
-      zDescription: `Are you sure you want to delete ${propertyName}? This action cannot be undone.`,
-      zOkText: 'Delete',
-      zCancelText: 'Cancel',
+      zTitle: this.translateService.instant('property.list.confirmDelete.title'),
+      zDescription: this.translateService.instant('property.list.confirmDelete.description', { name: propertyName }),
+      zOkText: this.translateService.instant('property.list.confirmDelete.ok'),
+      zCancelText: this.translateService.instant('common.cancel'),
       zOkDestructive: true,
       zViewContainerRef: this.viewContainerRef,
     });
@@ -620,7 +623,7 @@ export class PropertyListComponent implements OnInit, OnDestroy {
   }
 
   getPropertyDisplayName(property: Property): string {
-    return property.name || property.identifier || 'Unnamed Property';
+    return property.name || property.identifier || this.translateService.instant('common.unnamedProperty');
   }
 
   getPropertyTypeLabel(property: Property): string {

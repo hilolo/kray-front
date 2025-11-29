@@ -4,7 +4,7 @@ import { DarkModeService } from '@shared/services/darkmode.service';
 import { LanguageService } from '@shared/services/language.service';
 import { ZardButtonComponent } from '../button/button.component';
 import { ZardIconComponent } from '../icon/icon.component';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ZardAlertDialogService } from '../alert-dialog/alert-dialog.service';
 import { AuthService } from '@shared/services/auth.service';
 
@@ -65,7 +65,7 @@ import { AuthService } from '@shared/services/auth.service';
           (click)="showLogoutConfirmation()"
           zType="ghost"
           zSize="icon"
-          [attr.aria-label]="'Log out' | translate"
+          [attr.aria-label]="'login.logOut' | translate"
         >
           <z-icon zType="log-out" />
         </z-button>
@@ -79,6 +79,7 @@ export class ZardNavbarComponent implements OnDestroy {
   private readonly alertDialogService = inject(ZardAlertDialogService);
   private readonly authService = inject(AuthService);
   private readonly viewContainerRef = inject(ViewContainerRef);
+  private readonly translateService = inject(TranslateService);
   private readonly destroy$ = new Subject<void>();
 
   readonly currentLanguage = this.languageService.getCurrentLanguageSignal();
@@ -94,10 +95,10 @@ export class ZardNavbarComponent implements OnDestroy {
 
   showLogoutConfirmation(): void {
     const dialogRef = this.alertDialogService.confirm({
-      zTitle: 'Log out',
-      zDescription: 'Are you sure you want to log out?',
-      zOkText: 'Log out',
-      zCancelText: 'Cancel',
+      zTitle: this.translateService.instant('login.logoutConfirm.title'),
+      zDescription: this.translateService.instant('login.logoutConfirm.description'),
+      zOkText: this.translateService.instant('login.logoutConfirm.ok'),
+      zCancelText: this.translateService.instant('common.cancel'),
       zOkDestructive: true,
       zViewContainerRef: this.viewContainerRef,
     });

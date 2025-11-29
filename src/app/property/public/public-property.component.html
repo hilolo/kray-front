@@ -21,7 +21,7 @@
         <div class="flex items-center justify-center min-h-[400px]">
           <div class="text-center space-y-4">
             <z-icon zType="loader-circle" class="w-8 h-8 animate-spin mx-auto text-primary" />
-            <p class="text-sm text-muted-foreground">Loading property details...</p>
+            <p class="text-sm text-muted-foreground">{{ 'property.public.loading' | translate }}</p>
           </div>
         </div>
       } @else if (error()) {
@@ -34,7 +34,7 @@
                 </div>
               </div>
               <div class="space-y-2">
-                <h2 class="text-xl font-semibold">Property Not Available</h2>
+                <h2 class="text-xl font-semibold">{{ 'property.public.propertyNotAvailable' | translate }}</h2>
                 <p class="text-sm text-muted-foreground">{{ error() }}</p>
               </div>
             </div>
@@ -49,7 +49,7 @@
               @if (property()?.identifier) {
                 <z-badge zType="outline" class="inline-flex items-center gap-2 px-3 py-1">
                   <z-icon zType="id-card" zSize="sm" class="text-muted-foreground" />
-                  <span class="text-xs font-medium text-muted-foreground">Reference:</span>
+                  <span class="text-xs font-medium text-muted-foreground">{{ 'common.reference' | translate }}:</span>
                   <span class="text-xs font-semibold text-foreground">{{ property()?.identifier }}</span>
                 </z-badge>
               }
@@ -113,12 +113,12 @@
 
             <!-- Availability Calendar (only if enabled and location vacance) -->
             @if (shouldShowCalendar()) {
-              <z-card zTitle="Share the reservation booking">
+              <z-card [zTitle]="'property.public.shareReservationBooking' | translate">
                 @if (isLoadingReservations()) {
                   <div class="flex items-center justify-center py-8">
                     <div class="text-center space-y-4">
                       <z-icon zType="loader-circle" class="w-8 h-8 animate-spin mx-auto text-primary" />
-                      <p class="text-sm text-muted-foreground">Loading availability...</p>
+                      <p class="text-sm text-muted-foreground">{{ 'property.public.loadingAvailability' | translate }}</p>
                     </div>
                   </div>
                 } @else {
@@ -154,13 +154,13 @@
             </z-card>
 
             <!-- Property Details -->
-            <z-card zTitle="Property Details">
+            <z-card [zTitle]="'property.public.propertyDetails' | translate">
               <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 @if (property()?.area) {
                   <div class="space-y-1">
                     <div class="flex items-center gap-2 text-muted-foreground">
                       <z-icon zType="file" zSize="sm" />
-                      <span class="text-xs">Area</span>
+                      <span class="text-xs">{{ 'property.public.area' | translate }}</span>
                     </div>
                     <div class="text-sm font-semibold">{{ property()!.area }} m²</div>
                   </div>
@@ -169,7 +169,7 @@
                   <div class="space-y-1">
                     <div class="flex items-center gap-2 text-muted-foreground">
                       <z-icon zType="house" zSize="sm" />
-                      <span class="text-xs">Rooms</span>
+                      <span class="text-xs">{{ 'property.public.rooms' | translate }}</span>
                     </div>
                     <div class="text-sm font-semibold">{{ property()!.pieces }}</div>
                   </div>
@@ -178,7 +178,7 @@
                   <div class="space-y-1">
                     <div class="flex items-center gap-2 text-muted-foreground">
                       <z-icon zType="file" zSize="sm" />
-                      <span class="text-xs">Bathrooms</span>
+                      <span class="text-xs">{{ 'property.public.bathrooms' | translate }}</span>
                     </div>
                     <div class="text-sm font-semibold">{{ property()!.bathrooms }}</div>
                   </div>
@@ -188,14 +188,14 @@
 
             <!-- Description -->
             @if (description()) {
-              <z-card zTitle="Description">
+              <z-card [zTitle]="'property.public.description' | translate">
                 <p class="text-sm text-muted-foreground whitespace-pre-line break-words">{{ description() }}</p>
               </z-card>
             }
 
             <!-- Features -->
             @if (features().length > 0) {
-              <z-card zTitle="Features">
+              <z-card [zTitle]="'property.public.features' | translate">
                 <div class="flex flex-wrap gap-2">
                   @for (feature of features(); track feature) {
                     <z-badge zType="secondary" class="text-xs">{{ feature }}</z-badge>
@@ -206,7 +206,7 @@
 
             <!-- Equipment -->
             @if (equipment().length > 0) {
-              <z-card zTitle="Equipment">
+              <z-card [zTitle]="'property.public.equipment' | translate">
                 <div class="flex flex-wrap gap-2">
                   @for (item of equipment(); track item) {
                     <z-badge zType="outline" class="text-xs">{{ item }}</z-badge>
@@ -219,7 +219,7 @@
           <!-- Right Section: Company Information -->
           @if (hasCompanyInfo()) {
             <div class="w-full lg:w-80 space-y-6 shrink-0 lg:pt-[136px]">
-              <z-card zTitle="Contact Information">
+              <z-card [zTitle]="'property.public.contactInformation' | translate">
                 <div class="space-y-4">
                   @if (property()?.companyLogoUrl) {
                     <div class="flex justify-center mb-4">
@@ -298,7 +298,7 @@
                         (click)="callCompany()"
                       >
                         <z-icon zType="smartphone" zSize="sm" />
-                        Call Now
+                        {{ 'property.public.callNow' | translate }}
                       </z-button>
                     }
                     @if (property()?.companyEmail) {
@@ -308,7 +308,7 @@
                         (click)="emailCompany()"
                       >
                         <z-icon zType="mail" zSize="sm" />
-                        Send Email
+                        {{ 'property.public.sendEmail' | translate }}
                       </z-button>
                     }
                     @if (property()?.companyWebsite) {
@@ -318,7 +318,7 @@
                         (click)="openCompanyWebsite()"
                       >
                         <z-icon zType="globe" zSize="sm" />
-                        Visit Website
+                        {{ 'property.public.visitWebsite' | translate }}
                       </z-button>
                     }
                   </div>

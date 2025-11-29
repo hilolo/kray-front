@@ -1,4 +1,4 @@
-<z-page zTitle="Properties">
+<z-page [zTitle]="'property.list.title' | translate">
   <div class="flex flex-col h-full min-h-0">
     <!-- Header Section -->
     <div class="space-y-6 pb-6 flex-shrink-0">
@@ -8,7 +8,7 @@
         <div class="flex items-center gap-6">
           <div class="flex items-center gap-2">
             <label class="text-sm text-muted-foreground cursor-pointer" (click)="toggleShowArchived(!showArchived())">
-              Show Archived
+              {{ 'property.list.showArchived' | translate }}
             </label>
             <z-switch [ngModel]="showArchived()" (checkChange)="toggleShowArchived($event)" />
           </div>
@@ -22,7 +22,7 @@
               <input
                 z-input
                 type="text"
-                placeholder="Search properties..."
+                [placeholder]="'property.list.searchPlaceholder' | translate"
                 class="pl-9 w-full"
                 [value]="searchInput()"
                 (input)="onSearchInputChange($any($event.target).value)"
@@ -37,9 +37,9 @@
                   #ownerCombobox
                   [options]="ownerOptions()"
                   [value]="selectedOwnerId()"
-                  [placeholder]="'Select owner...'"
-                  [searchPlaceholder]="'Search owners...'"
-                  [emptyText]="'No owners found'"
+                  [placeholder]="'property.list.selectOwner' | translate"
+                  [searchPlaceholder]="'property.list.searchOwners' | translate"
+                  [emptyText]="'property.list.noOwnersFound' | translate"
                   [searchable]="true"
                   [disabled]="isLoadingOwners()"
                   (zValueChange)="onOwnerChange($event)"
@@ -50,7 +50,7 @@
               <div class="w-full sm:w-[200px]">
                 <z-dropdown-menu class="w-full">
                   <z-button zType="outline" zSize="default" class="w-full justify-between" dropdown-trigger>
-                    <span class="truncate">{{ selectedPropertyTypes().length > 0 ? selectedPropertyTypesDisplay() : 'Select types...' }}</span>
+                    <span class="truncate">{{ selectedPropertyTypes().length > 0 ? selectedPropertyTypesDisplay() : ('property.list.selectTypes' | translate) }}</span>
                     <z-icon zType="chevron-down" zSize="sm" class="opacity-50 flex-shrink-0" />
                   </z-button>
                   @for (type of propertyTypeOptions(); track type) {
@@ -74,9 +74,9 @@
                   #categoryCombobox
                   [options]="categoryOptions()"
                   [value]="selectedCategory() !== null ? selectedCategory()!.toString() : null"
-                  [placeholder]="'Select category...'"
-                  [searchPlaceholder]="'Search categories...'"
-                  [emptyText]="'No categories found'"
+                  [placeholder]="'property.list.selectCategory' | translate"
+                  [searchPlaceholder]="'property.list.searchCategories' | translate"
+                  [emptyText]="'property.list.noCategoriesFound' | translate"
                   [searchable]="true"
                   (zValueChange)="onCategoryChange($event)"
                   class="w-full"
@@ -90,12 +90,12 @@
               @if (showArchived()) {
                 <z-button zType="outline" zSize="default" class="gap-2 bg-green-400 hover:bg-green-500 text-green-950 border-green-400 hover:border-green-500 dark:bg-green-600 dark:hover:bg-green-700 dark:text-green-50 dark:border-green-600 dark:hover:border-green-700 shadow-xs" (click)="showUnarchiveConfirmation()">
                   <z-icon zType="folder-open" zSize="sm" />
-                  Unarchive
+                  {{ 'property.list.unarchive' | translate }}
                 </z-button>
               } @else {
                 <z-button zType="outline" zSize="default" class="gap-2 bg-yellow-400 hover:bg-yellow-500 text-yellow-950 border-yellow-400 hover:border-yellow-500 dark:bg-yellow-600 dark:hover:bg-yellow-700 dark:text-yellow-50 dark:border-yellow-600 dark:hover:border-yellow-700 shadow-xs" (click)="showArchiveConfirmation()">
                   <z-icon zType="folder" zSize="sm" />
-                  Archive
+                  {{ 'property.list.archive' | translate }}
                 </z-button>
               }
             }
@@ -103,21 +103,21 @@
             @if (showResetButton()) {
               <z-button zType="outline" zSize="default" class="gap-2 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground" (click)="onResetFilters()">
                 <z-icon zType="x" zSize="sm" />
-                <span>Reset</span>
+                <span>{{ 'common.reset' | translate }}</span>
               </z-button>
             }
             <z-button zType="outline" zSize="default" class="gap-2" (click)="toggleViewMode()">
               @if (viewMode() === 'list') {
                 <z-icon zType="layout-dashboard" zSize="sm" />
-                <span>Card View</span>
+                <span>{{ 'property.list.cardView' | translate }}</span>
               } @else {
                 <z-icon zType="layers" zSize="sm" />
-                <span>List View</span>
+                <span>{{ 'property.list.listView' | translate }}</span>
               }
             </z-button>
             <z-button zType="default" zSize="default" class="gap-2" routerLink="/property/add">
               <z-icon zType="plus" zSize="sm" />
-              Add Property
+              {{ 'property.list.addProperty' | translate }}
             </z-button>
           </div>
         </div>
@@ -223,16 +223,16 @@
             </z-button>
             <z-dropdown-menu-item (click)="onViewProperty(row)">
               <z-icon zType="eye" zSize="sm" class="mr-2" />
-              <span>View</span>
+              <span>{{ 'common.view' | translate }}</span>
             </z-dropdown-menu-item>
             <z-dropdown-menu-item (click)="onEditProperty(row)">
               <z-icon zType="pencil" zSize="sm" class="mr-2" />
-              <span>Edit</span>
+              <span>{{ 'common.edit' | translate }}</span>
             </z-dropdown-menu-item>
             <z-divider class="my-1" />
             <z-dropdown-menu-item (click)="onDeleteProperty(row)" class="text-destructive focus:text-destructive">
               <z-icon zType="x" zSize="sm" class="mr-2" />
-              <span>Delete</span>
+              <span>{{ 'common.delete' | translate }}</span>
             </z-dropdown-menu-item>
           </z-dropdown-menu>
         </ng-template>
@@ -249,16 +249,16 @@
                 </z-button>
                 <z-dropdown-menu-item (click)="onViewProperty(row)">
                   <z-icon zType="eye" zSize="sm" class="mr-2" />
-                  <span>View</span>
+                  <span>{{ 'common.view' | translate }}</span>
                 </z-dropdown-menu-item>
                 <z-dropdown-menu-item (click)="onEditProperty(row)">
                   <z-icon zType="pencil" zSize="sm" class="mr-2" />
-                  <span>Edit</span>
+                  <span>{{ 'common.edit' | translate }}</span>
                 </z-dropdown-menu-item>
                 <z-divider class="my-1" />
                 <z-dropdown-menu-item (click)="onDeleteProperty(row)" class="text-destructive focus:text-destructive">
                   <z-icon zType="x" zSize="sm" class="mr-2" />
-                  <span>Delete</span>
+                  <span>{{ 'common.delete' | translate }}</span>
                 </z-dropdown-menu-item>
               </z-dropdown-menu>
             </div>

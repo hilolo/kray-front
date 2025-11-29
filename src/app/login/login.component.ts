@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ZardFormFieldComponent } from '@shared/components/form/form.component';
 import { ZardFormControlComponent } from '@shared/components/form/form.component';
 import { ZardFormLabelComponent } from '@shared/components/form/form.component';
@@ -18,6 +19,7 @@ import { UserService } from '@shared/services/user.service';
   imports: [
     FormsModule,
     RouterLink,
+    TranslateModule,
     ZardFormFieldComponent,
     ZardFormControlComponent,
     ZardFormLabelComponent,
@@ -34,6 +36,7 @@ export class LoginComponent {
   private readonly authService = inject(AuthService);
   private readonly settingsService = inject(SettingsService);
   private readonly userService = inject(UserService);
+  private readonly translateService = inject(TranslateService);
 
   email = 'admin@admin.com';
   password = 'admin';
@@ -66,17 +69,17 @@ export class LoginComponent {
     const passwordValue = this.password;
 
     if (!emailValue) {
-      this.emailError.set('Email is required');
+      this.emailError.set(this.translateService.instant('login.emailRequired'));
       return;
     }
 
     if (!this.isValidEmail(emailValue)) {
-      this.emailError.set('Please enter a valid email address');
+      this.emailError.set(this.translateService.instant('login.invalidEmail'));
       return;
     }
 
     if (!passwordValue) {
-      this.passwordError.set('Password is required');
+      this.passwordError.set(this.translateService.instant('login.passwordRequired'));
       return;
     }
 
@@ -186,7 +189,7 @@ export class LoginComponent {
         } else if (error?.error?.message) {
           this.errorMessage.set(error.error.message);
         } else {
-          this.errorMessage.set('Login failed. Please try again.');
+          this.errorMessage.set(this.translateService.instant('login.loginFailed'));
         }
       },
     });

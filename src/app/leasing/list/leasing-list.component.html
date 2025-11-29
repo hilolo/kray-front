@@ -1,4 +1,4 @@
-<z-page zTitle="Leasing">
+<z-page [zTitle]="'leasing.list.title' | translate">
   <div class="flex flex-col h-full min-h-0">
     <!-- Header Section -->
     <div class="space-y-6 pb-6 flex-shrink-0">
@@ -6,8 +6,8 @@
       <div class="flex flex-col gap-4">
         <!-- Show Archived switch -->
         <div class="flex items-center gap-2">
-          <label class="text-sm text-muted-foreground cursor-pointer" (click)="onShowArchivedChange(!showArchived())">
-            Show Archived
+            <label class="text-sm text-muted-foreground cursor-pointer" (click)="onShowArchivedChange(!showArchived())">
+            {{ 'leasing.list.showArchived' | translate }}
           </label>
           <z-switch [ngModel]="showArchived()" (checkChange)="onShowArchivedChange($event)" />
         </div>
@@ -20,7 +20,7 @@
               <input
                 z-input
                 type="text"
-                placeholder="Search leases..."
+                [placeholder]="'leasing.list.searchPlaceholder' | translate"
                 class="pl-9 w-full"
                 [value]="searchInput()"
                 (input)="onSearchInputChange($any($event.target).value)"
@@ -33,9 +33,9 @@
                 [options]="tenantOptions()"
                 [value]="selectedTenant()"
                 [disabled]="isLoadingTenants()"
-                [placeholder]="'All Tenants'"
-                [searchPlaceholder]="'Search tenants...'"
-                [emptyText]="'No tenants found'"
+                [placeholder]="'leasing.list.allTenants' | translate"
+                [searchPlaceholder]="'leasing.list.searchTenants' | translate"
+                [emptyText]="'leasing.list.noTenantsFound' | translate"
                 [zWidth]="'lg'"
                 (zValueChange)="onTenantChange($event)"
               />
@@ -47,9 +47,9 @@
                 [options]="propertyOptions()"
                 [value]="selectedProperty()"
                 [disabled]="isLoadingProperties()"
-                [placeholder]="'All Properties'"
-                [searchPlaceholder]="'Search properties...'"
-                [emptyText]="'No properties found'"
+                [placeholder]="'leasing.list.allProperties' | translate"
+                [searchPlaceholder]="'leasing.list.searchProperties' | translate"
+                [emptyText]="'leasing.list.noPropertiesFound' | translate"
                 [zWidth]="'lg'"
                 (zValueChange)="onPropertyChange($event)"
               />
@@ -61,12 +61,12 @@
               @if (showArchived()) {
                 <z-button zType="outline" zSize="default" class="gap-2 bg-green-400 hover:bg-green-500 text-green-950 border-green-400 hover:border-green-500 dark:bg-green-600 dark:hover:bg-green-700 dark:text-green-50 dark:border-green-600 dark:hover:border-green-700 shadow-xs" (click)="showUnarchiveConfirmation()">
                   <z-icon zType="folder-open" zSize="sm" />
-                  Unarchive
+                  {{ 'leasing.list.unarchive' | translate }}
                 </z-button>
               } @else {
                 <z-button zType="outline" zSize="default" class="gap-2 bg-yellow-400 hover:bg-yellow-500 text-yellow-950 border-yellow-400 hover:border-yellow-500 dark:bg-yellow-600 dark:hover:bg-yellow-700 dark:text-yellow-50 dark:border-yellow-600 dark:hover:border-yellow-700 shadow-xs" (click)="showArchiveConfirmation()">
                   <z-icon zType="folder" zSize="sm" />
-                  Archive
+                  {{ 'leasing.list.archive' | translate }}
                 </z-button>
               }
             }
@@ -78,21 +78,21 @@
                 (click)="onResetFilters()"
               >
                 <z-icon zType="x" zSize="sm" />
-                <span>Reset</span>
+                <span>{{ 'common.reset' | translate }}</span>
               </z-button>
             }
             <z-button zType="outline" zSize="default" class="gap-2" (click)="onViewModeChange(viewMode() === 'list' ? 'card' : 'list')">
               @if (viewMode() === 'list') {
                 <z-icon zType="layout-dashboard" zSize="sm" />
-                <span>Card View</span>
+                <span>{{ 'leasing.list.cardView' | translate }}</span>
               } @else {
                 <z-icon zType="layers" zSize="sm" />
-                <span>List View</span>
+                <span>{{ 'leasing.list.listView' | translate }}</span>
               }
             </z-button>
             <z-button zType="default" zSize="default" class="gap-2" routerLink="/leasing/add">
               <z-icon zType="plus" zSize="sm" />
-              Add Lease
+              {{ 'leasing.list.addLease' | translate }}
             </z-button>
           </div>
         </div>
@@ -168,7 +168,7 @@
             <div class="flex flex-col gap-1 cursor-pointer hover:opacity-80 transition-opacity" (click)="onViewContact(row)">
               <span class="font-medium text-base">{{ row.tenantName || 'N/A' }}</span>
               @if (getTenantIdentifier(row)) {
-                <span class="text-sm text-muted-foreground">Ref: {{ getTenantIdentifier(row) }}</span>
+                <span class="text-sm text-muted-foreground">{{ 'leasing.list.ref' | translate }} {{ getTenantIdentifier(row) }}</span>
               }
               @if (row.tenantEmail) {
                 <span class="text-sm text-muted-foreground">{{ row.tenantEmail }}</span>
@@ -192,7 +192,7 @@
               <span class="text-sm">{{ formatDate(row.tenancyEnd) }}</span>
             </div>
             @if (getTenancyDuration(row)) {
-              <span class="text-xs text-muted-foreground mt-1">{{ getTenancyDuration(row) }} months</span>
+              <span class="text-xs text-muted-foreground mt-1">{{ getTenancyDuration(row) }} {{ 'leasing.list.months' | translate }}</span>
             }
           </div>
         </ng-template>
@@ -212,7 +212,7 @@
                 </span>
               </div>
             } @else {
-              <span class="text-sm text-muted-foreground">No deposit data</span>
+              <span class="text-sm text-muted-foreground">{{ 'leasing.list.noDepositData' | translate }}</span>
             }
           } @else {
             @if (getStatusColor(row.status) === 'default') {
@@ -223,7 +223,7 @@
                 (click)="onCreateDeposit(row)"
               >
                 <z-icon zType="plus" zSize="sm" />
-                <span>Create Deposit</span>
+                <span>{{ 'leasing.list.createDeposit' | translate }}</span>
               </z-button>
             }
           }
@@ -258,7 +258,7 @@
               zType="ghost"
               zSize="icon"
               class="h-7 w-7 text-muted-foreground hover:text-primary"
-              [title]="'View Situation'"
+              [title]="'leasing.list.viewSituation' | translate"
               (click)="onViewRentSituation(row)"
             >
               <z-icon zType="eye" zSize="sm" />
@@ -290,12 +290,12 @@
             </z-button>
             <z-dropdown-menu-item (click)="onEditLease(row)">
               <z-icon zType="pencil" zSize="sm" class="mr-2" />
-              <span>Edit</span>
+              <span>{{ 'common.edit' | translate }}</span>
             </z-dropdown-menu-item>
             <z-divider class="my-1" />
             <z-dropdown-menu-item (click)="onDeleteLease(row)" class="text-destructive focus:text-destructive">
               <z-icon zType="x" zSize="sm" class="mr-2" />
-              <span>Delete</span>
+              <span>{{ 'common.delete' | translate }}</span>
             </z-dropdown-menu-item>
           </z-dropdown-menu>
         </ng-template>
@@ -343,8 +343,8 @@
                   </div>
                 }
                 <div class="text-center w-full">
-                  <p class="text-xs font-medium text-muted-foreground mb-0.5">Property</p>
-                  <p class="text-xs font-semibold truncate">{{ row.propertyName || 'N/A' }}</p>
+                  <p class="text-xs font-medium text-muted-foreground mb-0.5">{{ 'leasing.list.property' | translate }}</p>
+                  <p class="text-xs font-semibold truncate">{{ row.propertyName || ('common.na' | translate) }}</p>
                 </div>
               </div>
               
@@ -371,10 +371,10 @@
                   />
                 }
                 <div class="text-center w-full">
-                  <p class="text-xs font-medium text-muted-foreground mb-0.5">Tenant</p>
-                  <p class="text-xs font-semibold truncate">{{ row.tenantName || 'N/A' }}</p>
+                  <p class="text-xs font-medium text-muted-foreground mb-0.5">{{ 'leasing.list.tenant' | translate }}</p>
+                  <p class="text-xs font-semibold truncate">{{ row.tenantName || ('common.na' | translate) }}</p>
                   @if (getTenantIdentifier(row)) {
-                    <p class="text-xs text-muted-foreground truncate">Ref: {{ getTenantIdentifier(row) }}</p>
+                    <p class="text-xs text-muted-foreground truncate">{{ 'leasing.list.ref' | translate }} {{ getTenantIdentifier(row) }}</p>
                   }
                 </div>
               </div>
@@ -401,7 +401,7 @@
                 @if (getTenancyDuration(row)) {
                   <div class="flex items-center gap-2 text-xs ml-6">
                     <z-icon zType="clock" zSize="sm" class="text-muted-foreground/70 flex-shrink-0 w-3 h-3" />
-                    <span class="text-muted-foreground/70">{{ getTenancyDuration(row) }} months</span>
+                    <span class="text-muted-foreground/70">{{ getTenancyDuration(row) }} {{ 'leasing.list.months' | translate }}</span>
                   </div>
                 }
               </div>

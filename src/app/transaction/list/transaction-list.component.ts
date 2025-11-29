@@ -33,7 +33,7 @@ import { FormsModule } from '@angular/forms';
 import type { Property } from '@shared/models/property/property.model';
 import type { Contact } from '@shared/models/contact/contact.model';
 import { ContactType } from '@shared/models/contact/contact.model';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ZardPdfViewerComponent } from '@shared/pdf-viewer/pdf-viewer.component';
 import { PdfGenerationService } from '@shared/services/pdf-generation.service';
 
@@ -59,6 +59,7 @@ import { PdfGenerationService } from '@shared/services/pdf-generation.service';
     ZardInputGroupComponent,
     ZardInputDirective,
     FormsModule,
+    TranslateModule,
     ZardPdfViewerComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -261,9 +262,9 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
 
   readonly emptyMessage = computed(() => {
     if (this.hasActiveFilters()) {
-      return 'No transactions found matching your filters';
+      return this.translateService.instant('transaction.list.emptySearch');
     }
-    return 'No transactions found';
+    return this.translateService.instant('transaction.list.empty');
   });
 
   readonly hasData = computed(() => {

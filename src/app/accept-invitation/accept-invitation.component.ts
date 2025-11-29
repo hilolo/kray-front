@@ -1,6 +1,7 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ZardFormFieldComponent, ZardFormControlComponent, ZardFormLabelComponent } from '@shared/components/form/form.component';
 import { ZardInputDirective } from '@shared/components/input/input.directive';
 import { ZardButtonComponent } from '@shared/components/button/button.component';
@@ -14,6 +15,7 @@ import { AuthService } from '@shared/services/auth.service';
     imports: [
         FormsModule,
         RouterLink,
+        TranslateModule,
         ZardFormFieldComponent,
         ZardFormControlComponent,
         ZardFormLabelComponent,
@@ -27,6 +29,7 @@ export class AcceptInvitationComponent implements OnInit {
     private readonly router = inject(Router);
     private readonly route = inject(ActivatedRoute);
     private readonly authService = inject(AuthService);
+    private readonly translateService = inject(TranslateService);
 
     token = signal('');
 
@@ -52,16 +55,16 @@ export class AcceptInvitationComponent implements OnInit {
     readonly passwordError = computed(() => {
         if (!this.formSubmitted()) return '';
         const password = this.form.password().trim();
-        if (!password) return 'Password is required';
-        if (password.length < 8) return 'Password must be at least 8 characters';
+        if (!password) return this.translateService.instant('login.passwordRequired');
+        if (password.length < 8) return this.translateService.instant('acceptInvitation.passwordMinLength');
         return '';
     });
 
     readonly confirmPasswordError = computed(() => {
         if (!this.formSubmitted()) return '';
         const confirmPassword = this.form.confirmPassword().trim();
-        if (!confirmPassword) return 'Please confirm your password';
-        if (confirmPassword !== this.form.password().trim()) return 'Passwords do not match';
+        if (!confirmPassword) return this.translateService.instant('acceptInvitation.confirmPasswordRequired');
+        if (confirmPassword !== this.form.password().trim()) return this.translateService.instant('resetPassword.passwordsDoNotMatch');
         return '';
     });
 
@@ -71,7 +74,7 @@ export class AcceptInvitationComponent implements OnInit {
             if (tokenParam) {
                 this.token.set(tokenParam);
             } else {
-                this.errorMessage.set('Invalid invitation link. Please check your email.');
+                this.errorMessage.set(this.translateService.instant('acceptInvitation.invalidLink'));
             }
         });
     }
@@ -94,7 +97,7 @@ export class AcceptInvitationComponent implements OnInit {
         this.errorMessage.set('');
 
         if (!this.token()) {
-            this.errorMessage.set('Invalid invitation token');
+            this.errorMessage.set(this.translateService.instant('acceptInvitation.invalidToken'));
             return;
         }
 
@@ -123,13 +126,13 @@ export class AcceptInvitationComponent implements OnInit {
                 const errorMessage = error?.error?.message || error?.message;
                 
                 if (errorCode === 'token_expired') {
-                    this.errorMessage.set('This invitation has expired.');
+                    this.errorMessage.set(this.translateService.instant('acceptInvitation.tokenExpired'));
                 } else if (errorCode === 'invalid_token') {
-                    this.errorMessage.set('Invalid invitation token.');
+                    this.errorMessage.set(this.translateService.instant('acceptInvitation.invalidToken'));
                 } else if (errorMessage) {
                     this.errorMessage.set(errorMessage);
                 } else {
-                    this.errorMessage.set('Failed to accept invitation. Please try again.');
+                    this.errorMessage.set(this.translateService.instant('acceptInvitation.failed'));
                 }
             }
         });

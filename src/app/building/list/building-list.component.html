@@ -1,4 +1,4 @@
-<z-page zTitle="Buildings">
+<z-page [zTitle]="'building.list.title' | translate">
   <div class="flex flex-col h-full min-h-0">
     <!-- Header Section -->
     <div class="space-y-6 pb-6 flex-shrink-0">
@@ -6,8 +6,8 @@
       <div class="flex flex-col gap-4">
         <!-- Show Archived switch -->
         <div class="flex items-center gap-2">
-          <label class="text-sm text-muted-foreground cursor-pointer" (click)="onShowArchivedChange(!showArchived())">
-            Show Archived
+            <label class="text-sm text-muted-foreground cursor-pointer" (click)="onShowArchivedChange(!showArchived())">
+            {{ 'building.list.showArchived' | translate }}
           </label>
           <z-switch [ngModel]="showArchived()" (checkChange)="onShowArchivedChange($event)" />
         </div>
@@ -20,7 +20,7 @@
               <input
                 z-input
                 type="text"
-                placeholder="Search buildings..."
+                [placeholder]="'building.list.searchPlaceholder' | translate"
                 class="pl-9 w-full"
                 [value]="searchInput()"
                 (input)="onSearchInputChange($any($event.target).value)"
@@ -33,12 +33,12 @@
               @if (showArchived()) {
                 <z-button zType="outline" zSize="default" class="gap-2 bg-green-400 hover:bg-green-500 text-green-950 border-green-400 hover:border-green-500 dark:bg-green-600 dark:hover:bg-green-700 dark:text-green-50 dark:border-green-600 dark:hover:border-green-700 shadow-xs" (click)="showUnarchiveConfirmation()" [disabled]="isDeleting()">
                   <z-icon zType="folder-open" zSize="sm" />
-                  Unarchive
+                  {{ 'building.list.unarchive' | translate }}
                 </z-button>
               } @else {
                 <z-button zType="outline" zSize="default" class="gap-2 bg-yellow-400 hover:bg-yellow-500 text-yellow-950 border-yellow-400 hover:border-yellow-500 dark:bg-yellow-600 dark:hover:bg-yellow-700 dark:text-yellow-50 dark:border-yellow-600 dark:hover:border-yellow-700 shadow-xs" (click)="showArchiveConfirmation()" [disabled]="isDeleting()">
                   <z-icon zType="folder" zSize="sm" />
-                  Archive
+                  {{ 'building.list.archive' | translate }}
                 </z-button>
               }
             }
@@ -50,21 +50,21 @@
                 (click)="onResetFilters()"
               >
                 <z-icon zType="x" zSize="sm" />
-                <span>Reset</span>
+                <span>{{ 'common.reset' | translate }}</span>
               </z-button>
             }
             <z-button zType="outline" zSize="default" class="gap-2" (click)="onViewModeChange(viewMode() === 'list' ? 'card' : 'list')">
               @if (viewMode() === 'list') {
                 <z-icon zType="layout-dashboard" zSize="sm" />
-                <span>Card View</span>
+                <span>{{ 'building.list.cardView' | translate }}</span>
               } @else {
                 <z-icon zType="layers" zSize="sm" />
-                <span>List View</span>
+                <span>{{ 'building.list.listView' | translate }}</span>
               }
             </z-button>
             <z-button zType="default" zSize="default" class="gap-2" routerLink="/building/add">
               <z-icon zType="plus" zSize="sm" />
-              Add Building
+              {{ 'building.list.addBuilding' | translate }}
             </z-button>
           </div>
         </div>
@@ -131,15 +131,15 @@
           <div class="flex flex-col gap-1">
             <div class="flex items-center gap-2 text-sm">
               <z-icon zType="calendar" zSize="sm" class="text-muted-foreground" />
-              <span>Construction Year: {{ row.year }}</span>
+              <span>{{ 'building.list.constructionYear' | translate }} {{ row.year }}</span>
             </div>
             <div class="flex items-center gap-2 text-sm">
               <z-icon zType="layers" zSize="sm" class="text-muted-foreground" />
-              <span>{{ row.floor }} floor{{ row.floor !== 1 ? 's' : '' }}</span>
+              <span>{{ row.floor }} {{ row.floor !== 1 ? ('building.list.floorsPlural' | translate) : ('building.list.floors' | translate) }}</span>
             </div>
             <div class="flex items-center gap-2 text-sm">
               <z-icon zType="house" zSize="sm" class="text-muted-foreground" />
-              <span>{{ row.propertiesCount || 0 }} propert{{ (row.propertiesCount || 0) === 1 ? 'y' : 'ies' }}</span>
+              <span>{{ row.propertiesCount || 0 }} {{ (row.propertiesCount || 0) === 1 ? ('building.list.properties' | translate) : ('building.list.propertiesPlural' | translate) }}</span>
             </div>
           </div>
         </ng-template>
@@ -152,17 +152,17 @@
             </z-button>
             <z-dropdown-menu-item (click)="onViewProperties(row)">
               <z-icon zType="house" zSize="sm" class="mr-2" />
-              <span>View Properties</span>
+              <span>{{ 'building.list.viewProperties' | translate }}</span>
             </z-dropdown-menu-item>
             <z-divider class="my-1" />
             <z-dropdown-menu-item (click)="onEditBuilding(row)">
               <z-icon zType="pencil" zSize="sm" class="mr-2" />
-              <span>Edit</span>
+              <span>{{ 'common.edit' | translate }}</span>
             </z-dropdown-menu-item>
             <z-divider class="my-1" />
             <z-dropdown-menu-item (click)="onDeleteBuilding(row)" class="text-destructive focus:text-destructive">
               <z-icon zType="x" zSize="sm" class="mr-2" />
-              <span>Delete</span>
+              <span>{{ 'common.delete' | translate }}</span>
             </z-dropdown-menu-item>
           </z-dropdown-menu>
         </ng-template>
@@ -179,17 +179,17 @@
                 </z-button>
                 <z-dropdown-menu-item (click)="onViewProperties(row)">
                   <z-icon zType="house" zSize="sm" class="mr-2" />
-                  <span>View Properties</span>
+                  <span>{{ 'building.list.viewProperties' | translate }}</span>
                 </z-dropdown-menu-item>
                 <z-divider class="my-1" />
                 <z-dropdown-menu-item (click)="onEditBuilding(row)">
                   <z-icon zType="pencil" zSize="sm" class="mr-2" />
-                  <span>Edit</span>
+                  <span>{{ 'common.edit' | translate }}</span>
                 </z-dropdown-menu-item>
                 <z-divider class="my-1" />
                 <z-dropdown-menu-item (click)="onDeleteBuilding(row)" class="text-destructive focus:text-destructive">
                   <z-icon zType="x" zSize="sm" class="mr-2" />
-                  <span>Delete</span>
+                  <span>{{ 'common.delete' | translate }}</span>
                 </z-dropdown-menu-item>
               </z-dropdown-menu>
             </div>
@@ -270,14 +270,14 @@
         <div class="flex items-center justify-center py-12">
           <div class="flex flex-col items-center gap-4">
             <z-icon zType="loader-circle" zSize="lg" class="animate-spin text-primary" />
-            <p class="text-muted-foreground">Loading properties...</p>
+            <p class="text-muted-foreground">{{ 'building.list.loadingProperties' | translate }}</p>
           </div>
         </div>
       } @else if (buildingProperties().length === 0) {
         <div class="flex items-center justify-center py-12">
           <div class="flex flex-col items-center gap-2">
             <z-icon zType="house" zSize="lg" class="text-muted-foreground" />
-            <p class="text-muted-foreground">No properties found for this building</p>
+            <p class="text-muted-foreground">{{ 'building.list.noPropertiesFound' | translate }}</p>
           </div>
         </div>
       } @else {
@@ -329,7 +329,7 @@
                   routerLink="/property/detail/{{ property.id }}"
                 >
                   <z-icon zType="arrow-right" zSize="sm" class="mr-2" />
-                  <span>View</span>
+                  <span>{{ 'common.view' | translate }}</span>
                 </z-button>
                 <z-button
                   zType="outline"
@@ -340,10 +340,10 @@
                 >
                   @if (detachingPropertyId() === property.id) {
                     <z-icon zType="loader-circle" zSize="sm" class="animate-spin mr-2" />
-                    <span>Detaching...</span>
+                    <span>{{ 'building.list.detaching' | translate }}</span>
                   } @else {
                     <z-icon zType="x" zSize="sm" class="mr-2" />
-                    <span>Detach</span>
+                    <span>{{ 'building.list.detach' | translate }}</span>
                   }
                 </z-button>
               </div>

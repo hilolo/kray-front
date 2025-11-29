@@ -1,10 +1,10 @@
-<z-page zTitle="Contact Details">
+<z-page [zTitle]="'contact.detail.title' | translate">
   <div class="container mx-auto max-w-8xl px-2 py-2">
     @if (isLoading()) {
       <div class="flex items-center justify-center min-h-[400px]">
         <div class="text-center space-y-4">
           <z-icon zType="loader-circle" class="w-8 h-8 animate-spin mx-auto" />
-          <p class="text-sm text-muted-foreground">Loading contact details...</p>
+          <p class="text-sm text-muted-foreground">{{ 'contact.detail.loading' | translate }}</p>
         </div>
       </div>
     } @else if (contact()) {
@@ -14,14 +14,14 @@
           @if (contact()?.identifier) {
             <z-badge zType="outline" class="flex items-center gap-2 px-4 py-2">
               <z-icon zType="id-card" zSize="default" class="text-muted-foreground" />
-              <span class="text-sm font-medium text-muted-foreground">Reference:</span>
+              <span class="text-sm font-medium text-muted-foreground">{{ 'common.reference' | translate }}:</span>
               <span class="text-sm font-semibold text-foreground">{{ contact()?.identifier }}</span>
             </z-badge>
           }
         </div>
         <z-button zType="default" (click)="console.log('Button clicked'); onEditContact()">
           <z-icon zType="pencil" zSize="sm" />
-          Edit Contact
+          {{ 'contact.detail.editContact' | translate }}
         </z-button>
       </div>
 
@@ -31,7 +31,7 @@
           <!-- Contact Profile Card -->
           <z-card zBodySpacing="none">
             <div class="space-y-3">
-              <h3 class="text-sm font-semibold">Contact Information</h3>
+              <h3 class="text-sm font-semibold">{{ 'contact.detail.contactInformation' | translate }}</h3>
               <div class="flex items-start gap-3">
                 @if (contact()?.avatar) {
                   <img
@@ -72,7 +72,7 @@
               <!-- Company Information -->
               @if (contact()?.isACompany) {
                 <div class="border-t border-border pt-3 mt-3 space-y-2">
-                  <h4 class="text-sm font-semibold">Company Details</h4>
+                  <h4 class="text-sm font-semibold">{{ 'contact.detail.companyDetails' | translate }}</h4>
                   @if (contact()?.ice) {
                     <div class="flex items-center gap-2 text-sm text-muted-foreground">
                       <z-icon zType="building" zSize="sm" />
@@ -91,7 +91,7 @@
               <!-- Bank Information -->
               @if (hasBanks()) {
                 <div class="border-t border-border pt-3 mt-3 space-y-2">
-                  <h4 class="text-sm font-semibold">Bank Accounts</h4>
+                  <h4 class="text-sm font-semibold">{{ 'contact.detail.bankAccounts' | translate }}</h4>
                   @for (bank of banks(); track bank.id) {
                     <div class="p-3 rounded-md border border-border bg-muted/50">
                       <div class="flex items-center gap-2 mb-2">
@@ -124,7 +124,7 @@
               <!-- Attachments -->
               @if (hasAttachments()) {
                 <div class="border-t border-border pt-3 mt-3 space-y-2">
-                  <h4 class="text-sm font-semibold">Attachments</h4>
+                  <h4 class="text-sm font-semibold">{{ 'contact.detail.attachments' | translate }}</h4>
                   <div class="space-y-2">
                     @for (attachment of attachments(); track attachment.id) {
                       <div 
@@ -164,11 +164,11 @@
           <z-card zBodySpacing="none">
             <z-tab-group zTabsPosition="top" zActivePosition="bottom" class="flex flex-col">
               <!-- Finance Tab (always shown) -->
-              <z-tab label="FINANCE">
+              <z-tab [label]="'contact.detail.finance' | translate">
                 <div class="pt-4">
                   @if (!hasTransactions()) {
                     <div class="text-center py-8 text-sm text-muted-foreground">
-                      No transactions found
+                      {{ 'contact.detail.noTransactionsFound' | translate }}
                     </div>
                   } @else {
                     <!-- Revenue Section (GREEN) -->
@@ -176,7 +176,7 @@
                       <div class="mb-6">
                         <div class="flex items-center gap-2 mb-4 pb-2 border-b-2 border-green-500">
                           <z-icon zType="plus" zSize="sm" class="text-green-600 dark:text-green-400" />
-                          <h3 class="text-sm font-semibold text-green-600 dark:text-green-400">REVENUE</h3>
+                          <h3 class="text-sm font-semibold text-green-600 dark:text-green-400">{{ 'contact.detail.revenue' | translate }}</h3>
                           <z-badge zType="default" class="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
                             {{ revenueTransactions().length }}
                           </z-badge>
@@ -250,7 +250,7 @@
                       <div>
                         <div class="flex items-center gap-2 mb-4 pb-2 border-b-2 border-red-500">
                           <z-icon zType="minus" zSize="sm" class="text-red-600 dark:text-red-400" />
-                          <h3 class="text-sm font-semibold text-red-600 dark:text-red-400">EXPENSE</h3>
+                          <h3 class="text-sm font-semibold text-red-600 dark:text-red-400">{{ 'contact.detail.expense' | translate }}</h3>
                           <z-badge zType="destructive" class="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
                             {{ expenseTransactions().length }}
                           </z-badge>
@@ -324,7 +324,7 @@
 
               <!-- Properties Tab (shown only if has data) -->
               @if (properties().length > 0) {
-                <z-tab label="PROPERTIES">
+                <z-tab [label]="'contact.detail.properties' | translate">
                   <div class="pt-4 space-y-3">
                     @for (property of properties(); track property.id) {
                       <z-card class="p-4 cursor-pointer hover:bg-muted/50 transition-colors" zBodySpacing="none" (click)="viewProperty(property.id)">
@@ -377,13 +377,13 @@
 
               <!-- Reservations Tab (shown only if has data or is loading) -->
               @if (isLoadingReservations() || reservations().length > 0) {
-                <z-tab label="RESERVATIONS">
+                <z-tab [label]="'contact.detail.reservations' | translate">
                   <div class="pt-4 space-y-3">
                     @if (isLoadingReservations()) {
                       <div class="flex items-center justify-center py-8">
                         <div class="text-center space-y-4">
                           <z-icon zType="loader-circle" class="w-8 h-8 animate-spin mx-auto" />
-                          <p class="text-sm text-muted-foreground">Loading reservations...</p>
+                          <p class="text-sm text-muted-foreground">{{ 'contact.detail.loadingReservations' | translate }}</p>
                         </div>
                       </div>
                     } @else if (reservations().length > 0) {
@@ -432,7 +432,7 @@
                                 </z-badge>
                                 <z-button zType="ghost" zSize="sm" (click)="viewReservation(reservation.id)">
                                   <z-icon zType="eye" zSize="sm" />
-                                  View
+                                  {{ 'contact.detail.view' | translate }}
                                 </z-button>
                               </div>
                             </div>
@@ -446,7 +446,7 @@
 
               <!-- Leases Tab (shown for Owners and Tenants) -->
               @if ((isOwner() || isTenant()) && leases().length > 0) {
-                <z-tab label="LEASES">
+                <z-tab [label]="'contact.detail.leases' | translate">
                   <div class="pt-4 space-y-3">
                     @for (lease of leases(); track lease.id) {
                       <z-card class="p-4" zBodySpacing="none">
@@ -495,7 +495,7 @@
 
               <!-- Maintenance Tab (shown only if has data) -->
               @if (maintenances().length > 0) {
-                <z-tab label="MAINTENANCE">
+                <z-tab [label]="'contact.detail.maintenance' | translate">
                   <div class="pt-4 space-y-3">
                     @for (maintenance of maintenances(); track maintenance.id) {
                       <z-card class="p-4 cursor-pointer hover:bg-muted/50 transition-colors" zBodySpacing="none" (click)="viewMaintenance(maintenance.id)">
@@ -536,9 +536,9 @@
     } @else {
       <div class="flex items-center justify-center min-h-[400px]">
         <div class="text-center space-y-4">
-          <p class="text-sm text-muted-foreground">Contact not found</p>
+          <p class="text-sm text-muted-foreground">{{ 'contact.detail.contactNotFound' | translate }}</p>
           <z-button zType="default" (click)="router.navigate(['/contact'])">
-            Back to Contacts
+            {{ 'contact.detail.backToContacts' | translate }}
           </z-button>
         </div>
       </div>

@@ -1,4 +1,4 @@
-<z-page zTitle="Tasks">
+<z-page [zTitle]="'tasks.list.title' | translate">
   <div class="flex flex-col h-full min-h-0">
     <!-- Header Section -->
     <div class="space-y-6 pb-6 flex-shrink-0">
@@ -13,7 +13,7 @@
               <input
                 z-input
                 type="text"
-                placeholder="Search tasks..."
+                [placeholder]="'tasks.list.searchPlaceholder' | translate"
                 class="pl-9 w-full"
                 [value]="searchInput()"
                 (input)="onSearchInputChange($any($event.target).value)"
@@ -25,7 +25,7 @@
               #statusSelectRef
               [zValue]="getStatusFilterValue()"
               [zLabel]="getStatusFilterLabel()"
-              zPlaceholder="All Statuses"
+              [zPlaceholder]="'tasks.list.allStatuses' | translate"
               class="w-full sm:w-[180px]"
               (zSelectionChange)="onStatusFilterChange($event)"
             >
@@ -33,25 +33,25 @@
               <z-select-item zValue="all">
                 <div class="flex items-center gap-2">
                   <z-icon zType="settings" zSize="sm" />
-                  <span>All Statuses</span>
+                  <span>{{ 'tasks.list.allStatuses' | translate }}</span>
                 </div>
               </z-select-item>
               <z-select-item zValue="1">
                 <div class="flex items-center gap-2">
                   <z-icon zType="circle" zSize="sm" />
-                  <span>To Do</span>
+                  <span>{{ 'tasks.list.toDo' | translate }}</span>
                 </div>
               </z-select-item>
               <z-select-item zValue="2">
                 <div class="flex items-center gap-2">
                   <z-icon zType="clock" zSize="sm" />
-                  <span>In Progress</span>
+                  <span>{{ 'tasks.list.inProgress' | translate }}</span>
                 </div>
               </z-select-item>
               <z-select-item zValue="3">
                 <div class="flex items-center gap-2">
                   <z-icon zType="circle-check" zSize="sm" />
-                  <span>Completed</span>
+                  <span>{{ 'tasks.list.completed' | translate }}</span>
                 </div>
               </z-select-item>
             </z-select>
@@ -60,7 +60,7 @@
               #prioritySelectRef
               [zValue]="getPriorityFilterValue()"
               [zLabel]="getPriorityFilterLabel()"
-              zPlaceholder="All Priorities"
+              [zPlaceholder]="'tasks.list.allPriorities' | translate"
               class="w-full sm:w-[180px]"
               (zSelectionChange)="onPriorityFilterChange($event)"
             >
@@ -68,31 +68,31 @@
               <z-select-item zValue="all">
                 <div class="flex items-center gap-2">
                   <z-icon zType="settings" zSize="sm" />
-                  <span>All Priorities</span>
+                  <span>{{ 'tasks.list.allPriorities' | translate }}</span>
                 </div>
               </z-select-item>
               <z-select-item zValue="1">
                 <div class="flex items-center gap-2">
                   <z-icon zType="circle" zSize="sm" />
-                  <span>Low</span>
+                  <span>{{ 'tasks.list.low' | translate }}</span>
                 </div>
               </z-select-item>
               <z-select-item zValue="2">
                 <div class="flex items-center gap-2">
                   <z-icon zType="circle-check" zSize="sm" />
-                  <span>Medium</span>
+                  <span>{{ 'tasks.list.medium' | translate }}</span>
                 </div>
               </z-select-item>
               <z-select-item zValue="3">
                 <div class="flex items-center gap-2">
                   <z-icon zType="triangle-alert" zSize="sm" />
-                  <span>High</span>
+                  <span>{{ 'tasks.list.high' | translate }}</span>
                 </div>
               </z-select-item>
               <z-select-item zValue="4">
                 <div class="flex items-center gap-2">
                   <z-icon zType="triangle-alert" zSize="sm" />
-                  <span>Critical</span>
+                  <span>{{ 'tasks.list.critical' | translate }}</span>
                 </div>
               </z-select-item>
             </z-select>
@@ -108,21 +108,21 @@
                 (click)="resetFilters()"
               >
                 <z-icon zType="x" zSize="sm" />
-                <span>Reset</span>
+                <span>{{ 'common.reset' | translate }}</span>
               </z-button>
             }
             <z-button zType="outline" zSize="default" class="gap-2" (click)="toggleViewMode()">
               @if (viewMode() === 'list') {
                 <z-icon zType="layout-dashboard" zSize="sm" />
-                <span>Card View</span>
+                <span>{{ 'tasks.list.cardView' | translate }}</span>
               } @else {
                 <z-icon zType="layers" zSize="sm" />
-                <span>List View</span>
+                <span>{{ 'tasks.list.listView' | translate }}</span>
               }
             </z-button>
             <z-button zType="default" zSize="default" class="gap-2" (click)="onAddTask()">
               <z-icon zType="plus" zSize="sm" />
-              Add Task
+              {{ 'tasks.list.addTask' | translate }}
             </z-button>
           </div>
         </div>
@@ -163,7 +163,7 @@
 
         <!-- Assigned User Column Template -->
         <ng-template #assignedUserCell let-value let-row="row">
-          <span class="text-sm">{{ row.assignedUserName || 'Unassigned' }}</span>
+          <span class="text-sm">{{ row.assignedUserName || ('tasks.list.unassigned' | translate) }}</span>
         </ng-template>
 
         <!-- Scheduled Date Column Template -->
@@ -201,7 +201,7 @@
               }
             </div>
           } @else {
-            <span class="text-sm text-muted-foreground">None</span>
+            <span class="text-sm text-muted-foreground">{{ 'tasks.list.none' | translate }}</span>
           }
         </ng-template>
 
@@ -213,25 +213,25 @@
             </z-button>
             <z-dropdown-menu-item (click)="onEditTask(row)">
               <z-icon zType="pencil" zSize="sm" class="mr-2" />
-              <span>Edit</span>
+              <span>{{ 'common.edit' | translate }}</span>
             </z-dropdown-menu-item>
             <z-divider class="my-1" />
             <z-dropdown-menu-item (click)="onStatusChange(row, 1)">
               <z-icon zType="circle" zSize="sm" class="mr-2" />
-              <span>To Do</span>
+              <span>{{ 'tasks.list.toDo' | translate }}</span>
             </z-dropdown-menu-item>
             <z-dropdown-menu-item (click)="onStatusChange(row, 2)">
               <z-icon zType="clock" zSize="sm" class="mr-2" />
-              <span>In Progress</span>
+              <span>{{ 'tasks.list.inProgress' | translate }}</span>
             </z-dropdown-menu-item>
             <z-dropdown-menu-item (click)="onStatusChange(row, 3)">
               <z-icon zType="circle-check" zSize="sm" class="mr-2" />
-              <span>Completed</span>
+              <span>{{ 'tasks.list.completed' | translate }}</span>
             </z-dropdown-menu-item>
             <z-divider class="my-1" />
             <z-dropdown-menu-item (click)="onDeleteTask(row)" class="text-destructive focus:text-destructive">
               <z-icon zType="x" zSize="sm" class="mr-2" />
-              <span>Delete</span>
+              <span>{{ 'common.delete' | translate }}</span>
             </z-dropdown-menu-item>
           </z-dropdown-menu>
         </ng-template>
@@ -247,25 +247,25 @@
                 </z-button>
                 <z-dropdown-menu-item (click)="onEditTask(row)">
                   <z-icon zType="pencil" zSize="sm" class="mr-2" />
-                  <span>Edit</span>
+                  <span>{{ 'common.edit' | translate }}</span>
                 </z-dropdown-menu-item>
                 <z-divider class="my-1" />
                 <z-dropdown-menu-item (click)="onStatusChange(row, 1)">
                   <z-icon zType="circle" zSize="sm" class="mr-2" />
-                  <span>To Do</span>
+                  <span>{{ 'tasks.list.toDo' | translate }}</span>
                 </z-dropdown-menu-item>
                 <z-dropdown-menu-item (click)="onStatusChange(row, 2)">
                   <z-icon zType="clock" zSize="sm" class="mr-2" />
-                  <span>In Progress</span>
+                  <span>{{ 'tasks.list.inProgress' | translate }}</span>
                 </z-dropdown-menu-item>
                 <z-dropdown-menu-item (click)="onStatusChange(row, 3)">
                   <z-icon zType="circle-check" zSize="sm" class="mr-2" />
-                  <span>Completed</span>
+                  <span>{{ 'tasks.list.completed' | translate }}</span>
                 </z-dropdown-menu-item>
                 <z-divider class="my-1" />
                 <z-dropdown-menu-item (click)="onDeleteTask(row)" class="text-destructive focus:text-destructive">
                   <z-icon zType="x" zSize="sm" class="mr-2" />
-                  <span>Delete</span>
+                  <span>{{ 'common.delete' | translate }}</span>
                 </z-dropdown-menu-item>
               </z-dropdown-menu>
             </div>
@@ -291,7 +291,7 @@
                 
                 <div class="flex items-center gap-2 text-xs">
                   <z-icon zType="user" zSize="sm" class="text-muted-foreground flex-shrink-0" />
-                  <span class="text-muted-foreground truncate">{{ row.assignedUserName || 'Unassigned' }}</span>
+                  <span class="text-muted-foreground truncate">{{ row.assignedUserName || ('tasks.list.unassigned' | translate) }}</span>
                 </div>
                 
                 <div class="flex items-center gap-2 text-xs">

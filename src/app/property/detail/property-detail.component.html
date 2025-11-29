@@ -1,10 +1,10 @@
-<z-page zTitle="Property Details">
+<z-page [zTitle]="'property.detail.title' | translate">
   <div class="container mx-auto max-w-8xl px-2 py-2">
     @if (isLoading()) {
       <div class="flex items-center justify-center min-h-[400px]">
         <div class="text-center space-y-4">
           <z-icon zType="loader-circle" class="w-8 h-8 animate-spin mx-auto" />
-          <p class="text-sm text-muted-foreground">Loading property details...</p>
+          <p class="text-sm text-muted-foreground">{{ 'property.detail.loading' | translate }}</p>
         </div>
       </div>
     } @else if (property()) {
@@ -14,7 +14,7 @@
           @if (property()?.identifier) {
             <z-badge zType="outline" class="flex items-center gap-2 px-4 py-2">
               <z-icon zType="id-card" zSize="default" class="text-muted-foreground" />
-              <span class="text-sm font-medium text-muted-foreground">Reference:</span>
+              <span class="text-sm font-medium text-muted-foreground">{{ 'common.reference' | translate }}:</span>
               <span class="text-sm font-semibold text-foreground">{{ property()?.identifier }}</span>
               @if (property()?.building?.name) {
                 <span class="text-sm text-muted-foreground">•</span>
@@ -26,7 +26,7 @@
         </div>
         <z-button zType="default" [routerLink]="['/property', property()?.id]">
           <z-icon zType="pencil" zSize="sm" />
-          Edit Property
+          {{ 'property.detail.editProperty' | translate }}
         </z-button>
       </div>
 
@@ -60,7 +60,7 @@
                 </z-button>
                 @if (isCurrentImageDefault()) {
                   <z-badge zType="default" class="bg-primary text-primary-foreground">
-                    Default
+                    {{ 'common.default' | translate }}
                   </z-badge>
                 }
               </div>
@@ -98,7 +98,7 @@
             } @else {
               <div class="absolute top-2 right-2">
                 <z-button zType="ghost" zSize="sm" class="text-xs bg-background/80">
-                  Add image
+                  {{ 'property.detail.addImage' | translate }}
                 </z-button>
               </div>
             }
@@ -108,7 +108,7 @@
         <!-- General Information -->
         <z-card zBodySpacing="none">
           <div class="space-y-3">
-            <h3 class="text-sm font-semibold">General Information</h3>
+            <h3 class="text-sm font-semibold">{{ 'property.detail.generalInformation' | translate }}</h3>
             <div class="flex items-start justify-between gap-4">
               <div class="space-y-2 flex-1">
                 <h1 class="text-sm font-semibold">{{ propertyName() }}</h1>
@@ -139,7 +139,7 @@
         @if (property()?.contact || property()?.ownerName) {
           <z-card zBodySpacing="none">
             <div class="space-y-3">
-              <h3 class="text-sm font-semibold">Owner Information</h3>
+              <h3 class="text-sm font-semibold">{{ 'property.detail.ownerInformation' | translate }}</h3>
               <div class="flex items-start justify-between gap-3">
                 <div class="flex items-start gap-3 flex-1 min-w-0">
                   @if (getOwnerAvatarUrl()) {
@@ -164,7 +164,7 @@
                     @if (getOwnerIdentifier()) {
                       <div class="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                         <z-icon zType="id-card" zSize="sm" />
-                        <span>Ref: {{ getOwnerIdentifier() }}</span>
+                        <span>{{ 'common.referenceAbbr' | translate }}: {{ getOwnerIdentifier() }}</span>
                       </div>
                     }
                     @if (getOwnerEmail()) {
@@ -184,7 +184,7 @@
                 <div class="flex-shrink-0">
                   <z-button zType="outline" zSize="sm" (click)="viewOwnerProfile()">
                     <z-icon zType="user" zSize="sm" class="mr-2" />
-                    View Profile
+                    {{ 'property.detail.viewProfile' | translate }}
                   </z-button>
                 </div>
               </div>
@@ -192,7 +192,7 @@
               <!-- Keys Section -->
               <div class="border-t border-border pt-3 mt-3">
                 <div class="flex items-center justify-between mb-2">
-                  <h4 class="text-sm font-semibold">Keys</h4>
+                  <h4 class="text-sm font-semibold">{{ 'menu.keys' | translate }}</h4>
                 </div>
                 @if (keys().length > 0) {
                   <div class="space-y-2">
@@ -231,7 +231,7 @@
                   </div>
                 } @else {
                   <div class="text-center py-4 text-sm text-muted-foreground">
-                    No keys available
+                    {{ 'property.detail.noKeysAvailable' | translate }}
                   </div>
                 }
               </div>
@@ -241,7 +241,7 @@
 
         <!-- Information Sections -->
         <z-accordion zType="multiple" [zDefaultValue]="['equipments', 'features']">
-          <z-accordion-item zValue="equipments" zTitle="Equipments">
+          <z-accordion-item zValue="equipments" [zTitle]="'property.detail.equipments' | translate">
             @if (equipment().length > 0) {
               <div class="flex flex-wrap gap-2">
                 @for (item of equipment(); track item) {
@@ -249,11 +249,11 @@
                 }
               </div>
             } @else {
-              <div class="text-sm text-muted-foreground">No equipments listed</div>
+              <div class="text-sm text-muted-foreground">{{ 'property.detail.noEquipmentsListed' | translate }}</div>
             }
           </z-accordion-item>
 
-          <z-accordion-item zValue="features" zTitle="Features">
+          <z-accordion-item zValue="features" [zTitle]="'property.detail.features' | translate">
             @if (features().length > 0) {
               <div class="flex flex-wrap gap-2">
                 @for (item of features(); track item) {
@@ -261,7 +261,7 @@
                 }
               </div>
             } @else {
-              <div class="text-sm text-muted-foreground">No features listed</div>
+              <div class="text-sm text-muted-foreground">{{ 'property.detail.noFeaturesListed' | translate }}</div>
             }
           </z-accordion-item>
 
@@ -273,11 +273,11 @@
       <div class="w-full lg:w-1/2 space-y-2 min-w-0">
         <z-card zBodySpacing="none" class="flex flex-col">
           <z-tab-group zTabsPosition="top" zActivePosition="bottom" class="flex flex-col">
-            <z-tab label="FINANCE">
+            <z-tab [label]="'property.detail.finance' | translate">
               <div class="pt-4">
                 @if (!hasTransactions()) {
                   <div class="text-center py-8 text-sm text-muted-foreground">
-                    No transactions found
+                    {{ 'property.detail.noTransactionsFound' | translate }}
                   </div>
                 } @else {
                   <!-- Revenue Section (GREEN) -->
@@ -285,7 +285,7 @@
                     <div class="mb-6">
                       <div class="flex items-center gap-2 mb-4 pb-2 border-b-2 border-green-500">
                         <z-icon zType="plus" zSize="sm" class="text-green-600 dark:text-green-400" />
-                        <h3 class="text-sm font-semibold text-green-600 dark:text-green-400">REVENUE</h3>
+                        <h3 class="text-sm font-semibold text-green-600 dark:text-green-400">{{ 'property.detail.revenue' | translate }}</h3>
                         <z-badge zType="default" class="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
                           {{ revenueTransactions().length }}
                         </z-badge>
@@ -352,7 +352,7 @@
                     <div>
                       <div class="flex items-center gap-2 mb-4 pb-2 border-b-2 border-red-500">
                         <z-icon zType="minus" zSize="sm" class="text-red-600 dark:text-red-400" />
-                        <h3 class="text-sm font-semibold text-red-600 dark:text-red-400">EXPENSE</h3>
+                        <h3 class="text-sm font-semibold text-red-600 dark:text-red-400">{{ 'property.detail.expense' | translate }}</h3>
                         <z-badge zType="destructive" class="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
                           {{ expenseTransactions().length }}
                         </z-badge>
@@ -417,13 +417,13 @@
               </div>
             </z-tab>
             @if (isVacationLocation()) {
-              <z-tab label="RESERVATIONS">
+              <z-tab [label]="'property.detail.reservations' | translate">
                 <div class="pt-4">
                   @if (isLoadingReservations()) {
                     <div class="flex items-center justify-center py-8">
                       <div class="text-center space-y-4">
                         <z-icon zType="loader-circle" class="w-8 h-8 animate-spin mx-auto" />
-                        <p class="text-sm text-muted-foreground">Loading reservations...</p>
+                        <p class="text-sm text-muted-foreground">{{ 'property.detail.loadingReservations' | translate }}</p>
                       </div>
                     </div>
                   } @else {
@@ -438,9 +438,9 @@
               </z-tab>
             }
             @if (!isVacationLocation()) {
-              <z-tab label="LEASING">
+              <z-tab [label]="'property.detail.leasing' | translate">
                 <div class="pt-2 space-y-2">
-                  <h3 class="text-sm font-semibold">Leasing</h3>
+                  <h3 class="text-sm font-semibold">{{ 'menu.leasing' | translate }}</h3>
 
                   <div class="space-y-3">
                     @for (lease of leases(); track lease.id) {
@@ -465,12 +465,12 @@
                             }
                             <div class="flex-1 min-w-0">
                               <div class="flex items-center gap-2 mb-1">
-                                <span class="text-sm font-semibold">{{ lease.tenantName || 'Unnamed tenant' }}</span>
+                                <span class="text-sm font-semibold">{{ lease.tenantName || ('property.detail.unnamedTenant' | translate) }}</span>
                               </div>
                               @if (lease.tenantIdentifier) {
                                 <div class="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                                   <z-icon zType="id-card" zSize="sm" />
-                                  <span>Ref: {{ lease.tenantIdentifier }}</span>
+                                  <span>{{ 'common.referenceAbbr' | translate }}: {{ lease.tenantIdentifier }}</span>
                                 </div>
                               }
                               @if (lease.tenantEmail) {
@@ -511,7 +511,7 @@
                             </div>
                             @if (lease.tenancyDuration) {
                               <div class="text-xs text-muted-foreground ml-6">
-                                Duration: {{ lease.tenancyDuration }} months
+                                {{ 'property.detail.duration' | translate }}: {{ lease.tenancyDuration }} {{ 'property.detail.months' | translate }}
                               </div>
                             }
 
@@ -533,14 +533,14 @@
                             @if (lease.paymentDate) {
                               <div class="flex items-center gap-2">
                                 <z-icon zType="calendar" zSize="sm" class="text-muted-foreground" />
-                                <span class="text-sm text-muted-foreground">Payment Date: Day {{ lease.paymentDate }}</span>
+                                <span class="text-sm text-muted-foreground">{{ 'property.detail.paymentDate' | translate }}: {{ 'property.detail.day' | translate }} {{ lease.paymentDate }}</span>
                               </div>
                             }
 
                             <!-- Special Terms -->
                             @if (lease.specialTerms) {
                               <div class="mt-2 pt-2 border-t border-border">
-                                <p class="text-xs font-medium text-muted-foreground mb-1">Special Terms:</p>
+                                <p class="text-xs font-medium text-muted-foreground mb-1">{{ 'property.detail.specialTerms' | translate }}:</p>
                                 <p class="text-sm text-muted-foreground">{{ lease.specialTerms }}</p>
                               </div>
                             }
@@ -550,7 +550,7 @@
                     }
                     @if (leases().length === 0) {
                       <div class="text-center py-8 text-sm text-muted-foreground">
-                        No leases found
+                        {{ 'property.detail.noLeasesFound' | translate }}
                       </div>
                     }
                   </div>
@@ -563,7 +563,7 @@
         <!-- Calendar and Public Profile -->
         <z-card zBodySpacing="none">
           <div class="space-y-2">
-            <h3 class="text-sm font-semibold">Visibility</h3>
+            <h3 class="text-sm font-semibold">{{ 'property.detail.visibility' | translate }}</h3>
             <!-- Calendar Link -->
             @if (isVacationLocation()) {
               <div class="space-y-2 pb-4">
@@ -574,7 +574,7 @@
                     (click)="generateICalFile()"
                   >
                     <z-icon zType="calendar" zSize="sm" class="mr-2" />
-                    Generate iCal File
+                    {{ 'property.detail.generateICalFile' | translate }}
                   </z-button>
                   <z-button 
                     zType="outline" 
@@ -582,11 +582,11 @@
                     (click)="shareICalViaWhatsApp()"
                   >
                     <z-icon zType="message-circle" zSize="sm" class="mr-2" />
-                    Share via WhatsApp
+                    {{ 'property.detail.shareViaWhatsApp' | translate }}
                   </z-button>
                 </div>
                 <p class="text-xs text-muted-foreground">
-                  Use this iCal link to synchronize with external services such as Airbnb and Google Calendar.
+                  {{ 'property.detail.iCalDescription' | translate }}
                 </p>
               </div>
             }
@@ -594,13 +594,13 @@
             <!-- Public Profile -->
               <div class="space-y-2">
               <div class="flex items-center gap-2">
-                <span class="text-sm font-medium">Public property profile</span>
+                <span class="text-sm font-medium">{{ 'property.detail.publicPropertyProfile' | translate }}</span>
                 <z-icon zType="info" zSize="sm" class="text-muted-foreground" />
               </div>
               
               <!-- Enable Sharing Toggle -->
               <div class="flex items-center justify-between">
-                <label class="text-sm text-muted-foreground">Enable sharing</label>
+                <label class="text-sm text-muted-foreground">{{ 'property.detail.enableSharing' | translate }}</label>
                 <z-switch
                   [ngModel]="enableSharing()"
                   (checkChange)="updateEnableSharing($event)"
@@ -609,7 +609,7 @@
 
               <!-- Enable Address Sharing Toggle -->
               <div class="flex items-center justify-between">
-                <label class="text-sm text-muted-foreground">Enable address sharing</label>
+                <label class="text-sm text-muted-foreground">{{ 'property.detail.enableAddressSharing' | translate }}</label>
                 <z-switch
                   [ngModel]="enableAddressSharing()"
                   (checkChange)="updateEnableAddressSharing($event)"
@@ -620,7 +620,7 @@
               <!-- Enable Reservation Show Toggle (only for location vacance) -->
               @if (isVacationLocation()) {
                 <div class="flex items-center justify-between">
-                  <label class="text-sm text-muted-foreground">Show reservations now</label>
+                  <label class="text-sm text-muted-foreground">{{ 'property.detail.showReservationsNow' | translate }}</label>
                   <z-switch
                     [ngModel]="enableReservationShow()"
                     (checkChange)="updateEnableReservationShow($event)"
@@ -648,7 +648,7 @@
                     type="button"
                     (click)="copyPublicProfileLink($event)"
                     [disabled]="isPublicProfileDisabled()"
-                    [attr.aria-label]="'Copy link'"
+                    [attr.aria-label]="'property.detail.copyLink' | translate"
                     class="!opacity-100 !text-foreground !bg-muted/50 hover:!bg-accent hover:!text-accent-foreground !min-w-0 !h-auto !p-1.5 !rounded"
                   >
                     <z-icon zType="copy" zSize="sm" class="!text-foreground" />
@@ -659,7 +659,7 @@
                     type="button"
                     (click)="sharePublicProfileViaWhatsApp($event)"
                     [disabled]="isPublicProfileDisabled()"
-                    [attr.aria-label]="'Share via WhatsApp'"
+                    [attr.aria-label]="'property.detail.shareViaWhatsApp' | translate"
                     class="!opacity-100 !text-foreground !bg-muted/50 hover:!bg-accent hover:!text-accent-foreground !min-w-0 !h-auto !p-1.5 !rounded"
                   >
                     <z-icon zType="message-circle" zSize="sm" class="!text-foreground" />
@@ -674,9 +674,9 @@
     } @else {
       <div class="flex items-center justify-center min-h-[400px]">
         <div class="text-center space-y-4">
-          <p class="text-sm text-muted-foreground">Property not found</p>
+          <p class="text-sm text-muted-foreground">{{ 'property.detail.propertyNotFound' | translate }}</p>
           <z-button zType="default" (click)="router.navigate(['/property'])">
-            Back to Properties
+            {{ 'property.detail.backToProperties' | translate }}
           </z-button>
         </div>
       </div>

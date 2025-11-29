@@ -23,6 +23,7 @@ import { TaskService } from '@shared/services/task.service';
 import { RoutePreferencesService } from '@shared/services/route-preferences.service';
 import { ZardDialogService } from '@shared/components/dialog/dialog.service';
 import { EditTaskComponent } from '../edit/edit-task.component';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-task-list',
@@ -30,6 +31,7 @@ import { EditTaskComponent } from '../edit/edit-task.component';
   imports: [
     CommonModule,
     FormsModule,
+    TranslateModule,
     ZardPageComponent,
     ZardButtonComponent,
     ZardInputDirective,
@@ -54,6 +56,7 @@ export class TaskListComponent implements OnInit, OnDestroy {
   private readonly taskService = inject(TaskService);
   private readonly dialogService = inject(ZardDialogService);
   private readonly preferencesService = inject(RoutePreferencesService);
+  private readonly translateService = inject(TranslateService);
   private readonly destroy$ = new Subject<void>();
   private readonly searchInputSubject = new Subject<string>();
 
@@ -89,37 +92,37 @@ export class TaskListComponent implements OnInit, OnDestroy {
   readonly columns = computed<DatatableColumn<Task>[]>(() => [
     {
       key: 'title',
-      label: 'Title',
+      label: this.translateService.instant('tasks.list.columns.title'),
       sortable: true,
       cellTemplate: this.titleCell(),
     },
     {
       key: 'priority',
-      label: 'Priority',
+      label: this.translateService.instant('tasks.list.columns.priority'),
       sortable: true,
       cellTemplate: this.priorityCell(),
     },
     {
       key: 'status',
-      label: 'Status',
+      label: this.translateService.instant('tasks.list.columns.status'),
       sortable: true,
       cellTemplate: this.statusCell(),
     },
     {
       key: 'assignedUser',
-      label: 'Assigned To',
+      label: this.translateService.instant('tasks.list.columns.assignedUser'),
       sortable: true,
       cellTemplate: this.assignedUserCell(),
     },
     {
       key: 'scheduledDateTime',
-      label: 'Scheduled Date',
+      label: this.translateService.instant('tasks.list.columns.scheduledDate'),
       sortable: true,
       cellTemplate: this.scheduledDateCell(),
     },
     {
       key: 'linkTo',
-      label: 'Link To',
+      label: this.translateService.instant('tasks.list.columns.linkTo'),
       cellTemplate: this.linkToCell(),
     },
     {
@@ -253,9 +256,9 @@ export class TaskListComponent implements OnInit, OnDestroy {
 
   readonly emptyMessage = computed(() => {
     if (this.searchQuery() || this.statusFilter() !== undefined || this.priorityFilter() !== undefined) {
-      return 'No tasks match your filters';
+      return this.translateService.instant('tasks.list.emptySearch');
     }
-    return 'No tasks available';
+    return this.translateService.instant('tasks.list.empty');
   });
 
   onStatusFilterChange(status: string): void {
@@ -272,7 +275,7 @@ export class TaskListComponent implements OnInit, OnDestroy {
 
   getStatusFilterLabel(): string {
     const status = this.statusFilter();
-    if (status === undefined) return 'All Statuses';
+    if (status === undefined) return this.translateService.instant('tasks.list.allStatuses');
     return this.getStatusLabel(status);
   }
 
@@ -301,7 +304,7 @@ export class TaskListComponent implements OnInit, OnDestroy {
 
   getPriorityFilterLabel(): string {
     const priority = this.priorityFilter();
-    if (priority === undefined) return 'All Priorities';
+    if (priority === undefined) return this.translateService.instant('tasks.list.allPriorities');
     return this.getPriorityLabel(priority);
   }
 
@@ -371,7 +374,7 @@ export class TaskListComponent implements OnInit, OnDestroy {
   onEditTask(task: Task): void {
     const dialogRef = this.dialogService.create({
       zContent: EditTaskComponent,
-      zTitle: 'Edit Task',
+      zTitle: this.translateService.instant('tasks.list.editTask'),
       zWidth: '1200px',
       zCustomClasses: 'max-w-[calc(100vw-2rem)] sm:max-w-[1200px] max-h-[90vh] overflow-hidden flex flex-col',
       zData: { taskId: task.id },
@@ -403,10 +406,10 @@ export class TaskListComponent implements OnInit, OnDestroy {
   onDeleteTask(task: Task): void {
     const taskTitle = task.title;
     const dialogRef = this.alertDialogService.confirm({
-      zTitle: 'Delete Task',
-      zDescription: `Are you sure you want to delete "${taskTitle}"? This action cannot be undone.`,
-      zOkText: 'Delete',
-      zCancelText: 'Cancel',
+      zTitle: this.translateService.instant('tasks.list.deleteConfirmation.title'),
+      zDescription: this.translateService.instant('tasks.list.deleteConfirmation.description', { taskTitle }),
+      zOkText: this.translateService.instant('common.delete'),
+      zCancelText: this.translateService.instant('common.cancel'),
       zOkDestructive: true,
       zViewContainerRef: this.viewContainerRef,
     });
@@ -437,7 +440,7 @@ export class TaskListComponent implements OnInit, OnDestroy {
   onAddTask(): void {
     const dialogRef = this.dialogService.create({
       zContent: EditTaskComponent,
-      zTitle: 'Create Task',
+      zTitle: this.translateService.instant('tasks.list.createTask'),
       zWidth: '1200px',
       zCustomClasses: 'max-w-[calc(100vw-2rem)] sm:max-w-[1200px] max-h-[90vh] overflow-hidden flex flex-col',
       zData: {},
@@ -487,11 +490,11 @@ export class TaskListComponent implements OnInit, OnDestroy {
 
   getPriorityLabel(priority: number): string {
     switch (priority) {
-      case 1: return 'Low';
-      case 2: return 'Medium';
-      case 3: return 'High';
-      case 4: return 'Critical';
-      default: return 'Unknown';
+      case 1: return this.translateService.instant('tasks.list.priority.low');
+      case 2: return this.translateService.instant('tasks.list.priority.medium');
+      case 3: return this.translateService.instant('tasks.list.priority.high');
+      case 4: return this.translateService.instant('tasks.list.priority.critical');
+      default: return this.translateService.instant('common.unknown');
     }
   }
 
@@ -507,10 +510,10 @@ export class TaskListComponent implements OnInit, OnDestroy {
 
   getStatusLabel(status: number): string {
     switch (status) {
-      case 1: return 'To Do';
-      case 2: return 'In Progress';
-      case 3: return 'Completed';
-      default: return 'Unknown';
+      case 1: return this.translateService.instant('tasks.list.status.todo');
+      case 2: return this.translateService.instant('tasks.list.status.inProgress');
+      case 3: return this.translateService.instant('tasks.list.status.completed');
+      default: return this.translateService.instant('common.unknown');
     }
   }
 

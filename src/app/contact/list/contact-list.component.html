@@ -1,4 +1,4 @@
-<z-page zTitle="Contacts">
+<z-page [zTitle]="'contact.list.title' | translate">
   <div class="flex flex-col h-full min-h-0">
     <!-- Header Section -->
     <div class="space-y-6 pb-6 flex-shrink-0">
@@ -6,9 +6,9 @@
       <div class="flex flex-col gap-4">
         <!-- Show Archived switch -->
         <div class="flex items-center gap-2">
-          <label class="text-sm text-muted-foreground cursor-pointer" (click)="toggleShowArchived(!showArchived())">
-            Show Archived
-          </label>
+            <label class="text-sm text-muted-foreground cursor-pointer" (click)="toggleShowArchived(!showArchived())">
+              {{ 'contact.list.showArchived' | translate }}
+            </label>
           <z-switch [ngModel]="showArchived()" (checkChange)="toggleShowArchived($event)" />
         </div>
         <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
@@ -20,7 +20,7 @@
               <input
                 z-input
                 type="text"
-                placeholder="Search contacts..."
+                [placeholder]="'contact.list.searchPlaceholder' | translate"
                 class="pl-9 w-full"
                 [value]="searchInput()"
                 (input)="onSearchInputChange($any($event.target).value)"
@@ -34,7 +34,7 @@
                 <div class="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center">
                   <z-icon zType="plus" zSize="sm" class="text-primary" />
                 </div>
-                <span class="text-sm font-medium text-foreground">Type</span>
+                <span class="text-sm font-medium text-foreground">{{ 'contact.list.type' | translate }}</span>
               </div>
               <!-- Separator -->
               <div class="w-px h-6 bg-border"></div>
@@ -47,7 +47,7 @@
                     ? 'px-3 py-1.5 rounded-md text-sm font-medium bg-primary text-primary-foreground transition-colors' 
                     : 'px-3 py-1.5 rounded-md text-sm font-medium bg-muted text-muted-foreground hover:bg-muted/80 transition-colors'"
                 >
-                  Individual
+                  {{ 'contact.list.individual' | translate }}
                 </button>
                 <button
                   type="button"
@@ -56,7 +56,7 @@
                     ? 'px-3 py-1.5 rounded-md text-sm font-medium bg-primary text-primary-foreground transition-colors' 
                     : 'px-3 py-1.5 rounded-md text-sm font-medium bg-muted text-muted-foreground hover:bg-muted/80 transition-colors'"
                 >
-                  Company
+                  {{ 'contact.list.company' | translate }}
                 </button>
               </div>
             </div>
@@ -67,12 +67,12 @@
               @if (showArchived()) {
                 <z-button zType="outline" zSize="default" class="gap-2 bg-green-400 hover:bg-green-500 text-green-950 border-green-400 hover:border-green-500 dark:bg-green-600 dark:hover:bg-green-700 dark:text-green-50 dark:border-green-600 dark:hover:border-green-700 shadow-xs" (click)="showUnarchiveConfirmation()">
                   <z-icon zType="folder-open" zSize="sm" />
-                  Unarchive
+                  {{ 'contact.list.unarchive' | translate }}
                 </z-button>
               } @else {
                 <z-button zType="outline" zSize="default" class="gap-2 bg-yellow-400 hover:bg-yellow-500 text-yellow-950 border-yellow-400 hover:border-yellow-500 dark:bg-yellow-600 dark:hover:bg-yellow-700 dark:text-yellow-50 dark:border-yellow-600 dark:hover:border-yellow-700 shadow-xs" (click)="showArchiveConfirmation()">
                   <z-icon zType="folder" zSize="sm" />
-                  Archive
+                  {{ 'contact.list.archive' | translate }}
                 </z-button>
               }
             }
@@ -85,21 +85,21 @@
                 (click)="resetFilters()"
               >
                 <z-icon zType="x" zSize="sm" />
-                <span>Reset</span>
+                <span>{{ 'common.reset' | translate }}</span>
               </z-button>
             }
             <z-button zType="outline" zSize="default" class="gap-2" (click)="toggleViewMode()">
               @if (viewMode() === 'list') {
                 <z-icon zType="layout-dashboard" zSize="sm" />
-                <span>Card View</span>
+                <span>{{ 'contact.list.cardView' | translate }}</span>
               } @else {
                 <z-icon zType="layers" zSize="sm" />
-                <span>List View</span>
+                <span>{{ 'contact.list.listView' | translate }}</span>
               }
             </z-button>
             <z-button zType="default" zSize="default" class="gap-2" [routerLink]="getAddContactRoute()">
               <z-icon zType="folder-plus" zSize="sm" />
-              Add Contact
+              {{ 'contact.list.addContact' | translate }}
             </z-button>
           </div>
         </div>
@@ -171,7 +171,7 @@
         <!-- Type Column Template -->
         <ng-template #typeCell let-value let-row="row">
           <z-badge zType="secondary" zShape="default">
-            {{ row.isACompany ? 'Company' : 'Individual' }}
+            {{ row.isACompany ? ('contact.list.company' | translate) : ('contact.list.individual' | translate) }}
           </z-badge>
         </ng-template>
 
@@ -183,16 +183,16 @@
             </z-button>
             <z-dropdown-menu-item (click)="onViewContact(row)">
               <z-icon zType="eye" zSize="sm" class="mr-2" />
-              <span>View</span>
+              <span>{{ 'common.view' | translate }}</span>
             </z-dropdown-menu-item>
             <z-dropdown-menu-item (click)="onEditContact(row)">
               <z-icon zType="pencil" zSize="sm" class="mr-2" />
-              <span>Edit</span>
+              <span>{{ 'common.edit' | translate }}</span>
             </z-dropdown-menu-item>
             <z-divider class="my-1" />
             <z-dropdown-menu-item (click)="onDeleteContact(row)" class="text-destructive focus:text-destructive">
               <z-icon zType="x" zSize="sm" class="mr-2" />
-              <span>Delete</span>
+              <span>{{ 'common.delete' | translate }}</span>
             </z-dropdown-menu-item>
           </z-dropdown-menu>
         </ng-template>
@@ -236,7 +236,7 @@
                   (click)="onViewContact(row)"
                 />
                 <z-badge zType="secondary" zShape="default" class="w-fit text-xs">
-                  {{ row.isACompany ? 'Company' : 'Individual' }}
+                  {{ row.isACompany ? ('contact.list.company' | translate) : ('contact.list.individual' | translate) }}
                 </z-badge>
               </div>
               

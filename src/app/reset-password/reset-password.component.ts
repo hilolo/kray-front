@@ -1,6 +1,7 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ZardFormFieldComponent } from '@shared/components/form/form.component';
 import { ZardFormControlComponent } from '@shared/components/form/form.component';
 import { ZardFormLabelComponent } from '@shared/components/form/form.component';
@@ -15,6 +16,7 @@ import { PasswordResetService } from '@shared/services/password-reset.service';
   imports: [
     FormsModule,
     RouterLink,
+    TranslateModule,
     ZardFormFieldComponent,
     ZardFormControlComponent,
     ZardFormLabelComponent,
@@ -28,6 +30,7 @@ export class ResetPasswordComponent implements OnInit {
   readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly passwordResetService = inject(PasswordResetService);
+  private readonly translateService = inject(TranslateService);
 
   token = signal('');
   newPassword = signal('');
@@ -65,10 +68,10 @@ export class ResetPasswordComponent implements OnInit {
     if (!this.formSubmitted()) return '';
     const newPass = this.newPassword().trim();
     if (!newPass) {
-      return 'Password is required';
+      return this.translateService.instant('login.passwordRequired');
     }
     if (newPass.length < 5) {
-      return 'Password must be at least 5 characters';
+      return this.translateService.instant('resetPassword.passwordMinLength');
     }
     return '';
   });
@@ -77,10 +80,10 @@ export class ResetPasswordComponent implements OnInit {
     if (!this.formSubmitted()) return '';
     const confirmPass = this.confirmPassword().trim();
     if (!confirmPass) {
-      return 'Confirm password is required';
+      return this.translateService.instant('resetPassword.confirmPasswordRequired');
     }
     if (confirmPass !== this.newPassword().trim()) {
-      return 'Passwords do not match';
+      return this.translateService.instant('resetPassword.passwordsDoNotMatch');
     }
     return '';
   });
@@ -129,7 +132,7 @@ export class ResetPasswordComponent implements OnInit {
 
     const tokenValue = this.token();
     if (!tokenValue) {
-      this.errorMessage.set('Invalid reset token. Please request a new password reset.');
+      this.errorMessage.set(this.translateService.instant('resetPassword.invalidToken'));
       return;
     }
 
@@ -153,10 +156,10 @@ export class ResetPasswordComponent implements OnInit {
           this.isLoading.set(false);
           
           const errorCode = error?.code || error?.error?.code;
-          const errorMsg = error?.message || error?.error?.message || 'Failed to reset password. Please try again.';
+          const errorMsg = error?.message || error?.error?.message || this.translateService.instant('resetPassword.resetFailed');
           
           if (errorCode === 'invalid_token' || errorMsg.toLowerCase().includes('token')) {
-            this.errorMessage.set('Invalid or expired reset token. Please request a new password reset.');
+            this.errorMessage.set(this.translateService.instant('resetPassword.invalidOrExpiredToken'));
           } else {
             this.errorMessage.set(errorMsg);
           }

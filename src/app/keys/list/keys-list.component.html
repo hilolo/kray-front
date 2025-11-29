@@ -1,4 +1,4 @@
-<z-page zTitle="Keys">
+<z-page [zTitle]="'keys.list.title' | translate">
   <div class="flex flex-col h-full min-h-0">
     <!-- Header Section -->
     <div class="space-y-6 pb-6 flex-shrink-0">
@@ -13,7 +13,7 @@
               <input
                 z-input
                 type="text"
-                placeholder="Search keys..."
+                [placeholder]="'keys.list.searchPlaceholder' | translate"
                 class="pl-9 w-full"
                 [value]="searchInput()"
                 (input)="onSearchInputChange($any($event.target).value)"
@@ -26,9 +26,9 @@
                 #propertyCombobox
                 [options]="propertyOptions()"
                 [value]="selectedPropertyId()"
-                [placeholder]="'Select property...'"
-                [searchPlaceholder]="'Search properties...'"
-                [emptyText]="'No properties found'"
+                [placeholder]="'keys.list.selectProperty' | translate"
+                [searchPlaceholder]="'keys.list.searchProperties' | translate"
+                [emptyText]="'keys.list.noPropertiesFound' | translate"
                 [searchable]="true"
                 [disabled]="isLoadingProperties()"
                 (zValueChange)="onPropertyChange($event)"
@@ -42,21 +42,21 @@
             @if (showResetButton()) {
               <z-button zType="outline" zSize="default" class="gap-2 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground" (click)="onResetFilters()">
                 <z-icon zType="x" zSize="sm" />
-                <span>Reset</span>
+                <span>{{ 'common.reset' | translate }}</span>
               </z-button>
             }
             <z-button zType="outline" zSize="default" class="gap-2" (click)="toggleViewMode()">
               @if (viewMode() === 'list') {
                 <z-icon zType="layout-dashboard" zSize="sm" />
-                <span>Card View</span>
+                <span>{{ 'keys.list.cardView' | translate }}</span>
               } @else {
                 <z-icon zType="layers" zSize="sm" />
-                <span>List View</span>
+                <span>{{ 'keys.list.listView' | translate }}</span>
               }
             </z-button>
             <z-button zType="default" zSize="default" class="gap-2" (click)="onAddKey()">
               <z-icon zType="plus" zSize="sm" />
-              Add Key
+              {{ 'keys.list.addKey' | translate }}
             </z-button>
           </div>
         </div>
@@ -131,12 +131,12 @@
             </z-button>
             <z-dropdown-menu-item (click)="onEditKey(row)">
               <z-icon zType="pencil" zSize="sm" class="mr-2" />
-              <span>Edit</span>
+              <span>{{ 'common.edit' | translate }}</span>
             </z-dropdown-menu-item>
             <z-divider class="my-1" />
             <z-dropdown-menu-item (click)="onDeleteKey(row)" class="text-destructive focus:text-destructive">
               <z-icon zType="x" zSize="sm" class="mr-2" />
-              <span>Delete</span>
+              <span>{{ 'common.delete' | translate }}</span>
             </z-dropdown-menu-item>
           </z-dropdown-menu>
         </ng-template>

@@ -126,29 +126,29 @@ export class PropertyDetailComponent implements OnInit {
     return [
       {
         key: 'date',
-        label: 'Date',
+        label: this.translateService.instant('property.detail.columns.date'),
         sortable: true,
         cellTemplate: dateCell || undefined,
       },
       {
         key: 'contact',
-        label: 'From',
+        label: this.translateService.instant('property.detail.columns.from'),
         cellTemplate: contactCell || undefined,
       },
       {
         key: 'type',
-        label: 'Type',
+        label: this.translateService.instant('property.detail.columns.type'),
         cellTemplate: typeCell || undefined,
       },
       {
         key: 'amount',
-        label: 'Amount',
+        label: this.translateService.instant('property.detail.columns.amount'),
         sortable: true,
         cellTemplate: amountCell || undefined,
       },
       {
         key: 'status',
-        label: 'Status',
+        label: this.translateService.instant('property.detail.columns.status'),
         cellTemplate: statusCell || undefined,
       },
     ];
@@ -171,7 +171,7 @@ export class PropertyDetailComponent implements OnInit {
       },
       {
         key: 'contact',
-        label: 'To',
+        label: this.translateService.instant('property.detail.columns.to'),
         cellTemplate: contactCell || undefined,
       },
       {

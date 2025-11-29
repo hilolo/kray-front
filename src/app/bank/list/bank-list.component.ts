@@ -4,7 +4,7 @@ import { ZardPageComponent } from '../../page/page.component';
 import { ZardButtonComponent } from '@shared/components/button/button.component';
 import { ZardInputDirective } from '@shared/components/input/input.directive';
 import { ZardIconComponent } from '@shared/components/icon/icon.component';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
 import { ZardAlertDialogService } from '@shared/components/alert-dialog/alert-dialog.service';
 import { ZardDatatableComponent, DatatableColumn } from '@shared/components/datatable/datatable.component';
@@ -55,6 +55,7 @@ export class BankListComponent implements OnInit, OnDestroy {
   private readonly contactService = inject(ContactService);
   private readonly preferencesService = inject(RoutePreferencesService);
   private readonly dialogService = inject(ZardDialogService);
+  private readonly translateService = inject(TranslateService);
   private readonly destroy$ = new Subject<void>();
   private readonly searchInputSubject = new Subject<string>();
 
@@ -131,9 +132,9 @@ export class BankListComponent implements OnInit, OnDestroy {
 
   readonly emptyMessage = computed(() => {
     if (this.searchQuery()) {
-      return 'No banks match your search';
+      return this.translateService.instant('bank.list.emptySearch');
     }
-    return 'No banks available';
+    return this.translateService.instant('bank.list.empty');
   });
 
   readonly hasData = computed(() => {

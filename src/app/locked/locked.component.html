@@ -8,16 +8,16 @@
 
       <!-- Title and Message -->
       <div class="space-y-2">
-        <h1 class="text-2xl font-semibold tracking-tight">Access Restricted</h1>
+        <h1 class="text-2xl font-semibold tracking-tight">{{ 'locked.title' | translate }}</h1>
         <p class="text-muted-foreground">
-          Your access has been restricted. Please contact support.
+          {{ 'locked.description' | translate }}
         </p>
       </div>
 
       <!-- Logout Button -->
       <z-button zType="default" (click)="onLogout()" class="w-full">
         <z-icon zType="log-out" />
-        Logout
+        {{ 'locked.logout' | translate }}
       </z-button>
     </div>
   </z-card>

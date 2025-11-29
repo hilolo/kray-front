@@ -18,9 +18,9 @@
                     <z-icon zType="users" class="text-primary-foreground w-6 h-6" />
                 </div>
             </div>
-            <h1 class="text-2xl font-semibold tracking-tight">Join the Team</h1>
+            <h1 class="text-2xl font-semibold tracking-tight">{{ 'acceptInvitation.title' | translate }}</h1>
             <p class="text-sm text-muted-foreground">
-                Create your account to accept the invitation
+                {{ 'acceptInvitation.description' | translate }}
             </p>
         </div>
 
@@ -36,40 +36,40 @@
             <form (ngSubmit)="onSubmit($event)" class="space-y-4">
                 <!-- Name (Optional) -->
                 <z-form-field>
-                    <z-form-label>Full Name (Optional)</z-form-label>
+                    <z-form-label>{{ 'acceptInvitation.fullNameOptional' | translate }}</z-form-label>
                     <z-form-control>
                         <z-input-group [zPrefix]="userIcon">
                             <input z-input type="text" [ngModel]="form.name()" (ngModelChange)="form.name.set($event)"
-                                name="name" placeholder="John Doe" class="w-full" />
+                                name="name" [placeholder]="'acceptInvitation.namePlaceholder' | translate" class="w-full" />
                         </z-input-group>
                     </z-form-control>
                 </z-form-field>
 
                 <!-- Phone (Optional) -->
                 <z-form-field>
-                    <z-form-label>Phone (Optional)</z-form-label>
+                    <z-form-label>{{ 'acceptInvitation.phoneOptional' | translate }}</z-form-label>
                     <z-form-control>
                         <z-input-group [zPrefix]="phoneIcon">
                             <input z-input type="tel" [ngModel]="form.phone()" (ngModelChange)="form.phone.set($event)"
-                                name="phone" placeholder="+1 234 567 890" class="w-full" />
+                                name="phone" [placeholder]="'acceptInvitation.phonePlaceholder' | translate" class="w-full" />
                         </z-input-group>
                     </z-form-control>
                 </z-form-field>
 
                 <!-- Password -->
                 <z-form-field>
-                    <z-form-label zRequired>Create Password</z-form-label>
+                    <z-form-label zRequired>{{ 'acceptInvitation.createPassword' | translate }}</z-form-label>
                     <z-form-control [errorMessage]="passwordError()">
                         <div class="relative">
                             <z-input-group [zPrefix]="lockIcon">
                                 <input z-input [type]="showPassword() ? 'text' : 'password'" [ngModel]="form.password()"
                                     (ngModelChange)="form.password.set($event)" name="password"
-                                    placeholder="At least 8 characters"
+                                    [placeholder]="'acceptInvitation.passwordPlaceholder' | translate"
                                     [zStatus]="passwordError() ? 'error' : undefined" class="w-full pr-10" />
                             </z-input-group>
                             <button type="button" (click)="togglePasswordVisibility()"
                                 class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                                [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'">
+                                [attr.aria-label]="showPassword() ? ('common.hidePassword' | translate) : ('common.showPassword' | translate)">
                                 @if (showPassword()) {
                                 <z-icon zType="eye-off" zSize="sm" />
                                 } @else {
@@ -82,19 +82,19 @@
 
                 <!-- Confirm Password -->
                 <z-form-field>
-                    <z-form-label zRequired>Confirm Password</z-form-label>
+                    <z-form-label zRequired>{{ 'acceptInvitation.confirmPassword' | translate }}</z-form-label>
                     <z-form-control [errorMessage]="confirmPasswordError()">
                         <div class="relative">
                             <z-input-group [zPrefix]="lockIcon">
                                 <input z-input [type]="showConfirmPassword() ? 'text' : 'password'"
                                     [ngModel]="form.confirmPassword()"
                                     (ngModelChange)="form.confirmPassword.set($event)" name="confirmPassword"
-                                    placeholder="Confirm your password"
+                                    [placeholder]="'acceptInvitation.confirmPasswordPlaceholder' | translate"
                                     [zStatus]="confirmPasswordError() ? 'error' : undefined" class="w-full pr-10" />
                             </z-input-group>
                             <button type="button" (click)="toggleConfirmPasswordVisibility()"
                                 class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                                [attr.aria-label]="showConfirmPassword() ? 'Hide password' : 'Show password'">
+                                [attr.aria-label]="showConfirmPassword() ? ('common.hidePassword' | translate) : ('common.showPassword' | translate)">
                                 @if (showConfirmPassword()) {
                                 <z-icon zType="eye-off" zSize="sm" />
                                 } @else {
@@ -109,9 +109,9 @@
                     class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2 w-full">
                     @if (isLoading()) {
                     <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
-                    Creating Account...
+                    {{ 'acceptInvitation.creatingAccount' | translate }}
                     } @else {
-                    Create Account & Join Team
+                    {{ 'acceptInvitation.createAccountJoinTeam' | translate }}
                     }
                 </button>
             </form>
@@ -119,8 +119,8 @@
 
         <!-- Footer -->
         <div class="text-center text-sm text-muted-foreground">
-            Already have an account?
-            <a routerLink="/login" class="font-medium text-primary hover:underline">Sign in</a>
+            {{ 'acceptInvitation.alreadyHaveAccount' | translate }}
+            <a routerLink="/login" class="font-medium text-primary hover:underline">{{ 'acceptInvitation.signIn' | translate }}</a>
         </div>
     </div>
 </div>

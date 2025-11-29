@@ -5,7 +5,7 @@ import { ZardButtonComponent } from '@shared/components/button/button.component'
 import { ZardInputDirective } from '@shared/components/input/input.directive';
 import { ZardCheckboxComponent } from '@shared/components/checkbox/checkbox.component';
 import { ZardIconComponent } from '@shared/components/icon/icon.component';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
 import { ZardAlertDialogService } from '@shared/components/alert-dialog/alert-dialog.service';
 import { ZardDatatableComponent, DatatableColumn } from '@shared/components/datatable/datatable.component';
@@ -64,6 +64,7 @@ export class BuildingListComponent implements OnInit, OnDestroy {
   private readonly userService = inject(UserService);
   private readonly propertyService = inject(PropertyService);
   private readonly sheetService = inject(ZardSheetService);
+  private readonly translateService = inject(TranslateService);
   private readonly destroy$ = new Subject<void>();
   private readonly searchInputSubject = new Subject<string>();
 
@@ -129,9 +130,12 @@ export class BuildingListComponent implements OnInit, OnDestroy {
 
   readonly emptyMessage = computed(() => {
     if (this.showArchived()) {
-      return 'No archived buildings found';
+      return this.translateService.instant('building.list.emptyArchived');
     }
-    return 'No buildings found';
+    if (this.searchQuery()) {
+      return this.translateService.instant('building.list.emptySearch');
+    }
+    return this.translateService.instant('building.list.empty');
   });
 
   readonly filteredBuildings = computed(() => {
@@ -510,11 +514,12 @@ export class BuildingListComponent implements OnInit, OnDestroy {
   }
 
   onDetachProperty(property: Property): void {
+    const propertyName = property.name || property.identifier || this.translateService.instant('common.unnamedProperty');
     const dialogRef = this.alertDialogService.confirm({
-      zTitle: 'Detach Property',
-      zDescription: `Are you sure you want to detach "${property.name || property.identifier}" from this building?`,
-      zOkText: 'Detach',
-      zCancelText: 'Cancel',
+      zTitle: this.translateService.instant('building.list.confirmDetach.title'),
+      zDescription: this.translateService.instant('building.list.confirmDetach.description', { name: propertyName }),
+      zOkText: this.translateService.instant('building.list.confirmDetach.ok'),
+      zCancelText: this.translateService.instant('common.cancel'),
       zOkDestructive: true,
       zViewContainerRef: this.viewContainerRef,
     });
@@ -527,7 +532,8 @@ export class BuildingListComponent implements OnInit, OnDestroy {
           .pipe(takeUntil(this.destroy$))
           .subscribe({
             next: () => {
-              this.toastService.success(`Property "${property.name || property.identifier}" detached successfully`);
+              const propertyName = property.name || property.identifier || this.translateService.instant('common.unnamedProperty');
+              this.toastService.success(this.translateService.instant('building.list.detachedSuccessfully', { name: propertyName }));
               // Remove from building properties list
               this.buildingProperties.update(properties => 
                 properties.filter(p => p.id !== property.id)
@@ -536,7 +542,7 @@ export class BuildingListComponent implements OnInit, OnDestroy {
             },
             error: (error) => {
               console.error('Error detaching property:', error);
-              this.toastService.error('Failed to detach property');
+              this.toastService.error(this.translateService.instant('building.list.failedToDetach'));
               this.detachingPropertyId.set(null);
             },
           });

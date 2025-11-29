@@ -20,6 +20,7 @@ import { ZardReservationCalendarComponent } from '@shared/components/reservation
 import { ReservationService } from '@shared/services/reservation.service';
 import type { PublicReservation } from '@shared/models/reservation/public-reservation.model';
 import type { Reservation } from '@shared/models/reservation/reservation.model';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-public-property',
@@ -36,6 +37,7 @@ import type { Reservation } from '@shared/models/reservation/reservation.model';
     PropertyPricePipe,
     ZardAvatarComponent,
     ZardReservationCalendarComponent,
+    TranslateModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './public-property.component.html',
@@ -47,6 +49,7 @@ export class PublicPropertyComponent implements OnInit {
   private readonly propertyService = inject(PropertyService);
   private readonly darkModeService = inject(DarkModeService);
   private readonly reservationService = inject(ReservationService);
+  private readonly translateService = inject(TranslateService);
 
   // Property data
   readonly property = signal<PublicProperty | null>(null);
@@ -145,9 +148,9 @@ export class PublicPropertyComponent implements OnInit {
           this.isLoading.set(false);
           // Check if property is not shared
           if (error.status === 404 || error.error?.status === 'Failed') {
-            this.error.set('This property is not publicly shared. Please contact the property owner for more information.');
+            this.error.set(this.translateService.instant('property.public.notPubliclyShared'));
           } else {
-            this.error.set('Failed to load property details. Please try again later.');
+            this.error.set(this.translateService.instant('property.public.failedToLoad'));
           }
           return of(null);
         }),
