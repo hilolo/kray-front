@@ -12,7 +12,7 @@
           class="bg-foreground text-background hover:bg-foreground/90"
         >
           <z-icon zType="plus" />
-          New Chat
+          {{ 'aiChat.sidebar.newChat' | translate }}
         </button>
       </div>
 
@@ -21,7 +21,7 @@
         <!-- Recent Chats Header -->
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-xs font-semibold uppercase text-muted-foreground tracking-wider">
-            Recent Chats
+            {{ 'aiChat.sidebar.recentChats' | translate }}
           </h3>
           <z-icon zType="search" zSize="sm" class="text-muted-foreground" />
         </div>
@@ -31,7 +31,7 @@
           <input
             z-input
             type="text"
-            placeholder="Search chats..."
+            [placeholder]="'aiChat.sidebar.searchPlaceholder' | translate"
             class="w-full"
             [value]="searchQuery()"
             (input)="searchQuery.set($any($event.target).value)"
@@ -55,7 +55,7 @@
             </button>
           } @empty {
             <div class="text-sm text-muted-foreground text-center py-8">
-              No recent chats
+              {{ 'aiChat.sidebar.noRecentChats' | translate }}
             </div>
           }
         </div>
@@ -66,7 +66,7 @@
         <div class="p-4 rounded-lg bg-muted/50 border border-border">
           <div class="flex items-center justify-between mb-2">
             <span class="text-xs font-semibold uppercase text-muted-foreground tracking-wider">
-              Questions Remaining
+              {{ 'aiChat.sidebar.questionsRemaining' | translate }}
             </span>
             <span class="text-lg font-bold" [class.text-primary]="zRemainingQuestions() > 0" [class.text-muted-foreground]="zRemainingQuestions() === 0">
               {{ zRemainingQuestions() }}
@@ -74,7 +74,7 @@
           </div>
           @if (zRemainingQuestions() === 0) {
             <div class="mt-2 text-xs text-destructive">
-              You've reached your daily limit
+              {{ 'aiChat.sidebar.dailyLimitReached' | translate }}
             </div>
           }
         </div>
@@ -91,9 +91,9 @@
           <div class="text-center space-y-4 max-w-md">
             <z-icon zType="message-circle" zSize="lg" class="mx-auto text-muted-foreground" />
             <div class="space-y-2">
-              <h3 class="text-lg font-semibold">Start a conversation</h3>
+              <h3 class="text-lg font-semibold">{{ 'aiChat.emptyState.startConversation' | translate }}</h3>
               <p class="text-sm text-muted-foreground">
-                Ask me anything and I'll help you out.
+                {{ 'aiChat.emptyState.description' | translate }}
               </p>
             </div>
           </div>
@@ -151,7 +151,7 @@
         <input
           z-input
           type="text"
-          [placeholder]="zDisabled() ? zPlaceholder() : (zRemainingQuestions() === 0 ? 'Daily limit reached' : zPlaceholder())"
+          [placeholder]="inputPlaceholder()"
           class="flex-1 border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent"
           [value]="currentMessage()"
           (input)="currentMessage.set($any($event.target).value)"
@@ -166,7 +166,7 @@
           (click)="sendMessage()"
           [disabled]="!currentMessage().trim() || zDisabled() || zLoading() || !canAskQuestion()"
           class="shrink-0"
-          title="Send message"
+          [title]="'aiChat.input.sendMessage' | translate"
         >
           <z-icon zType="send" />
         </button>

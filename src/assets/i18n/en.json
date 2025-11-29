@@ -105,9 +105,40 @@
     }
   },
   "aiChat": {
+    "title": "AI Chat",
     "alert": {
       "title": "AI Results Disclaimer",
       "description": "AI responses may contain errors. Verify important information independently."
+    },
+    "placeholder": {
+      "askAnything": "Ask me anything...",
+      "conversationComplete": "This conversation is complete. Start a new chat to ask another question."
+    },
+    "newChat": "New Chat",
+    "dailyLimit": {
+      "title": "Daily Limit Reached",
+      "description": "You've reached your daily limit of {count} questions. Please try again tomorrow.",
+      "ok": "OK"
+    },
+    "error": {
+      "generic": "Sorry, an error occurred. Please try again later.",
+      "noResponse": "No response received."
+    },
+    "sidebar": {
+      "newChat": "New Chat",
+      "recentChats": "Recent Chats",
+      "searchPlaceholder": "Search chats...",
+      "noRecentChats": "No recent chats",
+      "questionsRemaining": "Questions Remaining",
+      "dailyLimitReached": "You've reached your daily limit"
+    },
+    "emptyState": {
+      "startConversation": "Start a conversation",
+      "description": "Ask me anything and I'll help you out."
+    },
+    "input": {
+      "dailyLimitReached": "Daily limit reached",
+      "sendMessage": "Send message"
     }
   }
 }

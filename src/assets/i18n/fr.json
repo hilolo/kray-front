@@ -105,9 +105,40 @@
     }
   },
   "aiChat": {
+    "title": "Chat IA",
     "alert": {
       "title": "Avertissement sur les résultats de l'IA",
       "description": "Les réponses de l'IA peuvent contenir des erreurs. Vérifiez les informations importantes de manière indépendante."
+    },
+    "placeholder": {
+      "askAnything": "Posez-moi une question...",
+      "conversationComplete": "Cette conversation est terminée. Commencez un nouveau chat pour poser une autre question."
+    },
+    "newChat": "Nouveau Chat",
+    "dailyLimit": {
+      "title": "Limite quotidienne atteinte",
+      "description": "Vous avez atteint votre limite quotidienne de {count} questions. Veuillez réessayer demain.",
+      "ok": "OK"
+    },
+    "error": {
+      "generic": "Désolé, une erreur s'est produite. Veuillez réessayer plus tard.",
+      "noResponse": "Aucune réponse reçue."
+    },
+    "sidebar": {
+      "newChat": "Nouveau Chat",
+      "recentChats": "Chats récents",
+      "searchPlaceholder": "Rechercher des chats...",
+      "noRecentChats": "Aucun chat récent",
+      "questionsRemaining": "Questions restantes",
+      "dailyLimitReached": "Vous avez atteint votre limite quotidienne"
+    },
+    "emptyState": {
+      "startConversation": "Commencer une conversation",
+      "description": "Posez-moi une question et je vous aiderai."
+    },
+    "input": {
+      "dailyLimitReached": "Limite quotidienne atteinte",
+      "sendMessage": "Envoyer le message"
     }
   }
 }

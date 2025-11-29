@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, signal, inject, OnInit, computed } 
 import { ZardPageComponent } from '../page/page.component';
 import { ZardAiChatComponent, ChatMessage, RecentChat } from '@shared/components/ai-chat/ai-chat.component';
 import { ZardAlertComponent } from '@shared/components/alert/alert.component';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AiChatService } from '@shared/services/ai-chat.service';
 import { ZardAlertDialogService } from '@shared/components/alert-dialog/alert-dialog.service';
 import { catchError, finalize } from 'rxjs/operators';
@@ -26,6 +26,7 @@ export interface Conversation {
 export class AiChatComponent implements OnInit {
   private readonly aiChatService = inject(AiChatService);
   private readonly alertDialogService = inject(ZardAlertDialogService);
+  private readonly translateService = inject(TranslateService);
 
   // Store all conversations
   readonly conversations = signal<Map<string, Conversation>>(new Map());
@@ -51,6 +52,18 @@ export class AiChatComponent implements OnInit {
     if (!conversation) return false;
     // Check if there's at least one assistant message (answer)
     return conversation.messages.some(msg => msg.role === 'assistant');
+  });
+
+  // Computed: Get placeholder text based on conversation state
+  readonly placeholder = computed(() => {
+    const activeId = this.activeConversationId();
+    if (activeId === null) {
+      return this.translateService.instant('aiChat.placeholder.askAnything');
+    }
+    if (this.isActiveConversationComplete()) {
+      return this.translateService.instant('aiChat.placeholder.conversationComplete');
+    }
+    return this.translateService.instant('aiChat.placeholder.askAnything');
   });
 
   ngOnInit(): void {
@@ -133,6 +146,8 @@ export class AiChatComponent implements OnInit {
               });
               return merged;
             });
+            // Sort recent chats by timestamp descending (newest first)
+            recentChatsList.sort((a, b) => (b.timestamp?.getTime() || 0) - (a.timestamp?.getTime() || 0));
             this.recentChats.set(recentChatsList);
 
             // Don't automatically set active conversation on initial load
@@ -222,7 +237,7 @@ export class AiChatComponent implements OnInit {
             const errorMessage: ChatMessage = {
               id: `error-${Date.now()}`,
               role: 'assistant',
-              content: error?.message || error?.error?.message || 'Sorry, an error occurred. Please try again later.',
+              content: error?.message || error?.error?.message || this.translateService.instant('aiChat.error.generic'),
               timestamp: new Date(),
             };
             this.updateConversationMessages(activeId!, (msgs) => {
@@ -273,7 +288,7 @@ export class AiChatComponent implements OnInit {
           const aiMessage: ChatMessage = {
             id: `${response.id}-assistant`,
             role: 'assistant',
-            content: response.answer || 'No response received.',
+            content: response.answer || this.translateService.instant('aiChat.error.noResponse'),
             timestamp: new Date(response.createdOn),
           };
 
@@ -313,7 +328,7 @@ export class AiChatComponent implements OnInit {
     const newId = `new-${Date.now()}`;
     const newConversation: Conversation = {
       id: newId,
-      title: 'New Chat',
+      title: this.translateService.instant('aiChat.newChat'),
       messages: [],
       createdAt: new Date(),
     };
@@ -340,9 +355,9 @@ export class AiChatComponent implements OnInit {
 
   private showQuotaReachedModal(): void {
     this.alertDialogService.warning({
-      zTitle: 'Daily Limit Reached',
-      zDescription: `You've reached your daily limit of ${this.maxQuestionsPerDay()} questions. Please try again tomorrow.`,
-      zOkText: 'OK',
+      zTitle: this.translateService.instant('aiChat.dailyLimit.title'),
+      zDescription: this.translateService.instant('aiChat.dailyLimit.description', { count: this.maxQuestionsPerDay() }),
+      zOkText: this.translateService.instant('aiChat.dailyLimit.ok'),
       zCancelText: null,
     });
   }

@@ -1,4 +1,4 @@
-<z-page zTitle="AI Chat">
+<z-page [zTitle]="'aiChat.title' | translate">
   <div class="flex flex-col h-full min-h-0 w-full overflow-hidden">
     <z-alert
       zType="warning"
@@ -13,7 +13,7 @@
         [zMessages]="messages()"
         [zRecentChats]="recentChats()"
         [zLoading]="isLoading()"
-        [zPlaceholder]="activeConversationId() === null ? 'Ask me anything...' : (isActiveConversationComplete() ? 'This conversation is complete. Start a new chat to ask another question.' : 'Ask me anything...')"
+        [zPlaceholder]="placeholder()"
         [zRemainingQuestions]="remainingQuestions()"
         [zMaxQuestionsPerDay]="maxQuestionsPerDay()"
         [zDisabled]="activeConversationId() !== null && isActiveConversationComplete()"

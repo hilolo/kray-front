@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, ElementRef, input, output, signal, ViewChild, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, ElementRef, inject, input, output, signal, ViewChild, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import type { ClassValue } from 'clsx';
 
 import { mergeClasses } from '@shared/utils/merge-classes';
@@ -46,6 +47,7 @@ export interface RecentChat {
   imports: [
     CommonModule,
     FormsModule,
+    TranslateModule,
     ZardButtonComponent,
     ZardIconComponent,
     ZardInputDirective,
@@ -59,6 +61,8 @@ export interface RecentChat {
   },
 })
 export class ZardAiChatComponent {
+  private readonly translateService = inject(TranslateService);
+
   readonly zSize = input<ZardAiChatVariants['zSize']>('default');
   readonly zShowSidebar = input(true);
   readonly zMessages = input<ChatMessage[]>([]);
@@ -144,6 +148,17 @@ export class ZardAiChatComponent {
 
   protected readonly canAskQuestion = computed(() => {
     return this.zRemainingQuestions() > 0 && !this.zDisabled() && !this.zLoading();
+  });
+
+  // Computed: Get placeholder text for input
+  protected readonly inputPlaceholder = computed(() => {
+    if (this.zDisabled()) {
+      return this.zPlaceholder();
+    }
+    if (this.zRemainingQuestions() === 0) {
+      return this.translateService.instant('aiChat.input.dailyLimitReached');
+    }
+    return this.zPlaceholder();
   });
 
   scrollToBottom(): void {
