@@ -1,13 +1,13 @@
 <z-page zTitle="AI Chat">
-  <div class="flex flex-col gap-4 w-full">
+  <div class="flex flex-col gap-4 w-full h-full pb-8">
     <z-alert
       zType="warning"
       zAppearance="soft"
       [zTitle]="'aiChat.alert.title' | translate"
       [zDescription]="'aiChat.alert.description' | translate"
-      class="w-full"
+      class="w-full shrink-0"
     />
-    <div class="h-[calc(100vh-300px)] w-full">
+    <div class="flex-1 min-h-0 w-full">
       <z-ai-chat
         [zMessages]="messages()"
         [zRecentChats]="recentChats()"
@@ -19,7 +19,7 @@
         (chatSelected)="onChatSelected($event)"
         (newChatClicked)="onNewChat()"
         zSize="full"
-        class="w-full"
+        class="w-full h-full"
       />
     </div>
   </div>

@@ -107,7 +107,7 @@
   "aiChat": {
     "alert": {
       "title": "Avertissement sur les résultats de l'IA",
-      "description": "Veuillez être conscient que les réponses générées par ce système de chat IA peuvent contenir des inexactitudes, des erreurs ou des informations obsolètes. Les systèmes d'intelligence artificielle, bien que puissants, ne sont pas infaillibles et peuvent produire du contenu incorrect ou trompeur. L'IA peut halluciner des informations ou fournir des réponses qui semblent plausibles mais qui sont factuellement incorrectes. Il est fortement recommandé de vérifier toute information critique auprès de sources indépendantes ou d'une consultation professionnelle. Ne vous fiez pas uniquement aux réponses générées par l'IA pour des décisions importantes, des conseils médicaux, des questions juridiques ou la planification financière. Exercez toujours votre esprit critique et recoupez les informations provenant de plusieurs sources fiables."
+      "description": "Les réponses de l'IA peuvent contenir des erreurs. Vérifiez les informations importantes de manière indépendante."
     }
   }
 }
