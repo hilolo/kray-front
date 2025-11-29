@@ -10,3 +10,4 @@ export interface AiChatListRequest extends SearchOptions {
   searchQuery?: string;
 }
 
+

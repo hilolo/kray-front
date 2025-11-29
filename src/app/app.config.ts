@@ -19,20 +19,21 @@ export function HttpLoaderFactory(http: HttpClient) {
 // APP_INITIALIZER function to load translations before app starts
 export function initializeApp(translateService: TranslateService): () => Promise<any> {
   return () => {
-    // Get language from localStorage or default to browser language
+    // Get language from localStorage or default to French
     const storageKey = 'language';
     const savedLanguage = localStorage.getItem(storageKey);
-    let lang = 'en';
+    let lang = 'fr'; // Default to French
     
+    // Only use saved language if it's valid, otherwise use French
     if (savedLanguage && (savedLanguage === 'en' || savedLanguage === 'fr')) {
       lang = savedLanguage;
     } else {
-      const browserLang = navigator.language.split('-')[0].toLowerCase();
-      lang = browserLang === 'fr' ? 'fr' : 'en';
+      // If no saved language, save French as default
+      localStorage.setItem(storageKey, 'fr');
     }
     
     // Set default language and load translations
-    translateService.setDefaultLang('en');
+    translateService.setDefaultLang('fr');
     document.documentElement.setAttribute('lang', lang);
     
     // Return promise that resolves when translations are loaded
@@ -64,7 +65,7 @@ export const appConfig: ApplicationConfig = {
       ])
     ),
     ...TranslateModule.forRoot({
-      fallbackLang: 'en',
+      fallbackLang: 'fr',
       loader: {
         provide: TranslateLoader,
         useFactory: HttpLoaderFactory,

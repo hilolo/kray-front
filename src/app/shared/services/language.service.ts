@@ -28,9 +28,9 @@ export class LanguageService {
       this.currentLanguage.set(savedLanguage);
       this.applyLanguage(savedLanguage);
     } else {
-      // Default to browser language or 'en'
-      const browserLang = navigator.language.split('-')[0].toLowerCase();
-      const lang: Language = browserLang === 'fr' ? 'fr' : 'en';
+      // Default to French if no language is saved and save it
+      const lang: Language = 'fr';
+      localStorage.setItem(this.storageKey, lang);
       this.currentLanguage.set(lang);
       this.applyLanguage(lang);
     }
@@ -63,8 +63,8 @@ export class LanguageService {
     if (saved && (saved === 'en' || saved === 'fr')) {
       return saved;
     }
-    const browserLang = navigator.language.split('-')[0].toLowerCase();
-    return browserLang === 'fr' ? 'fr' : 'en';
+    // Default to French if no language is saved
+    return 'fr';
   }
 
   private applyLanguage(language: Language): void {

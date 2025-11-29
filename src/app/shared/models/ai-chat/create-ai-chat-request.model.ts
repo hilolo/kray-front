@@ -6,3 +6,4 @@ export interface CreateAiChatRequest {
   question: string;
 }
 
+
