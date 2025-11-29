@@ -38,8 +38,8 @@ export class LoginComponent {
   private readonly userService = inject(UserService);
   private readonly translateService = inject(TranslateService);
 
-  email = 'admin@admin.com';
-  password = 'admin';
+  email = '';
+  password = '';
   rememberMe = false;
   showPassword = signal(false);
   isLoading = signal(false);
