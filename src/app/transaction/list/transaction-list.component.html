@@ -321,7 +321,20 @@
 
         <!-- Amount Column Template -->
         <ng-template #amountCell let-row="row">
-          <span class="font-semibold">{{ formatCurrency(row.totalAmount) }}</span>
+          <div class="flex items-center gap-2">
+            <span class="font-semibold">{{ formatCurrency(row.totalAmount) }}</span>
+            @if (canGenerateReceipt(row)) {
+              <z-button
+                zType="ghost"
+                zSize="icon"
+                class="h-6 w-6 text-primary hover:text-primary/80"
+                [title]="'transaction.list.generateReceipt' | translate"
+                (click)="onGenerateReceipt(row)"
+              >
+                <z-icon zType="file-text" zSize="sm" />
+              </z-button>
+            }
+          </div>
         </ng-template>
 
         <!-- Status Column Template -->

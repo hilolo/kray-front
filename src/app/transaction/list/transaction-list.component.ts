@@ -776,6 +776,42 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
     return '';
   }
 
+  /**
+   * Check if a receipt can be generated for a transaction
+   * Receipts are only available for Paid Revenue transactions of type Loyer, Caution, or FraisAgence
+   */
+  canGenerateReceipt(transaction: Transaction): boolean {
+    const transactionType = transaction.type ?? transaction.category;
+    if (transaction.status !== TransactionStatus.Paid || transactionType !== TransactionType.Revenue) {
+      return false;
+    }
+    
+    return transaction.revenueType === RevenueType.Loyer ||
+           transaction.revenueType === RevenueType.Caution ||
+           transaction.revenueType === RevenueType.FraisAgence;
+  }
+
+  /**
+   * Get the appropriate receipt generation method based on revenue type
+   */
+  onGenerateReceipt(transaction: Transaction): void {
+    if (!this.canGenerateReceipt(transaction)) {
+      return;
+    }
+
+    switch (transaction.revenueType) {
+      case RevenueType.Loyer:
+        this.onGenerateRentReceipt(transaction);
+        break;
+      case RevenueType.Caution:
+        this.onGenerateDepositReceipt(transaction);
+        break;
+      case RevenueType.FraisAgence:
+        this.onGenerateFeesReceipt(transaction);
+        break;
+    }
+  }
+
   onClearFilters(): void {
     // Reset to default Revenue type
     this.selectedType.set(TransactionType.Revenue);
