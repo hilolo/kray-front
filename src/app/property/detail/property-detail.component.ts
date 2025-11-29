@@ -117,6 +117,7 @@ export class PropertyDetailComponent implements OnInit, OnDestroy {
   readonly revenueTypeCell = viewChild<TemplateRef<any>>('revenueTypeCell');
   readonly revenueAmountCell = viewChild<TemplateRef<any>>('revenueAmountCell');
   readonly revenueStatusCell = viewChild<TemplateRef<any>>('revenueStatusCell');
+  readonly revenueReceiptCell = viewChild<TemplateRef<any>>('revenueReceiptCell');
 
   readonly expenseDateCell = viewChild<TemplateRef<any>>('expenseDateCell');
   readonly expenseContactCell = viewChild<TemplateRef<any>>('expenseContactCell');
@@ -131,6 +132,7 @@ export class PropertyDetailComponent implements OnInit, OnDestroy {
     const typeCell = this.revenueTypeCell();
     const amountCell = this.revenueAmountCell();
     const statusCell = this.revenueStatusCell();
+    const receiptCell = this.revenueReceiptCell();
 
     return [
       {
@@ -159,6 +161,12 @@ export class PropertyDetailComponent implements OnInit, OnDestroy {
         key: 'status',
         label: this.translateService.instant('property.detail.columns.status'),
         cellTemplate: statusCell || undefined,
+      },
+      {
+        key: 'receipt',
+        label: '',
+        width: '50px',
+        cellTemplate: receiptCell || undefined,
       },
     ];
   });

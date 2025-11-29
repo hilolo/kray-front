@@ -328,6 +328,7 @@ export class ContactDetailComponent implements OnInit, OnDestroy {
   readonly revenueTypeCell = viewChild<TemplateRef<any>>('revenueTypeCell');
   readonly revenueAmountCell = viewChild<TemplateRef<any>>('revenueAmountCell');
   readonly revenueStatusCell = viewChild<TemplateRef<any>>('revenueStatusCell');
+  readonly revenueReceiptCell = viewChild<TemplateRef<any>>('revenueReceiptCell');
 
   readonly expenseDateCell = viewChild<TemplateRef<any>>('expenseDateCell');
   readonly expensePropertyCell = viewChild<TemplateRef<any>>('expensePropertyCell');
@@ -342,6 +343,7 @@ export class ContactDetailComponent implements OnInit, OnDestroy {
     const typeCell = this.revenueTypeCell();
     const amountCell = this.revenueAmountCell();
     const statusCell = this.revenueStatusCell();
+    const receiptCell = this.revenueReceiptCell();
 
     return [
       {
@@ -370,6 +372,12 @@ export class ContactDetailComponent implements OnInit, OnDestroy {
         key: 'status',
         label: this.translateService.instant('contact.detail.columns.status'),
         cellTemplate: statusCell || undefined,
+      },
+      {
+        key: 'receipt',
+        label: '',
+        width: '50px',
+        cellTemplate: receiptCell || undefined,
       },
     ];
   });
