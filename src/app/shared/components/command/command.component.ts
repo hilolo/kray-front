@@ -107,8 +107,9 @@ export class ZardCommandComponent implements ControlValueAccessor {
 
     return this.optionComponents().filter(option => {
       const label = option.zLabel().toLowerCase();
+      const subtitle = option.zSubtitle()?.toLowerCase() || '';
       const command = option.zCommand()?.toLowerCase() || '';
-      return label.includes(lowerSearchTerm) || command.includes(lowerSearchTerm);
+      return label.includes(lowerSearchTerm) || subtitle.includes(lowerSearchTerm) || command.includes(lowerSearchTerm);
     });
   });
 

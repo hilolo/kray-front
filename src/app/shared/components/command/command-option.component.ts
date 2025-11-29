@@ -30,7 +30,12 @@ import { ZardIcon } from '@shared/components/icon/icons';
         @if (zIcon()) {
           <div z-icon [zType]="zIcon()!" class="mr-2 shrink-0 flex items-center justify-center"></div>
         }
-        <span class="flex-1">{{ zLabel() }}</span>
+        <div class="flex-1 min-w-0">
+          <div class="truncate">{{ zLabel() }}</div>
+          @if (zSubtitle()) {
+            <div class="text-xs text-muted-foreground truncate">{{ zSubtitle() }}</div>
+          }
+        </div>
         @if (zShortcut()) {
           <span [class]="shortcutClasses()">{{ zShortcut() }}</span>
         }
@@ -44,6 +49,7 @@ export class ZardCommandOptionComponent {
 
   readonly zValue = input.required<unknown>();
   readonly zLabel = input.required<string>();
+  readonly zSubtitle = input<string>('');
   readonly zCommand = input<string>('');
   readonly zIcon = input<ZardIcon>();
   readonly zShortcut = input<string>('');
@@ -70,7 +76,17 @@ export class ZardCommandOptionComponent {
     // If no search term, show all options
     if (searchTerm === '') return true;
 
-    // Check if this option is in the filtered list
+    // Check if this is a search result (GUID/UUID format) - search results should always show
+    const value = this.zValue();
+    const isSearchResult = typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+    
+    if (isSearchResult) {
+      // Always show search results - they're already filtered by the backend
+      return true;
+    }
+
+    // For navigation options, check if they're in the filtered list
+    // The filteredOptions now also checks subtitle, so properties matching by address will be included
     return filteredOptions.includes(this);
   });
 
