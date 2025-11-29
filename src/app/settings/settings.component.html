@@ -1,17 +1,17 @@
-<z-page zTitle="Settings">
+<z-page [zTitle]="'settings.title' | translate">
   <div class="p-6">
     <div class="flex gap-4">
       <!-- Settings Navigation -->
       <div class="w-64 flex-shrink-0">
-        <h2 class="text-lg font-semibold mb-4">Settings</h2>
+        <h2 class="text-lg font-semibold mb-4">{{ 'settings.title' | translate }}</h2>
         <div class="space-y-0.5">
           <button type="button" (click)="activeSection.set('account')"
             [class]="activeSection() === 'account' ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'"
             class="w-full flex items-center gap-2 px-3 py-2 rounded-md transition-colors text-left">
             <z-icon zType="user" zSize="default" />
             <div class="flex-1 min-w-0">
-              <div class="text-sm font-medium truncate">Account</div>
-              <div class="text-xs opacity-80 line-clamp-2">Manage your public profile and private information</div>
+              <div class="text-sm font-medium truncate">{{ 'settings.navigation.account' | translate }}</div>
+              <div class="text-xs opacity-80 line-clamp-2">{{ 'settings.navigation.accountDescription' | translate }}</div>
             </div>
           </button>
 
@@ -20,9 +20,8 @@
             class="w-full flex items-center gap-2 px-3 py-2 rounded-md transition-colors text-left">
             <z-icon zType="lock" zSize="default" />
             <div class="flex-1 min-w-0">
-              <div class="text-sm font-medium truncate">Security</div>
-              <div class="text-xs opacity-80 line-clamp-2">Manage your password and 2-step verification preferences
-              </div>
+              <div class="text-sm font-medium truncate">{{ 'settings.navigation.security' | translate }}</div>
+              <div class="text-xs opacity-80 line-clamp-2">{{ 'settings.navigation.securityDescription' | translate }}</div>
             </div>
           </button>
 
@@ -31,8 +30,8 @@
             class="w-full flex items-center gap-2 px-3 py-2 rounded-md transition-colors text-left">
             <z-icon zType="users" zSize="default" />
             <div class="flex-1 min-w-0">
-              <div class="text-sm font-medium truncate">Team</div>
-              <div class="text-xs opacity-80 line-clamp-2">Manage your existing team and change roles/permissions</div>
+              <div class="text-sm font-medium truncate">{{ 'settings.navigation.team' | translate }}</div>
+              <div class="text-xs opacity-80 line-clamp-2">{{ 'settings.navigation.teamDescription' | translate }}</div>
             </div>
           </button>
 
@@ -41,8 +40,8 @@
             class="w-full flex items-center gap-2 px-3 py-2 rounded-md transition-colors text-left">
             <z-icon zType="settings" zSize="default" />
             <div class="flex-1 min-w-0">
-              <div class="text-sm font-medium truncate">Application</div>
-              <div class="text-xs opacity-80 line-clamp-2">Configure default settings for your application</div>
+              <div class="text-sm font-medium truncate">{{ 'settings.navigation.application' | translate }}</div>
+              <div class="text-xs opacity-80 line-clamp-2">{{ 'settings.navigation.applicationDescription' | translate }}</div>
             </div>
           </button>
         </div>
@@ -76,10 +75,10 @@
         @switch (activeSection()) {
         @case ('account') {
         <div class="space-y-8">
-          <h1 class="text-3xl font-bold">Account</h1>
+          <h1 class="text-3xl font-bold">{{ 'settings.account.title' | translate }}</h1>
 
           <!-- User Information -->
-          <z-card zTitle="User Information" zDescription="Manage your personal profile information">
+          <z-card [zTitle]="'settings.account.userInformation.title' | translate" [zDescription]="'settings.account.userInformation.description' | translate">
             <div class="flex gap-6">
               <!-- Profile Picture -->
               <div class="flex-shrink-0">
@@ -95,7 +94,7 @@
                   }
                   <button type="button" (click)="onImageClick()"
                     class="absolute -bottom-1 -right-1 bg-primary text-primary-foreground rounded-full p-2 hover:bg-primary/90 transition-colors"
-                    title="Change profile picture">
+                    [title]="'settings.account.userInformation.changeProfilePicture' | translate">
                     <z-icon zType="camera" zSize="sm" />
                   </button>
                   <input #fileInput type="file" accept="image/*" (change)="onFileSelected($event)" class="hidden" />
@@ -105,23 +104,23 @@
               <!-- Form Fields -->
               <div class="flex-1 space-y-4">
                 <z-form-field>
-                  <z-form-label zRequired>Full name</z-form-label>
+                  <z-form-label zRequired>{{ 'settings.account.userInformation.fullName' | translate }}</z-form-label>
                   <z-form-control [errorMessage]="fullNameError()">
                     <z-input-group [zPrefix]="userIconTemplate">
                       <input z-input type="text" [ngModel]="userInfo.fullName()"
                         (ngModelChange)="userInfo.fullName.set($event)" name="fullName"
-                        placeholder="Enter your full name" [zStatus]="fullNameHasError() ? 'error' : undefined"
+                        [placeholder]="'settings.account.userInformation.enterFullName' | translate" [zStatus]="fullNameHasError() ? 'error' : undefined"
                         class="w-full" />
                     </z-input-group>
                   </z-form-control>
                 </z-form-field>
 
                 <z-form-field>
-                  <z-form-label>Phone</z-form-label>
+                  <z-form-label>{{ 'settings.account.userInformation.phone' | translate }}</z-form-label>
                   <z-form-control>
                     <z-input-group [zPrefix]="phoneIconTemplate">
                       <input z-input type="tel" [ngModel]="userInfo.phone()"
-                        (ngModelChange)="userInfo.phone.set($event)" name="phone" placeholder="Enter your phone number"
+                        (ngModelChange)="userInfo.phone.set($event)" name="phone" [placeholder]="'settings.account.userInformation.enterPhoneNumber' | translate"
                         class="w-full" />
                     </z-input-group>
                   </z-form-control>
@@ -130,16 +129,16 @@
                 <!-- Action Buttons -->
                 <div class="flex gap-3 justify-end pt-2">
                   <z-button zType="outline" [disabled]="isSaving()"
-                    (click)="!isSaving() && onCancel()">Cancel</z-button>
+                    (click)="!isSaving() && onCancel()">{{ 'common.cancel' | translate }}</z-button>
                   <z-button [zType]="isSaving() || !isAccountFormValid() ? 'ghost' : 'default'" [disabled]="isSaving()"
                     (click)="!isSaving() && onSaveUserInfo()">
                     @if (isSaving()) {
                     <span class="flex items-center gap-2">
                       <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
-                      Saving...
+                      {{ 'settings.account.userInformation.saving' | translate }}
                     </span>
                     } @else {
-                    Save User Info
+                    {{ 'settings.account.userInformation.saveUserInfo' | translate }}
                     }
                   </z-button>
                 </div>
@@ -148,8 +147,8 @@
           </z-card>
 
           <!-- Company Information -->
-          <z-card zTitle="Company Information"
-            zDescription="Company details are managed by administrators and cannot be modified here">
+          <z-card [zTitle]="'settings.account.companyInformation.title' | translate"
+            [zDescription]="'settings.account.companyInformation.description' | translate">
             <div class="flex gap-6">
               <!-- Company Logo -->
               <div class="flex-shrink-0">
@@ -157,7 +156,7 @@
                   <div class="w-40 h-40 border border-border rounded-lg overflow-hidden bg-muted flex items-center justify-center">
                     <img 
                       [src]="getCompanyImageUrl()" 
-                      [alt]="companyInfo.name || 'Company logo'"
+                      [alt]="companyInfo.name || ('settings.account.companyInformation.companyLogo' | translate)"
                       class="w-full h-full object-contain"
                     />
                   </div>
@@ -172,7 +171,7 @@
               <div class="flex-1 min-w-0">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <z-form-field>
-                    <z-form-label>Company Name</z-form-label>
+                    <z-form-label>{{ 'settings.account.companyInformation.companyName' | translate }}</z-form-label>
                     <z-form-control>
                       <z-input-group [zPrefix]="buildingIconTemplate">
                         <input z-input type="text" [value]="companyInfo.name" disabled class="w-full truncate" />
@@ -181,7 +180,7 @@
                   </z-form-field>
 
                   <z-form-field>
-                    <z-form-label>Address</z-form-label>
+                    <z-form-label>{{ 'settings.account.companyInformation.address' | translate }}</z-form-label>
                     <z-form-control>
                       <z-input-group [zPrefix]="mapPinIconTemplate">
                         <input z-input type="text" [value]="companyInfo.address" disabled class="w-full truncate" />
@@ -190,7 +189,7 @@
                   </z-form-field>
 
                   <z-form-field>
-                    <z-form-label>City</z-form-label>
+                    <z-form-label>{{ 'settings.account.companyInformation.city' | translate }}</z-form-label>
                     <z-form-control>
                       <z-input-group [zPrefix]="building2IconTemplate">
                         <input z-input type="text" [value]="companyInfo.city" disabled class="w-full truncate" />
@@ -199,7 +198,7 @@
                   </z-form-field>
 
                   <z-form-field>
-                    <z-form-label>Phone</z-form-label>
+                    <z-form-label>{{ 'settings.account.companyInformation.phone' | translate }}</z-form-label>
                     <z-form-control>
                       <z-input-group [zPrefix]="phoneIconTemplate">
                         <input z-input type="tel" [value]="companyInfo.phone" disabled class="w-full truncate" />
@@ -208,7 +207,7 @@
                   </z-form-field>
 
                   <z-form-field>
-                    <z-form-label>Website</z-form-label>
+                    <z-form-label>{{ 'settings.account.companyInformation.website' | translate }}</z-form-label>
                     <z-form-control>
                       <z-input-group [zPrefix]="globeIconTemplate">
                         <input z-input type="url" [value]="companyInfo.website" disabled class="w-full truncate" />
@@ -217,14 +216,14 @@
                   </z-form-field>
 
                   <z-form-field>
-                    <z-form-label>RC (Registration Number)</z-form-label>
+                    <z-form-label>{{ 'settings.account.companyInformation.rc' | translate }}</z-form-label>
                     <z-form-control>
                       <input z-input type="text" [value]="companyInfo.rc" disabled class="w-full truncate" />
                     </z-form-control>
                   </z-form-field>
 
                   <z-form-field>
-                    <z-form-label>ICE (Tax ID)</z-form-label>
+                    <z-form-label>{{ 'settings.account.companyInformation.ice' | translate }}</z-form-label>
                     <z-form-control>
                       <input z-input type="text" [value]="companyInfo.ice" disabled class="w-full truncate" />
                     </z-form-control>
@@ -238,24 +237,24 @@
 
         @case ('security') {
         <div class="space-y-8">
-          <h1 class="text-3xl font-bold">Security</h1>
+          <h1 class="text-3xl font-bold">{{ 'settings.security.title' | translate }}</h1>
 
-          <z-card zTitle="Change your password" zDescription="You can only change your password twice within 24 hours!">
+          <z-card [zTitle]="'settings.security.changePassword.title' | translate" [zDescription]="'settings.security.changePassword.description' | translate">
             <div class="space-y-4">
               <z-form-field>
-                <z-form-label zRequired>Current password</z-form-label>
+                <z-form-label zRequired>{{ 'settings.security.changePassword.currentPassword' | translate }}</z-form-label>
                 <z-form-control [errorMessage]="currentPasswordError()">
                   <div class="relative">
                     <z-input-group [zPrefix]="lockIconTemplate">
                       <input z-input [type]="showCurrentPassword() ? 'text' : 'password'"
                         [ngModel]="passwordForm.currentPassword()"
                         (ngModelChange)="passwordForm.currentPassword.set($event)" name="currentPassword"
-                        placeholder="Enter your current password"
+                        [placeholder]="'settings.security.changePassword.enterCurrentPassword' | translate"
                         [zStatus]="currentPasswordHasError() ? 'error' : undefined" class="w-full pr-10" />
                     </z-input-group>
                     <button type="button" (click)="toggleCurrentPassword()"
                       class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                      [attr.aria-label]="showCurrentPassword() ? 'Hide password' : 'Show password'">
+                      [attr.aria-label]="showCurrentPassword() ? ('settings.security.changePassword.hidePassword' | translate) : ('settings.security.changePassword.showPassword' | translate)">
                       @if (showCurrentPassword()) {
                       <z-icon zType="eye-off" zSize="sm" />
                       } @else {
@@ -267,18 +266,18 @@
               </z-form-field>
 
               <z-form-field>
-                <z-form-label zRequired>New password</z-form-label>
+                <z-form-label zRequired>{{ 'settings.security.changePassword.newPassword' | translate }}</z-form-label>
                 <z-form-control [errorMessage]="newPasswordError()">
                   <div class="relative">
                     <z-input-group [zPrefix]="lockIconTemplate">
                       <input z-input [type]="showNewPassword() ? 'text' : 'password'"
                         [ngModel]="passwordForm.newPassword()" (ngModelChange)="passwordForm.newPassword.set($event)"
-                        name="newPassword" placeholder="Enter your new password"
+                        name="newPassword" [placeholder]="'settings.security.changePassword.enterNewPassword' | translate"
                         [zStatus]="newPasswordHasError() ? 'error' : undefined" class="w-full pr-10" />
                     </z-input-group>
                     <button type="button" (click)="toggleNewPassword()"
                       class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                      [attr.aria-label]="showNewPassword() ? 'Hide password' : 'Show password'">
+                      [attr.aria-label]="showNewPassword() ? ('settings.security.changePassword.hidePassword' | translate) : ('settings.security.changePassword.showPassword' | translate)">
                       @if (showNewPassword()) {
                       <z-icon zType="eye-off" zSize="sm" />
                       } @else {
@@ -290,19 +289,19 @@
               </z-form-field>
 
               <z-form-field>
-                <z-form-label zRequired>Confirm password</z-form-label>
+                <z-form-label zRequired>{{ 'settings.security.changePassword.confirmPassword' | translate }}</z-form-label>
                 <z-form-control [errorMessage]="confirmPasswordError()">
                   <div class="relative">
                     <z-input-group [zPrefix]="lockIconTemplate">
                       <input z-input [type]="showConfirmPassword() ? 'text' : 'password'"
                         [ngModel]="passwordForm.confirmPassword()"
                         (ngModelChange)="passwordForm.confirmPassword.set($event)" name="confirmPassword"
-                        placeholder="Confirm your new password"
+                        [placeholder]="'settings.security.changePassword.confirmNewPassword' | translate"
                         [zStatus]="confirmPasswordHasError() ? 'error' : undefined" class="w-full pr-10" />
                     </z-input-group>
                     <button type="button" (click)="toggleConfirmPassword()"
                       class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                      [attr.aria-label]="showConfirmPassword() ? 'Hide password' : 'Show password'">
+                      [attr.aria-label]="showConfirmPassword() ? ('settings.security.changePassword.hidePassword' | translate) : ('settings.security.changePassword.showPassword' | translate)">
                       @if (showConfirmPassword()) {
                       <z-icon zType="eye-off" zSize="sm" />
                       } @else {
@@ -319,10 +318,10 @@
                   @if (isUpdatingPassword()) {
                   <span class="flex items-center gap-2">
                     <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
-                    Updating...
+                    {{ 'settings.security.changePassword.updating' | translate }}
                   </span>
                   } @else {
-                  Save Password
+                  {{ 'settings.security.changePassword.savePassword' | translate }}
                   }
                 </z-button>
               </div>
@@ -334,21 +333,21 @@
         @case ('team') {
         <div class="space-y-8">
           <div>
-            <h1 class="text-3xl font-bold">Team</h1>
-            <h2 class="text-xl font-semibold mt-2">Team Members</h2>
-            <p class="text-muted-foreground mt-1">Manage your team members and their permissions</p>
+            <h1 class="text-3xl font-bold">{{ 'settings.team.title' | translate }}</h1>
+            <h2 class="text-xl font-semibold mt-2">{{ 'settings.team.teamMembers' | translate }}</h2>
+            <p class="text-muted-foreground mt-1">{{ 'settings.team.manageTeamMembers' | translate }}</p>
           </div>
 
           <!-- Invite Team Member -->
-          <z-card zTitle="Invite Team Member" zDescription="Invite a new member to join your team (Max 3 invitations)">
+          <z-card [zTitle]="'settings.team.inviteTeamMember.title' | translate" [zDescription]="'settings.team.inviteTeamMember.description' | translate">
             <div class="flex items-end gap-4">
               <div class="flex-1">
                 <z-form-field>
-                  <z-form-label zRequired>Email Address</z-form-label>
+                  <z-form-label zRequired>{{ 'settings.team.inviteTeamMember.emailAddress' | translate }}</z-form-label>
                   <z-form-control [errorMessage]="invitationEmailError()">
                     <z-input-group [zPrefix]="userIconTemplate">
                       <input z-input type="email" [ngModel]="invitationForm.email()"
-                        (ngModelChange)="invitationForm.email.set($event)" placeholder="mail@company.com"
+                        (ngModelChange)="invitationForm.email.set($event)" [placeholder]="'settings.team.inviteTeamMember.mailPlaceholder' | translate"
                         [zStatus]="invitationEmailHasError() ? 'error' : undefined" class="w-full" />
                     </z-input-group>
                   </z-form-control>
@@ -356,12 +355,12 @@
               </div>
               <div class="w-48">
                 <z-form-field>
-                  <z-form-label zRequired>Role</z-form-label>
+                  <z-form-label zRequired>{{ 'settings.team.inviteTeamMember.role' | translate }}</z-form-label>
                   <z-form-control>
                     <z-select [zValue]="invitationForm.role()" [zLabel]="invitationForm.role()"
                       (zSelectionChange)="invitationForm.role.set($event)" class="w-full">
-                      <z-select-item zValue="User">User</z-select-item>
-                      <z-select-item zValue="Admin">Admin</z-select-item>
+                      <z-select-item zValue="User">{{ 'settings.team.inviteTeamMember.user' | translate }}</z-select-item>
+                      <z-select-item zValue="Admin">{{ 'settings.team.inviteTeamMember.admin' | translate }}</z-select-item>
                     </z-select>
                   </z-form-control>
                 </z-form-field>
@@ -372,12 +371,12 @@
                   @if (isInviting()) {
                   <span class="flex items-center gap-2">
                     <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
-                    Sending...
+                    {{ 'settings.team.inviteTeamMember.sending' | translate }}
                   </span>
                   } @else {
                   <span class="flex items-center gap-2">
                     <z-icon zType="mail" zSize="sm" />
-                    Invite
+                    {{ 'settings.team.inviteTeamMember.invite' | translate }}
                   </span>
                   }
                 </z-button>
@@ -387,11 +386,11 @@
 
           @if (isLoadingTeamMembers()) {
           <div class="flex items-center justify-center p-8">
-            <div class="text-muted-foreground">Loading team members...</div>
+            <div class="text-muted-foreground">{{ 'settings.team.loadingTeamMembers' | translate }}</div>
           </div>
           } @else if (teamMembers().length === 0) {
           <div class="flex items-center justify-center p-8">
-            <div class="text-muted-foreground">No team members found</div>
+            <div class="text-muted-foreground">{{ 'settings.team.noTeamMembersFound' | translate }}</div>
           </div>
           } @else {
           <div class="space-y-4">
@@ -404,7 +403,7 @@
                     <z-avatar zSize="lg" zType="default"
                       [zImage]="member.avatar ? { url: member.avatar, fallback: (member.name || member.email).charAt(0).toUpperCase() } : { fallback: (member.name || member.email).charAt(0).toUpperCase() }" />
                     <div>
-                      <div class="font-semibold">{{ member.name || 'No name' }}</div>
+                      <div class="font-semibold">{{ member.name || ('settings.team.noName' | translate) }}</div>
                       <div class="text-sm text-muted-foreground">{{ member.email }}</div>
                       @if (member.phone) {
                       <div class="flex items-center gap-2 mt-1">
@@ -413,8 +412,7 @@
                       </div>
                       }
                       @if (member.status === 'Pending') {
-                      <z-badge zType="outline" class="mt-1 text-yellow-600 border-yellow-600 bg-yellow-50">Pending
-                        Invitation</z-badge>
+                      <z-badge zType="outline" class="mt-1 text-yellow-600 border-yellow-600 bg-yellow-50">{{ 'settings.team.pendingInvitation' | translate }}</z-badge>
                       }
                     </div>
                   </div>
@@ -431,22 +429,22 @@
                           </svg>
                         </div>
                       </div>
-                      <span class="text-sm font-medium">{{ member.role || 'No role' }}</span>
+                      <span class="text-sm font-medium">{{ member.role || ('settings.team.noRole' | translate) }}</span>
                     </div>
                     @if (!isCurrentUser(member)) {
                     <div class="flex items-center gap-2">
                       <z-button zType="outline" zSize="sm" (click)="togglePermissions(member)">
                         @if (editingUserId() === member.id) {
                         <z-icon zType="x" zSize="sm" />
-                        Close
+                        {{ 'settings.team.close' | translate }}
                         } @else {
                         <z-icon zType="pencil" zSize="sm" />
-                        Modify
+                        {{ 'settings.team.modify' | translate }}
                         }
                       </z-button>
                       <z-button zType="outline" zSize="sm" (click)="deleteTeamMember(member)" class="text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/50">
                         <z-icon zType="x" zSize="sm" />
-                        Delete
+                        {{ 'common.delete' | translate }}
                       </z-button>
                     </div>
                     }
@@ -458,13 +456,13 @@
                 <div class="border-t pt-4 space-y-4">
                   <!-- User Name and Email Display -->
                   <div class="space-y-1">
-                    <div class="text-sm font-semibold">User: {{ member.name || 'No name' }}</div>
-                    <div class="text-sm text-muted-foreground">Email: {{ member.email }}</div>
+                    <div class="text-sm font-semibold">{{ 'settings.team.user' | translate }} {{ member.name || ('settings.team.noName' | translate) }}</div>
+                    <div class="text-sm text-muted-foreground">{{ 'settings.team.email' | translate }} {{ member.email }}</div>
                   </div>
 
                   @if (isUserPermissionsLoading(member.id)) {
                   <div class="flex items-center justify-center p-8">
-                    <div class="text-muted-foreground">Loading permissions...</div>
+                    <div class="text-muted-foreground">{{ 'settings.team.loadingPermissions' | translate }}</div>
                   </div>
                   } @else if (getUserPermissions(member.id)) {
                   <div class="space-y-4">
@@ -475,12 +473,12 @@
                       <div class="w-8 h-8 rounded bg-primary flex items-center justify-center flex-shrink-0">
                         <z-icon zType="check" zSize="sm" class="text-primary-foreground" />
                       </div>
-                      <span class="font-medium">Select All Permissions</span>
+                      <span class="font-medium">{{ 'settings.team.selectAllPermissions' | translate }}</span>
                     </div>
 
                     <!-- Permissions List -->
                     <div class="space-y-1">
-                      <div class="text-sm font-semibold mb-3">Permissions:</div>
+                      <div class="text-sm font-semibold mb-3">{{ 'settings.team.permissions' | translate }}</div>
                       <div class="border rounded-lg divide-y">
                         @for (module of modules; track module.key) {
                         <div class="flex items-center gap-4 p-3 hover:bg-accent/50 transition-colors">
@@ -494,22 +492,22 @@
                           <!-- Permissions Checkboxes (Horizontal) -->
                           <div class="flex items-center gap-6 flex-1">
                             <div class="flex items-center gap-2">
-                              <span class="text-xs text-muted-foreground min-w-[40px]">View</span>
+                              <span class="text-xs text-muted-foreground min-w-[40px]">{{ 'settings.team.view' | translate }}</span>
                               <z-checkbox [ngModel]="getPermission(member.id, module.key, 'view')"
                                 (ngModelChange)="updatePermission(member.id, module.key, 'view', $event)" />
                             </div>
                             <div class="flex items-center gap-2">
-                              <span class="text-xs text-muted-foreground min-w-[40px]">Edit</span>
+                              <span class="text-xs text-muted-foreground min-w-[40px]">{{ 'settings.team.edit' | translate }}</span>
                               <z-checkbox [ngModel]="getPermission(member.id, module.key, 'edit')"
                                 (ngModelChange)="updatePermission(member.id, module.key, 'edit', $event)" />
                             </div>
                             <div class="flex items-center gap-2">
-                              <span class="text-xs text-muted-foreground min-w-[50px]">Delete</span>
+                              <span class="text-xs text-muted-foreground min-w-[50px]">{{ 'settings.team.delete' | translate }}</span>
                               <z-checkbox zType="destructive" [ngModel]="getPermission(member.id, module.key, 'delete')"
                                 (ngModelChange)="updatePermission(member.id, module.key, 'delete', $event)" />
                             </div>
                             <div class="flex items-center gap-2 ml-auto">
-                              <span class="text-xs font-medium min-w-[30px]">All</span>
+                              <span class="text-xs font-medium min-w-[30px]">{{ 'settings.team.all' | translate }}</span>
                               <z-checkbox [ngModel]="getAllPermission(member.id, module.key)"
                                 (ngModelChange)="updateAllPermission(member.id, module.key, $event)" />
                             </div>
@@ -527,10 +525,10 @@
                         @if (isUserPermissionsSaving(member.id)) {
                         <span class="flex items-center gap-2">
                           <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
-                          Saving...
+                          {{ 'settings.team.saving' | translate }}
                         </span>
                         } @else {
-                        Save Permissions
+                        {{ 'settings.team.savePermissions' | translate }}
                         }
                       </z-button>
                     </div>
@@ -548,18 +546,18 @@
 
         @case ('application') {
         <div class="space-y-8">
-          <h1 class="text-3xl font-bold">Application</h1>
+          <h1 class="text-3xl font-bold">{{ 'settings.application.title' | translate }}</h1>
 
           <!-- Settings Accordion -->
           <div class="space-y-4">
             <!-- Layout Settings -->
             <div class="bg-card border border-border rounded-lg shadow-sm overflow-hidden">
               <z-accordion zType="single" class="border-0">
-                <z-accordion-item zTitle="Layout Settings" zValue="layout-settings"
+                <z-accordion-item [zTitle]="'settings.application.layoutSettings.title' | translate" zValue="layout-settings"
                   class="!px-6 !py-5 border-b-0 !text-lg">
                   <div class="mb-6">
-                    <h3 class="text-sm font-medium mb-2">Preset</h3>
-                    <p class="text-sm text-muted-foreground mb-4">Choose a color theme for your dashboard</p>
+                    <h3 class="text-sm font-medium mb-2">{{ 'settings.application.layoutSettings.preset' | translate }}</h3>
+                    <p class="text-sm text-muted-foreground mb-4">{{ 'settings.application.layoutSettings.chooseColorTheme' | translate }}</p>
                     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                       @for (preset of themePresets; track preset.value) {
                       <button type="button" (click)="onThemeChange(preset.value)" [class]="currentTheme() === preset.value 
@@ -598,23 +596,22 @@
             <!-- Property Settings -->
             <div class="bg-card border border-border rounded-lg shadow-sm overflow-hidden">
               <z-accordion zType="single" class="border-0">
-                <z-accordion-item zTitle="Property" zValue="property" class="!px-6 !py-5 border-b-0 !text-lg">
+                <z-accordion-item [zTitle]="'settings.application.property.title' | translate" zValue="property" class="!px-6 !py-5 border-b-0 !text-lg">
                   @if (isLoadingPropertySettings()) {
                   <div class="flex items-center justify-center p-8">
-                    <div class="text-muted-foreground">Loading property settings...</div>
+                    <div class="text-muted-foreground">{{ 'settings.application.property.loadingPropertySettings' | translate }}</div>
                   </div>
                   } @else {
                   <div class="space-y-8">
                     <!-- Default City -->
                     <div>
-                      <h3 class="text-xl font-semibold mb-2">Ville par Défaut</h3>
-                      <p class="text-sm text-muted-foreground mb-4">Définir la ville par défaut pour les nouvelles
-                        propriétés</p>
+                      <h3 class="text-xl font-semibold mb-2">{{ 'settings.application.property.defaultCity.title' | translate }}</h3>
+                      <p class="text-sm text-muted-foreground mb-4">{{ 'settings.application.property.defaultCity.description' | translate }}</p>
                       <z-form-field>
-                        <z-form-label zRequired>Ville par Défaut</z-form-label>
+                        <z-form-label zRequired>{{ 'settings.application.property.defaultCity.label' | translate }}</z-form-label>
                         <z-form-control>
                           <z-select [zValue]="propertySettings.defaultCity()"
-                            [zLabel]="propertySettings.defaultCity() || 'Select a city'" zPlaceholder="Select a city"
+                            [zLabel]="propertySettings.defaultCity() || ('settings.application.property.defaultCity.selectCity' | translate)" [zPlaceholder]="'settings.application.property.defaultCity.selectCity' | translate"
                             (zSelectionChange)="propertySettings.defaultCity.set($event)" class="w-full">
                             <z-select-item zValue="Tanger">Tanger</z-select-item>
                             <z-select-item zValue="Casablanca">Casablanca</z-select-item>
@@ -628,9 +625,8 @@
 
                     <!-- Default Categories -->
                     <div>
-                      <h3 class="text-xl font-semibold mb-2">Catégories par Défaut</h3>
-                      <p class="text-sm text-muted-foreground mb-4">Gérer les catégories par défaut avec leur clé et
-                        référence</p>
+                      <h3 class="text-xl font-semibold mb-2">{{ 'settings.application.property.defaultCategories.title' | translate }}</h3>
+                      <p class="text-sm text-muted-foreground mb-4">{{ 'settings.application.property.defaultCategories.description' | translate }}</p>
                       <div class="grid grid-cols-3 gap-3 mb-4">
                         @for (category of propertySettings.categories(); track category.key) {
                         <div class="p-3 border rounded-lg bg-card">
@@ -648,14 +644,14 @@
 
                     <!-- Property Types -->
                     <div>
-                      <h3 class="text-xl font-semibold mb-2">Types de Propriété</h3>
-                      <p class="text-sm text-muted-foreground mb-4">Gérer les types de propriété disponibles</p>
+                      <h3 class="text-xl font-semibold mb-2">{{ 'settings.application.property.propertyTypes.title' | translate }}</h3>
+                      <p class="text-sm text-muted-foreground mb-4">{{ 'settings.application.property.propertyTypes.description' | translate }}</p>
                       <div class="flex flex-wrap gap-2 mb-4">
                         @for (type of propertySettings.propertyTypes(); track type) {
                         <z-badge zType="outline" class="flex items-center gap-1.5 px-3 py-1">
                           <span>{{ type }}</span>
                           <button type="button" (click)="removePropertyType(type)"
-                            class="hover:text-destructive transition-colors" aria-label="Remove property type">
+                            class="hover:text-destructive transition-colors" [attr.aria-label]="'settings.application.property.propertyTypes.removePropertyType' | translate">
                             <z-icon zType="x" zSize="sm" />
                           </button>
                         </z-badge>
@@ -665,7 +661,7 @@
                           <input z-input type="text" [ngModel]="newPropertyType()"
                             (ngModelChange)="newPropertyType.set($event)" (keyup.enter)="addPropertyType()"
                             (keyup.escape)="showAddPropertyTypeInput.set(false); newPropertyType.set('')"
-                            placeholder="Enter property type" class="w-48" autofocus />
+                            [placeholder]="'settings.application.property.propertyTypes.enterPropertyType' | translate" class="w-48" autofocus />
                           <z-button zType="default" zSize="sm" (click)="addPropertyType()">
                             <z-icon zType="check" zSize="sm" />
                           </z-button>
@@ -678,7 +674,7 @@
                         <z-button zType="outline" zSize="sm" (click)="showAddPropertyTypeInput.set(true)"
                           class="border-dashed border-primary/50 text-primary hover:bg-primary/5">
                           <z-icon zType="plus" zSize="sm" />
-                          Ajouter un Type de Propriété
+                          {{ 'settings.application.property.propertyTypes.addPropertyType' | translate }}
                         </z-button>
                         }
                       </div>
@@ -686,15 +682,14 @@
 
                     <!-- Property Characteristics (Features) -->
                     <div>
-                      <h3 class="text-xl font-semibold mb-2">Caractéristiques de Propriété</h3>
-                      <p class="text-sm text-muted-foreground mb-4">Gérer les caractéristiques de propriété disponibles
-                      </p>
+                      <h3 class="text-xl font-semibold mb-2">{{ 'settings.application.property.features.title' | translate }}</h3>
+                      <p class="text-sm text-muted-foreground mb-4">{{ 'settings.application.property.features.description' | translate }}</p>
                       <div class="flex flex-wrap gap-2 mb-4">
                         @for (feature of propertySettings.features(); track feature) {
                         <z-badge zType="outline" class="flex items-center gap-1.5 px-3 py-1">
                           <span>{{ feature }}</span>
                           <button type="button" (click)="removeFeature(feature)"
-                            class="hover:text-destructive transition-colors" aria-label="Remove feature">
+                            class="hover:text-destructive transition-colors" [attr.aria-label]="'settings.application.property.features.removeFeature' | translate">
                             <z-icon zType="x" zSize="sm" />
                           </button>
                         </z-badge>
@@ -704,7 +699,7 @@
                           <input z-input type="text" [ngModel]="newFeature()" (ngModelChange)="newFeature.set($event)"
                             (keyup.enter)="addFeature()"
                             (keyup.escape)="showAddFeatureInput.set(false); newFeature.set('')"
-                            placeholder="Enter feature" class="w-48" autofocus />
+                            [placeholder]="'settings.application.property.features.enterFeature' | translate" class="w-48" autofocus />
                           <z-button zType="default" zSize="sm" (click)="addFeature()">
                             <z-icon zType="check" zSize="sm" />
                           </z-button>
@@ -717,7 +712,7 @@
                         <z-button zType="outline" zSize="sm" (click)="showAddFeatureInput.set(true)"
                           class="border-dashed border-primary/50 text-primary hover:bg-primary/5">
                           <z-icon zType="plus" zSize="sm" />
-                          Ajouter une Caractéristique
+                          {{ 'settings.application.property.features.addFeature' | translate }}
                         </z-button>
                         }
                       </div>
@@ -725,14 +720,14 @@
 
                     <!-- Property Amenities -->
                     <div>
-                      <h3 class="text-xl font-semibold mb-2">Équipements de Propriété</h3>
-                      <p class="text-sm text-muted-foreground mb-4">Gérer les équipements de propriété disponibles</p>
+                      <h3 class="text-xl font-semibold mb-2">{{ 'settings.application.property.amenities.title' | translate }}</h3>
+                      <p class="text-sm text-muted-foreground mb-4">{{ 'settings.application.property.amenities.description' | translate }}</p>
                       <div class="flex flex-wrap gap-2 mb-4">
                         @for (amenity of propertySettings.amenities(); track amenity) {
                         <z-badge zType="outline" class="flex items-center gap-1.5 px-3 py-1">
                           <span>{{ amenity }}</span>
                           <button type="button" (click)="removeAmenity(amenity)"
-                            class="hover:text-destructive transition-colors" aria-label="Remove amenity">
+                            class="hover:text-destructive transition-colors" [attr.aria-label]="'settings.application.property.amenities.removeAmenity' | translate">
                             <z-icon zType="x" zSize="sm" />
                           </button>
                         </z-badge>
@@ -742,7 +737,7 @@
                           <input z-input type="text" [ngModel]="newAmenity()" (ngModelChange)="newAmenity.set($event)"
                             (keyup.enter)="addAmenity()"
                             (keyup.escape)="showAddAmenityInput.set(false); newAmenity.set('')"
-                            placeholder="Enter amenity" class="w-48" autofocus />
+                            [placeholder]="'settings.application.property.amenities.enterAmenity' | translate" class="w-48" autofocus />
                           <z-button zType="default" zSize="sm" (click)="addAmenity()">
                             <z-icon zType="check" zSize="sm" />
                           </z-button>
@@ -755,7 +750,7 @@
                         <z-button zType="outline" zSize="sm" (click)="showAddAmenityInput.set(true)"
                           class="border-dashed border-primary/50 text-primary hover:bg-primary/5">
                           <z-icon zType="plus" zSize="sm" />
-                          Ajouter un Équipement
+                          {{ 'settings.application.property.amenities.addAmenity' | translate }}
                         </z-button>
                         }
                       </div>
@@ -769,10 +764,10 @@
                         @if (isSavingPropertySettings()) {
                         <span class="flex items-center gap-2">
                           <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
-                          Saving...
+                          {{ 'settings.application.property.saving' | translate }}
                         </span>
                         } @else {
-                        Save Property Settings
+                        {{ 'settings.application.property.savePropertySettings' | translate }}
                         }
                       </z-button>
                     </div>

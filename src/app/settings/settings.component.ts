@@ -27,6 +27,7 @@ import { ZardBadgeComponent } from '@shared/components/badge/badge.component';
 import { ZardCheckboxComponent } from '@shared/components/checkbox/checkbox.component';
 import type { UserPermissions } from '@shared/models/user/user-permissions.model';
 import { MODULES } from '@shared/constants/modules.constant';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 type SettingsSection = 'account' | 'security' | 'team' | 'application';
 
@@ -51,6 +52,7 @@ type SettingsSection = 'account' | 'security' | 'team' | 'application';
     ZardAccordionItemComponent,
     ZardBadgeComponent,
     ZardCheckboxComponent,
+    TranslateModule,
   ],
   templateUrl: './settings.component.html',
 })
@@ -62,6 +64,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
   private readonly toastService = inject(ToastService);
   private readonly themeService = inject(ThemeService);
   private readonly settingsService = inject(SettingsService);
+  private readonly translateService = inject(TranslateService);
   private readonly destroy$ = new Subject<void>();
 
   activeSection = signal<SettingsSection>('account');
@@ -105,7 +108,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     if (!this.formSubmitted()) return '';
     const fullName = this.userInfo.fullName();
     if (!fullName || fullName.trim() === '') {
-      return 'Full name is required';
+      return this.translateService.instant('settings.account.userInformation.fullNameRequired');
     }
     return '';
   });
@@ -185,11 +188,11 @@ export class SettingsComponent implements OnInit, OnDestroy {
     if (!this.invitationFormSubmitted()) return '';
     const email = this.invitationForm.email();
     if (!email || email.trim() === '') {
-      return 'Email is required';
+      return this.translateService.instant('settings.team.inviteTeamMember.emailRequired');
     }
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(email)) {
-      return 'Please enter a valid email address';
+      return this.translateService.instant('settings.team.inviteTeamMember.invalidEmail');
     }
     return '';
   });
@@ -344,7 +347,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
         error: (error) => {
           console.error('Error loading team members:', error);
           this.isLoadingTeamMembers.set(false);
-          this.toastService.error('Failed to load team members');
+          this.toastService.error(this.translateService.instant('settings.team.failedToLoadTeamMembers'));
         }
       });
   }
@@ -354,15 +357,15 @@ export class SettingsComponent implements OnInit, OnDestroy {
    */
   deleteTeamMember(member: TeamMember): void {
     if (this.isCurrentUser(member)) {
-      this.toastService.error('You cannot delete your own account');
+      this.toastService.error(this.translateService.instant('settings.team.cannotDeleteOwnAccount'));
       return;
     }
 
     const dialogRef = this.alertDialogService.confirm({
-      zTitle: 'Delete Team Member',
-      zDescription: `Are you sure you want to delete ${member.name || member.email}? This action cannot be undone.`,
-      zOkText: 'Delete',
-      zCancelText: 'Cancel',
+      zTitle: this.translateService.instant('settings.team.deleteTeamMember'),
+      zDescription: this.translateService.instant('settings.team.deleteTeamMemberConfirm', { name: member.name || member.email }),
+      zOkText: this.translateService.instant('settings.team.deleteTeamMemberButton'),
+      zCancelText: this.translateService.instant('common.cancel'),
       zOkDestructive: true,
       zViewContainerRef: this.viewContainerRef,
     });
@@ -373,7 +376,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
           .pipe(takeUntil(this.destroy$))
           .subscribe({
             next: () => {
-              this.toastService.success('Team member deleted successfully');
+              this.toastService.success(this.translateService.instant('settings.team.teamMemberDeleted'));
               // Reload team members to refresh the list
               this.loadTeamMembers();
               // Close permissions if this user was being edited
@@ -383,7 +386,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
             },
             error: (error) => {
               console.error('Error deleting team member:', error);
-              this.toastService.error('Failed to delete team member');
+              this.toastService.error(this.translateService.instant('settings.team.failedToDeleteTeamMember'));
             }
           });
       }
@@ -402,7 +405,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     // Check limit (max 2 extra users + 1 admin = 3 total)
     if (this.teamMembers().length >= 3) {
-      this.toastService.error('You can only invite up to 2 additional team members (maximum 3 total users including admin)');
+      this.toastService.error(this.translateService.instant('settings.team.inviteTeamMember.maxTeamMembersReached'));
       return;
     }
 
@@ -422,7 +425,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
           this.invitationForm.email.set('');
           this.invitationForm.role.set('User');
 
-          this.toastService.success(`Invitation sent to ${inviteData.email}`);
+          this.toastService.success(this.translateService.instant('settings.team.inviteTeamMember.invitationSent', { email: inviteData.email }));
 
           // Add new member to the list
           this.teamMembers.update(members => [...members, newMember]);
@@ -432,12 +435,12 @@ export class SettingsComponent implements OnInit, OnDestroy {
           console.error('Error inviting team member:', error);
 
           if (error.error?.code === 'user_already_exists') {
-            this.toastService.error('A user with this email already exists');
+            this.toastService.error(this.translateService.instant('settings.team.inviteTeamMember.userAlreadyExists'));
           } else if (error.error?.code === 'team_limit_reached') {
-            const errorMessage = error.error?.message || 'Team limit reached';
+            const errorMessage = error.error?.message || this.translateService.instant('settings.team.inviteTeamMember.teamLimitReached');
             this.toastService.error(errorMessage);
           } else {
-            this.toastService.error('Failed to send invitation');
+            this.toastService.error(this.translateService.instant('settings.team.inviteTeamMember.failedToSendInvitation'));
           }
         }
       });
@@ -486,7 +489,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
           const loadingMap = new Map(this.isLoadingPermissions());
           loadingMap.set(userId, false);
           this.isLoadingPermissions.set(loadingMap);
-          this.toastService.error('Failed to load permissions');
+          this.toastService.error(this.translateService.instant('settings.team.failedToLoadPermissions'));
         }
       });
   }
@@ -593,7 +596,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
   saveUserPermissions(userId: string): void {
     const perms = this.getUserPermissions(userId);
     if (!perms) {
-      this.toastService.error('No permissions to save');
+      this.toastService.error(this.translateService.instant('settings.team.noPermissionsToSave'));
       return;
     }
 
@@ -616,7 +619,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
           // Close the permissions section after successful save
           this.editingUserId.set(null);
 
-          this.toastService.success('Permissions updated successfully');
+          this.toastService.success(this.translateService.instant('settings.team.permissionsUpdated'));
           // Reload team members to reflect any role changes
           this.loadTeamMembers();
         },
@@ -663,7 +666,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     if (!this.passwordFormSubmitted()) return '';
     const currentPassword = this.passwordForm.currentPassword();
     if (!currentPassword || currentPassword.trim() === '') {
-      return 'Current password is required';
+      return this.translateService.instant('settings.security.changePassword.currentPasswordRequired');
     }
     return '';
   });
@@ -672,10 +675,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
     if (!this.passwordFormSubmitted()) return '';
     const newPassword = this.passwordForm.newPassword();
     if (!newPassword || newPassword.trim() === '') {
-      return 'New password is required';
+      return this.translateService.instant('settings.security.changePassword.newPasswordRequired');
     }
     if (newPassword.length < 8) {
-      return 'Password must be at least 8 characters long';
+      return this.translateService.instant('settings.security.changePassword.passwordMinLength');
     }
     return '';
   });
@@ -685,10 +688,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
     const newPassword = this.passwordForm.newPassword();
     const confirmPassword = this.passwordForm.confirmPassword();
     if (!confirmPassword || confirmPassword.trim() === '') {
-      return 'Please confirm your password';
+      return this.translateService.instant('settings.security.changePassword.confirmPasswordRequired');
     }
     if (newPassword !== confirmPassword) {
-      return 'Passwords do not match';
+      return this.translateService.instant('settings.security.changePassword.passwordsDoNotMatch');
     }
     return '';
   });
@@ -726,13 +729,13 @@ export class SettingsComponent implements OnInit, OnDestroy {
     if (file) {
       // Validate file type
       if (!file.type.startsWith('image/')) {
-        alert('Please select an image file');
+        alert(this.translateService.instant('settings.errors.pleaseSelectImageFile'));
         return;
       }
 
       // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        alert('Image size must be less than 5MB');
+        alert(this.translateService.instant('settings.errors.imageSizeTooLarge'));
         return;
       }
 
@@ -793,7 +796,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
       };
       reader.onerror = () => {
         this.isSaving.set(false);
-        this.toastService.error('Failed to read image file');
+        this.toastService.error(this.translateService.instant('settings.errors.failedToReadImageFile'));
       };
       reader.readAsDataURL(imageFile);
     } else {
@@ -810,7 +813,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
       next: (updatedUser) => {
         this.isSaving.set(false);
         this.formSubmitted.set(false); // Reset form validation state on success
-        this.toastService.success('Account information updated successfully');
+        this.toastService.success(this.translateService.instant('settings.account.userInformation.accountInformationUpdated'));
 
         // Clear the file reference after successful update
         this.profileImageFile.set(null);
@@ -855,7 +858,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.passwordForm.newPassword.set('');
         this.passwordForm.confirmPassword.set('');
 
-        this.toastService.success('Password updated successfully');
+        this.toastService.success(this.translateService.instant('settings.security.changePassword.passwordUpdated'));
       },
       error: (error) => {
         this.isUpdatingPassword.set(false);
@@ -867,10 +870,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
   onLogout(): void {
     const dialogRef = this.alertDialogService.confirm({
-      zTitle: 'Log out',
-      zDescription: 'Are you sure you want to log out?',
-      zOkText: 'Log out',
-      zCancelText: 'Cancel',
+      zTitle: this.translateService.instant('login.logoutConfirm.title'),
+      zDescription: this.translateService.instant('login.logoutConfirm.description'),
+      zOkText: this.translateService.instant('login.logoutConfirm.ok'),
+      zCancelText: this.translateService.instant('common.cancel'),
       zOkDestructive: true,
       zViewContainerRef: this.viewContainerRef,
     });
@@ -916,7 +919,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
         error: (error) => {
           console.error('Error loading property settings:', error);
           this.isLoadingPropertySettings.set(false);
-          this.toastService.error('Failed to load property settings');
+          this.toastService.error(this.translateService.instant('settings.application.property.failedToLoadPropertySettings'));
         }
       });
   }
@@ -950,7 +953,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
             localStorage.setItem('settings', JSON.stringify(settings));
           }
           this.isSavingPropertySettings.set(false);
-          this.toastService.success('Property settings updated successfully');
+          this.toastService.success(this.translateService.instant('settings.application.property.propertySettingsUpdated'));
         },
         error: (error) => {
           console.error('Error updating property settings:', error);

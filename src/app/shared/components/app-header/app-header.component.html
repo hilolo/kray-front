@@ -55,11 +55,11 @@
           {{ currentLanguage() === 'en' ? 'EN' : 'FR' }}
         </z-button>
         
-        <z-dropdown-menu-item (click)="setLanguage('en')" [class.bg-accent]="currentLanguage() === 'en'">
-          {{ 'language.english' | translate }}
-        </z-dropdown-menu-item>
         <z-dropdown-menu-item (click)="setLanguage('fr')" [class.bg-accent]="currentLanguage() === 'fr'">
           {{ 'language.french' | translate }}
+        </z-dropdown-menu-item>
+        <z-dropdown-menu-item (click)="setLanguage('en')" [class.bg-accent]="currentLanguage() === 'en'">
+          {{ 'language.english' | translate }}
         </z-dropdown-menu-item>
       </z-dropdown-menu>
 

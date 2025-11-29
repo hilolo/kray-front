@@ -504,6 +504,16 @@
   },
   "settings": {
     "title": "Settings",
+    "navigation": {
+      "account": "Account",
+      "accountDescription": "Manage your public profile and private information",
+      "security": "Security",
+      "securityDescription": "Manage your password and 2-step verification preferences",
+      "team": "Team",
+      "teamDescription": "Manage your existing team and change roles/permissions",
+      "application": "Application",
+      "applicationDescription": "Configure default settings for your application"
+    },
     "account": {
       "title": "Account",
       "userInformation": {
@@ -512,10 +522,12 @@
         "changeProfilePicture": "Change profile picture",
         "fullName": "Full name",
         "enterFullName": "Enter your full name",
+        "fullNameRequired": "Full name is required",
         "phone": "Phone",
         "enterPhoneNumber": "Enter your phone number",
         "saveUserInfo": "Save User Info",
-        "saving": "Saving..."
+        "saving": "Saving...",
+        "accountInformationUpdated": "Account information updated successfully"
       },
       "companyInformation": {
         "title": "Company Information",
@@ -526,7 +538,8 @@
         "phone": "Phone",
         "website": "Website",
         "rc": "RC (Registration Number)",
-        "ice": "ICE (Tax ID)"
+        "ice": "ICE (Tax ID)",
+        "companyLogo": "Company logo"
       }
     },
     "security": {
@@ -536,12 +549,20 @@
         "description": "You can only change your password twice within 24 hours!",
         "currentPassword": "Current password",
         "enterCurrentPassword": "Enter your current password",
+        "currentPasswordRequired": "Current password is required",
         "newPassword": "New password",
         "enterNewPassword": "Enter your new password",
+        "newPasswordRequired": "New password is required",
+        "passwordMinLength": "Password must be at least 8 characters long",
         "confirmPassword": "Confirm password",
         "confirmNewPassword": "Confirm your new password",
+        "confirmPasswordRequired": "Please confirm your password",
+        "passwordsDoNotMatch": "Passwords do not match",
         "savePassword": "Save Password",
-        "updating": "Updating..."
+        "updating": "Updating...",
+        "passwordUpdated": "Password updated successfully",
+        "showPassword": "Show password",
+        "hidePassword": "Hide password"
       }
     },
     "team": {
@@ -553,11 +574,18 @@
         "description": "Invite a new member to join your team (Max 3 invitations)",
         "emailAddress": "Email Address",
         "mailPlaceholder": "mail@company.com",
+        "emailRequired": "Email is required",
+        "invalidEmail": "Please enter a valid email address",
         "role": "Role",
         "user": "User",
         "admin": "Admin",
         "invite": "Invite",
-        "sending": "Sending..."
+        "sending": "Sending...",
+        "invitationSent": "Invitation sent to {email}",
+        "userAlreadyExists": "A user with this email already exists",
+        "teamLimitReached": "Team limit reached",
+        "failedToSendInvitation": "Failed to send invitation",
+        "maxTeamMembersReached": "You can only invite up to 2 additional team members (maximum 3 total users including admin)"
       },
       "loadingTeamMembers": "Loading team members...",
       "noTeamMembersFound": "No team members found",
@@ -572,9 +600,21 @@
       "selectAllPermissions": "Select All Permissions",
       "permissions": "Permissions:",
       "view": "View",
+      "edit": "Edit",
       "delete": "Delete",
+      "all": "All",
       "savePermissions": "Save Permissions",
-      "saving": "Saving..."
+      "saving": "Saving...",
+      "permissionsUpdated": "Permissions updated successfully",
+      "noPermissionsToSave": "No permissions to save",
+      "failedToLoadPermissions": "Failed to load permissions",
+      "deleteTeamMember": "Delete Team Member",
+      "deleteTeamMemberConfirm": "Are you sure you want to delete {name}? This action cannot be undone.",
+      "deleteTeamMemberButton": "Delete",
+      "teamMemberDeleted": "Team member deleted successfully",
+      "failedToDeleteTeamMember": "Failed to delete team member",
+      "cannotDeleteOwnAccount": "You cannot delete your own account",
+      "failedToLoadTeamMembers": "Failed to load team members"
     },
     "application": {
       "title": "Application",
@@ -586,41 +626,51 @@
       "property": {
         "title": "Property",
         "defaultCity": {
-          "title": "Ville par Défaut",
-          "description": "Définir la ville par défaut pour les nouvelles propriétés",
-          "label": "Ville par Défaut",
+          "title": "Default City",
+          "description": "Set the default city for new properties",
+          "label": "Default City",
           "selectCity": "Select a city"
         },
         "defaultCategories": {
-          "title": "Catégories par Défaut",
-          "description": "Gérer les catégories par défaut avec leur clé et référence"
+          "title": "Default Categories",
+          "description": "Manage default categories with their key and reference"
         },
         "propertyTypes": {
-          "title": "Types de Propriété",
-          "description": "Gérer les types de propriété disponibles",
+          "title": "Property Types",
+          "description": "Manage available property types",
           "enterPropertyType": "Enter property type",
-          "addPropertyType": "Ajouter un Type de Propriété",
+          "addPropertyType": "Add Property Type",
           "removePropertyType": "Remove property type"
         },
         "features": {
-          "title": "Caractéristiques de Propriété",
-          "description": "Gérer les caractéristiques de propriété disponibles",
+          "title": "Property Features",
+          "description": "Manage available property features",
           "enterFeature": "Enter feature",
-          "addFeature": "Ajouter une Caractéristique",
+          "addFeature": "Add Feature",
           "removeFeature": "Remove feature"
         },
         "amenities": {
-          "title": "Équipements de Propriété",
-          "description": "Gérer les équipements de propriété disponibles",
+          "title": "Property Amenities",
+          "description": "Manage available property amenities",
           "enterAmenity": "Enter amenity",
-          "addAmenity": "Ajouter un Équipement",
+          "addAmenity": "Add Amenity",
           "removeAmenity": "Remove amenity"
         },
         "savePropertySettings": "Save Property Settings",
         "saving": "Saving...",
-        "loadingPropertySettings": "Loading property settings..."
+        "loadingPropertySettings": "Loading property settings...",
+        "propertySettingsUpdated": "Property settings updated successfully",
+        "failedToLoadPropertySettings": "Failed to load property settings"
       }
+    },
+    "errors": {
+      "failedToReadImageFile": "Failed to read image file",
+      "pleaseSelectImageFile": "Please select an image file",
+      "imageSizeTooLarge": "Image size must be less than 5MB"
     }
+  },
+  "datatable": {
+    "noDataAvailable": "No data available"
   },
   "maintenance": {
     "title": "Maintenance",

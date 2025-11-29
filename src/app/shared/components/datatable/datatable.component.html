@@ -8,7 +8,7 @@
           @if (emptyTemplate()) {
             <ng-container *ngTemplateOutlet="emptyTemplate()!" />
           } @else {
-            <z-empty [zDescription]="zEmptyMessage()" class="w-full" />
+            <z-empty [zDescription]="translatedEmptyMessage()" class="w-full" />
           }
         </div>
       } @else {

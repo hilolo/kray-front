@@ -5,6 +5,7 @@ import {
   computed,
   contentChild,
   effect,
+  inject,
   input,
   output,
   signal,
@@ -21,6 +22,7 @@ import { ZardCheckboxComponent } from '@shared/components/checkbox/checkbox.comp
 import { ZardIconComponent } from '@shared/components/icon/icon.component';
 import { ZardCardComponent } from '@shared/components/card/card.component';
 import { FormsModule } from '@angular/forms';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { datatableVariants, ZardDatatableVariants } from './datatable.variants';
 
 export interface DatatableColumn<T = any> {
@@ -43,6 +45,7 @@ export interface DatatableColumn<T = any> {
     ZardEmptyComponent,
     ZardCheckboxComponent,
     ZardCardComponent,
+    TranslateModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
@@ -52,6 +55,8 @@ export interface DatatableColumn<T = any> {
   },
 })
 export class ZardDatatableComponent<T = any> {
+  private readonly translateService = inject(TranslateService);
+
   // Data inputs
   readonly zData = input<T[]>([]);
   readonly zColumns = input<DatatableColumn<T>[]>([]);
@@ -60,8 +65,19 @@ export class ZardDatatableComponent<T = any> {
   readonly zViewMode = input<'list' | 'card'>('list');
   
   // Empty state
-  readonly zEmptyMessage = input<string>('No data available');
+  readonly zEmptyMessage = input<string>('datatable.noDataAvailable');
   readonly zShowEmpty = input<boolean>(true);
+  
+  // Computed translated empty message
+  protected readonly translatedEmptyMessage = computed(() => {
+    const message = this.zEmptyMessage();
+    // If it's a translation key (starts with a namespace like 'datatable.' or 'common.'), translate it
+    if (message.includes('.')) {
+      return this.translateService.instant(message);
+    }
+    // Otherwise return as-is (already translated or plain text)
+    return message;
+  });
   
   // Selection
   readonly zSelectable = input<boolean>(false);

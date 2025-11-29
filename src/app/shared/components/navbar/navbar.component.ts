@@ -27,22 +27,22 @@ import { AuthService } from '@shared/services/auth.service';
         <!-- Language Toggle -->
         <div class="flex items-center gap-1 border rounded-md">
           <z-button
-            (click)="setLanguage('en')"
-            zType="ghost"
-            zSize="sm"
-            [class.bg-accent]="currentLanguage() === 'en'"
-            class="rounded-r-none"
-          >
-            EN
-          </z-button>
-          <z-button
             (click)="setLanguage('fr')"
             zType="ghost"
             zSize="sm"
             [class.bg-accent]="currentLanguage() === 'fr'"
-            class="rounded-l-none border-l"
+            class="rounded-r-none"
           >
             FR
+          </z-button>
+          <z-button
+            (click)="setLanguage('en')"
+            zType="ghost"
+            zSize="sm"
+            [class.bg-accent]="currentLanguage() === 'en'"
+            class="rounded-l-none border-l"
+          >
+            EN
           </z-button>
         </div>
 

@@ -504,6 +504,16 @@
   },
   "settings": {
     "title": "Paramètres",
+    "navigation": {
+      "account": "Compte",
+      "accountDescription": "Gérez votre profil public et vos informations privées",
+      "security": "Sécurité",
+      "securityDescription": "Gérez votre mot de passe et vos préférences de vérification en deux étapes",
+      "team": "Équipe",
+      "teamDescription": "Gérez votre équipe existante et modifiez les rôles/permissions",
+      "application": "Application",
+      "applicationDescription": "Configurez les paramètres par défaut de votre application"
+    },
     "account": {
       "title": "Compte",
       "userInformation": {
@@ -512,10 +522,12 @@
         "changeProfilePicture": "Changer la photo de profil",
         "fullName": "Nom complet",
         "enterFullName": "Entrez votre nom complet",
+        "fullNameRequired": "Le nom complet est requis",
         "phone": "Téléphone",
         "enterPhoneNumber": "Entrez votre numéro de téléphone",
         "saveUserInfo": "Enregistrer les informations utilisateur",
-        "saving": "Enregistrement..."
+        "saving": "Enregistrement...",
+        "accountInformationUpdated": "Informations du compte mises à jour avec succès"
       },
       "companyInformation": {
         "title": "Informations sur l'entreprise",
@@ -526,7 +538,8 @@
         "phone": "Téléphone",
         "website": "Site web",
         "rc": "RC (Numéro d'enregistrement)",
-        "ice": "ICE (Identifiant fiscal)"
+        "ice": "ICE (Identifiant fiscal)",
+        "companyLogo": "Logo de l'entreprise"
       }
     },
     "security": {
@@ -536,12 +549,20 @@
         "description": "Vous ne pouvez changer votre mot de passe que deux fois en 24 heures !",
         "currentPassword": "Mot de passe actuel",
         "enterCurrentPassword": "Entrez votre mot de passe actuel",
+        "currentPasswordRequired": "Le mot de passe actuel est requis",
         "newPassword": "Nouveau mot de passe",
         "enterNewPassword": "Entrez votre nouveau mot de passe",
+        "newPasswordRequired": "Le nouveau mot de passe est requis",
+        "passwordMinLength": "Le mot de passe doit contenir au moins 8 caractères",
         "confirmPassword": "Confirmer le mot de passe",
         "confirmNewPassword": "Confirmez votre nouveau mot de passe",
+        "confirmPasswordRequired": "Veuillez confirmer votre mot de passe",
+        "passwordsDoNotMatch": "Les mots de passe ne correspondent pas",
         "savePassword": "Enregistrer le mot de passe",
-        "updating": "Mise à jour..."
+        "updating": "Mise à jour...",
+        "passwordUpdated": "Mot de passe mis à jour avec succès",
+        "showPassword": "Afficher le mot de passe",
+        "hidePassword": "Masquer le mot de passe"
       }
     },
     "team": {
@@ -553,11 +574,18 @@
         "description": "Invitez un nouveau membre à rejoindre votre équipe (Maximum 3 invitations)",
         "emailAddress": "Adresse e-mail",
         "mailPlaceholder": "mail@company.com",
+        "emailRequired": "L'adresse e-mail est requise",
+        "invalidEmail": "Veuillez entrer une adresse e-mail valide",
         "role": "Rôle",
         "user": "Utilisateur",
         "admin": "Administrateur",
         "invite": "Inviter",
-        "sending": "Envoi..."
+        "sending": "Envoi...",
+        "invitationSent": "Invitation envoyée à {email}",
+        "userAlreadyExists": "Un utilisateur avec cette adresse e-mail existe déjà",
+        "teamLimitReached": "Limite d'équipe atteinte",
+        "failedToSendInvitation": "Échec de l'envoi de l'invitation",
+        "maxTeamMembersReached": "Vous ne pouvez inviter que jusqu'à 2 membres d'équipe supplémentaires (maximum 3 utilisateurs au total, y compris l'administrateur)"
       },
       "loadingTeamMembers": "Chargement des membres de l'équipe...",
       "noTeamMembersFound": "Aucun membre d'équipe trouvé",
@@ -572,9 +600,21 @@
       "selectAllPermissions": "Sélectionner toutes les permissions",
       "permissions": "Permissions :",
       "view": "Voir",
+      "edit": "Modifier",
       "delete": "Supprimer",
+      "all": "Tous",
       "savePermissions": "Enregistrer les permissions",
-      "saving": "Enregistrement..."
+      "saving": "Enregistrement...",
+      "permissionsUpdated": "Permissions mises à jour avec succès",
+      "noPermissionsToSave": "Aucune permission à enregistrer",
+      "failedToLoadPermissions": "Échec du chargement des permissions",
+      "deleteTeamMember": "Supprimer un membre de l'équipe",
+      "deleteTeamMemberConfirm": "Êtes-vous sûr de vouloir supprimer {name} ? Cette action ne peut pas être annulée.",
+      "deleteTeamMemberButton": "Supprimer",
+      "teamMemberDeleted": "Membre de l'équipe supprimé avec succès",
+      "failedToDeleteTeamMember": "Échec de la suppression du membre de l'équipe",
+      "cannotDeleteOwnAccount": "Vous ne pouvez pas supprimer votre propre compte",
+      "failedToLoadTeamMembers": "Échec du chargement des membres de l'équipe"
     },
     "application": {
       "title": "Application",
@@ -618,9 +658,19 @@
         },
         "savePropertySettings": "Enregistrer les paramètres de propriété",
         "saving": "Enregistrement...",
-        "loadingPropertySettings": "Chargement des paramètres de propriété..."
+        "loadingPropertySettings": "Chargement des paramètres de propriété...",
+        "propertySettingsUpdated": "Paramètres de propriété mis à jour avec succès",
+        "failedToLoadPropertySettings": "Échec du chargement des paramètres de propriété"
       }
+    },
+    "errors": {
+      "failedToReadImageFile": "Échec de la lecture du fichier image",
+      "pleaseSelectImageFile": "Veuillez sélectionner un fichier image",
+      "imageSizeTooLarge": "La taille de l'image doit être inférieure à 5 Mo"
     }
+  },
+  "datatable": {
+    "noDataAvailable": "Aucune donnée disponible"
   },
   "maintenance": {
     "title": "Maintenance",
