@@ -33,51 +33,12 @@
     <div class="flex-1 min-h-0 overflow-y-auto">
       <z-card class="max-w-7xl mx-auto">
         <div class="p-8 space-y-8">
-          <!-- Allocation Section -->
-          @if (!shouldHidePropertySelect()) {
-          <div class="space-y-6 pb-6 border-b">
-            <div>
-              <h3 class="text-lg font-semibold mb-1">Allocation</h3>
-              <p class="text-sm text-muted-foreground">
-                Select the property and optionally the lease for this transaction
-              </p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <!-- Property Field -->
-              <z-form-field>
-                <z-form-label [zRequired]="isPropertyRequired()">Property</z-form-label>
-                <z-form-control [errorMessage]="propertyIdError()">
-                  <z-combobox [options]="propertyOptions()" [value]="formData().propertyId"
-                    [placeholder]="'Select property...'" [searchPlaceholder]="'Search properties...'"
-                    [emptyText]="'No properties found'" [searchable]="true" 
-                    [disabled]="isLoadingProperties() || isPropertyDisabled()"
-                    [zWidth]="'lg'" (zValueChange)="updatePropertyId($event || '')" class="w-full" />
-                </z-form-control>
-              </z-form-field>
-
-              <!-- Lease Field -->
-              @if (!shouldHideLeaseSelect()) {
-              <z-form-field>
-                <z-form-label [zRequired]="isPropertyAndLeaseRequired()">Lease</z-form-label>
-                <z-form-control [errorMessage]="leaseIdError()">
-                  <z-combobox [options]="leaseOptions()" [value]="formData().leaseId" [placeholder]="'Select lease...'"
-                    [searchPlaceholder]="'Search leases...'" [emptyText]="'No leases found'" [searchable]="true"
-                    [disabled]="isLoadingLeases() || !formData().propertyId" [zWidth]="'lg'"
-                    (zValueChange)="updateLeaseId($event || '')" class="w-full" />
-                </z-form-control>
-              </z-form-field>
-              }
-            </div>
-          </div>
-          }
-
           <!-- General Info Section -->
           <div class="space-y-6 pb-6 border-b">
             <div>
               <h3 class="text-lg font-semibold mb-1">General Info</h3>
               <p class="text-sm text-muted-foreground">
-                Enter the transaction type and contact information
+                Enter the transaction type and date
               </p>
             </div>
 
@@ -119,10 +80,53 @@
               </z-form-field>
             </div>
             }
+          </div>
 
+          <!-- Allocation Section -->
+          @if (!shouldHidePropertySelect() || formData().revenueType === RevenueType.FraisAgence) {
+          <div class="space-y-6 pb-6 border-b">
+            <div>
+              <h3 class="text-lg font-semibold mb-1">Allocation</h3>
+              <p class="text-sm text-muted-foreground">
+                @if (formData().revenueType === RevenueType.FraisAgence) {
+                  Select the contact for this transaction
+                } @else {
+                  Select the property, optionally the lease, and contact for this transaction
+                }
+              </p>
+            </div>
+
+            @if (!shouldHidePropertySelect()) {
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <!-- Property Field -->
+              <z-form-field>
+                <z-form-label [zRequired]="isPropertyRequired()">Property</z-form-label>
+                <z-form-control [errorMessage]="propertyIdError()">
+                  <z-combobox [options]="propertyOptions()" [value]="formData().propertyId"
+                    [placeholder]="'Select property...'" [searchPlaceholder]="'Search properties...'"
+                    [emptyText]="'No properties found'" [searchable]="true" 
+                    [disabled]="isLoadingProperties() || isPropertyDisabled()"
+                    [zWidth]="'lg'" (zValueChange)="updatePropertyId($event || '')" class="w-full" />
+                </z-form-control>
+              </z-form-field>
 
-              <!-- From (Contact) Field -->
+              <!-- Lease Field -->
+              @if (!shouldHideLeaseSelect()) {
+              <z-form-field>
+                <z-form-label [zRequired]="isPropertyAndLeaseRequired()">Lease</z-form-label>
+                <z-form-control [errorMessage]="leaseIdError()">
+                  <z-combobox [options]="leaseOptions()" [value]="formData().leaseId" [placeholder]="'Select lease...'"
+                    [searchPlaceholder]="'Search leases...'" [emptyText]="'No leases found'" [searchable]="true"
+                    [disabled]="isLoadingLeases() || !formData().propertyId" [zWidth]="'lg'"
+                    (zValueChange)="updateLeaseId($event || '')" class="w-full" />
+                </z-form-control>
+              </z-form-field>
+              }
+            </div>
+            }
+
+            <!-- From (Contact) Field -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               <z-form-field>
                 <z-form-label [zRequired]="formData().revenueType !== RevenueType.Autre">From</z-form-label>
                 <z-form-control [errorMessage]="contactIdError()">
@@ -133,7 +137,7 @@
                         [emptyText]="'No contacts found'" [searchable]="true"
                         [disabled]="isLoadingContacts() || formData().isOtherContact || formData().revenueType === RevenueType.Autre || isContactDisabled()"
                         [zWidth]="'lg'" (zValueChange)="updateContactId($event || '')" class="flex-1" />
-                      @if (formData().revenueType !== RevenueType.Autre && formData().revenueType !== RevenueType.Maintenance && !isContactDisabled()) {
+                      @if (formData().revenueType !== RevenueType.Autre && formData().revenueType !== RevenueType.Maintenance && formData().revenueType !== RevenueType.FraisAgence && !isContactDisabled()) {
                       <z-checkbox [ngModel]="formData().isOtherContact" (ngModelChange)="updateIsOtherContact($event)"
                         class="flex-shrink-0">
                         Other
@@ -153,6 +157,7 @@
               </z-form-field>
             </div>
           </div>
+          }
 
           <!-- Amount Section -->
           <div class="space-y-6 pb-6 border-b">

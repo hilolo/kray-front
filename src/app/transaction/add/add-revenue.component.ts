@@ -325,7 +325,8 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
   });
 
   // Check if contact field should be disabled (for reservation types, contact auto-fills from reservation)
-  // Also disabled for Loyer, Caution, FraisAgence (contact auto-fills from lease)
+  // Also disabled for Loyer, Caution (contact auto-fills from lease)
+  // Note: FraisAgence and Maintenance allow manual contact selection
   readonly isContactDisabled = computed(() => {
     const type = this.formData().revenueType;
     return this.isReservationType() || this.isPropertyAndLeaseRequired();
@@ -1070,45 +1071,32 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
 
         // Load properties and contacts first, then set selected values
 
-        // Load contacts based on revenue type
-        let contactsObservable: Observable<ContactListResponse>;
-        if (transaction.revenueType === RevenueType.Maintenance) {
-          const contactRequest = {
+        // Load both Owner and Tenant contacts (for all types including Maintenance)
+        const ownerRequest = {
+          currentPage: 1,
+          pageSize: 1000,
+          ignore: true,
+          type: ContactType.Owner,
+          isArchived: false,
+        };
+        const tenantRequest = {
+          currentPage: 1,
+          pageSize: 1000,
+          ignore: true,
+          type: ContactType.Tenant,
+          isArchived: false,
+        };
+        const contactsObservable = forkJoin({
+          owners: this.contactService.list(ownerRequest),
+          tenants: this.contactService.list(tenantRequest),
+        }).pipe(
+          map(({ owners, tenants }): ContactListResponse => ({
             currentPage: 1,
-            pageSize: 1000,
-            ignore: true,
-            type: ContactType.Service,
-            isArchived: false,
-          };
-          contactsObservable = this.contactService.list(contactRequest);
-        } else {
-          // Load both Owner and Tenant
-          const ownerRequest = {
-            currentPage: 1,
-            pageSize: 1000,
-            ignore: true,
-            type: ContactType.Owner,
-            isArchived: false,
-          };
-          const tenantRequest = {
-            currentPage: 1,
-            pageSize: 1000,
-            ignore: true,
-            type: ContactType.Tenant,
-            isArchived: false,
-          };
-          contactsObservable = forkJoin({
-            owners: this.contactService.list(ownerRequest),
-            tenants: this.contactService.list(tenantRequest),
-          }).pipe(
-            map(({ owners, tenants }): ContactListResponse => ({
-              currentPage: 1,
-              totalPages: 1,
-              totalItems: (owners.result?.length || 0) + (tenants.result?.length || 0),
-              result: [...(owners.result || []), ...(tenants.result || [])]
-            }))
-          );
-        }
+            totalPages: 1,
+            totalItems: (owners.result?.length || 0) + (tenants.result?.length || 0),
+            result: [...(owners.result || []), ...(tenants.result || [])]
+          }))
+        );
 
         const propertiesRequest: any = {
           currentPage: 1,
@@ -1231,12 +1219,8 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
       // Load properties with LocationVacances filter for reservation types
       this.loadProperties();
     } else {
-      // Load appropriate contacts based on revenue type
-      if (type === RevenueType.Maintenance) {
-        this.loadContacts(ContactType.Service);
-      } else {
-        this.loadContacts();
-      }
+      // Load contacts (Owner and Tenant for all types including Maintenance)
+      this.loadContacts();
 
       // Reload properties with appropriate filter
       this.loadProperties();

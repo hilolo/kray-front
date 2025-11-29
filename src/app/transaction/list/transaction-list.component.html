@@ -383,6 +383,12 @@
                   <span>Deposit Receipt</span>
                 </z-dropdown-menu-item>
               }
+              @if (row.revenueType === RevenueType.FraisAgence) {
+                <z-dropdown-menu-item (click)="onGenerateFeesReceipt(row)">
+                  <z-icon zType="file-text" zSize="sm" class="mr-2" />
+                  <span>Fees Receipt</span>
+                </z-dropdown-menu-item>
+              }
             }
             <z-divider class="my-1" />
             <z-dropdown-menu-item (click)="onDelete(row)" class="text-destructive focus:text-destructive">
