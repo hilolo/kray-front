@@ -26,7 +26,7 @@ export const aiChatSidebarVariants = cva(
 );
 
 export const aiChatSidebarHeaderVariants = cva(
-  'p-4 border-b',
+  'p-4 border-b shrink-0',
   {
     variants: {},
     defaultVariants: {},
@@ -34,7 +34,7 @@ export const aiChatSidebarHeaderVariants = cva(
 );
 
 export const aiChatSidebarContentVariants = cva(
-  'flex-1 overflow-y-auto p-4 space-y-4',
+  'flex-1 min-h-0 overflow-y-auto p-4 space-y-4',
   {
     variants: {},
     defaultVariants: {},
@@ -42,7 +42,7 @@ export const aiChatSidebarContentVariants = cva(
 );
 
 export const aiChatSidebarFooterVariants = cva(
-  'p-4 border-t space-y-2',
+  'p-4 border-t space-y-2 shrink-0',
   {
     variants: {},
     defaultVariants: {},
@@ -58,7 +58,7 @@ export const aiChatMainVariants = cva(
 );
 
 export const aiChatMessagesVariants = cva(
-  'flex-1 overflow-y-auto p-4 space-y-6 w-full',
+  'flex-1 min-h-0 overflow-y-auto p-4 space-y-6 w-full',
   {
     variants: {},
     defaultVariants: {},
@@ -96,7 +96,7 @@ export const aiChatMessageContentVariants = cva(
 );
 
 export const aiChatInputAreaVariants = cva(
-  'border-t p-4 bg-background w-full',
+  'border-t p-4 bg-background w-full shrink-0',
   {
     variants: {},
     defaultVariants: {},

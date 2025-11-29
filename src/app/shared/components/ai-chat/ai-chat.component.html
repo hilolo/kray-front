@@ -151,7 +151,7 @@
         <input
           z-input
           type="text"
-          [placeholder]="zRemainingQuestions() === 0 ? 'Daily limit reached' : zPlaceholder()"
+          [placeholder]="zDisabled() ? zPlaceholder() : (zRemainingQuestions() === 0 ? 'Daily limit reached' : zPlaceholder())"
           class="flex-1 border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent"
           [value]="currentMessage()"
           (input)="currentMessage.set($any($event.target).value)"
