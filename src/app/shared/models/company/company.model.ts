@@ -10,6 +10,7 @@ export interface Company {
   city: string;
   rc: string;
   ice: string;
+  image: string;
   restricted: boolean;
   isDeleted: boolean;
   id: string;

@@ -153,9 +153,19 @@
             <div class="flex gap-6">
               <!-- Company Logo -->
               <div class="flex-shrink-0">
-                <div class="w-40 h-40 border border-border rounded-lg flex items-center justify-center bg-muted">
-                  <z-icon zType="file" zSize="lg" class="text-muted-foreground" />
-                </div>
+                @if (companyInfo.image) {
+                  <div class="w-40 h-40 border border-border rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+                    <img 
+                      [src]="getCompanyImageUrl()" 
+                      [alt]="companyInfo.name || 'Company logo'"
+                      class="w-full h-full object-contain"
+                    />
+                  </div>
+                } @else {
+                  <div class="w-40 h-40 border border-border rounded-lg flex items-center justify-center bg-muted">
+                    <z-icon zType="file" zSize="lg" class="text-muted-foreground" />
+                  </div>
+                }
               </div>
 
               <!-- Read-only Fields -->

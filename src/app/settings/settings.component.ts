@@ -124,7 +124,26 @@ export class SettingsComponent implements OnInit, OnDestroy {
     website: '',
     rc: '',
     ice: '',
+    image: '',
   };
+
+  /**
+   * Get formatted company image URL
+   * Ensures base64 images have the proper data URL prefix
+   */
+  getCompanyImageUrl(): string {
+    const image = this.companyInfo.image;
+    if (!image) return '';
+    
+    // If it already has data URL prefix, return as is
+    if (image.startsWith('data:')) {
+      return image;
+    }
+    
+    // Otherwise, assume it's a base64 string and add the prefix
+    // Default to image/png if we can't determine the type
+    return `data:image/png;base64,${image}`;
+  }
 
   // Password Form
   passwordForm = {
@@ -269,6 +288,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
           website: company.website || '',
           rc: company.rc || '',
           ice: company.ice || '',
+          image: company.image || '',
         };
       }
     });
@@ -298,6 +318,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
         website: company.website || '',
         rc: company.rc || '',
         ice: company.ice || '',
+        image: company.image || '',
       };
     }
 
@@ -876,6 +897,11 @@ export class SettingsComponent implements OnInit, OnDestroy {
             this.propertySettings.features.set(settings.features || []);
             this.propertySettings.amenities.set(settings.amenities || []);
             this.propertySettings.propertyTypes.set(settings.propertyTypes || []);
+            
+            // Update company image from settings
+            if (settings.image) {
+              this.companyInfo.image = settings.image;
+            }
           } else {
             console.warn('Settings is null or undefined');
             // Initialize with empty values if settings is null/undefined

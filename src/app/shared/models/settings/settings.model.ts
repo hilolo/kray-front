@@ -8,5 +8,6 @@ export interface Settings {
   features: string[];
   amenities: string[];
   propertyTypes: string[];
+  image: string;
 }
 
