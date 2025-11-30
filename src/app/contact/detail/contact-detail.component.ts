@@ -37,6 +37,9 @@ import { TransactionService } from '@shared/services/transaction.service';
 import { PdfGenerationService } from '@shared/services/pdf-generation.service';
 import { ZardPdfViewerComponent } from '@shared/pdf-viewer/pdf-viewer.component';
 import { ToastService } from '@shared/services/toast.service';
+import { WhatsAppService } from '@shared/services/whatsapp.service';
+import { ZardAlertDialogService } from '@shared/components/alert-dialog/alert-dialog.service';
+import { ViewContainerRef } from '@angular/core';
 import { takeUntil } from 'rxjs';
 import { Subject } from 'rxjs';
 
@@ -74,6 +77,9 @@ export class ContactDetailComponent implements OnInit, OnDestroy {
   private readonly transactionService = inject(TransactionService);
   private readonly pdfGenerationService = inject(PdfGenerationService);
   private readonly toastService = inject(ToastService);
+  private readonly whatsAppService = inject(WhatsAppService);
+  private readonly alertDialogService = inject(ZardAlertDialogService);
+  private readonly viewContainerRef = inject(ViewContainerRef);
   private readonly destroy$ = new Subject<void>();
 
   // Contact data
@@ -81,6 +87,7 @@ export class ContactDetailComponent implements OnInit, OnDestroy {
   readonly isLoading = signal(false);
   readonly reservations = signal<Reservation[]>([]);
   readonly isLoadingReservations = signal(false);
+  readonly checkingWhatsApp = signal<Set<string>>(new Set());
   readonly maintenances = computed(() => {
     const contact = this.contact();
     if (!contact) return [];
@@ -1111,6 +1118,96 @@ export class ContactDetailComponent implements OnInit, OnDestroy {
     this.showPdfViewer.set(false);
     this.pdfViewerUrl.set('');
     this.pdfViewerName.set('');
+  }
+
+  /**
+   * Check if a phone number has WhatsApp
+   */
+  checkWhatsApp(phoneNumber: string): void {
+    if (!phoneNumber || this.checkingWhatsApp().has(phoneNumber)) {
+      return;
+    }
+
+    // Add to checking set
+    const checkingSet = new Set(this.checkingWhatsApp());
+    checkingSet.add(phoneNumber);
+    this.checkingWhatsApp.set(checkingSet);
+
+    // Remove any non-digit characters except + for formatting
+    const cleanNumber = phoneNumber.replace(/[^\d]/g, '');
+
+    this.whatsAppService.sendWhatsAppNumbers([cleanNumber])
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          // Remove from checking set
+          const updatedSet = new Set(this.checkingWhatsApp());
+          updatedSet.delete(phoneNumber);
+          this.checkingWhatsApp.set(updatedSet);
+
+          // Get the check result for this phone number
+          const cleanNumber = phoneNumber.replace(/[^\d]/g, '');
+          const checkResult = response.content?.find(r => r.number === cleanNumber || r.number === phoneNumber);
+          
+          // Determine message, icon, and type based on exists status
+          let message: string;
+          let icon: string;
+          let dialogType: 'default' | 'warning' = 'default';
+          
+          if (checkResult?.exists) {
+            message = this.translateService.instant('whatsapp.check.exists')
+              .replace('{number}', phoneNumber);
+            icon = 'circle-check';
+            dialogType = 'default';
+          } else {
+            message = this.translateService.instant('whatsapp.check.notExists')
+              .replace('{number}', phoneNumber);
+            icon = 'circle-x';
+            dialogType = 'warning';
+          }
+          
+          this.alertDialogService.info({
+            zTitle: this.translateService.instant('whatsapp.check.title'),
+            zDescription: message,
+            zOkText: this.translateService.instant('common.close'),
+            zCancelText: null,
+            zClosable: true,
+            zIcon: icon as any,
+            zType: dialogType,
+            zWidth: '400px',
+            zViewContainerRef: this.viewContainerRef,
+          });
+        },
+        error: (error) => {
+          console.error('Error checking WhatsApp:', error);
+          
+          // Remove from checking set
+          const updatedSet = new Set(this.checkingWhatsApp());
+          updatedSet.delete(phoneNumber);
+          this.checkingWhatsApp.set(updatedSet);
+
+          // Show error modal
+          const errorMessage = error?.error?.message || error?.message || 
+            this.translateService.instant('whatsapp.check.error');
+          
+          this.alertDialogService.warning({
+            zTitle: this.translateService.instant('whatsapp.check.errorTitle'),
+            zDescription: errorMessage,
+            zOkText: this.translateService.instant('common.close'),
+            zCancelText: null,
+            zClosable: true,
+            zWidth: '400px',
+            zViewContainerRef: this.viewContainerRef,
+          });
+        }
+      });
+  }
+
+  /**
+   * Check if a phone number is currently being checked
+   */
+  isCheckingWhatsApp(phoneNumber: string): boolean {
+    return this.checkingWhatsApp().has(phoneNumber);
   }
 
   ngOnDestroy(): void {

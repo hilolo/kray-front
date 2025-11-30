@@ -61,9 +61,26 @@
                     </div>
                   }
                   @if (contact()?.phones && contact()!.phones.length > 0) {
-                    <div class="flex items-center gap-2 text-sm text-muted-foreground">
-                      <z-icon zType="smartphone" zSize="sm" />
-                      <span>{{ contact()!.phones.join(', ') }}</span>
+                    <div class="flex flex-col gap-2">
+                      @for (phone of contact()!.phones; track phone) {
+                        <div class="flex items-center gap-2 text-sm text-muted-foreground">
+                          <z-icon zType="smartphone" zSize="sm" />
+                          <span>{{ phone }}</span>
+                          <z-icon zType="message-circle" zSize="sm" class="text-green-600" />
+                          <z-button
+                            zType="ghost"
+                            zSize="sm"
+                            [zLoading]="isCheckingWhatsApp(phone)"
+                            [disabled]="isCheckingWhatsApp(phone)"
+                            (click)="checkWhatsApp(phone)"
+                            [attr.aria-label]="'whatsapp.check.button' | translate"
+                            class="ml-auto"
+                            title="{{ 'whatsapp.check.button' | translate }}"
+                          >
+                            <z-icon zType="send" zSize="sm" />
+                          </z-button>
+                        </div>
+                      }
                     </div>
                   }
                 </div>

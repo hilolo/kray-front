@@ -845,5 +845,31 @@
       "dailyLimitReached": "Daily limit reached",
       "sendMessage": "Send message"
     }
+  },
+  "whatsapp": {
+    "connected": {
+      "title": "WhatsApp is connected",
+      "description": "Your WhatsApp account has been successfully connected"
+    },
+    "qr": {
+      "title": "Scan QR Code to Connect WhatsApp",
+      "description": "Open WhatsApp on your phone and scan this QR code to connect your account",
+      "loading": "Loading QR code...",
+      "alt": "WhatsApp QR Code",
+      "instructions": "Make sure your phone is connected to the internet and WhatsApp is open"
+    },
+    "disconnect": {
+      "button": "Disconnect",
+      "success": "WhatsApp disconnected successfully",
+      "error": "Failed to disconnect WhatsApp. Please try again."
+    },
+    "check": {
+      "button": "Check WhatsApp",
+      "title": "WhatsApp Check",
+      "exists": "Phone number {number} has WhatsApp",
+      "notExists": "Phone number {number} does not have WhatsApp",
+      "error": "Failed to check WhatsApp. Please try again.",
+      "errorTitle": "WhatsApp Check Failed"
+    }
   }
 }

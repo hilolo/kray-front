@@ -50,8 +50,9 @@
         <z-button
           zType="ghost"
           zSize="icon"
-          [attr.aria-label]="whatsappStatus() ? 'WhatsApp Online' : 'WhatsApp Offline'"
+          [attr.aria-label]="whatsappStatus() === null ? 'WhatsApp Status Unknown' : (whatsappStatus() ? 'WhatsApp Online' : 'WhatsApp Offline')"
           class="relative"
+          (click)="onWhatsAppClick()"
         >
           <!-- WhatsApp Logo SVG -->
           <svg 
@@ -70,8 +71,9 @@
           <!-- Status Indicator -->
           <span 
             class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-background"
-            [class.bg-green-500]="whatsappStatus()"
-            [class.bg-red-500]="!whatsappStatus()"
+            [class.bg-green-500]="whatsappStatus() === true"
+            [class.bg-red-500]="whatsappStatus() === false"
+            [class.bg-gray-500]="whatsappStatus() === null"
           ></span>
         </z-button>
       </div>

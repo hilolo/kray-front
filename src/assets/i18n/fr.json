@@ -845,5 +845,31 @@
       "dailyLimitReached": "Limite quotidienne atteinte",
       "sendMessage": "Envoyer le message"
     }
+  },
+  "whatsapp": {
+    "connected": {
+      "title": "WhatsApp est connecté",
+      "description": "Votre compte WhatsApp a été connecté avec succès"
+    },
+    "qr": {
+      "title": "Scannez le code QR pour connecter WhatsApp",
+      "description": "Ouvrez WhatsApp sur votre téléphone et scannez ce code QR pour connecter votre compte",
+      "loading": "Chargement du code QR...",
+      "alt": "Code QR WhatsApp",
+      "instructions": "Assurez-vous que votre téléphone est connecté à Internet et que WhatsApp est ouvert"
+    },
+    "disconnect": {
+      "button": "Déconnecter",
+      "success": "WhatsApp déconnecté avec succès",
+      "error": "Échec de la déconnexion de WhatsApp. Veuillez réessayer."
+    },
+    "check": {
+      "button": "Vérifier WhatsApp",
+      "title": "Vérification WhatsApp",
+      "exists": "Le numéro de téléphone {number} a WhatsApp",
+      "notExists": "Le numéro de téléphone {number} n'a pas WhatsApp",
+      "error": "Échec de la vérification WhatsApp. Veuillez réessayer.",
+      "errorTitle": "Échec de la vérification WhatsApp"
+    }
   }
 }

@@ -1,0 +1,60 @@
+<div class="flex flex-col items-center justify-center space-y-4 p-6">
+  @if (isConnected()) {
+    <!-- Success State -->
+    <div class="flex flex-col items-center justify-center space-y-4">
+      <div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
+        <z-icon zType="check" class="w-8 h-8 text-green-600" />
+      </div>
+      <h3 class="text-lg font-semibold text-green-600">{{ 'whatsapp.connected.title' | translate }}</h3>
+      <p class="text-sm text-muted-foreground text-center">
+        {{ 'whatsapp.connected.description' | translate }}
+      </p>
+      <z-button
+        zType="destructive"
+        zSize="default"
+        [zLoading]="isDisconnecting()"
+        [disabled]="isDisconnecting()"
+        (click)="disconnect()"
+        class="mt-4"
+      >
+        <z-icon zType="log-out" />
+        {{ 'whatsapp.disconnect.button' | translate }}
+      </z-button>
+    </div>
+  } @else {
+    <!-- QR Code State with Loader -->
+    <h3 class="text-lg font-semibold">{{ 'whatsapp.qr.title' | translate }}</h3>
+    <p class="text-sm text-muted-foreground text-center">
+      {{ 'whatsapp.qr.description' | translate }}
+    </p>
+    
+    <!-- Loader always shown above QR code, stops when connected -->
+    <div class="flex flex-col items-center justify-center space-y-2 py-2">
+      <div [class.animate-spin]="!isConnected()">
+        <z-icon zType="loader-circle" class="w-6 h-6 text-primary" />
+      </div>
+      @if (!qrCodeBase64()) {
+        <p class="text-sm text-muted-foreground text-center">
+          {{ 'whatsapp.qr.loading' | translate }}
+        </p>
+      }
+    </div>
+    
+    <!-- QR Code -->
+    @if (qrCodeBase64() && !isConnected()) {
+      <div class="bg-white p-4 rounded-lg shadow-lg">
+        <img 
+          [src]="qrCodeBase64()" 
+          [alt]="'whatsapp.qr.alt' | translate" 
+          class="w-64 h-64"
+          style="filter: grayscale(100%) contrast(200%);"
+        />
+      </div>
+    }
+    
+    <p class="text-xs text-muted-foreground text-center max-w-sm">
+      {{ 'whatsapp.qr.instructions' | translate }}
+    </p>
+  }
+</div>
+
