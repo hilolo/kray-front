@@ -16,7 +16,7 @@ import { ZardCheckboxComponent } from '@shared/components/checkbox/checkbox.comp
 import { ZardComboboxComponent, ZardComboboxOption } from '@shared/components/combobox/combobox.component';
 import { ZardInputGroupComponent } from '@shared/components/input-group/input-group.component';
 import { ZardInputDirective } from '@shared/components/input/input.directive';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, Observable } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 import type { Transaction } from '@shared/models/transaction/transaction.model';
@@ -1091,6 +1091,113 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
       error: (error) => {
         console.error('Error fetching fees receipt:', error);
         const errorMessage = error?.error?.message || error?.message || 'Failed to generate fees receipt';
+        this.toastService.error(errorMessage);
+        this.isGeneratingReceipt.set(false);
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  /**
+   * Generate public receipt PDF and copy base64 to clipboard
+   * Only available for Paid transactions
+   * Generates base64 entirely on frontend using appropriate receipt type
+   */
+  onGeneratePublicReceipt(transaction: Transaction): void {
+    if (this.isGeneratingReceipt()) {
+      return;
+    }
+
+    // Validate transaction status
+    if (transaction.status !== TransactionStatus.Paid) {
+      this.toastService.error('Receipt can only be generated for paid transactions');
+      return;
+    }
+
+    // Determine which receipt type to generate based on transaction
+    const transactionType = transaction.type ?? transaction.category;
+    let receiptObservable: Observable<any>;
+
+    if (transactionType === TransactionType.Revenue) {
+      if (transaction.revenueType === RevenueType.Loyer) {
+        receiptObservable = this.transactionService.generateLeasingReceipt(transaction.id);
+      } else if (transaction.revenueType === RevenueType.Caution) {
+        receiptObservable = this.transactionService.generateDepositReceipt(transaction.id);
+      } else if (transaction.revenueType === RevenueType.FraisAgence) {
+        receiptObservable = this.transactionService.generateFeesReceipt(transaction.id);
+      } else {
+        this.toastService.error('Receipt type not supported for this transaction');
+        return;
+      }
+    } else {
+      this.toastService.error('Public receipt can only be generated for revenue transactions');
+      return;
+    }
+
+    this.isGeneratingReceipt.set(true);
+    this.cdr.markForCheck();
+
+    receiptObservable.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: async (pdfMakeData: any) => {
+        try {
+          // Handle response format (may be wrapped in data property)
+          let dataToProcess: any = pdfMakeData;
+          if (typeof pdfMakeData === 'object' && pdfMakeData !== null && 'data' in pdfMakeData) {
+            dataToProcess = (pdfMakeData as any).data;
+          }
+
+          // Parse PDFMake JSON if needed
+          let pdfMakeJson: any;
+          if (typeof dataToProcess === 'string') {
+            pdfMakeJson = JSON.parse(dataToProcess);
+          } else if (typeof dataToProcess === 'object' && dataToProcess !== null) {
+            pdfMakeJson = dataToProcess;
+          } else {
+            throw new Error('Invalid PDFMake data format');
+          }
+
+          // Validate PDFMake structure
+          if (!pdfMakeJson || (!pdfMakeJson.content && !pdfMakeJson.text)) {
+            throw new Error('PDFMake data is missing required content property');
+          }
+
+          // Convert PDFMake JSON to PDF data URL (generated entirely on frontend)
+          const pdfResult = await this.pdfGenerationService.generatePdfFromJson(pdfMakeJson);
+
+          // Extract base64 from dataUrl (format: "data:application/pdf;base64,<base64_string>")
+          const dataUrl = pdfResult.dataUrl;
+          const base64Match = dataUrl.match(/^data:application\/pdf;base64,(.+)$/);
+          
+          if (!base64Match || !base64Match[1]) {
+            throw new Error('Failed to extract base64 from PDF data URL');
+          }
+
+          const base64String = base64Match[1];
+
+          // Copy base64 to clipboard
+          try {
+            await navigator.clipboard.writeText(base64String);
+            this.toastService.success('PDF base64 copied to clipboard');
+          } catch (clipboardError) {
+            console.error('Failed to copy to clipboard:', clipboardError);
+            this.toastService.error('Failed to copy base64 to clipboard');
+          }
+
+          this.isGeneratingReceipt.set(false);
+          this.cdr.markForCheck();
+        } catch (error: any) {
+          console.error('Error generating public receipt:', error);
+          const errorMessage = error?.message || 'Failed to generate public receipt';
+          this.toastService.error(errorMessage);
+          this.isGeneratingReceipt.set(false);
+          this.cdr.markForCheck();
+        }
+      },
+      error: (error: any) => {
+        console.error('Error fetching receipt:', error);
+        const errorMessage = error?.error?.message || error?.message || 'Failed to generate receipt';
         this.toastService.error(errorMessage);
         this.isGeneratingReceipt.set(false);
         this.cdr.markForCheck();

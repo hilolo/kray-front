@@ -433,7 +433,9 @@
       "paid": "Paid",
       "leasingReceipt": "Leasing Receipt",
       "depositReceipt": "Deposit Receipt",
-      "feesReceipt": "Fees Receipt"
+      "feesReceipt": "Fees Receipt",
+      "publicReceipt": "Public Receipt",
+      "generateReceipt": "Generate Receipt"
     }
   },
   "tasks": {

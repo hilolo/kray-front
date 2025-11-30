@@ -108,5 +108,15 @@ export class TransactionService {
   generateFeesReceipt(id: string): Observable<any> {
     return this.apiService.post<any>(`Transaction/${id}/feesreceipt`, {});
   }
+
+  /**
+   * Generate public transaction receipt PDF (public access, no authentication required)
+   * GET api/public/transactions/{id}/pdf
+   * @param id Transaction ID
+   * @returns Observable of processed PDFMake JSON object with placeholders replaced
+   */
+  generatePublicReceipt(id: string): Observable<any> {
+    return this.apiService.get<any>(`public/transactions/${id}/pdf`);
+  }
 }
 

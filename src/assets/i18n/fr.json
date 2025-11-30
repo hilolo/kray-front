@@ -433,7 +433,9 @@
       "paid": "Payé",
       "leasingReceipt": "Reçu de location",
       "depositReceipt": "Reçu de dépôt",
-      "feesReceipt": "Reçu de frais"
+      "feesReceipt": "Reçu de frais",
+      "publicReceipt": "Reçu public",
+      "generateReceipt": "Générer un reçu"
     }
   },
   "tasks": {
