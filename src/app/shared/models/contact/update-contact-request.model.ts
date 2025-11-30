@@ -13,6 +13,7 @@ export interface UpdateContactRequest {
   rc?: string;
   identifier?: string;
   email?: string;
+  adresse?: string;
   phones?: string[];
   avatar?: string; // Base64 string or null/empty to preserve existing
   removeAvatar?: boolean; // Flag to indicate if avatar should be removed

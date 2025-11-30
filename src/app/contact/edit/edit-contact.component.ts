@@ -97,6 +97,7 @@ export class EditContactComponent implements OnInit, OnDestroy {
     rc: '',
     phoneNumbers: [''],
     email: '',
+    adresse: '',
     isCompany: false,
   });
 
@@ -129,6 +130,7 @@ export class EditContactComponent implements OnInit, OnDestroy {
   readonly buildingIconTemplate = viewChild.required<TemplateRef<void>>('buildingIconTemplate');
   readonly mailIconTemplate = viewChild.required<TemplateRef<void>>('mailIconTemplate');
   readonly phoneIconTemplate = viewChild.required<TemplateRef<void>>('phoneIconTemplate');
+  readonly mapPinIconTemplate = viewChild.required<TemplateRef<void>>('mapPinIconTemplate');
 
   // Computed values
   readonly isCompany = computed(() => this.formData().isCompany);
@@ -381,6 +383,7 @@ export class EditContactComponent implements OnInit, OnDestroy {
       rc: contact.rc || '',
       phoneNumbers: contact.phones && contact.phones.length > 0 ? contact.phones : [''],
       email: contact.email || '',
+      adresse: contact.adresse || '',
       isCompany: contact.isACompany,
     });
 
@@ -418,6 +421,7 @@ export class EditContactComponent implements OnInit, OnDestroy {
       rc: '',
       phoneNumbers: [''],
       email: '',
+      adresse: '',
       isCompany: false,
     });
     this.avatarUrl.set(null);
@@ -800,6 +804,10 @@ export class EditContactComponent implements OnInit, OnDestroy {
       request.email = formData.email.trim();
     }
 
+    if (formData.adresse && formData.adresse.trim()) {
+      request.adresse = formData.adresse.trim();
+    }
+
     // Add phone numbers (filter out empty ones)
     const phones = formData.phoneNumbers
       .map((phone) => phone.trim())
@@ -871,6 +879,10 @@ export class EditContactComponent implements OnInit, OnDestroy {
     // Add contact details
     if (formData.email && formData.email.trim()) {
       request.email = formData.email.trim();
+    }
+
+    if (formData.adresse && formData.adresse.trim()) {
+      request.adresse = formData.adresse.trim();
     }
 
     // Add phone numbers (filter out empty ones)

@@ -84,6 +84,12 @@
                       }
                     </div>
                   }
+                  @if (contact()?.adresse) {
+                    <div class="flex items-center gap-2 text-sm text-muted-foreground mt-2">
+                      <z-icon zType="map-pin" zSize="sm" />
+                      <span>{{ contact()?.adresse }}</span>
+                    </div>
+                  }
                 </div>
               </div>
 

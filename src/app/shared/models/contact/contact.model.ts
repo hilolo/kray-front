@@ -46,6 +46,7 @@ export interface Contact {
   type: ContactTypeString;
   isACompany: boolean;
   email: string;
+  adresse: string;
   phones: string[];
   avatar: string | null;
   attachments?: Attachment[];

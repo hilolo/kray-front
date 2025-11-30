@@ -393,6 +393,23 @@
         </z-form-field>
       </div>
 
+      <!-- Address Field -->
+      <z-form-field>
+        <z-form-label>Address</z-form-label>
+        <z-form-control>
+          <z-input-group [zPrefix]="mapPinIconTemplate">
+            <input
+              z-input
+              type="text"
+              [ngModel]="formData().adresse"
+              (ngModelChange)="updateField('adresse', $event)"
+              placeholder="Enter address"
+              class="w-full"
+            />
+          </z-input-group>
+        </z-form-control>
+      </z-form-field>
+
       <!-- Additional Phone Numbers -->
       @if (formData().phoneNumbers.length > 1) {
         <div class="space-y-3">
@@ -615,6 +632,10 @@
 
 <ng-template #phoneIconTemplate>
   <z-icon zType="smartphone" zSize="sm" />
+</ng-template>
+
+<ng-template #mapPinIconTemplate>
+  <z-icon zType="map-pin" zSize="sm" />
 </ng-template>
 
 <!-- File Viewer -->

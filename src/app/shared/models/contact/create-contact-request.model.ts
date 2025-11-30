@@ -23,6 +23,7 @@ export interface CreateContactRequest {
   type: ContactType; // Required
   isACompany: boolean; // Required
   email?: string;
+  adresse?: string;
   phones?: string[];
   avatar?: string;
   attachments?: AttachmentInput[];

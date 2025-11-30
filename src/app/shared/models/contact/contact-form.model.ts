@@ -15,6 +15,7 @@ export interface ContactFormData {
   // Contact Details
   phoneNumbers: string[];
   email: string;
+  adresse: string;
   
   // Settings
   isCompany: boolean;
