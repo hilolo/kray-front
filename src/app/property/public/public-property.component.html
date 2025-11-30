@@ -221,15 +221,17 @@
             <div class="w-full lg:w-80 space-y-6 shrink-0 lg:pt-[136px]">
               <z-card [zTitle]="'property.public.contactInformation' | translate">
                 <div class="space-y-4">
-                  @if (property()?.companyLogoUrl) {
+                  @if (companyLogoDataUrl() && !companyLogoError()) {
                     <div class="flex justify-center mb-4">
                       <img 
-                        [src]="property()!.companyLogoUrl!" 
+                        [src]="companyLogoDataUrl()!" 
                         [alt]="property()!.companyName || 'Company logo'"
                         class="max-w-32 max-h-32 object-contain"
+                        (error)="onCompanyLogoError()"
                       />
                     </div>
-                  } @else if (property()?.companyName) {
+                  }
+                  @if ((!companyLogoDataUrl() || companyLogoError()) && property()?.companyName) {
                     <div class="flex justify-center mb-4">
                       <z-avatar zSize="lg" class="text-2xl">
                         {{ (property()?.companyName || 'C').charAt(0).toUpperCase() }}

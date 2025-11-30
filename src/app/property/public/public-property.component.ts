@@ -61,6 +61,7 @@ export class PublicPropertyComponent implements OnInit {
   readonly imageAnimationDirection = signal<'next' | 'prev' | ''>('');
   readonly reservations = signal<Reservation[]>([]);
   readonly isLoadingReservations = signal(false);
+  readonly companyLogoError = signal(false);
   
   // Current month/year for calendar
   readonly currentCalendarMonth = signal<number | undefined>(undefined);
@@ -121,6 +122,34 @@ export class PublicPropertyComponent implements OnInit {
     const prop = this.property();
     return !!(prop?.companyName || prop?.companyEmail || prop?.companyPhone || prop?.companyWebsite || prop?.companyAddress);
   });
+  readonly companyLogoDataUrl = computed(() => {
+    const logoUrl = this.property()?.companyLogoUrl;
+    if (!logoUrl) return null;
+    
+    // If it already has data URL prefix, return as is
+    if (logoUrl.startsWith('data:')) {
+      return logoUrl;
+    }
+    
+    // If it's a regular HTTP/HTTPS URL, return as is
+    if (logoUrl.startsWith('http://') || logoUrl.startsWith('https://')) {
+      return logoUrl;
+    }
+    
+    // Otherwise, assume it's a base64 string and add the prefix
+    // Try to detect image type from base64 content
+    let mimeType = 'image/png'; // default
+    if (logoUrl.startsWith('/9j/') || logoUrl.startsWith('iVBORw0KGgo')) {
+      // JPEG starts with /9j/, PNG starts with iVBORw0KGgo
+      mimeType = logoUrl.startsWith('/9j/') ? 'image/jpeg' : 'image/png';
+    } else if (logoUrl.startsWith('R0lGOD')) {
+      mimeType = 'image/gif';
+    } else if (logoUrl.startsWith('UklGR')) {
+      mimeType = 'image/webp';
+    }
+    
+    return `data:${mimeType};base64,${logoUrl}`;
+  });
   readonly currentTheme = this.darkModeService.getCurrentThemeSignal();
   readonly shouldShowCalendar = computed(() => {
     const prop = this.property();
@@ -160,6 +189,7 @@ export class PublicPropertyComponent implements OnInit {
         if (property) {
           this.property.set(property);
           this.currentImageIndex.set(0);
+          this.companyLogoError.set(false); // Reset logo error when loading new property
           // Load public reservations if calendar should be shown
           if (property.isReservationShow && property.category === PropertyCategory.LocationVacances) {
             const now = new Date();
@@ -299,6 +329,10 @@ export class PublicPropertyComponent implements OnInit {
     if (prop?.companyEmail) {
       window.location.href = `mailto:${prop.companyEmail}`;
     }
+  }
+
+  onCompanyLogoError(): void {
+    this.companyLogoError.set(true);
   }
 
   private loadPublicReservations(propertyId: string): void {
