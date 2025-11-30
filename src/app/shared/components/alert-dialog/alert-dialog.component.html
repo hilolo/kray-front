@@ -6,7 +6,16 @@
       }
 
       @if (config.zDescription) {
-        <p data-testid="z-alert-description" [id]="descriptionId()" class="text-sm text-muted-foreground">{{ config.zDescription }}</p>
+        <div data-testid="z-alert-description" [id]="descriptionId()" class="text-sm text-muted-foreground">
+          @if (config.zIcon) {
+            <div class="flex items-center gap-3">
+              <z-icon [zType]="iconType()" zSize="lg" [class.text-green-600]="config.zType === 'default'" [class.text-red-600]="config.zType === 'warning'" />
+              <span>{{ config.zDescription }}</span>
+            </div>
+          } @else {
+            <p>{{ config.zDescription }}</p>
+          }
+        </div>
       }
     </header>
   }

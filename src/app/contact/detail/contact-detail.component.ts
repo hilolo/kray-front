@@ -1146,15 +1146,23 @@ export class ContactDetailComponent implements OnInit, OnDestroy {
           this.checkingWhatsApp.set(updatedSet);
 
           // Get the check result for this phone number
+          // Backend formats numbers (replaces 0 with 212), so we need to format the number for matching
           const cleanNumber = phoneNumber.replace(/[^\d]/g, '');
-          const checkResult = response.content?.find(r => r.number === cleanNumber || r.number === phoneNumber);
+          const formattedNumber = cleanNumber.startsWith('0') ? '212' + cleanNumber.substring(1) : cleanNumber;
+          
+          // Try to find the result - backend returns formatted numbers
+          // Since we only send one number, we can use the first result
+          const result = response.content?.[0];
           
           // Determine message, icon, and type based on exists status
+          // Check if exists is explicitly true (not just truthy)
+          const hasWhatsApp = result?.exists === true;
+          
           let message: string;
           let icon: string;
           let dialogType: 'default' | 'warning' = 'default';
           
-          if (checkResult?.exists) {
+          if (hasWhatsApp) {
             message = this.translateService.instant('whatsapp.check.exists')
               .replace('{number}', phoneNumber);
             icon = 'circle-check';

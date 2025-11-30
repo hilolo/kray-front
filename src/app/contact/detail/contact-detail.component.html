@@ -66,19 +66,20 @@
                         <div class="flex items-center gap-2 text-sm text-muted-foreground">
                           <z-icon zType="smartphone" zSize="sm" />
                           <span>{{ phone }}</span>
-                          <z-icon zType="message-circle" zSize="sm" class="text-green-600" />
-                          <z-button
-                            zType="ghost"
-                            zSize="sm"
-                            [zLoading]="isCheckingWhatsApp(phone)"
+                          <button
+                            type="button"
                             [disabled]="isCheckingWhatsApp(phone)"
                             (click)="checkWhatsApp(phone)"
                             [attr.aria-label]="'whatsapp.check.button' | translate"
-                            class="ml-auto"
+                            class="ml-auto cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                             title="{{ 'whatsapp.check.button' | translate }}"
                           >
-                            <z-icon zType="send" zSize="sm" />
-                          </z-button>
+                            @if (isCheckingWhatsApp(phone)) {
+                              <z-icon zType="loader-circle" zSize="sm" class="text-green-600 animate-spin" />
+                            } @else {
+                              <z-icon zType="message-circle" zSize="sm" class="text-green-600 hover:text-green-700 transition-colors" />
+                            }
+                          </button>
                         </div>
                       }
                     </div>

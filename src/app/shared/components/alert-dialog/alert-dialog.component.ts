@@ -23,6 +23,7 @@ import { ClassValue } from 'clsx';
 
 import { alertDialogVariants, ZardAlertDialogVariants } from './alert-dialog.variants';
 import { ZardButtonComponent } from '../button/button.component';
+import { ZardIconComponent } from '../icon/icon.component';
 import { ZardAlertDialogService } from './alert-dialog.service';
 import { ZardAlertDialogRef } from './alert-dialog-ref';
 import { generateId, mergeClasses } from '@shared/utils/merge-classes';
@@ -54,7 +55,7 @@ export class ZardAlertDialogOptions<T> {
   selector: 'z-alert-dialog',
   exportAs: 'zAlertDialog',
   standalone: true,
-  imports: [OverlayModule, PortalModule, ZardButtonComponent, A11yModule],
+  imports: [OverlayModule, PortalModule, ZardButtonComponent, ZardIconComponent, A11yModule],
   templateUrl: './alert-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
@@ -98,6 +99,10 @@ export class ZardAlertDialogComponent<T> extends BasePortalOutlet {
   public alertDialogRef?: ZardAlertDialogRef<T>;
 
   protected readonly isStringContent = typeof this.config.zContent === 'string';
+  
+  protected readonly iconType = computed(() => {
+    return this.config.zIcon as any;
+  });
 
   readonly portalOutlet = viewChild.required(CdkPortalOutlet);
 
