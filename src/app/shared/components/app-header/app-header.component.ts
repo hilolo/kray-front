@@ -40,6 +40,7 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
   readonly currentLanguage = this.languageService.getCurrentLanguageSignal();
   readonly currentTheme = this.darkmodeService.getCurrentThemeSignal();
   readonly isFullscreen = signal(false);
+  readonly whatsappStatus = signal<boolean>(false); // false = offline (red), true = online (green)
 
   ngOnInit(): void {
     // Initialize fullscreen state
