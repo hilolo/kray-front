@@ -855,7 +855,7 @@ export class LeasingListComponent implements OnInit, OnDestroy {
   formatCurrency(amount: number): string {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'MAD',
     }).format(amount);
   }
 
