@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { imageSlideAnimation } from '@shared/animations/image-swap.animations';
 import { ZardCardComponent } from '@shared/components/card/card.component';
 import { ZardButtonComponent } from '@shared/components/button/button.component';
 import { ZardIconComponent } from '@shared/components/icon/icon.component';
@@ -41,7 +40,6 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './public-property.component.html',
-  animations: [imageSlideAnimation],
 })
 export class PublicPropertyComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
@@ -58,10 +56,15 @@ export class PublicPropertyComponent implements OnInit {
   readonly currentImageIndex = signal(0);
   readonly isImageViewerOpen = signal(false);
   readonly imageViewerIndex = signal(0);
-  readonly imageAnimationDirection = signal<'next' | 'prev' | ''>('');
   readonly reservations = signal<Reservation[]>([]);
   readonly isLoadingReservations = signal(false);
   readonly companyLogoError = signal(false);
+  
+  // Touch/swipe handling for mobile
+  private touchStartX = 0;
+  private touchStartY = 0;
+  private touchEndX = 0;
+  private touchEndY = 0;
   
   // Current month/year for calendar
   readonly currentCalendarMonth = signal<number | undefined>(undefined);
@@ -214,18 +217,9 @@ export class PublicPropertyComponent implements OnInit {
     const atts = this.attachments();
     if (atts.length === 0) return;
     
-    // Update index first
+    // Update index
     const newIndex = (this.currentImageIndex() + 1) % atts.length;
     this.currentImageIndex.set(newIndex);
-    
-    // Set animation direction - use requestAnimationFrame for smooth state change
-    requestAnimationFrame(() => {
-      this.imageAnimationDirection.set('next');
-      // Reset direction after animation completes (450ms)
-      setTimeout(() => {
-        this.imageAnimationDirection.set('');
-      }, 450);
-    });
   }
 
   previousImage(event?: Event): void {
@@ -239,18 +233,9 @@ export class PublicPropertyComponent implements OnInit {
     const atts = this.attachments();
     if (atts.length === 0) return;
     
-    // Update index first
+    // Update index
     const newIndex = (this.currentImageIndex() - 1 + atts.length) % atts.length;
     this.currentImageIndex.set(newIndex);
-    
-    // Set animation direction - use requestAnimationFrame for smooth state change
-    requestAnimationFrame(() => {
-      this.imageAnimationDirection.set('prev');
-      // Reset direction after animation completes (450ms)
-      setTimeout(() => {
-        this.imageAnimationDirection.set('');
-      }, 450);
-    });
   }
 
   openImageViewer(event?: Event): void {
@@ -398,6 +383,34 @@ export class PublicPropertyComponent implements OnInit {
     // Reload reservations for the new month (for now, we load all reservations)
     // The calendar component will filter by month
     this.loadPublicReservations(property.id);
+  }
+
+  // Touch event handlers for mobile swipe
+  onTouchStart(event: TouchEvent): void {
+    this.touchStartX = event.changedTouches[0].screenX;
+    this.touchStartY = event.changedTouches[0].screenY;
+  }
+
+  onTouchEnd(event: TouchEvent): void {
+    this.touchEndX = event.changedTouches[0].screenX;
+    this.touchEndY = event.changedTouches[0].screenY;
+    this.handleSwipe();
+  }
+
+  private handleSwipe(): void {
+    const deltaX = this.touchEndX - this.touchStartX;
+    const deltaY = this.touchEndY - this.touchStartY;
+    
+    // Only handle horizontal swipes (ignore vertical scrolling)
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
+      if (deltaX > 0) {
+        // Swipe right - previous image
+        this.previousImage();
+      } else {
+        // Swipe left - next image
+        this.nextImage();
+      }
+    }
   }
 }
 

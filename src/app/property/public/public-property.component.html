@@ -62,14 +62,44 @@
 
             <!-- Property Media -->
             <z-card class="p-0 overflow-hidden" zBodySpacing="none">
-              <div class="relative w-full aspect-[4/3] bg-muted flex items-center justify-center overflow-hidden">
+              <!-- Mobile: Horizontal scrollable gallery -->
+              @if (attachments().length > 0) {
+                <div class="md:hidden relative w-full aspect-[4/3] bg-muted">
+                  <div class="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide h-full" style="scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;">
+                    @for (attachment of attachments(); track attachment.url; let i = $index) {
+                      <div class="flex-shrink-0 w-full h-full snap-center relative">
+                        <img 
+                          [src]="attachment.url" 
+                          [alt]="propertyName() + ' - Image ' + (i + 1)" 
+                          class="w-full h-full object-cover cursor-pointer"
+                          (click)="openImageViewer($event); imageViewerIndex.set(i)"
+                        />
+                      </div>
+                    }
+                  </div>
+                  <div class="absolute top-2 right-2 z-20 pointer-events-auto">
+                    <z-button zType="ghost" zSize="sm" class="text-xs bg-background/80 hover:bg-background/90 shadow-lg">
+                      {{ attachments().length }}
+                    </z-button>
+                  </div>
+                </div>
+              } @else {
+                <div class="md:hidden relative w-full aspect-[4/3] bg-muted flex items-center justify-center">
+                  <z-icon zType="image" class="w-12 h-12 text-muted-foreground" />
+                </div>
+              }
+
+              <!-- Desktop: Single image with navigation -->
+              <div 
+                class="hidden md:block relative w-full aspect-[4/3] bg-muted flex items-center justify-center overflow-hidden"
+                (touchstart)="onTouchStart($event)"
+                (touchend)="onTouchEnd($event)"
+              >
                 @if (currentImage()) {
                   <img 
                     [src]="currentImage()!" 
                     [alt]="propertyName()" 
-                    [@imageSlide]="imageAnimationDirection()"
-                    class="w-full h-full object-cover absolute inset-0 transition-none cursor-pointer"
-                    style="will-change: transform, opacity; transform-origin: center center; backface-visibility: hidden;"
+                    class="w-full h-full object-cover absolute inset-0 cursor-pointer touch-none select-none"
                     (click)="openImageViewer($event)"
                   />
                 } @else {

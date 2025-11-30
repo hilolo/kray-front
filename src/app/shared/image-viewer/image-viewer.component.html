@@ -25,9 +25,25 @@
         </z-button>
       </div>
 
-      <!-- Navigation Buttons -->
+      <!-- Mobile: Horizontal scrollable gallery -->
+      <div class="md:hidden image-content-mobile">
+        <div class="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide h-full w-full" style="scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;">
+          @for (image of allImages(); track image.url; let i = $index) {
+            <div class="flex-shrink-0 w-full h-full snap-center relative flex items-center justify-center">
+              <img 
+                [src]="image.url" 
+                [alt]="image.name || 'Image ' + (i + 1)" 
+                class="max-w-full max-h-full object-contain"
+              />
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Desktop: Single image with navigation buttons -->
+      <!-- Navigation Buttons (Desktop only) -->
       @if (hasMultipleImages()) {
-        <div class="navigation-buttons">
+        <div class="hidden md:flex navigation-buttons">
           <z-button
             zType="ghost"
             zSize="icon"
@@ -50,9 +66,9 @@
         </div>
       }
 
-      <!-- Image Info -->
+      <!-- Image Info (Desktop only) -->
       @if (currentImageName() || formattedFileSize() || imageCounter()) {
-        <div class="image-info">
+        <div class="hidden md:block image-info">
           @if (currentImageName()) {
             <div class="image-name">{{ currentImageName() }}</div>
           }
@@ -65,14 +81,16 @@
         </div>
       }
 
-      <!-- Image Content -->
-      <div class="image-content">
+      <!-- Image Content (Desktop only) -->
+      <div 
+        class="hidden md:flex image-content desktop-image-content"
+        (touchstart)="onTouchStart($event)"
+        (touchend)="onTouchEnd($event)"
+      >
         <img
           [src]="currentImageUrl()"
           [alt]="currentImageName() || 'Full size image'"
-          [@imageSlide]="imageAnimationDirection()"
-          class="full-size-image"
-          style="will-change: transform, opacity; transform-origin: center center; backface-visibility: hidden;">
+          class="full-size-image">
       </div>
     </div>
   </div>

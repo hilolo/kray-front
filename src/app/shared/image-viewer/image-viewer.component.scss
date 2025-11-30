@@ -10,17 +10,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: fadeIn 0.2s ease-in-out;
   cursor: pointer;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
 }
 
 /* Image Viewer Modal */
@@ -32,18 +22,6 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  animation: zoomIn 0.3s ease-in-out;
-}
-
-@keyframes zoomIn {
-  from {
-    transform: scale(0.8);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
 }
 
 /* Action Buttons Container */
@@ -63,16 +41,10 @@
   backdrop-filter: blur(15px);
   border: 2px solid rgba(255, 255, 255, 0.2);
   color: white;
-  transition: all 0.3s ease;
   
   &:hover {
     background-color: rgba(255, 255, 255, 0.25);
     border-color: rgba(255, 255, 255, 0.4);
-    transform: scale(1.05);
-  }
-  
-  &:active {
-    transform: scale(0.95);
   }
 }
 
@@ -135,7 +107,6 @@
   background-color: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(15px);
   border: 2px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -144,7 +115,6 @@
   &:hover {
     background-color: rgba(255, 255, 255, 0.25);
     border-color: rgba(255, 255, 255, 0.4);
-    transform: scale(1.05);
   }
 }
 
@@ -227,6 +197,41 @@
   align-items: center;
   justify-content: center;
   padding: 80px 40px 40px 40px;
+}
+
+/* Hide desktop image content on mobile */
+@media (max-width: 767px) {
+  .desktop-image-content,
+  .image-content {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+  }
+  
+  .full-size-image {
+    display: none !important;
+  }
+}
+
+/* Mobile Image Content - Horizontal Scrollable Gallery */
+.image-content-mobile {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.image-content-mobile > div {
+  height: 100%;
 }
 
 /* Full Size Image */

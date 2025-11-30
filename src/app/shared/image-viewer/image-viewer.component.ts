@@ -1,8 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, HostListener, inject, input, output, signal, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, HostListener, inject, input, output, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ZardButtonComponent } from '@shared/components/button/button.component';
 import { ZardIconComponent } from '@shared/components/icon/icon.component';
-import { imageSlideAnimation } from '@shared/animations/image-swap.animations';
 
 export interface ImageItem {
   url: string;
@@ -23,7 +22,6 @@ export interface ImageItem {
   styleUrls: ['./image-viewer.component.scss'],
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [imageSlideAnimation],
 })
 export class ZardImageViewerComponent {
   readonly imageUrl = input<string>('');
@@ -36,13 +34,11 @@ export class ZardImageViewerComponent {
   readonly close = output<void>();
   readonly imageChanged = output<number>();
 
-  // Animation direction for image swap
-  private readonly animationDirection = signal<'next' | 'prev' | ''>('');
-  
-  protected readonly imageAnimationDirection = computed<'next' | 'prev' | ''>(() => {
-    // Return the current animation direction
-    return this.animationDirection();
-  });
+  // Touch/swipe handling for mobile
+  private touchStartX = 0;
+  private touchStartY = 0;
+  private touchEndX = 0;
+  private touchEndY = 0;
 
   // Current image
   protected readonly currentImage = computed<ImageItem>(() => {
@@ -90,6 +86,20 @@ export class ZardImageViewerComponent {
     return images && images.length > 1;
   });
 
+  // Get all images for mobile gallery
+  protected readonly allImages = computed(() => {
+    const images = this.images();
+    if (images && images.length > 0) {
+      return images;
+    }
+    // Fallback to single image
+    return [{
+      url: this.imageUrl(),
+      name: this.imageName(),
+      size: this.fileSize(),
+    }];
+  });
+
   // Image counter text
   protected readonly imageCounter = computed(() => {
     if (!this.hasMultipleImages()) {
@@ -119,17 +129,8 @@ export class ZardImageViewerComponent {
         index--;
       }
       
-      // Emit the new index first
+      // Emit the new index
       this.imageChanged.emit(index);
-      
-      // Set animation direction - use requestAnimationFrame for smooth state change
-      requestAnimationFrame(() => {
-        this.animationDirection.set('prev');
-        // Reset direction after animation completes (450ms)
-        setTimeout(() => {
-          this.animationDirection.set('');
-        }, 450);
-      });
     }
   }
 
@@ -152,17 +153,8 @@ export class ZardImageViewerComponent {
         index++;
       }
       
-      // Emit the new index first
+      // Emit the new index
       this.imageChanged.emit(index);
-      
-      // Set animation direction - use requestAnimationFrame for smooth state change
-      requestAnimationFrame(() => {
-        this.animationDirection.set('next');
-        // Reset direction after animation completes (450ms)
-        setTimeout(() => {
-          this.animationDirection.set('');
-        }, 450);
-      });
     }
   }
 
@@ -196,6 +188,36 @@ export class ZardImageViewerComponent {
    */
   closeViewer(): void {
     this.close.emit();
+  }
+
+  /**
+   * Touch event handlers for mobile swipe
+   */
+  onTouchStart(event: TouchEvent): void {
+    this.touchStartX = event.changedTouches[0].screenX;
+    this.touchStartY = event.changedTouches[0].screenY;
+  }
+
+  onTouchEnd(event: TouchEvent): void {
+    this.touchEndX = event.changedTouches[0].screenX;
+    this.touchEndY = event.changedTouches[0].screenY;
+    this.handleSwipe();
+  }
+
+  private handleSwipe(): void {
+    const deltaX = this.touchEndX - this.touchStartX;
+    const deltaY = this.touchEndY - this.touchStartY;
+    
+    // Only handle horizontal swipes (ignore vertical scrolling)
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
+      if (deltaX > 0) {
+        // Swipe right - previous image
+        this.goToPrevious();
+      } else {
+        // Swipe left - next image
+        this.goToNext();
+      }
+    }
   }
 
   /**
