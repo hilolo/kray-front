@@ -53,19 +53,11 @@
         </div>
       } @else {
         <z-card class="max-w-7xl mx-auto">
-          <div class="p-8 space-y-8">
-            <!-- Property and Tenant Section (Read-only in edit mode) -->
-            <div class="space-y-6 pb-6 border-b">
-              <div>
-                <h3 class="text-lg font-semibold mb-1">Property & Tenant</h3>
-                <p class="text-sm text-muted-foreground">
-                  @if (isEditMode()) {
-                    Property and tenant information (cannot be changed)
-                  } @else {
-                    Select the property and tenant for this lease
-                  }
-                </p>
-              </div>
+          <div class="p-8">
+            <z-accordion zType="multiple" zDefaultValue="['property-tenant', 'tenancy-period', 'payment-info', 'receipt-notification', 'additional-info', 'documents']">
+              <!-- Property and Tenant Section -->
+              <z-accordion-item zValue="property-tenant" zTitle="Property & Tenant">
+                <div class="space-y-6">
 
               <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <!-- Property Field -->
@@ -177,16 +169,31 @@
                   </z-form-field>
                 }
               </div>
-            </div>
 
-            <!-- Tenancy Period Section -->
-            <div class="space-y-6 pb-6 border-b">
-              <div>
-                <h3 class="text-lg font-semibold mb-1">Tenancy Period</h3>
-                <p class="text-sm text-muted-foreground">
-                  Enter the start and end dates for the lease
-                </p>
+              <!-- Save Button -->
+              <div class="flex justify-end mt-4 pt-4 border-t">
+                <z-button 
+                  [zType]="isSavingSection('property-tenant') ? 'ghost' : 'default'" 
+                  [disabled]="isSavingSection('property-tenant')" 
+                  (click)="saveSection('property-tenant')"
+                >
+                  @if (isSavingSection('property-tenant')) {
+                    <span class="flex items-center gap-2">
+                      <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+                      Saving...
+                    </span>
+                  } @else {
+                    <z-icon zType="check" zSize="sm" class="mr-2" />
+                    Save Section
+                  }
+                </z-button>
               </div>
+              </div>
+              </z-accordion-item>
+
+              <!-- Tenancy Period Section -->
+              <z-accordion-item zValue="tenancy-period" zTitle="Tenancy Period">
+                <div class="space-y-6">
 
               <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <z-form-field>
@@ -228,16 +235,31 @@
                   </span>
                 </div>
               }
-            </div>
 
-            <!-- Payment Information Section -->
-            <div class="space-y-6 pb-6 border-b">
-              <div>
-                <h3 class="text-lg font-semibold mb-1">Payment Information</h3>
-                <p class="text-sm text-muted-foreground">
-                  Configure payment details for the lease
-                </p>
+              <!-- Save Button -->
+              <div class="flex justify-end mt-4 pt-4 border-t">
+                <z-button 
+                  [zType]="isSavingSection('tenancy-period') ? 'ghost' : 'default'" 
+                  [disabled]="isSavingSection('tenancy-period')" 
+                  (click)="saveSection('tenancy-period')"
+                >
+                  @if (isSavingSection('tenancy-period')) {
+                    <span class="flex items-center gap-2">
+                      <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+                      Saving...
+                    </span>
+                  } @else {
+                    <z-icon zType="check" zSize="sm" class="mr-2" />
+                    Save Section
+                  }
+                </z-button>
               </div>
+                </div>
+              </z-accordion-item>
+
+              <!-- Payment Information Section -->
+              <z-accordion-item zValue="payment-info" zTitle="Payment Information">
+                <div class="space-y-6">
 
               <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <z-form-field>
@@ -325,16 +347,31 @@
                   </z-form-control>
                 </z-form-field>
               </div>
-            </div>
 
-            <!-- Receipt & Notification Section -->
-            <div class="space-y-6 pb-6 border-b">
-              <div>
-                <h3 class="text-lg font-semibold mb-1">Receipt & Notifications</h3>
-                <p class="text-sm text-muted-foreground">
-                  Configure receipt generation and notification preferences
-                </p>
+              <!-- Save Button -->
+              <div class="flex justify-end mt-4 pt-4 border-t">
+                <z-button 
+                  [zType]="isSavingSection('payment-info') ? 'ghost' : 'default'" 
+                  [disabled]="isSavingSection('payment-info')" 
+                  (click)="saveSection('payment-info')"
+                >
+                  @if (isSavingSection('payment-info')) {
+                    <span class="flex items-center gap-2">
+                      <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+                      Saving...
+                    </span>
+                  } @else {
+                    <z-icon zType="check" zSize="sm" class="mr-2" />
+                    Save Section
+                  }
+                </z-button>
               </div>
+                </div>
+              </z-accordion-item>
+
+              <!-- Receipt & Notification Section -->
+              <z-accordion-item zValue="receipt-notification" zTitle="Receipt & Notifications">
+                <div class="space-y-6">
 
               <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
                 <div class="flex items-center justify-between p-4 border rounded-md">
@@ -373,16 +410,31 @@
                   />
                 </div>
               </div>
-            </div>
 
-            <!-- Additional Information Section -->
-            <div class="space-y-6 pb-6 border-b">
-              <div>
-                <h3 class="text-lg font-semibold mb-1">Additional Information</h3>
-                <p class="text-sm text-muted-foreground">
-                  Add any special terms or private notes
-                </p>
+              <!-- Save Button -->
+              <div class="flex justify-end mt-4 pt-4 border-t">
+                <z-button 
+                  [zType]="isSavingSection('receipt-notification') ? 'ghost' : 'default'" 
+                  [disabled]="isSavingSection('receipt-notification')" 
+                  (click)="saveSection('receipt-notification')"
+                >
+                  @if (isSavingSection('receipt-notification')) {
+                    <span class="flex items-center gap-2">
+                      <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+                      Saving...
+                    </span>
+                  } @else {
+                    <z-icon zType="check" zSize="sm" class="mr-2" />
+                    Save Section
+                  }
+                </z-button>
               </div>
+                </div>
+              </z-accordion-item>
+
+              <!-- Additional Information Section -->
+              <z-accordion-item zValue="additional-info" zTitle="Additional Information">
+                <div class="space-y-6">
 
               <div class="space-y-6">
                 <z-form-field>
@@ -413,16 +465,31 @@
                   </z-form-control>
                 </z-form-field>
               </div>
-            </div>
 
-            <!-- Attachments Section -->
-            <div class="space-y-4 pt-4 border-t">
-              <div>
-                <h3 class="text-lg font-semibold mb-1">Documents</h3>
-                <p class="text-sm text-muted-foreground">
-                  Attach relevant documents (optional)
-                </p>
+              <!-- Save Button -->
+              <div class="flex justify-end mt-4 pt-4 border-t">
+                <z-button 
+                  [zType]="isSavingSection('additional-info') ? 'ghost' : 'default'" 
+                  [disabled]="isSavingSection('additional-info')" 
+                  (click)="saveSection('additional-info')"
+                >
+                  @if (isSavingSection('additional-info')) {
+                    <span class="flex items-center gap-2">
+                      <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+                      Saving...
+                    </span>
+                  } @else {
+                    <z-icon zType="check" zSize="sm" class="mr-2" />
+                    Save Section
+                  }
+                </z-button>
               </div>
+                </div>
+              </z-accordion-item>
+
+              <!-- Attachments Section -->
+              <z-accordion-item zValue="documents" zTitle="Documents">
+                <div class="space-y-4">
 
               <!-- Upload Area -->
               <div
@@ -579,7 +646,28 @@
                   </p>
                 </div>
               }
-            </div>
+
+              <!-- Save Button -->
+              <div class="flex justify-end mt-4 pt-4 border-t">
+                <z-button 
+                  [zType]="isSavingSection('documents') ? 'ghost' : 'default'" 
+                  [disabled]="isSavingSection('documents')" 
+                  (click)="saveSection('documents')"
+                >
+                  @if (isSavingSection('documents')) {
+                    <span class="flex items-center gap-2">
+                      <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+                      Saving...
+                    </span>
+                  } @else {
+                    <z-icon zType="check" zSize="sm" class="mr-2" />
+                    Save Section
+                  }
+                </z-button>
+              </div>
+                </div>
+              </z-accordion-item>
+            </z-accordion>
           </div>
         </z-card>
       }

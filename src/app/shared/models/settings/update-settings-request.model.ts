@@ -1,4 +1,5 @@
 import type { Category } from './category.model';
+import type { EmailNotification } from './settings.model';
 
 export interface UpdateSettingsRequest {
   defaultCity: string;
@@ -6,5 +7,6 @@ export interface UpdateSettingsRequest {
   features: string[];
   amenities: string[];
   propertyTypes: string[];
+  emailNotification: EmailNotification;
 }
 

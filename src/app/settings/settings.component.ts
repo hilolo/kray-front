@@ -230,6 +230,27 @@ export class SettingsComponent implements OnInit, OnDestroy {
   isLoadingPropertySettings = signal(false);
   isSavingPropertySettings = signal(false);
 
+  // Notification Settings
+  notificationSettings = {
+    lease: {
+      overdue: signal(''),
+      pending: signal(''),
+      paid: signal(''),
+    },
+    maintenance: {
+      paid: signal(''),
+    },
+    reservation: {
+      confirmation: signal(''),
+      enter: signal(''),
+      left: signal(''),
+    },
+  };
+
+  // Loading state for notification settings
+  isLoadingNotificationSettings = signal(false);
+  isSavingNotificationSettings = signal(false);
+
   // Input states for adding new items
   showAddPropertyTypeInput = signal(false);
   showAddFeatureInput = signal(false);
@@ -330,6 +351,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     // Load property settings
     this.loadPropertySettings();
+
+    // Load notification settings
+    this.loadNotificationSettings();
   }
 
   /**
@@ -901,6 +925,17 @@ export class SettingsComponent implements OnInit, OnDestroy {
             this.propertySettings.amenities.set(settings.amenities || []);
             this.propertySettings.propertyTypes.set(settings.propertyTypes || []);
             
+            // Update notification settings
+            if (settings.emailNotification) {
+              this.notificationSettings.lease.overdue.set(settings.emailNotification.lease?.overdue || '');
+              this.notificationSettings.lease.pending.set(settings.emailNotification.lease?.pending || '');
+              this.notificationSettings.lease.paid.set(settings.emailNotification.lease?.paid || '');
+              this.notificationSettings.maintenance.paid.set(settings.emailNotification.maintenance?.paid || '');
+              this.notificationSettings.reservation.confirmation.set(settings.emailNotification.reservation?.confirmation || '');
+              this.notificationSettings.reservation.enter.set(settings.emailNotification.reservation?.enter || '');
+              this.notificationSettings.reservation.left.set(settings.emailNotification.reservation?.left || '');
+            }
+            
             // Update company image from settings
             if (settings.image) {
               this.companyInfo.image = settings.image;
@@ -936,6 +971,21 @@ export class SettingsComponent implements OnInit, OnDestroy {
       features: this.propertySettings.features(),
       amenities: this.propertySettings.amenities(),
       propertyTypes: this.propertySettings.propertyTypes(),
+      emailNotification: {
+        lease: {
+          overdue: this.notificationSettings.lease.overdue(),
+          pending: this.notificationSettings.lease.pending(),
+          paid: this.notificationSettings.lease.paid(),
+        },
+        maintenance: {
+          paid: this.notificationSettings.maintenance.paid(),
+        },
+        reservation: {
+          confirmation: this.notificationSettings.reservation.confirmation(),
+          enter: this.notificationSettings.reservation.enter(),
+          left: this.notificationSettings.reservation.left(),
+        },
+      },
     };
 
     this.settingsService.updateSettings(updateRequest)
@@ -948,6 +998,17 @@ export class SettingsComponent implements OnInit, OnDestroy {
             this.propertySettings.features.set(settings.features || []);
             this.propertySettings.amenities.set(settings.amenities || []);
             this.propertySettings.propertyTypes.set(settings.propertyTypes || []);
+
+            // Update notification settings
+            if (settings.emailNotification) {
+              this.notificationSettings.lease.overdue.set(settings.emailNotification.lease?.overdue || '');
+              this.notificationSettings.lease.pending.set(settings.emailNotification.lease?.pending || '');
+              this.notificationSettings.lease.paid.set(settings.emailNotification.lease?.paid || '');
+              this.notificationSettings.maintenance.paid.set(settings.emailNotification.maintenance?.paid || '');
+              this.notificationSettings.reservation.confirmation.set(settings.emailNotification.reservation?.confirmation || '');
+              this.notificationSettings.reservation.enter.set(settings.emailNotification.reservation?.enter || '');
+              this.notificationSettings.reservation.left.set(settings.emailNotification.reservation?.left || '');
+            }
 
             // Update localStorage with the updated settings
             localStorage.setItem('settings', JSON.stringify(settings));
@@ -1038,6 +1099,102 @@ export class SettingsComponent implements OnInit, OnDestroy {
         input.value = category.reference;
       }
     }
+  }
+
+  /**
+   * Load notification settings from API
+   */
+  loadNotificationSettings(): void {
+    this.isLoadingNotificationSettings.set(true);
+    this.settingsService.getSettings()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (settings) => {
+          if (settings?.emailNotification) {
+            this.notificationSettings.lease.overdue.set(settings.emailNotification.lease?.overdue || '');
+            this.notificationSettings.lease.pending.set(settings.emailNotification.lease?.pending || '');
+            this.notificationSettings.lease.paid.set(settings.emailNotification.lease?.paid || '');
+            this.notificationSettings.maintenance.paid.set(settings.emailNotification.maintenance?.paid || '');
+            this.notificationSettings.reservation.confirmation.set(settings.emailNotification.reservation?.confirmation || '');
+            this.notificationSettings.reservation.enter.set(settings.emailNotification.reservation?.enter || '');
+            this.notificationSettings.reservation.left.set(settings.emailNotification.reservation?.left || '');
+          } else {
+            // Initialize with empty values if settings is null/undefined
+            this.notificationSettings.lease.overdue.set('');
+            this.notificationSettings.lease.pending.set('');
+            this.notificationSettings.lease.paid.set('');
+            this.notificationSettings.maintenance.paid.set('');
+            this.notificationSettings.reservation.confirmation.set('');
+            this.notificationSettings.reservation.enter.set('');
+            this.notificationSettings.reservation.left.set('');
+          }
+          this.isLoadingNotificationSettings.set(false);
+        },
+        error: (error) => {
+          console.error('Error loading notification settings:', error);
+          this.isLoadingNotificationSettings.set(false);
+          this.toastService.error(this.translateService.instant('settings.application.notification.failedToLoadNotificationSettings'));
+        }
+      });
+  }
+
+  /**
+   * Save notification settings
+   */
+  onSaveNotificationSettings(): void {
+    this.isSavingNotificationSettings.set(true);
+
+    const updateRequest = {
+      defaultCity: this.propertySettings.defaultCity(),
+      categories: this.propertySettings.categories(),
+      features: this.propertySettings.features(),
+      amenities: this.propertySettings.amenities(),
+      propertyTypes: this.propertySettings.propertyTypes(),
+      emailNotification: {
+        lease: {
+          overdue: this.notificationSettings.lease.overdue(),
+          pending: this.notificationSettings.lease.pending(),
+          paid: this.notificationSettings.lease.paid(),
+        },
+        maintenance: {
+          paid: this.notificationSettings.maintenance.paid(),
+        },
+        reservation: {
+          confirmation: this.notificationSettings.reservation.confirmation(),
+          enter: this.notificationSettings.reservation.enter(),
+          left: this.notificationSettings.reservation.left(),
+        },
+      },
+    };
+
+    this.settingsService.updateSettings(updateRequest)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (settings) => {
+          if (settings) {
+            // Update notification settings
+            if (settings.emailNotification) {
+              this.notificationSettings.lease.overdue.set(settings.emailNotification.lease?.overdue || '');
+              this.notificationSettings.lease.pending.set(settings.emailNotification.lease?.pending || '');
+              this.notificationSettings.lease.paid.set(settings.emailNotification.lease?.paid || '');
+              this.notificationSettings.maintenance.paid.set(settings.emailNotification.maintenance?.paid || '');
+              this.notificationSettings.reservation.confirmation.set(settings.emailNotification.reservation?.confirmation || '');
+              this.notificationSettings.reservation.enter.set(settings.emailNotification.reservation?.enter || '');
+              this.notificationSettings.reservation.left.set(settings.emailNotification.reservation?.left || '');
+            }
+
+            // Update localStorage with the updated settings
+            localStorage.setItem('settings', JSON.stringify(settings));
+          }
+          this.isSavingNotificationSettings.set(false);
+          this.toastService.success(this.translateService.instant('settings.application.notification.notificationSettingsUpdated'));
+        },
+        error: (error) => {
+          console.error('Error updating notification settings:', error);
+          this.isSavingNotificationSettings.set(false);
+          // Toast error is handled automatically by the API interceptor/service
+        }
+      });
   }
 
   ngOnDestroy(): void {

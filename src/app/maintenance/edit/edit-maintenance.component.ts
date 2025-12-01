@@ -14,6 +14,8 @@ import { ZardSelectItemComponent } from '@shared/components/select/select-item.c
 import { ZardComboboxComponent, ZardComboboxOption } from '@shared/components/combobox/combobox.component';
 import { ZardDatePickerComponent } from '@shared/components/date-picker/date-picker.component';
 import { ZardTimePickerComponent } from '@shared/components/time-picker/time-picker.component';
+import { ZardAccordionComponent } from '@shared/components/accordion/accordion.component';
+import { ZardAccordionItemComponent } from '@shared/components/accordion/accordion-item.component';
 import { MaintenanceService } from '@shared/services/maintenance.service';
 import { PropertyService } from '@shared/services/property.service';
 import { ContactService } from '@shared/services/contact.service';
@@ -44,6 +46,8 @@ import { ContactType } from '@shared/models/contact/contact.model';
     ZardComboboxComponent,
     ZardDatePickerComponent,
     ZardTimePickerComponent,
+    ZardAccordionComponent,
+    ZardAccordionItemComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './edit-maintenance.component.html',
@@ -62,6 +66,7 @@ export class EditMaintenanceComponent implements OnInit, OnDestroy {
   readonly isLoading = signal(false);
   readonly isSaving = signal(false);
   readonly formSubmitted = signal(false);
+  readonly savingSections = signal<Set<string>>(new Set());
 
   // Form data
   readonly formData = signal({
@@ -505,6 +510,105 @@ export class EditMaintenanceComponent implements OnInit, OnDestroy {
     if (this.dialogRef) {
       this.dialogRef.close();
     }
+  }
+
+  // Section-specific save methods
+  async saveSection(sectionName: string): Promise<void> {
+    this.savingSections.update(set => {
+      const newSet = new Set(set);
+      newSet.add(sectionName);
+      return newSet;
+    });
+
+    // Validate section-specific fields
+    let isValid = true;
+    const data = this.formData();
+
+    switch (sectionName) {
+      case 'basic-info':
+        if (!data.propertyId || !data.contactId || !data.subject.trim() || !data.description.trim()) {
+          this.toastService.error('Property, Service, Subject, and Description are required');
+          isValid = false;
+        }
+        break;
+      case 'schedule':
+        if (!data.scheduledDate || !data.scheduledTime) {
+          this.toastService.error('Scheduled date and time are required');
+          isValid = false;
+        }
+        break;
+      case 'status-priority':
+        // Status and priority always have defaults, so no validation needed
+        break;
+    }
+
+    if (!isValid) {
+      this.savingSections.update(set => {
+        const newSet = new Set(set);
+        newSet.delete(sectionName);
+        return newSet;
+      });
+      return;
+    }
+
+    // If in edit mode, save the section
+    if (this.isEditMode()) {
+      await this.saveSectionData(sectionName);
+    } else {
+      // In add mode, just validate - full save happens on final submit
+      this.toastService.success(`${sectionName} section validated successfully`);
+    }
+
+    this.savingSections.update(set => {
+      const newSet = new Set(set);
+      newSet.delete(sectionName);
+      return newSet;
+    });
+  }
+
+  private async saveSectionData(sectionName: string): Promise<void> {
+    const formData = this.formData();
+    const id = this.maintenanceId();
+    if (!id) {
+      this.savingSections.update(set => {
+        const newSet = new Set(set);
+        newSet.delete(sectionName);
+        return newSet;
+      });
+      return;
+    }
+
+    const priority = typeof formData.priority === 'number' 
+      ? formData.priority 
+      : parseInt(String(formData.priority), 10) as MaintenancePriority;
+    const status = typeof formData.status === 'number' 
+      ? formData.status 
+      : parseInt(String(formData.status), 10) as MaintenanceStatus;
+
+    const request: UpdateMaintenanceRequest = {
+      id,
+      propertyId: formData.propertyId,
+      priority: priority,
+      contactId: formData.contactId,
+      status: status,
+      subject: formData.subject,
+      description: formData.description,
+      scheduledDateTime: this.getScheduledDateTimeISO(),
+    };
+
+    this.maintenanceService.update(id, request).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (maintenance) => {
+        this.toastService.success(`${sectionName} section saved successfully`);
+      },
+      error: (error) => {
+        console.error(`Error saving ${sectionName} section:`, error);
+        this.toastService.error(`Failed to save ${sectionName} section`);
+      },
+    });
+  }
+
+  isSavingSection(sectionName: string): boolean {
+    return this.savingSections().has(sectionName);
   }
 }
 

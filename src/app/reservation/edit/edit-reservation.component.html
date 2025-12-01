@@ -53,19 +53,11 @@
         </div>
       } @else {
         <z-card class="max-w-7xl mx-auto">
-          <div class="p-8 space-y-8">
-            <!-- Property and Contact Section -->
-            <div class="space-y-6 pb-6 border-b">
-              <div>
-                <h3 class="text-lg font-semibold mb-1">Property & Contact</h3>
-                <p class="text-sm text-muted-foreground">
-                  @if (isEditMode()) {
-                    Property and contact information (cannot be changed)
-                  } @else {
-                    Select the property and contact for this reservation
-                  }
-                </p>
-              </div>
+          <div class="p-8">
+            <z-accordion zType="multiple" zDefaultValue="['property-contact', 'reservation-period', 'reservation-details', 'additional-info', 'documents']">
+              <!-- Property and Contact Section -->
+              <z-accordion-item zValue="property-contact" zTitle="Property & Contact">
+                <div class="space-y-6">
 
               <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <!-- Property Field -->
@@ -220,16 +212,31 @@
                   </div>
                 </div>
               }
-            </div>
 
-            <!-- Reservation Period Section -->
-            <div class="space-y-6 pb-6 border-b">
-              <div>
-                <h3 class="text-lg font-semibold mb-1">Reservation Period</h3>
-                <p class="text-sm text-muted-foreground">
-                  Enter the start and end dates for the reservation
-                </p>
+              <!-- Save Button -->
+              <div class="flex justify-end mt-4 pt-4 border-t">
+                <z-button 
+                  [zType]="isSavingSection('property-contact') ? 'ghost' : 'default'" 
+                  [disabled]="isSavingSection('property-contact')" 
+                  (click)="saveSection('property-contact')"
+                >
+                  @if (isSavingSection('property-contact')) {
+                    <span class="flex items-center gap-2">
+                      <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+                      Saving...
+                    </span>
+                  } @else {
+                    <z-icon zType="check" zSize="sm" class="mr-2" />
+                    Save Section
+                  }
+                </z-button>
               </div>
+                </div>
+              </z-accordion-item>
+
+              <!-- Reservation Period Section -->
+              <z-accordion-item zValue="reservation-period" zTitle="Reservation Period">
+                <div class="space-y-6">
 
               <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <z-form-field>
@@ -282,16 +289,31 @@
                   </div>
                 </div>
               }
-            </div>
 
-            <!-- Reservation Details Section -->
-            <div class="space-y-6 pb-6 border-b">
-              <div>
-                <h3 class="text-lg font-semibold mb-1">Reservation Details</h3>
-                <p class="text-sm text-muted-foreground">
-                  Enter reservation details and amount
-                </p>
+              <!-- Save Button -->
+              <div class="flex justify-end mt-4 pt-4 border-t">
+                <z-button 
+                  [zType]="isSavingSection('reservation-period') ? 'ghost' : 'default'" 
+                  [disabled]="isSavingSection('reservation-period')" 
+                  (click)="saveSection('reservation-period')"
+                >
+                  @if (isSavingSection('reservation-period')) {
+                    <span class="flex items-center gap-2">
+                      <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+                      Saving...
+                    </span>
+                  } @else {
+                    <z-icon zType="check" zSize="sm" class="mr-2" />
+                    Save Section
+                  }
+                </z-button>
               </div>
+                </div>
+              </z-accordion-item>
+
+              <!-- Reservation Details Section -->
+              <z-accordion-item zValue="reservation-details" zTitle="Reservation Details">
+                <div class="space-y-6">
 
               <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <z-form-field>
@@ -336,16 +358,30 @@
                 </z-form-field>
               </div>
 
-            </div>
-
-            <!-- Additional Information Section -->
-            <div class="space-y-6 pb-6 border-b">
-              <div>
-                <h3 class="text-lg font-semibold mb-1">Additional Information</h3>
-                <p class="text-sm text-muted-foreground">
-                  Add any private notes
-                </p>
+              <!-- Save Button -->
+              <div class="flex justify-end mt-4 pt-4 border-t">
+                <z-button 
+                  [zType]="isSavingSection('reservation-details') ? 'ghost' : 'default'" 
+                  [disabled]="isSavingSection('reservation-details')" 
+                  (click)="saveSection('reservation-details')"
+                >
+                  @if (isSavingSection('reservation-details')) {
+                    <span class="flex items-center gap-2">
+                      <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+                      Saving...
+                    </span>
+                  } @else {
+                    <z-icon zType="check" zSize="sm" class="mr-2" />
+                    Save Section
+                  }
+                </z-button>
               </div>
+                </div>
+              </z-accordion-item>
+
+              <!-- Additional Information Section -->
+              <z-accordion-item zValue="additional-info" zTitle="Additional Information">
+                <div class="space-y-6">
 
               <z-form-field>
                 <z-form-label>Private Note</z-form-label>
@@ -360,16 +396,31 @@
                   ></textarea>
                 </z-form-control>
               </z-form-field>
-            </div>
 
-            <!-- Attachments Section -->
-            <div class="space-y-4 pt-4 border-t">
-              <div>
-                <h3 class="text-lg font-semibold mb-1">Documents</h3>
-                <p class="text-sm text-muted-foreground">
-                  Attach relevant documents (optional)
-                </p>
+              <!-- Save Button -->
+              <div class="flex justify-end mt-4 pt-4 border-t">
+                <z-button 
+                  [zType]="isSavingSection('additional-info') ? 'ghost' : 'default'" 
+                  [disabled]="isSavingSection('additional-info')" 
+                  (click)="saveSection('additional-info')"
+                >
+                  @if (isSavingSection('additional-info')) {
+                    <span class="flex items-center gap-2">
+                      <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+                      Saving...
+                    </span>
+                  } @else {
+                    <z-icon zType="check" zSize="sm" class="mr-2" />
+                    Save Section
+                  }
+                </z-button>
               </div>
+                </div>
+              </z-accordion-item>
+
+              <!-- Attachments Section -->
+              <z-accordion-item zValue="documents" zTitle="Documents">
+                <div class="space-y-4">
 
               <!-- Upload Area -->
               <div
@@ -526,7 +577,28 @@
                   </p>
                 </div>
               }
-            </div>
+
+              <!-- Save Button -->
+              <div class="flex justify-end mt-4 pt-4 border-t">
+                <z-button 
+                  [zType]="isSavingSection('documents') ? 'ghost' : 'default'" 
+                  [disabled]="isSavingSection('documents')" 
+                  (click)="saveSection('documents')"
+                >
+                  @if (isSavingSection('documents')) {
+                    <span class="flex items-center gap-2">
+                      <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+                      Saving...
+                    </span>
+                  } @else {
+                    <z-icon zType="check" zSize="sm" class="mr-2" />
+                    Save Section
+                  }
+                </z-button>
+              </div>
+                </div>
+              </z-accordion-item>
+            </z-accordion>
           </div>
         </z-card>
       }

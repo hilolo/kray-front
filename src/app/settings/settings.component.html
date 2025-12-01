@@ -776,6 +776,141 @@
                 </z-accordion-item>
               </z-accordion>
             </div>
+
+            <!-- Notification Settings -->
+            <div class="bg-card border border-border rounded-lg shadow-sm overflow-hidden">
+              <z-accordion zType="single" class="border-0">
+                <z-accordion-item [zTitle]="'settings.application.notification.title' | translate" zValue="notification" class="!px-6 !py-5 border-b-0 !text-lg">
+                  @if (isLoadingNotificationSettings()) {
+                  <div class="flex items-center justify-center p-8">
+                    <div class="text-muted-foreground">{{ 'settings.application.notification.loadingNotificationSettings' | translate }}</div>
+                  </div>
+                  } @else {
+                  <div class="space-y-8">
+                    <!-- Email Section -->
+                    <div>
+                      <h3 class="text-xl font-semibold mb-4">{{ 'settings.application.notification.emailSection.title' | translate }}</h3>
+                      
+                      <!-- Lease Section -->
+                      <div class="mb-6">
+                        <h4 class="text-lg font-medium mb-3">{{ 'settings.application.notification.lease.title' | translate }}</h4>
+                        
+                        <!-- Lease Overdue -->
+                        <div class="mb-4">
+                          <z-form-field>
+                            <z-form-label>{{ 'settings.application.notification.lease.overdue' | translate }}</z-form-label>
+                            <z-form-control>
+                              <textarea z-input [ngModel]="notificationSettings.lease.overdue()"
+                                (ngModelChange)="notificationSettings.lease.overdue.set($event)"
+                                rows="4" class="w-full resize-y"></textarea>
+                            </z-form-control>
+                          </z-form-field>
+                        </div>
+
+                        <!-- Lease Pending -->
+                        <div class="mb-4">
+                          <z-form-field>
+                            <z-form-label>{{ 'settings.application.notification.lease.pending' | translate }}</z-form-label>
+                            <z-form-control>
+                              <textarea z-input [ngModel]="notificationSettings.lease.pending()"
+                                (ngModelChange)="notificationSettings.lease.pending.set($event)"
+                                rows="4" class="w-full resize-y"></textarea>
+                            </z-form-control>
+                          </z-form-field>
+                        </div>
+
+                        <!-- Lease Paid -->
+                        <div class="mb-4">
+                          <z-form-field>
+                            <z-form-label>{{ 'settings.application.notification.lease.paid' | translate }}</z-form-label>
+                            <z-form-control>
+                              <textarea z-input [ngModel]="notificationSettings.lease.paid()"
+                                (ngModelChange)="notificationSettings.lease.paid.set($event)"
+                                rows="4" class="w-full resize-y"></textarea>
+                            </z-form-control>
+                          </z-form-field>
+                        </div>
+                      </div>
+
+                      <!-- Maintenance Section -->
+                      <div class="mb-6">
+                        <h4 class="text-lg font-medium mb-3">{{ 'settings.application.notification.maintenance.title' | translate }}</h4>
+                        
+                        <!-- Maintenance Paid -->
+                        <div class="mb-4">
+                          <z-form-field>
+                            <z-form-label>{{ 'settings.application.notification.maintenance.paid' | translate }}</z-form-label>
+                            <z-form-control>
+                              <textarea z-input [ngModel]="notificationSettings.maintenance.paid()"
+                                (ngModelChange)="notificationSettings.maintenance.paid.set($event)"
+                                rows="4" class="w-full resize-y"></textarea>
+                            </z-form-control>
+                          </z-form-field>
+                        </div>
+                      </div>
+
+                      <!-- Reservation Section -->
+                      <div class="mb-6">
+                        <h4 class="text-lg font-medium mb-3">{{ 'settings.application.notification.reservation.title' | translate }}</h4>
+                        
+                        <!-- Reservation Confirmation -->
+                        <div class="mb-4">
+                          <z-form-field>
+                            <z-form-label>{{ 'settings.application.notification.reservation.confirmation' | translate }}</z-form-label>
+                            <z-form-control>
+                              <textarea z-input [ngModel]="notificationSettings.reservation.confirmation()"
+                                (ngModelChange)="notificationSettings.reservation.confirmation.set($event)"
+                                rows="4" class="w-full resize-y"></textarea>
+                            </z-form-control>
+                          </z-form-field>
+                        </div>
+
+                        <!-- Reservation Enter -->
+                        <div class="mb-4">
+                          <z-form-field>
+                            <z-form-label>{{ 'settings.application.notification.reservation.enter' | translate }}</z-form-label>
+                            <z-form-control>
+                              <textarea z-input [ngModel]="notificationSettings.reservation.enter()"
+                                (ngModelChange)="notificationSettings.reservation.enter.set($event)"
+                                rows="4" class="w-full resize-y"></textarea>
+                            </z-form-control>
+                          </z-form-field>
+                        </div>
+
+                        <!-- Reservation Left -->
+                        <div class="mb-4">
+                          <z-form-field>
+                            <z-form-label>{{ 'settings.application.notification.reservation.left' | translate }}</z-form-label>
+                            <z-form-control>
+                              <textarea z-input [ngModel]="notificationSettings.reservation.left()"
+                                (ngModelChange)="notificationSettings.reservation.left.set($event)"
+                                rows="4" class="w-full resize-y"></textarea>
+                            </z-form-control>
+                          </z-form-field>
+                        </div>
+                      </div>
+
+                      <!-- Save Button -->
+                      <div class="flex justify-end pt-4">
+                        <z-button [zType]="isSavingNotificationSettings() ? 'ghost' : 'default'"
+                          [disabled]="isSavingNotificationSettings()"
+                          (click)="!isSavingNotificationSettings() && onSaveNotificationSettings()">
+                          @if (isSavingNotificationSettings()) {
+                          <span class="flex items-center gap-2">
+                            <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+                            {{ 'settings.application.notification.saving' | translate }}
+                          </span>
+                          } @else {
+                          {{ 'settings.application.notification.saveNotificationSettings' | translate }}
+                          }
+                        </z-button>
+                      </div>
+                    </div>
+                  </div>
+                  }
+                </z-accordion-item>
+              </z-accordion>
+            </div>
           </div>
         </div>
         }

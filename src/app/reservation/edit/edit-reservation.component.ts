@@ -17,6 +17,8 @@ import { ZardImageHoverPreviewDirective } from '@shared/components/image-hover-p
 import { ZardComboboxComponent, ZardComboboxOption } from '@shared/components/combobox/combobox.component';
 import { ZardDatePickerComponent } from '@shared/components/date-picker/date-picker.component';
 import { ZardFileViewerComponent } from '@shared/components/file-viewer/file-viewer.component';
+import { ZardAccordionComponent } from '@shared/components/accordion/accordion.component';
+import { ZardAccordionItemComponent } from '@shared/components/accordion/accordion-item.component';
 import { ImageItem } from '@shared/image-viewer/image-viewer.component';
 import { getFileViewerType } from '@shared/utils/file-type.util';
 import { ReservationService } from '@shared/services/reservation.service';
@@ -75,6 +77,8 @@ interface ExistingAttachment {
     ZardComboboxComponent,
     ZardDatePickerComponent,
     ZardFileViewerComponent,
+    ZardAccordionComponent,
+    ZardAccordionItemComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './edit-reservation.component.html',
@@ -97,6 +101,7 @@ export class EditReservationComponent implements OnInit, OnDestroy {
   readonly formSubmitted = signal(false);
   readonly checkingOverlaps = signal(false);
   readonly overlappingReservations = signal<Reservation[]>([]);
+  readonly savingSections = signal<Set<string>>(new Set());
 
   // Reservation data
   readonly reservation = signal<Reservation | null>(null);
@@ -1050,6 +1055,144 @@ export class EditReservationComponent implements OnInit, OnDestroy {
       month: '2-digit',
       year: 'numeric',
     }).format(dateObj);
+  }
+
+  // Section-specific save methods
+  async saveSection(sectionName: string): Promise<void> {
+    this.savingSections.update(set => {
+      const newSet = new Set(set);
+      newSet.add(sectionName);
+      return newSet;
+    });
+
+    // Validate section-specific fields
+    let isValid = true;
+    const data = this.formData();
+
+    switch (sectionName) {
+      case 'property-contact':
+        if (!data.propertyId || !data.contactId) {
+          this.toastService.error('Property and Contact are required');
+          isValid = false;
+        }
+        break;
+      case 'reservation-period':
+        if (!data.startDate || !data.endDate || data.endDate <= data.startDate) {
+          this.toastService.error('Valid start and end dates are required');
+          isValid = false;
+        }
+        if (this.hasDateConflict()) {
+          this.toastService.error('The selected dates conflict with an existing reservation');
+          isValid = false;
+        }
+        break;
+      case 'reservation-details':
+        if (data.totalAmount < 0) {
+          this.toastService.error('Total amount must be greater than or equal to 0');
+          isValid = false;
+        }
+        break;
+    }
+
+    if (!isValid) {
+      this.savingSections.update(set => {
+        const newSet = new Set(set);
+        newSet.delete(sectionName);
+        return newSet;
+      });
+      return;
+    }
+
+    // If in edit mode, save the section
+    if (this.isEditMode()) {
+      await this.saveSectionData(sectionName);
+    } else {
+      // In add mode, just validate - full save happens on final submit
+      this.toastService.success(`${sectionName} section validated successfully`);
+    }
+
+    this.savingSections.update(set => {
+      const newSet = new Set(set);
+      newSet.delete(sectionName);
+      return newSet;
+    });
+  }
+
+  private async saveSectionData(sectionName: string): Promise<void> {
+    const companyId = this.userService.getCurrentUser()?.companyId;
+    const reservationId = this.reservationId()!;
+    const data = this.formData();
+
+    // Convert uploaded files to AttachmentInput (only for documents section)
+    let attachments: AttachmentInput[] = [];
+    if (sectionName === 'documents') {
+      const filePromises = this.uploadedFiles().map((file) => {
+        return new Promise<AttachmentInput>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const result = reader.result as string;
+            const base64 = result.split(',')[1] || '';
+            resolve({
+              fileName: file.name,
+              base64Content: base64,
+            });
+          };
+          reader.onerror = () => {
+            resolve({
+              fileName: file.name,
+              base64Content: '',
+            });
+          };
+          reader.readAsDataURL(file.file);
+        });
+      });
+      attachments = await Promise.all(filePromises);
+    }
+
+    // Normalize dates to midnight (00:00:00) in UTC
+    const formatDateAsUTCMidnight = (date: Date): string => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}T00:00:00.000Z`;
+    };
+
+    const normalizedStartDate = new Date(data.startDate!);
+    const normalizedEndDate = new Date(data.endDate!);
+
+    const request: UpdateReservationRequest = {
+      contactId: data.contactId,
+      propertyId: data.propertyId,
+      startDate: formatDateAsUTCMidnight(normalizedStartDate),
+      endDate: formatDateAsUTCMidnight(normalizedEndDate),
+      totalAmount: data.totalAmount,
+      description: data.description,
+      privateNote: data.privateNote,
+      status: data.status,
+      attachmentsToAdd: sectionName === 'documents' ? attachments : [],
+      attachmentsToDelete: sectionName === 'documents' ? Array.from(this.filesToDelete()) : [],
+    };
+
+    this.reservationService.update(reservationId, request).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => {
+        this.toastService.success(`${sectionName} section saved successfully`);
+        // Clear uploaded files if documents section was saved
+        if (sectionName === 'documents') {
+          this.uploadedFiles.set([]);
+          this.filesToDelete.set(new Set());
+          // Reload reservation to get updated attachments
+          this.loadReservation(reservationId);
+        }
+      },
+      error: (error) => {
+        console.error(`Error saving ${sectionName} section:`, error);
+        this.toastService.error(`Failed to save ${sectionName} section`);
+      },
+    });
+  }
+
+  isSavingSection(sectionName: string): boolean {
+    return this.savingSections().has(sectionName);
   }
 }
 

@@ -663,6 +663,34 @@
         "loadingPropertySettings": "Chargement des paramètres de propriété...",
         "propertySettingsUpdated": "Paramètres de propriété mis à jour avec succès",
         "failedToLoadPropertySettings": "Échec du chargement des paramètres de propriété"
+      },
+      "notification": {
+        "title": "Notification",
+        "emailSection": {
+          "title": "E-mail"
+        },
+        "lease": {
+          "title": "Location",
+          "overdue": "En retard",
+          "pending": "En attente",
+          "paid": "Payé"
+        },
+        "maintenance": {
+          "title": "Maintenance",
+          "paid": "Payé"
+        },
+        "reservation": {
+          "title": "Réservation",
+          "confirmation": "Confirmation",
+          "confirmationPlaceholder": "Entrer l'e-mail de confirmation",
+          "enter": "Entrée",
+          "left": "Parti"
+        },
+        "saveNotificationSettings": "Enregistrer les paramètres de notification",
+        "saving": "Enregistrement...",
+        "loadingNotificationSettings": "Chargement des paramètres de notification...",
+        "notificationSettingsUpdated": "Paramètres de notification mis à jour avec succès",
+        "failedToLoadNotificationSettings": "Échec du chargement des paramètres de notification"
       }
     },
     "errors": {

@@ -663,6 +663,34 @@
         "loadingPropertySettings": "Loading property settings...",
         "propertySettingsUpdated": "Property settings updated successfully",
         "failedToLoadPropertySettings": "Failed to load property settings"
+      },
+      "notification": {
+        "title": "Notification",
+        "emailSection": {
+          "title": "Email"
+        },
+        "lease": {
+          "title": "Lease",
+          "overdue": "Overdue",
+          "pending": "Pending",
+          "paid": "Paid"
+        },
+        "maintenance": {
+          "title": "Maintenance",
+          "paid": "Paid"
+        },
+        "reservation": {
+          "title": "Reservation",
+          "confirmation": "Confirmation",
+          "confirmationPlaceholder": "Enter confirmation email",
+          "enter": "Enter",
+          "left": "Left"
+        },
+        "saveNotificationSettings": "Save Notification Settings",
+        "saving": "Saving...",
+        "loadingNotificationSettings": "Loading notification settings...",
+        "notificationSettingsUpdated": "Notification settings updated successfully",
+        "failedToLoadNotificationSettings": "Failed to load notification settings"
       }
     },
     "errors": {
