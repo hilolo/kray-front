@@ -204,10 +204,10 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
     return type === RevenueType.Loyer || type === RevenueType.Caution;
   });
 
-  // Check if property is required (for reservation types and Loyer, Caution - not FraisAgence)
+  // Check if property is required (for reservation types, Loyer, Caution, and Maintenance - not FraisAgence)
   readonly isPropertyRequired = computed(() => {
     const type = this.formData().revenueType;
-    return this.isPropertyAndLeaseRequired() || this.isReservationType();
+    return this.isPropertyAndLeaseRequired() || this.isReservationType() || type === RevenueType.Maintenance;
   });
 
   // Form validation - contact not required for type "Autre", reservation required for reservation types
