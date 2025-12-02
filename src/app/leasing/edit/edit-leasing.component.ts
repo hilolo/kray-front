@@ -17,8 +17,6 @@ import { ZardImageHoverPreviewDirective } from '@shared/components/image-hover-p
 import { ZardComboboxComponent, ZardComboboxOption } from '@shared/components/combobox/combobox.component';
 import { ZardDatePickerComponent } from '@shared/components/date-picker/date-picker.component';
 import { ZardFileViewerComponent } from '@shared/components/file-viewer/file-viewer.component';
-import { ZardAccordionComponent } from '@shared/components/accordion/accordion.component';
-import { ZardAccordionItemComponent } from '@shared/components/accordion/accordion-item.component';
 import { ImageItem } from '@shared/image-viewer/image-viewer.component';
 import { getFileViewerType } from '@shared/utils/file-type.util';
 import { LeaseService } from '@shared/services/lease.service';
@@ -75,8 +73,6 @@ interface ExistingAttachment {
     ZardComboboxComponent,
     ZardDatePickerComponent,
     ZardFileViewerComponent,
-    ZardAccordionComponent,
-    ZardAccordionItemComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './edit-leasing.component.html',
@@ -97,7 +93,6 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
   readonly isLoading = signal(false);
   readonly isSaving = signal(false);
   readonly formSubmitted = signal(false);
-  readonly savingSections = signal<Set<string>>(new Set());
 
   // Lease data
   readonly lease = signal<Lease | null>(null);
@@ -953,136 +948,4 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
   updatePrivateNote(value: string): void {
     this.formData.update((data) => ({ ...data, privateNote: value }));
   }
-
-  // Section-specific save methods
-  async saveSection(sectionName: string): Promise<void> {
-    this.savingSections.update(set => {
-      const newSet = new Set(set);
-      newSet.add(sectionName);
-      return newSet;
-    });
-
-    // Validate section-specific fields
-    let isValid = true;
-    const data = this.formData();
-
-    switch (sectionName) {
-      case 'property-tenant':
-        if (!data.propertyId || !data.contactId) {
-          this.toastService.error('Property and Tenant are required');
-          isValid = false;
-        }
-        break;
-      case 'tenancy-period':
-        if (!data.tenancyStart || !data.tenancyEnd || data.tenancyEnd <= data.tenancyStart) {
-          this.toastService.error('Valid start and end dates are required');
-          isValid = false;
-        }
-        break;
-      case 'payment-info':
-        if (data.rentPrice <= 0) {
-          this.toastService.error('Rent price must be greater than 0');
-          isValid = false;
-        }
-        break;
-    }
-
-    if (!isValid) {
-      this.savingSections.update(set => {
-        const newSet = new Set(set);
-        newSet.delete(sectionName);
-        return newSet;
-      });
-      return;
-    }
-
-    // If in edit mode, save the section
-    if (this.isEditMode()) {
-      await this.saveSectionData(sectionName);
-    } else {
-      // In add mode, just validate - full save happens on final submit
-      this.toastService.success(`${sectionName} section validated successfully`);
-    }
-
-    this.savingSections.update(set => {
-      const newSet = new Set(set);
-      newSet.delete(sectionName);
-      return newSet;
-    });
-  }
-
-  private async saveSectionData(sectionName: string): Promise<void> {
-    const companyId = this.userService.getCurrentUser()?.companyId;
-    const leaseId = this.leaseId()!;
-    const data = this.formData();
-
-    // Convert uploaded files to AttachmentInput (only for documents section)
-    let attachments: AttachmentInput[] = [];
-    if (sectionName === 'documents') {
-      const filePromises = this.uploadedFiles().map((file) => {
-        return new Promise<AttachmentInput>((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => {
-            const result = reader.result as string;
-            const base64 = result.split(',')[1] || '';
-            resolve({
-              fileName: file.name,
-              base64Content: base64,
-            });
-          };
-          reader.onerror = () => {
-            resolve({
-              fileName: file.name,
-              base64Content: '',
-            });
-          };
-          reader.readAsDataURL(file.file);
-        });
-      });
-      attachments = await Promise.all(filePromises);
-    }
-
-    const request: UpdateLeaseRequest = {
-      id: leaseId,
-      propertyId: data.propertyId,
-      contactId: data.contactId,
-      tenancyStart: data.tenancyStart!.toISOString(),
-      tenancyEnd: data.tenancyEnd!.toISOString(),
-      paymentType: data.paymentType,
-      paymentMethod: data.paymentMethod,
-      paymentDate: data.paymentDate,
-      rentPrice: data.rentPrice,
-      depositPrice: data.depositPrice,
-      enableReceipts: data.enableReceipts,
-      notificationWhatsapp: data.notificationWhatsapp,
-      notificationEmail: data.notificationEmail,
-      specialTerms: data.specialTerms,
-      privateNote: data.privateNote,
-      companyId: companyId,
-      attachmentsToAdd: sectionName === 'documents' ? attachments : [],
-      attachmentsToDelete: sectionName === 'documents' ? Array.from(this.filesToDelete()) : [],
-    };
-
-    this.leaseService.update(leaseId, request).pipe(takeUntil(this.destroy$)).subscribe({
-      next: () => {
-        this.toastService.success(`${sectionName} section saved successfully`);
-        // Clear uploaded files if documents section was saved
-        if (sectionName === 'documents') {
-          this.uploadedFiles.set([]);
-          this.filesToDelete.set(new Set());
-          // Reload lease to get updated attachments
-          this.loadLease(leaseId);
-        }
-      },
-      error: (error) => {
-        console.error(`Error saving ${sectionName} section:`, error);
-        this.toastService.error(`Failed to save ${sectionName} section`);
-      },
-    });
-  }
-
-  isSavingSection(sectionName: string): boolean {
-    return this.savingSections().has(sectionName);
-  }
 }
-
