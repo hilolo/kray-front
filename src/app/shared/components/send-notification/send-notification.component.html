@@ -12,8 +12,13 @@
         [class.border-primary]="selectedType() === NotificationType.Email"
         [class.bg-primary]="selectedType() === NotificationType.Email"
         [class.text-primary-foreground]="selectedType() === NotificationType.Email"
+        [class.border-2]="selectedType() === NotificationType.Email"
+        [class.ring-2]="selectedType() === NotificationType.Email"
+        [class.ring-primary]="selectedType() === NotificationType.Email"
+        [class.ring-offset-2]="selectedType() === NotificationType.Email"
+        [class.ring-offset-background]="selectedType() === NotificationType.Email"
         (click)="onTypeChange(NotificationType.Email)"
-        class="h-24 flex flex-col items-center justify-center gap-2 transition-colors"
+        class="h-24 flex flex-col items-center justify-center gap-2 transition-all"
       >
         <z-icon zType="mail" zSize="lg" />
         <span class="font-medium">{{ 'notification.type.email' | translate }}</span>
@@ -110,7 +115,7 @@
         <textarea
           z-input
           zType="textarea"
-          [placeholder]="'notification.message.placeholder' | translate"
+          [placeholder]="'notification.messagePlaceholder' | translate"
           [value]="message()"
           (input)="updateMessage($event)"
           rows="5"

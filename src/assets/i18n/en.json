@@ -435,7 +435,8 @@
       "depositReceipt": "Deposit Receipt",
       "feesReceipt": "Fees Receipt",
       "publicReceipt": "Public Receipt",
-      "generateReceipt": "Generate Receipt"
+      "generateReceipt": "Generate Receipt",
+      "sendNotification": "Send Notification"
     }
   },
   "tasks": {
@@ -872,6 +873,25 @@
     "input": {
       "dailyLimitReached": "Daily limit reached",
       "sendMessage": "Send message"
+    }
+  },
+  "notification": {
+    "type": {
+      "title": "Notification Type",
+      "email": "Email",
+      "whatsapp": "WhatsApp"
+    },
+    "contacts": {
+      "emails": "Contact Emails",
+      "numbers": "Contact Numbers"
+    },
+    "email": "Email",
+    "phone": "Phone",
+    "message": "Message",
+    "messagePlaceholder": "Enter your message here...",
+    "send": "Send",
+    "whatsapp": {
+      "unavailable": "WhatsApp is not available"
     }
   },
   "whatsapp": {

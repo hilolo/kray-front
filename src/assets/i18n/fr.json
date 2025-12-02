@@ -435,7 +435,8 @@
       "depositReceipt": "Reçu de dépôt",
       "feesReceipt": "Reçu de frais",
       "publicReceipt": "Reçu public",
-      "generateReceipt": "Générer un reçu"
+      "generateReceipt": "Générer un reçu",
+      "sendNotification": "Envoyer une notification"
     }
   },
   "tasks": {
@@ -872,6 +873,25 @@
     "input": {
       "dailyLimitReached": "Limite quotidienne atteinte",
       "sendMessage": "Envoyer le message"
+    }
+  },
+  "notification": {
+    "type": {
+      "title": "Type de notification",
+      "email": "E-mail",
+      "whatsapp": "WhatsApp"
+    },
+    "contacts": {
+      "emails": "E-mails de contact",
+      "numbers": "Numéros de contact"
+    },
+    "email": "E-mail",
+    "phone": "Téléphone",
+    "message": "Message",
+    "messagePlaceholder": "Entrez votre message ici...",
+    "send": "Envoyer",
+    "whatsapp": {
+      "unavailable": "WhatsApp n'est pas disponible"
     }
   },
   "whatsapp": {
