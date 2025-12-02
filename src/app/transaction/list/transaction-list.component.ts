@@ -16,8 +16,8 @@ import { ZardCheckboxComponent } from '@shared/components/checkbox/checkbox.comp
 import { ZardComboboxComponent, ZardComboboxOption } from '@shared/components/combobox/combobox.component';
 import { ZardInputGroupComponent } from '@shared/components/input-group/input-group.component';
 import { ZardInputDirective } from '@shared/components/input/input.directive';
-import { Subject, takeUntil, Observable } from 'rxjs';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { Subject, Observable } from 'rxjs';
+import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 import type { Transaction } from '@shared/models/transaction/transaction.model';
 import { TransactionType, TransactionStatus, RevenueType, ExpenseType } from '@shared/models/transaction/transaction.model';
@@ -36,6 +36,8 @@ import { ContactType } from '@shared/models/contact/contact.model';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ZardPdfViewerComponent } from '@shared/pdf-viewer/pdf-viewer.component';
 import { PdfGenerationService } from '@shared/services/pdf-generation.service';
+import { ZardDialogService } from '@shared/components/dialog/dialog.service';
+import { SendNotificationComponent } from '@shared/components/send-notification/send-notification.component';
 
 @Component({
   selector: 'app-transaction-list',
@@ -67,6 +69,7 @@ import { PdfGenerationService } from '@shared/services/pdf-generation.service';
 })
 export class TransactionListComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly alertDialogService = inject(ZardAlertDialogService);
+  private readonly dialogService = inject(ZardDialogService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly transactionService = inject(TransactionService);
@@ -874,6 +877,29 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
           this.isDeleting.set(false);
         },
       });
+    });
+  }
+
+  /**
+   * Open send notification modal
+   */
+  onSendNotification(transaction: Transaction): void {
+    const dialogRef = this.dialogService.create({
+      zContent: SendNotificationComponent,
+      zTitle: this.translateService.instant('notification.title'),
+      zWidth: '600px',
+      zCustomClasses: 'max-w-[calc(100vw-2rem)] sm:max-w-[600px] max-h-[90vh] overflow-y-auto',
+      zData: {
+        transactionId: transaction.id,
+      },
+      zHideFooter: true,
+      zClosable: true,
+    });
+
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result) => {
+      if (result && result.success) {
+        // Notification was sent successfully, could reload or show confirmation
+      }
     });
   }
 

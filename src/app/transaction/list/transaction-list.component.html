@@ -409,6 +409,10 @@
                 <span>{{ 'transaction.list.publicReceipt' | translate }}</span>
               </z-dropdown-menu-item>
             }
+            <z-dropdown-menu-item (click)="onSendNotification(row)">
+              <z-icon zType="send" zSize="sm" class="mr-2" />
+              <span>{{ 'transaction.list.sendNotification' | translate }}</span>
+            </z-dropdown-menu-item>
             <z-divider class="my-1" />
             <z-dropdown-menu-item (click)="onDelete(row)" class="text-destructive focus:text-destructive">
               <z-icon zType="x" zSize="sm" class="mr-2" />

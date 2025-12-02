@@ -1,0 +1,146 @@
+<div class="flex flex-col gap-6">
+  <!-- Notification Type Selection -->
+  <div class="flex flex-col gap-4">
+    <h3 class="text-base font-semibold">{{ 'notification.type.title' | translate }}</h3>
+    
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Email Option -->
+      <button
+        type="button"
+        z-button
+        zType="outline"
+        [class.border-primary]="selectedType() === NotificationType.Email"
+        [class.bg-primary]="selectedType() === NotificationType.Email"
+        [class.text-primary-foreground]="selectedType() === NotificationType.Email"
+        (click)="onTypeChange(NotificationType.Email)"
+        class="h-24 flex flex-col items-center justify-center gap-2 transition-colors"
+      >
+        <z-icon zType="mail" zSize="lg" />
+        <span class="font-medium">{{ 'notification.type.email' | translate }}</span>
+      </button>
+
+      <!-- WhatsApp Option -->
+      <button
+        type="button"
+        z-button
+        zType="outline"
+        [disabled]="checkingWhatsAppStatus() || isWhatsAppAvailable() === false"
+        [class.border-primary]="selectedType() === NotificationType.WhatsApp"
+        [class.bg-primary]="selectedType() === NotificationType.WhatsApp"
+        [class.text-primary-foreground]="selectedType() === NotificationType.WhatsApp"
+        [class.opacity-50]="checkingWhatsAppStatus() || isWhatsAppAvailable() === false"
+        (click)="onTypeChange(NotificationType.WhatsApp)"
+        class="h-24 flex flex-col items-center justify-center gap-2 transition-colors relative"
+      >
+        @if (checkingWhatsAppStatus()) {
+          <div class="absolute top-2 right-2">
+            <div class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        } @else if (isWhatsAppAvailable() === false) {
+          <div class="absolute top-2 right-2">
+            <z-icon zType="circle-x" zSize="sm" class="text-destructive" />
+          </div>
+        }
+        <z-icon zType="message-circle" zSize="lg" />
+        <span class="font-medium">{{ 'notification.type.whatsapp' | translate }}</span>
+        @if (isWhatsAppAvailable() === false) {
+          <span class="text-xs text-muted-foreground">{{ 'notification.whatsapp.unavailable' | translate }}</span>
+        }
+      </button>
+    </div>
+  </div>
+
+  @if (selectedType() !== null) {
+    <!-- Contacts Input -->
+    <div class="flex flex-col gap-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-semibold">
+          {{ selectedType() === NotificationType.Email ? ('notification.contacts.emails' | translate) : ('notification.contacts.numbers' | translate) }}
+        </h3>
+        <z-button
+          zType="ghost"
+          zSize="sm"
+          (click)="addContact()"
+          class="gap-2"
+        >
+          <z-icon zType="plus" zSize="sm" />
+          <span>{{ 'common.add' | translate }}</span>
+        </z-button>
+      </div>
+
+      <div class="flex flex-col gap-3">
+        @for (contact of contacts(); track $index) {
+          <z-form-field>
+            <z-form-label>
+              {{ selectedType() === NotificationType.Email ? ('notification.email' | translate) : ('notification.phone' | translate) }} {{ $index + 1 }}
+            </z-form-label>
+            <z-form-control>
+              <z-input-group>
+                <input
+                  z-input
+                  [type]="selectedType() === NotificationType.Email ? 'email' : 'tel'"
+                  [placeholder]="selectedType() === NotificationType.Email ? 'example@email.com' : '+212 6XX XXX XXX'"
+                  [value]="contact"
+                  (input)="updateContact($index, $event)"
+                  class="flex-1"
+                />
+                @if (contacts().length > 1) {
+                  <button
+                    type="button"
+                    z-button
+                    zType="ghost"
+                    zSize="icon"
+                    (click)="removeContact($index)"
+                    class="text-destructive hover:text-destructive"
+                  >
+                    <z-icon zType="x" zSize="sm" />
+                  </button>
+                }
+              </z-input-group>
+            </z-form-control>
+          </z-form-field>
+        }
+      </div>
+    </div>
+
+    <!-- Message Input -->
+    <z-form-field>
+      <z-form-label>{{ 'notification.message' | translate }}</z-form-label>
+      <z-form-control>
+        <textarea
+          z-input
+          zType="textarea"
+          [placeholder]="'notification.message.placeholder' | translate"
+          [value]="message()"
+          (input)="updateMessage($event)"
+          rows="5"
+        ></textarea>
+      </z-form-control>
+    </z-form-field>
+
+    <!-- Action Buttons -->
+    <div class="flex justify-end gap-3 pt-4 border-t">
+      <z-button
+        zType="outline"
+        (click)="close()"
+        [disabled]="isSending()"
+      >
+        {{ 'common.cancel' | translate }}
+      </z-button>
+      <z-button
+        zType="default"
+        (click)="sendNotification()"
+        [disabled]="!isFormValid() || isSending()"
+        class="gap-2"
+      >
+        @if (isSending()) {
+          <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+        } @else {
+          <z-icon zType="send" zSize="sm" />
+        }
+        <span>{{ 'notification.send' | translate }}</span>
+      </z-button>
+    </div>
+  }
+</div>
+
