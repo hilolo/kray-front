@@ -881,6 +881,37 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
   }
 
   /**
+   * Check if send notification should be available for a transaction
+   * - Loyer (rent) transactions: show for Paid, Overdue, or Pending status
+   * - Maintenance transactions: show only for Paid status
+   */
+  canSendNotification(transaction: Transaction): boolean {
+    const transactionType = transaction.type ?? transaction.category;
+    
+    // Only show for revenue transactions
+    if (transactionType !== TransactionType.Revenue) {
+      return false;
+    }
+    
+    // Check for Loyer (rent) transactions
+    if (transaction.revenueType === RevenueType.Loyer) {
+      // Show for Paid, Overdue, or Pending
+      return transaction.status === TransactionStatus.Paid ||
+             transaction.status === TransactionStatus.Overdue ||
+             transaction.status === TransactionStatus.Pending;
+    }
+    
+    // Check for Maintenance transactions
+    if (transaction.revenueType === RevenueType.Maintenance) {
+      // Show only for Paid status
+      return transaction.status === TransactionStatus.Paid;
+    }
+    
+    // For all other transaction types, don't show
+    return false;
+  }
+
+  /**
    * Open send notification modal
    */
   onSendNotification(transaction: Transaction): void {

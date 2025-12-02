@@ -409,7 +409,7 @@
                 <span>{{ 'transaction.list.publicReceipt' | translate }}</span>
               </z-dropdown-menu-item>
             }
-            @if (row.type === TransactionType.Revenue || row.category === TransactionType.Revenue) {
+            @if (canSendNotification(row)) {
               <z-dropdown-menu-item (click)="onSendNotification(row)">
                 <z-icon zType="send" zSize="sm" class="mr-2" />
                 <span>{{ 'transaction.list.sendNotification' | translate }}</span>
