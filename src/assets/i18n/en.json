@@ -892,6 +892,22 @@
     "send": "Send",
     "whatsapp": {
       "unavailable": "WhatsApp is not available"
+    },
+    "error": {
+      "invalidEmail": "Invalid email address",
+      "invalidPhone": "Invalid phone number",
+      "noContacts": "Please add at least one contact",
+      "sendFailed": "Failed to send notification",
+      "numbersWithoutWhatsApp": "The following numbers do not have WhatsApp: {numbers}",
+      "numberWithoutWhatsApp": "This number does not have WhatsApp",
+      "verifyFailed": "Failed to verify WhatsApp numbers"
+    },
+    "success": {
+      "sent": "Notification sent successfully"
+    },
+    "help": {
+      "email": "Enter a valid email address",
+      "phone": "Enter a valid phone number"
     }
   },
   "whatsapp": {

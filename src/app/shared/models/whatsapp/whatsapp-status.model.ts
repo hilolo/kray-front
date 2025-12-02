@@ -29,6 +29,7 @@ export interface WhatsAppNumberCheck {
 
 /**
  * WhatsApp numbers response
+ * ApiService returns response.data, so this is the actual structure received
  */
 export interface WhatsAppNumbersResponse {
   content: WhatsAppNumberCheck[];

@@ -9,6 +9,7 @@
         type="button"
         z-button
         zType="outline"
+        [disabled]="isLoadingContact()"
         [class.border-primary]="selectedType() === NotificationType.Email"
         [class.bg-primary]="selectedType() === NotificationType.Email"
         [class.text-primary-foreground]="selectedType() === NotificationType.Email"
@@ -17,9 +18,15 @@
         [class.ring-primary]="selectedType() === NotificationType.Email"
         [class.ring-offset-1]="selectedType() === NotificationType.Email"
         [class.ring-offset-background]="selectedType() === NotificationType.Email"
+        [class.opacity-50]="isLoadingContact() && selectedType() !== NotificationType.Email"
         (click)="onTypeChange(NotificationType.Email)"
-        class="h-24 flex flex-col items-center justify-center gap-2 transition-all"
+        class="h-24 flex flex-col items-center justify-center gap-2 transition-all relative"
       >
+        @if (isLoadingContact() && selectedType() === NotificationType.Email) {
+          <div class="absolute top-2 right-2">
+            <div class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        }
         <z-icon 
           zType="mail" 
           zSize="lg"
@@ -37,7 +44,7 @@
         type="button"
         z-button
         zType="outline"
-        [disabled]="checkingWhatsAppStatus() || isWhatsAppAvailable() === false"
+        [disabled]="checkingWhatsAppStatus() || isWhatsAppAvailable() === false || isLoadingContact()"
         [class.border-primary]="selectedType() === NotificationType.WhatsApp"
         [class.bg-primary]="selectedType() === NotificationType.WhatsApp"
         [class.text-primary-foreground]="selectedType() === NotificationType.WhatsApp"
@@ -46,11 +53,11 @@
         [class.ring-primary]="selectedType() === NotificationType.WhatsApp"
         [class.ring-offset-1]="selectedType() === NotificationType.WhatsApp"
         [class.ring-offset-background]="selectedType() === NotificationType.WhatsApp"
-        [class.opacity-50]="(checkingWhatsAppStatus() || isWhatsAppAvailable() === false) && selectedType() !== NotificationType.WhatsApp"
+        [class.opacity-50]="((checkingWhatsAppStatus() || isWhatsAppAvailable() === false || isLoadingContact()) && selectedType() !== NotificationType.WhatsApp)"
         (click)="onTypeChange(NotificationType.WhatsApp)"
         class="h-24 flex flex-col items-center justify-center gap-2 transition-all relative"
       >
-        @if (checkingWhatsAppStatus()) {
+        @if (checkingWhatsAppStatus() || (isLoadingContact() && selectedType() === NotificationType.WhatsApp)) {
           <div class="absolute top-2 right-2">
             <div class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
           </div>
@@ -95,54 +102,80 @@
       </div>
 
       <div class="flex flex-col gap-3">
-        @for (contact of contacts(); track $index) {
-          <z-form-field>
-            <z-form-label>
-              {{ selectedType() === NotificationType.Email ? ('notification.email' | translate) : ('notification.phone' | translate) }} {{ $index + 1 }}
-            </z-form-label>
-            <z-form-control>
-              <z-input-group class="[&_.input-wrapper]:border-border">
-                <input
-                  z-input
-                  [type]="selectedType() === NotificationType.Email ? 'email' : 'tel'"
-                  [placeholder]="selectedType() === NotificationType.Email ? 'example@email.com' : '+212 6XX XXX XXX'"
-                  [value]="contact"
-                  (input)="updateContact($index, $event)"
-                  class="flex-1"
-                />
-                @if (contacts().length > 1) {
-                  <button
-                    type="button"
-                    z-button
-                    zType="ghost"
-                    zSize="icon"
-                    (click)="removeContact($index)"
-                    class="text-destructive hover:text-destructive"
-                  >
-                    <z-icon zType="x" zSize="sm" />
-                  </button>
-                }
-              </z-input-group>
-            </z-form-control>
-          </z-form-field>
+        @if (isLoadingContact()) {
+          <div class="flex items-center justify-center py-8">
+            <div class="flex flex-col items-center gap-3">
+              <div class="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+              <span class="text-sm text-muted-foreground">{{ 'common.loading' | translate }}</span>
+            </div>
+          </div>
+        } @else {
+          @for (contact of contacts(); track $index) {
+            <div class="flex flex-col gap-2">
+              <z-form-field>
+                <z-form-label>
+                  {{ selectedType() === NotificationType.Email ? ('notification.email' | translate) : ('notification.phone' | translate) }} {{ $index + 1 }}
+                </z-form-label>
+                <z-form-control>
+                  <div class="flex items-center gap-2">
+                    <z-input-group class="[&_.input-wrapper]:border-border flex-1">
+                      <input
+                        z-input
+                        [type]="selectedType() === NotificationType.Email ? 'email' : 'tel'"
+                        [placeholder]="selectedType() === NotificationType.Email ? 'example@email.com' : '+212 6XX XXX XXX'"
+                        [value]="contact"
+                        [disabled]="isContactFromTransaction($index)"
+                        (input)="updateContact($index, $event)"
+                        class="flex-1"
+                      />
+                    </z-input-group>
+                    <button
+                      type="button"
+                      z-button
+                      zType="ghost"
+                      zSize="icon"
+                      (click)="removeContact($index)"
+                      [disabled]="isContactFromTransaction($index) && contacts().length === 1"
+                      class="text-destructive hover:text-destructive shrink-0"
+                    >
+                      <z-icon zType="x" zSize="sm" />
+                    </button>
+                  </div>
+                  @if (getContactErrorMessage($index) || getContactHelpText($index)) {
+                    <div class="mt-1.5">
+                      @if (getContactErrorMessage($index)) {
+                        <p class="text-sm text-red-500">{{ getContactErrorMessage($index) }}</p>
+                      } @else if (getContactHelpText($index)) {
+                        <p class="text-sm text-muted-foreground">{{ getContactHelpText($index) }}</p>
+                      }
+                    </div>
+                  }
+                </z-form-control>
+              </z-form-field>
+              @if (isContactFromTransaction($index) && loadedContact()) {
+                <div class="flex items-start gap-2 px-3 py-2 bg-muted/50 rounded-md text-sm">
+                  <z-icon zType="user" zSize="sm" class="text-muted-foreground mt-0.5" />
+                  <div class="flex flex-col gap-1 flex-1">
+                    <span class="font-medium text-foreground">{{ getContactName() }}</span>
+                    @if (loadedContact()!.isACompany) {
+                      @if (loadedContact()!.ice) {
+                        <span class="text-muted-foreground">ICE: {{ loadedContact()!.ice }}</span>
+                      }
+                      @if (loadedContact()!.rc) {
+                        <span class="text-muted-foreground">RC: {{ loadedContact()!.rc }}</span>
+                      }
+                    }
+                    @if (loadedContact()!.adresse) {
+                      <span class="text-muted-foreground">{{ loadedContact()!.adresse }}</span>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
         }
       </div>
     </div>
-
-    <!-- Message Input -->
-    <z-form-field>
-      <z-form-label>{{ 'notification.message' | translate }}</z-form-label>
-      <z-form-control>
-        <textarea
-          z-input
-          zType="textarea"
-          [placeholder]="'notification.messagePlaceholder' | translate"
-          [value]="message()"
-          (input)="updateMessage($event)"
-          rows="5"
-        ></textarea>
-      </z-form-control>
-    </z-form-field>
 
     <!-- Action Buttons -->
     <div class="flex justify-end gap-3 pt-4 border-t">
