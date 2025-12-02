@@ -15,13 +15,21 @@
         [class.border-2]="selectedType() === NotificationType.Email"
         [class.ring-2]="selectedType() === NotificationType.Email"
         [class.ring-primary]="selectedType() === NotificationType.Email"
-        [class.ring-offset-2]="selectedType() === NotificationType.Email"
+        [class.ring-offset-1]="selectedType() === NotificationType.Email"
         [class.ring-offset-background]="selectedType() === NotificationType.Email"
         (click)="onTypeChange(NotificationType.Email)"
         class="h-24 flex flex-col items-center justify-center gap-2 transition-all"
       >
-        <z-icon zType="mail" zSize="lg" />
-        <span class="font-medium">{{ 'notification.type.email' | translate }}</span>
+        <z-icon 
+          zType="mail" 
+          zSize="lg"
+          [class]="selectedType() === NotificationType.Email ? 'text-white' : 'text-foreground'"
+        />
+        <span 
+          class="font-medium"
+          [class.text-white]="selectedType() === NotificationType.Email"
+          [class.text-foreground]="selectedType() !== NotificationType.Email"
+        >{{ 'notification.type.email' | translate }}</span>
       </button>
 
       <!-- WhatsApp Option -->
@@ -33,9 +41,14 @@
         [class.border-primary]="selectedType() === NotificationType.WhatsApp"
         [class.bg-primary]="selectedType() === NotificationType.WhatsApp"
         [class.text-primary-foreground]="selectedType() === NotificationType.WhatsApp"
-        [class.opacity-50]="checkingWhatsAppStatus() || isWhatsAppAvailable() === false"
+        [class.border-2]="selectedType() === NotificationType.WhatsApp"
+        [class.ring-2]="selectedType() === NotificationType.WhatsApp"
+        [class.ring-primary]="selectedType() === NotificationType.WhatsApp"
+        [class.ring-offset-1]="selectedType() === NotificationType.WhatsApp"
+        [class.ring-offset-background]="selectedType() === NotificationType.WhatsApp"
+        [class.opacity-50]="(checkingWhatsAppStatus() || isWhatsAppAvailable() === false) && selectedType() !== NotificationType.WhatsApp"
         (click)="onTypeChange(NotificationType.WhatsApp)"
-        class="h-24 flex flex-col items-center justify-center gap-2 transition-colors relative"
+        class="h-24 flex flex-col items-center justify-center gap-2 transition-all relative"
       >
         @if (checkingWhatsAppStatus()) {
           <div class="absolute top-2 right-2">
@@ -46,8 +59,16 @@
             <z-icon zType="circle-x" zSize="sm" class="text-destructive" />
           </div>
         }
-        <z-icon zType="message-circle" zSize="lg" />
-        <span class="font-medium">{{ 'notification.type.whatsapp' | translate }}</span>
+        <z-icon 
+          zType="message-circle" 
+          zSize="lg"
+          [class]="selectedType() === NotificationType.WhatsApp ? 'text-white' : 'text-foreground'"
+        />
+        <span 
+          class="font-medium"
+          [class.text-white]="selectedType() === NotificationType.WhatsApp"
+          [class.text-foreground]="selectedType() !== NotificationType.WhatsApp"
+        >{{ 'notification.type.whatsapp' | translate }}</span>
         @if (isWhatsAppAvailable() === false) {
           <span class="text-xs text-muted-foreground">{{ 'notification.whatsapp.unavailable' | translate }}</span>
         }
@@ -80,7 +101,7 @@
               {{ selectedType() === NotificationType.Email ? ('notification.email' | translate) : ('notification.phone' | translate) }} {{ $index + 1 }}
             </z-form-label>
             <z-form-control>
-              <z-input-group>
+              <z-input-group class="[&_.input-wrapper]:border-border">
                 <input
                   z-input
                   [type]="selectedType() === NotificationType.Email ? 'email' : 'tel'"
