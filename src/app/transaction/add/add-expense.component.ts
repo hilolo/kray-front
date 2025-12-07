@@ -15,6 +15,8 @@ import { ZardDatePickerComponent } from '@shared/components/date-picker/date-pic
 import { ZardCheckboxComponent } from '@shared/components/checkbox/checkbox.component';
 import { ZardFileViewerComponent } from '@shared/components/file-viewer/file-viewer.component';
 import { ZardImageHoverPreviewDirective } from '@shared/components/image-hover-preview/image-hover-preview.component';
+import { ZardAccordionComponent } from '@shared/components/accordion/accordion.component';
+import { ZardAccordionItemComponent } from '@shared/components/accordion/accordion-item.component';
 import { ImageItem } from '@shared/image-viewer/image-viewer.component';
 import { getFileViewerType } from '@shared/utils/file-type.util';
 import { AttachmentInput } from '@shared/models/contact/create-contact-request.model';
@@ -72,6 +74,8 @@ interface ExistingAttachment {
     ZardCheckboxComponent,
     ZardFileViewerComponent,
     ZardImageHoverPreviewDirective,
+    ZardAccordionComponent,
+    ZardAccordionItemComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './add-expense.component.html',
