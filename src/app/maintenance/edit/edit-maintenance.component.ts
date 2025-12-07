@@ -14,8 +14,6 @@ import { ZardSelectItemComponent } from '@shared/components/select/select-item.c
 import { ZardComboboxComponent, ZardComboboxOption } from '@shared/components/combobox/combobox.component';
 import { ZardDatePickerComponent } from '@shared/components/date-picker/date-picker.component';
 import { ZardTimePickerComponent } from '@shared/components/time-picker/time-picker.component';
-import { ZardAccordionComponent } from '@shared/components/accordion/accordion.component';
-import { ZardAccordionItemComponent } from '@shared/components/accordion/accordion-item.component';
 import { MaintenanceService } from '@shared/services/maintenance.service';
 import { PropertyService } from '@shared/services/property.service';
 import { ContactService } from '@shared/services/contact.service';
@@ -46,8 +44,6 @@ import { ContactType } from '@shared/models/contact/contact.model';
     ZardComboboxComponent,
     ZardDatePickerComponent,
     ZardTimePickerComponent,
-    ZardAccordionComponent,
-    ZardAccordionItemComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './edit-maintenance.component.html',

@@ -1,12 +1,8 @@
 <div class="flex flex-col h-full max-h-[90vh] min-h-0 overflow-hidden">
   <!-- Content -->
   <div class="flex-1 min-h-0 overflow-y-auto px-6 py-4" (click)="$event.stopPropagation()">
-    <div class="max-w-2xl mx-auto">
-      <z-accordion zType="multiple" zDefaultValue="['basic-info', 'status-priority', 'schedule']">
-        <!-- Basic Information Section -->
-        <z-accordion-item zValue="basic-info" zTitle="Basic Information">
-          <div class="space-y-4">
-            <!-- Property -->
+    <div class="max-w-2xl mx-auto space-y-4">
+      <!-- Property -->
       <z-form-field>
         <z-form-label zRequired>Property</z-form-label>
         <z-form-control [errorMessage]="propertyIdError()">
@@ -41,71 +37,47 @@
             [zWidth]="'full'"
             class="w-full"
           />
-          </z-form-control>
-        </z-form-field>
+        </z-form-control>
+      </z-form-field>
 
-            <!-- Subject -->
-            <z-form-field>
-              <z-form-label zRequired>Subject</z-form-label>
-              <z-form-control [errorMessage]="subjectError()">
-                <z-input-group>
-                  <input
-                    z-input
-                    type="text"
-                    [ngModel]="formData().subject"
-                    (ngModelChange)="updateField('subject', $event)"
-                    name="subject"
-                    placeholder="Enter subject"
-                    [zStatus]="subjectError() ? 'error' : undefined"
-                    class="w-full"
-                  />
-                </z-input-group>
-              </z-form-control>
-            </z-form-field>
+      <!-- Subject -->
+      <z-form-field>
+        <z-form-label zRequired>Subject</z-form-label>
+        <z-form-control [errorMessage]="subjectError()">
+          <z-input-group>
+            <input
+              z-input
+              type="text"
+              [ngModel]="formData().subject"
+              (ngModelChange)="updateField('subject', $event)"
+              name="subject"
+              placeholder="Enter subject"
+              [zStatus]="subjectError() ? 'error' : undefined"
+              class="w-full"
+            />
+          </z-input-group>
+        </z-form-control>
+      </z-form-field>
 
-            <!-- Description -->
-            <z-form-field>
-              <z-form-label zRequired>Description</z-form-label>
-              <z-form-control [errorMessage]="descriptionError()">
-                <textarea
-                  z-input
-                  [ngModel]="formData().description"
-                  (ngModelChange)="updateField('description', $event)"
-                  name="description"
-                  placeholder="Enter description"
-                  rows="4"
-                  [zStatus]="descriptionError() ? 'error' : undefined"
-                  class="w-full resize-none"
-                ></textarea>
-              </z-form-control>
-            </z-form-field>
+      <!-- Description -->
+      <z-form-field>
+        <z-form-label zRequired>Description</z-form-label>
+        <z-form-control [errorMessage]="descriptionError()">
+          <textarea
+            z-input
+            [ngModel]="formData().description"
+            (ngModelChange)="updateField('description', $event)"
+            name="description"
+            placeholder="Enter description"
+            rows="4"
+            [zStatus]="descriptionError() ? 'error' : undefined"
+            class="w-full resize-none"
+          ></textarea>
+        </z-form-control>
+      </z-form-field>
 
-            <!-- Save Button -->
-            <div class="flex justify-end mt-4 pt-4 border-t">
-              <z-button 
-                [zType]="isSavingSection('basic-info') ? 'ghost' : 'default'" 
-                [disabled]="isSavingSection('basic-info')" 
-                (click)="saveSection('basic-info')"
-              >
-                @if (isSavingSection('basic-info')) {
-                  <span class="flex items-center gap-2">
-                    <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
-                    Saving...
-                  </span>
-                } @else {
-                  <z-icon zType="check" zSize="sm" class="mr-2" />
-                  Save Section
-                }
-              </z-button>
-            </div>
-          </div>
-        </z-accordion-item>
-
-        <!-- Status and Priority Section -->
-        <z-accordion-item zValue="status-priority" zTitle="Status & Priority">
-          <div class="space-y-4">
-            <!-- Priority and Status -->
-            <div class="grid grid-cols-2 gap-2">
+      <!-- Priority and Status -->
+      <div class="grid grid-cols-2 gap-2">
         <!-- Priority -->
         <z-form-field>
           <z-form-label zRequired>Priority</z-form-label>
@@ -147,34 +119,10 @@
             </z-select>
           </z-form-control>
         </z-form-field>
-            </div>
+      </div>
 
-            <!-- Save Button -->
-            <div class="flex justify-end mt-4 pt-4 border-t">
-              <z-button 
-                [zType]="isSavingSection('status-priority') ? 'ghost' : 'default'" 
-                [disabled]="isSavingSection('status-priority')" 
-                (click)="saveSection('status-priority')"
-              >
-                @if (isSavingSection('status-priority')) {
-                  <span class="flex items-center gap-2">
-                    <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
-                    Saving...
-                  </span>
-                } @else {
-                  <z-icon zType="check" zSize="sm" class="mr-2" />
-                  Save Section
-                }
-              </z-button>
-            </div>
-          </div>
-        </z-accordion-item>
-
-        <!-- Schedule Section -->
-        <z-accordion-item zValue="schedule" zTitle="Schedule">
-          <div class="space-y-4">
-            <!-- Scheduled Date/Time -->
-            <div class="grid grid-cols-2 gap-2">
+      <!-- Scheduled Date/Time -->
+      <div class="grid grid-cols-2 gap-2">
         <!-- Date -->
         <z-form-field>
           <z-form-label zRequired>Scheduled Date</z-form-label>
@@ -200,29 +148,7 @@
             />
           </z-form-control>
         </z-form-field>
-            </div>
-
-            <!-- Save Button -->
-            <div class="flex justify-end mt-4 pt-4 border-t">
-              <z-button 
-                [zType]="isSavingSection('schedule') ? 'ghost' : 'default'" 
-                [disabled]="isSavingSection('schedule')" 
-                (click)="saveSection('schedule')"
-              >
-                @if (isSavingSection('schedule')) {
-                  <span class="flex items-center gap-2">
-                    <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
-                    Saving...
-                  </span>
-                } @else {
-                  <z-icon zType="check" zSize="sm" class="mr-2" />
-                  Save Section
-                }
-              </z-button>
-            </div>
-          </div>
-        </z-accordion-item>
-      </z-accordion>
+      </div>
     </div>
   </div>
 
