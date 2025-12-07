@@ -254,6 +254,22 @@
           </z-form-field>
 
           <z-form-field>
+            <z-form-label>Address</z-form-label>
+            <z-form-control>
+              <z-input-group [zPrefix]="mapPinIconTemplate">
+                <input
+                  z-input
+                  type="text"
+                  [ngModel]="formData().adresse"
+                  (ngModelChange)="updateField('adresse', $event)"
+                  placeholder="Enter address"
+                  class="w-full"
+                />
+              </z-input-group>
+            </z-form-control>
+          </z-form-field>
+
+          <z-form-field>
             <z-form-label>ICE</z-form-label>
             <z-form-control [errorMessage]="iceError()" helpText="Identifiant Commun de l'Entreprise">
               <z-input-group [zPrefix]="idCardIconTemplate">
@@ -340,6 +356,22 @@
               </z-input-group>
             </z-form-control>
           </z-form-field>
+
+          <z-form-field>
+            <z-form-label>Address</z-form-label>
+            <z-form-control>
+              <z-input-group [zPrefix]="mapPinIconTemplate">
+                <input
+                  z-input
+                  type="text"
+                  [ngModel]="formData().adresse"
+                  (ngModelChange)="updateField('adresse', $event)"
+                  placeholder="Enter address"
+                  class="w-full"
+                />
+              </z-input-group>
+            </z-form-control>
+          </z-form-field>
         </div>
       }
     </div>
@@ -392,23 +424,6 @@
           </z-form-control>
         </z-form-field>
       </div>
-
-      <!-- Address Field -->
-      <z-form-field>
-        <z-form-label>Address</z-form-label>
-        <z-form-control>
-          <z-input-group [zPrefix]="mapPinIconTemplate">
-            <input
-              z-input
-              type="text"
-              [ngModel]="formData().adresse"
-              (ngModelChange)="updateField('adresse', $event)"
-              placeholder="Enter address"
-              class="w-full"
-            />
-          </z-input-group>
-        </z-form-control>
-      </z-form-field>
 
       <!-- Additional Phone Numbers -->
       @if (formData().phoneNumbers.length > 1) {
