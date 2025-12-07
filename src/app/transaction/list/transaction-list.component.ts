@@ -781,7 +781,7 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
 
   /**
    * Check if a receipt can be generated for a transaction
-   * Receipts are only available for Paid Revenue transactions of type Loyer, Caution, or FraisAgence
+   * Receipts are only available for Paid Revenue transactions of type Loyer, Caution, FraisAgence, or Maintenance
    */
   canGenerateReceipt(transaction: Transaction): boolean {
     const transactionType = transaction.type ?? transaction.category;
@@ -791,7 +791,8 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
     
     return transaction.revenueType === RevenueType.Loyer ||
            transaction.revenueType === RevenueType.Caution ||
-           transaction.revenueType === RevenueType.FraisAgence;
+           transaction.revenueType === RevenueType.FraisAgence ||
+           transaction.revenueType === RevenueType.Maintenance;
   }
 
   /**
@@ -811,6 +812,9 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
         break;
       case RevenueType.FraisAgence:
         this.onGenerateFeesReceipt(transaction);
+        break;
+      case RevenueType.Maintenance:
+        this.onGenerateMaintenanceReceipt(transaction);
         break;
     }
   }
@@ -1156,6 +1160,80 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
   }
 
   /**
+   * Generate and display maintenance receipt for a transaction
+   * Only available for Paid Maintenance transactions
+   */
+  onGenerateMaintenanceReceipt(transaction: Transaction): void {
+    if (this.isGeneratingReceipt()) {
+      return;
+    }
+
+    // Validate transaction type and status
+    const transactionType = transaction.type ?? transaction.category;
+    if (transactionType !== TransactionType.Revenue || 
+        transaction.revenueType !== RevenueType.Maintenance ||
+        transaction.status !== TransactionStatus.Paid) {
+      this.toastService.error('Receipt can only be generated for paid maintenance transactions');
+      return;
+    }
+
+    this.isGeneratingReceipt.set(true);
+    this.cdr.markForCheck();
+
+    this.transactionService.generateMaintenanceReceipt(transaction.id).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: async (pdfMakeData) => {
+        try {
+          // Handle response format (may be wrapped in data property)
+          let dataToProcess: any = pdfMakeData;
+          if (typeof pdfMakeData === 'object' && pdfMakeData !== null && 'data' in pdfMakeData) {
+            dataToProcess = (pdfMakeData as any).data;
+          }
+
+          // Parse PDFMake JSON if needed
+          let pdfMakeJson: any;
+          if (typeof dataToProcess === 'string') {
+            pdfMakeJson = JSON.parse(dataToProcess);
+          } else if (typeof dataToProcess === 'object' && dataToProcess !== null) {
+            pdfMakeJson = dataToProcess;
+          } else {
+            throw new Error('Invalid PDFMake data format');
+          }
+
+          // Validate PDFMake structure
+          if (!pdfMakeJson || (!pdfMakeJson.content && !pdfMakeJson.text)) {
+            throw new Error('PDFMake data is missing required content property');
+          }
+
+          // Convert PDFMake JSON to PDF data URL
+          const pdfResult = await this.pdfGenerationService.generatePdfFromJson(pdfMakeJson);
+
+          // Show PDF in viewer
+          this.pdfViewerUrl.set(pdfResult.dataUrl);
+          this.pdfViewerName.set(`Maintenance Receipt - ${transaction.propertyIdentifier || transaction.propertyName || 'Transaction'} - ${this.formatDate(transaction)}`);
+          this.showPdfViewer.set(true);
+          this.isGeneratingReceipt.set(false);
+          this.cdr.markForCheck();
+        } catch (error: any) {
+          console.error('Error generating maintenance receipt:', error);
+          const errorMessage = error?.message || 'Failed to generate maintenance receipt';
+          this.toastService.error(errorMessage);
+          this.isGeneratingReceipt.set(false);
+          this.cdr.markForCheck();
+        }
+      },
+      error: (error) => {
+        console.error('Error fetching maintenance receipt:', error);
+        const errorMessage = error?.error?.message || error?.message || 'Failed to generate maintenance receipt';
+        this.toastService.error(errorMessage);
+        this.isGeneratingReceipt.set(false);
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  /**
    * Generate public receipt PDF and copy base64 to clipboard
    * Only available for Paid transactions
    * Generates base64 entirely on frontend using appropriate receipt type
@@ -1182,6 +1260,8 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
         receiptObservable = this.transactionService.generateDepositReceipt(transaction.id);
       } else if (transaction.revenueType === RevenueType.FraisAgence) {
         receiptObservable = this.transactionService.generateFeesReceipt(transaction.id);
+      } else if (transaction.revenueType === RevenueType.Maintenance) {
+        receiptObservable = this.transactionService.generateMaintenanceReceipt(transaction.id);
       } else {
         this.toastService.error('Receipt type not supported for this transaction');
         return;

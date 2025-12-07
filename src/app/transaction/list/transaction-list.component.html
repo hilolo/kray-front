@@ -402,6 +402,12 @@
                   <span>{{ 'transaction.list.feesReceipt' | translate }}</span>
                 </z-dropdown-menu-item>
               }
+              @if (row.revenueType === RevenueType.Maintenance) {
+                <z-dropdown-menu-item (click)="onGenerateMaintenanceReceipt(row)">
+                  <z-icon zType="file-text" zSize="sm" class="mr-2" />
+                  <span>{{ 'transaction.list.maintenanceReceipt' | translate }}</span>
+                </z-dropdown-menu-item>
+              }
             }
             @if (row.status === TransactionStatus.Paid) {
               <z-dropdown-menu-item (click)="onGeneratePublicReceipt(row)">

@@ -110,6 +110,16 @@ export class TransactionService {
   }
 
   /**
+   * Generate maintenance receipt PDF for a transaction with RevenueType = Maintenance
+   * POST api/Transaction/{id}/maintenancereceipt
+   * @param id Transaction ID
+   * @returns Observable of processed PDFMake JSON object with placeholders replaced
+   */
+  generateMaintenanceReceipt(id: string): Observable<any> {
+    return this.apiService.post<any>(`Transaction/${id}/maintenancereceipt`, {});
+  }
+
+  /**
    * Generate public transaction receipt PDF (public access, no authentication required)
    * GET api/public/transactions/{id}/pdf
    * @param id Transaction ID

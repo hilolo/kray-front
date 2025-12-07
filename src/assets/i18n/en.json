@@ -434,6 +434,7 @@
       "leasingReceipt": "Leasing Receipt",
       "depositReceipt": "Deposit Receipt",
       "feesReceipt": "Fees Receipt",
+      "maintenanceReceipt": "Maintenance Receipt",
       "publicReceipt": "Public Receipt",
       "generateReceipt": "Generate Receipt",
       "sendNotification": "Send Notification"

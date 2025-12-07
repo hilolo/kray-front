@@ -434,6 +434,7 @@
       "leasingReceipt": "Reçu de location",
       "depositReceipt": "Reçu de dépôt",
       "feesReceipt": "Reçu de frais",
+      "maintenanceReceipt": "Reçu de maintenance",
       "publicReceipt": "Reçu public",
       "generateReceipt": "Générer un reçu",
       "sendNotification": "Envoyer une notification"
