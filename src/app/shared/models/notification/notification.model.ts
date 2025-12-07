@@ -26,6 +26,7 @@ export interface CreateNotificationRequest {
   transactionId: string;
   repeat?: number;
   scheduledSent?: string; // ISO date string
+  file?: string; // Base64 encoded receipt PDF
 }
 
 /**
@@ -40,6 +41,8 @@ export interface Notification {
   message: string;
   transactionId: string;
   scheduledSent?: string;
+  sentAt?: string; // ISO date string - when notification was sent
+  file?: string; // Base64 encoded receipt PDF
   isDeleted: boolean;
   createdAt: string;
   updatedAt?: string;

@@ -904,7 +904,9 @@
       "verifyFailed": "Failed to verify WhatsApp numbers"
     },
     "success": {
-      "sent": "Notification sent successfully"
+      "sent": "Notification sent successfully",
+      "emailSent": "Email notification sent successfully",
+      "whatsappSent": "WhatsApp notification sent successfully"
     },
     "help": {
       "email": "Enter a valid email address",

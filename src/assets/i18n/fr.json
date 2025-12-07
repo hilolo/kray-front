@@ -904,7 +904,9 @@
       "verifyFailed": "Échec de la vérification des numéros WhatsApp"
     },
     "success": {
-      "sent": "Notification envoyée avec succès"
+      "sent": "Notification envoyée avec succès",
+      "emailSent": "Notification e-mail envoyée avec succès",
+      "whatsappSent": "Notification WhatsApp envoyée avec succès"
     },
     "help": {
       "email": "Entrez une adresse e-mail valide",

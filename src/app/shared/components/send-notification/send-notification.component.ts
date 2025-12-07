@@ -16,6 +16,8 @@ import { NotificationType } from '@shared/models/notification/notification.model
 import { TransactionService } from '@shared/services/transaction.service';
 import { ContactService } from '@shared/services/contact.service';
 import { Contact } from '@shared/models/contact/contact.model';
+import { PdfGenerationService } from '@shared/services/pdf-generation.service';
+import { Transaction, TransactionType, RevenueType, ExpenseType, TransactionStatus } from '@shared/models/transaction/transaction.model';
 import { Subject, takeUntil } from 'rxjs';
 
 interface SendNotificationData {
@@ -49,6 +51,7 @@ export class SendNotificationComponent implements OnInit, OnDestroy {
   private readonly translateService = inject(TranslateService);
   private readonly transactionService = inject(TransactionService);
   private readonly contactService = inject(ContactService);
+  private readonly pdfGenerationService = inject(PdfGenerationService);
   private readonly destroy$ = new Subject<void>();
 
   readonly NotificationType = NotificationType;
@@ -356,13 +359,15 @@ export class SendNotificationComponent implements OnInit, OnDestroy {
     
     console.log('[Notification] [Validation] Checking form validity', {
       selectedType: selectedType !== null ? (selectedType === NotificationType.Email ? 'Email' : 'WhatsApp') : 'null',
+      selectedTypeValue: selectedType,
       validContactsCount: validContacts.length,
       validContacts: validContacts,
       allContactsCount: allContacts.length,
       allContacts: allContacts
     });
     
-    if (!selectedType) {
+    // Check for null explicitly (not falsy, because 0 is a valid enum value for Email)
+    if (selectedType === null) {
       console.log('[Notification] [Validation] Failed: No notification type selected');
       return false;
     }
@@ -566,9 +571,89 @@ export class SendNotificationComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Generate receipt PDF base64 for the transaction
+   */
+  private async generateReceiptBase64(transaction: Transaction): Promise<string | null> {
+    try {
+      console.log('[Notification] Generating receipt for transaction:', transaction.id);
+      
+      let receiptObservable: any;
+      
+      // Determine which receipt to generate based on transaction type
+      const transactionType = transaction.type ?? transaction.category;
+      
+      if (transactionType === TransactionType.Revenue) {
+        if (transaction.revenueType === RevenueType.Loyer) {
+          receiptObservable = this.transactionService.generateLeasingReceipt(transaction.id);
+        } else if (transaction.revenueType === RevenueType.Caution) {
+          receiptObservable = this.transactionService.generateDepositReceipt(transaction.id);
+        } else if (transaction.revenueType === RevenueType.FraisAgence) {
+          receiptObservable = this.transactionService.generateFeesReceipt(transaction.id);
+        } else if (transaction.revenueType === RevenueType.Maintenance) {
+          receiptObservable = this.transactionService.generateMaintenanceReceipt(transaction.id);
+        } else {
+          console.log('[Notification] No receipt type available for revenue type:', transaction.revenueType);
+          return null;
+        }
+      } else if (transactionType === TransactionType.Expense) {
+        if (transaction.expenseType === ExpenseType.Maintenance) {
+          receiptObservable = this.transactionService.generateMaintenanceReceipt(transaction.id);
+        } else {
+          console.log('[Notification] No receipt type available for expense type:', transaction.expenseType);
+          return null;
+        }
+      } else {
+        console.log('[Notification] No receipt type available for transaction type:', transactionType);
+        return null;
+      }
+
+      if (!receiptObservable) {
+        return null;
+      }
+
+      // Get PDFMake JSON from backend
+      const pdfMakeData = await receiptObservable.pipe(takeUntil(this.destroy$)).toPromise();
+      
+      // Handle response format (may be wrapped in data property)
+      let dataToProcess: any = pdfMakeData;
+      if (typeof pdfMakeData === 'object' && pdfMakeData !== null && 'data' in pdfMakeData) {
+        dataToProcess = (pdfMakeData as any).data;
+      }
+
+      // Parse PDFMake JSON if needed
+      let pdfMakeJson: any;
+      if (typeof dataToProcess === 'string') {
+        pdfMakeJson = JSON.parse(dataToProcess);
+      } else if (typeof dataToProcess === 'object' && dataToProcess !== null) {
+        pdfMakeJson = dataToProcess;
+      } else {
+        throw new Error('Invalid PDFMake data format');
+      }
+
+      // Validate PDFMake structure
+      if (!pdfMakeJson || (!pdfMakeJson.content && !pdfMakeJson.text)) {
+        throw new Error('PDFMake data is missing required content property');
+      }
+
+      // Convert PDFMake JSON to PDF data URL
+      const pdfResult = await this.pdfGenerationService.generatePdfFromJson(pdfMakeJson);
+      
+      // Extract base64 from data URL (remove "data:application/pdf;base64," prefix)
+      const base64Receipt = pdfResult.dataUrl.split(',')[1];
+      
+      console.log('[Notification] Receipt generated successfully, base64 length:', base64Receipt?.length);
+      return base64Receipt;
+    } catch (error: any) {
+      console.error('[Notification] Error generating receipt:', error);
+      // Don't fail the notification if receipt generation fails
+      return null;
+    }
+  }
+
+  /**
    * Send the notification request
    */
-  private sendNotificationRequest(contacts: string[], type: NotificationType): void {
+  private async sendNotificationRequest(contacts: string[], type: NotificationType): Promise<void> {
     const notificationType = type === NotificationType.Email ? 'Email' : 'WhatsApp';
     console.log(`[Notification] [${notificationType}] Preparing to send notification request`);
     
@@ -582,18 +667,32 @@ export class SendNotificationComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Get transaction to generate receipt
+    let receiptBase64: string | null = null;
+    try {
+      const transaction = await this.transactionService.getById(this.transactionId).pipe(takeUntil(this.destroy$)).toPromise();
+      if (transaction) {
+        receiptBase64 = await this.generateReceiptBase64(transaction);
+      }
+    } catch (error) {
+      console.error('[Notification] Error fetching transaction for receipt generation:', error);
+      // Continue without receipt if transaction fetch fails
+    }
+
     const request = {
       type,
       contacts: validContacts,
       message: '',
       transactionId: this.transactionId,
+      file: receiptBase64 || undefined, // Base64 receipt PDF
     };
 
     console.log(`[Notification] [${notificationType}] Sending notification request:`, {
       type: notificationType,
       contactsCount: validContacts.length,
       contacts: validContacts,
-      transactionId: this.transactionId
+      transactionId: this.transactionId,
+      hasReceipt: !!receiptBase64
     });
 
     this.notificationService.create(request)
@@ -601,7 +700,17 @@ export class SendNotificationComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           console.log(`[Notification] [${notificationType}] Notification created successfully:`, response);
-          this.toastService.success(this.translateService.instant('notification.success.sent'));
+          
+          // Show type-specific success message
+          const successKey = type === NotificationType.Email 
+            ? 'notification.success.emailSent' 
+            : 'notification.success.whatsappSent';
+          const successMessage = this.translateService.instant(successKey) || 
+            (type === NotificationType.Email 
+              ? 'Email notification sent successfully' 
+              : 'WhatsApp notification sent successfully');
+          
+          this.toastService.success(successMessage);
           this.dialogRef.close({ success: true });
         },
         error: (error: any) => {
