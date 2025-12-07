@@ -431,11 +431,6 @@
                                   [src]="image.url"
                                   [alt]="'Property image'"
                                   class="w-full h-full object-cover"
-                                  [zImageHoverPreview]="image.url"
-                                  [zAlt]="'Property image'"
-                                  [zPosition]="'right'"
-                                  [zMaxWidth]="'700px'"
-                                  [zMaxHeight]="'700px'"
                                 />
                                 
                                 <!-- X Button - Top Right -->
@@ -456,18 +451,17 @@
                                   </div>
                                 }
                                 
-                                <!-- Set Default Button - Bottom Center -->
+                                <!-- Set Default Button - Top Left -->
                                 @if (!image.isDefault) {
-                                  <div class="absolute bottom-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                  <div class="absolute top-2 left-2 z-10">
                                     <z-button
-                                      zType="default"
+                                      zType="ghost"
                                       zSize="sm"
-                                      class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 shadow-md hover:bg-gray-50 dark:hover:bg-gray-800"
+                                      class="bg-background/90 dark:bg-background/90 hover:bg-background border border-border rounded-full p-1.5 h-auto w-auto"
                                       (click)="onSetDefaultImage(image.id, !image.isUploaded)"
                                       title="Set as default"
                                     >
-                                      <z-icon zType="star" zSize="sm" class="mr-1" />
-                                      Set Default
+                                      <z-icon zType="star" zSize="sm" class="text-yellow-500 fill-yellow-500" />
                                     </z-button>
                                   </div>
                                 }

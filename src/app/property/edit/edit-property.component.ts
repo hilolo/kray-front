@@ -84,7 +84,6 @@ type PropertyFormData = {
     ZardSelectItemComponent,
     ZardCheckboxComponent,
     ZardCardComponent,
-    ZardImageHoverPreviewDirective,
     ZardComboboxComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
