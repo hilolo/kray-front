@@ -77,6 +77,7 @@
                   [zViewMode]="'list'"
                   [zSelectable]="true"
                   [zSelectedRows]="selectedRows()"
+                  [zLoading]="isLoading()"
                   (zSelectionChange)="onRowSelect($event)"
                 >
                   <ng-template #nameCell let-row>

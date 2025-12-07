@@ -2,7 +2,15 @@
   <!-- Scrollable Content Area -->
   <div class="flex-1 overflow-y-auto min-h-0">
     <div class="space-y-4 pb-4">
-      @if (!hasData() && zShowEmpty()) {
+      @if (zLoading()) {
+        <!-- Loading State -->
+        <div class="flex items-center justify-center min-h-[400px]">
+          <div class="text-center space-y-4">
+            <z-icon zType="loader-circle" class="w-8 h-8 animate-spin mx-auto text-primary" />
+            <p class="text-sm text-muted-foreground">{{ 'common.loading' | translate }}</p>
+          </div>
+        </div>
+      } @else if (!hasData() && zShowEmpty()) {
         <!-- Empty State -->
         <div class="flex items-center justify-center min-h-[400px]">
           @if (emptyTemplate()) {

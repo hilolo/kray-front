@@ -45,6 +45,7 @@ export interface DatatableColumn<T = any> {
     ZardEmptyComponent,
     ZardCheckboxComponent,
     ZardCardComponent,
+    ZardIconComponent,
     TranslateModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -60,6 +61,9 @@ export class ZardDatatableComponent<T = any> {
   // Data inputs
   readonly zData = input<T[]>([]);
   readonly zColumns = input<DatatableColumn<T>[]>([]);
+  
+  // Loading state
+  readonly zLoading = input<boolean>(false);
   
   // View mode
   readonly zViewMode = input<'list' | 'card'>('list');
