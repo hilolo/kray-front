@@ -92,51 +92,29 @@ export class LoginComponent {
     this.isLoading.set(true);
     this.authService.login(emailValue, passwordValue).subscribe({
       next: (response) => {
-        // After successful login, call sign-in-with-token to get full user data
-        this.authService.signInWithToken().subscribe({
-          next: (tokenResponse) => {
-            // Fetch and store settings after successful login
-            this.settingsService.getSettings().subscribe({
-              next: (settings) => {
-                // Store settings in localStorage
-                localStorage.setItem('settings', JSON.stringify(settings));
-                this.isLoading.set(false);
-                // Check if company is restricted
-                const company = this.userService.company();
-                const isRestricted = company?.restricted === true;
-                
-                if (isRestricted) {
-                  // Redirect to locked page if restricted
-                  this.router.navigate(['/locked']);
-                } else {
-                  // Get return URL from route parameters or default to home
-                  const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
-                  // Navigate to return URL or home on successful login
-                  this.router.navigate([returnUrl]);
-                }
-              },
-              error: (settingsError) => {
-                console.error('Error fetching settings:', settingsError);
-                // Continue even if settings fetch fails
-                this.isLoading.set(false);
-                // Check if company is restricted
-                const company = this.userService.company();
-                const isRestricted = company?.restricted === true;
-                
-                if (isRestricted) {
-                  // Redirect to locked page if restricted
-                  this.router.navigate(['/locked']);
-                } else {
-                  // Get return URL from route parameters or default to home
-                  const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
-                  this.router.navigate([returnUrl]);
-                }
-              },
-            });
+        // Fetch and store settings after successful login
+        this.settingsService.getSettings().subscribe({
+          next: (settings) => {
+            // Store settings in localStorage
+            localStorage.setItem('settings', JSON.stringify(settings));
+            this.isLoading.set(false);
+            // Check if company is restricted
+            const company = this.userService.company();
+            const isRestricted = company?.restricted === true;
+            
+            if (isRestricted) {
+              // Redirect to locked page if restricted
+              this.router.navigate(['/locked']);
+            } else {
+              // Get return URL from route parameters or default to home
+              const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
+              // Navigate to return URL or home on successful login
+              this.router.navigate([returnUrl]);
+            }
           },
-          error: (tokenError) => {
-            console.error('Sign in with token error:', tokenError);
-            // Even if this fails, we still have the initial login data
+          error: (settingsError) => {
+            console.error('Error fetching settings:', settingsError);
+            // Continue even if settings fetch fails
             this.isLoading.set(false);
             // Check if company is restricted
             const company = this.userService.company();
