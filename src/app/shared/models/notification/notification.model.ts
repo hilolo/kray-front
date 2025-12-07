@@ -10,9 +10,10 @@ export enum NotificationType {
  * Notification status enum
  */
 export enum NotificationStatus {
-  Sent = 0,
-  Failed = 1,
-  Cancelled = 2,
+  Pending = 0,
+  Sent = 1,
+  Failed = 2,
+  Cancelled = 3,
 }
 
 /**

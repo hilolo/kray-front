@@ -350,8 +350,43 @@ export class SendNotificationComponent implements OnInit, OnDestroy {
    * Check if form is valid
    */
   isFormValid(): boolean {
-    if (!this.selectedType()) return false;
-    if (this.getValidContacts().length === 0) return false;
+    const selectedType = this.selectedType();
+    const validContacts = this.getValidContacts();
+    const allContacts = this.contacts();
+    
+    console.log('[Notification] [Validation] Checking form validity', {
+      selectedType: selectedType !== null ? (selectedType === NotificationType.Email ? 'Email' : 'WhatsApp') : 'null',
+      validContactsCount: validContacts.length,
+      validContacts: validContacts,
+      allContactsCount: allContacts.length,
+      allContacts: allContacts
+    });
+    
+    if (!selectedType) {
+      console.log('[Notification] [Validation] Failed: No notification type selected');
+      return false;
+    }
+    
+    if (validContacts.length === 0) {
+      console.log('[Notification] [Validation] Failed: No valid contacts found', {
+        allContacts: allContacts,
+        filteredContacts: validContacts
+      });
+      return false;
+    }
+    
+    // Check if any contacts have validation errors (email format, etc.)
+    const hasErrors = allContacts.some((contact, index) => {
+      const error = this.getContactErrorMessage(index);
+      return error && error.length > 0;
+    });
+    
+    if (hasErrors) {
+      console.log('[Notification] [Validation] Failed: Some contacts have validation errors');
+      return false;
+    }
+    
+    console.log('[Notification] [Validation] Form is valid');
     return true;
   }
 
@@ -359,26 +394,51 @@ export class SendNotificationComponent implements OnInit, OnDestroy {
    * Send notification
    */
   sendNotification(): void {
-    if (!this.isFormValid() || this.isSending()) {
+    console.log('[Notification] Send notification called');
+    
+    const isValid = this.isFormValid();
+    const isCurrentlySending = this.isSending();
+    
+    if (!isValid || isCurrentlySending) {
+      console.log('[Notification] Form validation failed or already sending', {
+        isValid: isValid,
+        isSending: isCurrentlySending,
+        selectedType: this.selectedType(),
+        contacts: this.contacts(),
+        validContacts: this.getValidContacts()
+      });
       return;
     }
 
     const type = this.selectedType();
-    if (type === null) return;
+    if (type === null) {
+      console.error('[Notification] No notification type selected');
+      return;
+    }
 
     const validContacts = this.getValidContacts();
     if (validContacts.length === 0) {
+      console.error('[Notification] No valid contacts found');
       this.toastService.error(this.translateService.instant('notification.error.noContacts'));
       return;
     }
+
+    console.log('[Notification] Starting notification send', {
+      type: type === NotificationType.Email ? 'Email' : 'WhatsApp',
+      contactsCount: validContacts.length,
+      contacts: validContacts,
+      transactionId: this.transactionId
+    });
 
     this.isSending.set(true);
 
     // If WhatsApp, verify all numbers first
     if (type === NotificationType.WhatsApp) {
+      console.log('[Notification] WhatsApp type selected - verifying numbers');
       this.verifyWhatsAppNumbers(validContacts);
     } else {
       // For email, send directly
+      console.log('[Notification] Email type selected - sending directly');
       this.sendNotificationRequest(validContacts, type);
     }
   }
@@ -387,6 +447,8 @@ export class SendNotificationComponent implements OnInit, OnDestroy {
    * Verify WhatsApp numbers before sending
    */
   private verifyWhatsAppNumbers(numbers: string[]): void {
+    console.log('[Notification] [WhatsApp] Starting number verification', { numbers });
+    
     // Clear previous errors
     this.whatsAppErrors.set(new Map());
     
@@ -394,16 +456,16 @@ export class SendNotificationComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
-          console.log('WhatsApp verification response:', response);
+          console.log('[Notification] [WhatsApp] Verification response received:', response);
           
           // ApiService returns response.data if it exists, so response is { content: [...] }
           // But handle both cases just in case
           const content = (response as any)?.content || (response as any)?.data?.content || [];
           
-          console.log('WhatsApp verification content:', content);
+          console.log('[Notification] [WhatsApp] Verification content:', content);
           
           if (!Array.isArray(content) || content.length === 0) {
-            console.error('Invalid response structure or empty content');
+            console.error('[Notification] [WhatsApp] Invalid response structure or empty content');
             this.toastService.error(this.translateService.instant('notification.error.verifyFailed') || 'Failed to verify WhatsApp numbers');
             this.isSending.set(false);
             return;
@@ -415,15 +477,17 @@ export class SendNotificationComponent implements OnInit, OnDestroy {
           
           // Verify we got results for all numbers
           if (content.length !== numbers.length) {
-            console.error('Response length mismatch. Expected:', numbers.length, 'Got:', content.length);
+            console.error('[Notification] [WhatsApp] Response length mismatch. Expected:', numbers.length, 'Got:', content.length);
             this.toastService.error(this.translateService.instant('notification.error.verifyFailed') || 'Failed to verify all WhatsApp numbers');
             this.isSending.set(false);
             return;
           }
 
+          console.log('[Notification] [WhatsApp] Processing verification results for', content.length, 'numbers');
+
           // Match response numbers to the numbers we sent, then find the corresponding contact index
           content.forEach((check: any, responseIndex: number) => {
-            console.log('Checking number:', check.number, 'exists:', check.exists, 'responseIndex:', responseIndex);
+            console.log('[Notification] [WhatsApp] Checking number:', check.number, 'exists:', check.exists, 'responseIndex:', responseIndex);
             if (!check.exists) {
               // First, find which number in the sent array matches this response
               const sentNumberIndex = numbers.findIndex(sentNumber => {
@@ -436,7 +500,7 @@ export class SendNotificationComponent implements OnInit, OnDestroy {
                 return matches;
               });
               
-              console.log('Sent number index for', check.number, ':', sentNumberIndex);
+              console.log('[Notification] [WhatsApp] Sent number index for', check.number, ':', sentNumberIndex);
               
               if (sentNumberIndex !== -1) {
                 // Now find the corresponding contact index
@@ -450,7 +514,7 @@ export class SendNotificationComponent implements OnInit, OnDestroy {
                          normalizedSent.endsWith(normalizedContact);
                 });
                 
-                console.log('Contact index for number', check.number, ':', contactIndex);
+                console.log('[Notification] [WhatsApp] Contact index for number', check.number, ':', contactIndex);
                 
                 if (contactIndex !== -1) {
                   errors.set(contactIndex, this.translateService.instant('notification.error.numberWithoutWhatsApp') || 'This number does not have WhatsApp');
@@ -470,24 +534,30 @@ export class SendNotificationComponent implements OnInit, OnDestroy {
             }
           });
 
-          console.log('WhatsApp errors found:', errors.size, 'out of', content.length, 'numbers checked');
+          console.log('[Notification] [WhatsApp] Verification complete. Errors found:', errors.size, 'out of', content.length, 'numbers checked');
 
           // CRITICAL: Do not send if ANY number doesn't have WhatsApp
           if (errors.size > 0) {
             // Some numbers don't have WhatsApp - show errors under each field
+            console.warn('[Notification] [WhatsApp] BLOCKED: Not sending notification due to verification errors:', errors);
             this.whatsAppErrors.set(errors);
             this.isSending.set(false);
             // DO NOT send notification - return early
-            console.log('BLOCKED: Not sending notification due to WhatsApp verification errors');
             return;
           }
           
           // Only send if ALL numbers have WhatsApp
-          console.log('All numbers verified successfully, sending notification');
+          console.log('[Notification] [WhatsApp] All numbers verified successfully, proceeding to send notification');
           this.sendNotificationRequest(numbers, NotificationType.WhatsApp);
         },
         error: (error: any) => {
-          console.error('Error verifying WhatsApp numbers:', error);
+          console.error('[Notification] [WhatsApp] Error verifying WhatsApp numbers:', error);
+          console.error('[Notification] [WhatsApp] Error details:', {
+            status: error?.status,
+            statusText: error?.statusText,
+            error: error?.error,
+            message: error?.message
+          });
           const errorMessage = error?.error?.message || error?.message || this.translateService.instant('notification.error.verifyFailed') || 'Failed to verify WhatsApp numbers';
           this.toastService.error(errorMessage);
           this.isSending.set(false);
@@ -499,24 +569,52 @@ export class SendNotificationComponent implements OnInit, OnDestroy {
    * Send the notification request
    */
   private sendNotificationRequest(contacts: string[], type: NotificationType): void {
+    const notificationType = type === NotificationType.Email ? 'Email' : 'WhatsApp';
+    console.log(`[Notification] [${notificationType}] Preparing to send notification request`);
+    
+    // Filter out empty contacts before sending
+    const validContacts = contacts.filter(c => c && c.trim().length > 0);
+    
+    if (validContacts.length === 0) {
+      console.error(`[Notification] [${notificationType}] No valid contacts provided after filtering`);
+      this.toastService.error(this.translateService.instant('notification.error.noContacts') || 'No valid contacts provided');
+      this.isSending.set(false);
+      return;
+    }
+
     const request = {
       type,
-      contacts,
+      contacts: validContacts,
       message: '',
       transactionId: this.transactionId,
-      repeat: 1,
     };
+
+    console.log(`[Notification] [${notificationType}] Sending notification request:`, {
+      type: notificationType,
+      contactsCount: validContacts.length,
+      contacts: validContacts,
+      transactionId: this.transactionId
+    });
 
     this.notificationService.create(request)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: () => {
+        next: (response) => {
+          console.log(`[Notification] [${notificationType}] Notification created successfully:`, response);
           this.toastService.success(this.translateService.instant('notification.success.sent'));
           this.dialogRef.close({ success: true });
         },
         error: (error: any) => {
-          console.error('Error sending notification:', error);
-          const errorMessage = error?.error?.message || error?.message || this.translateService.instant('notification.error.sendFailed');
+          console.error(`[Notification] [${notificationType}] Error sending notification:`, error);
+          console.error(`[Notification] [${notificationType}] Error details:`, {
+            status: error?.status,
+            statusText: error?.statusText,
+            error: error?.error,
+            message: error?.message,
+            url: error?.url,
+            request: request
+          });
+          const errorMessage = error?.error?.message || error?.error?.errors || error?.message || this.translateService.instant('notification.error.sendFailed') || 'Failed to send notification';
           this.toastService.error(errorMessage);
           this.isSending.set(false);
         }
