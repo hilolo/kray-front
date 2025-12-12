@@ -877,6 +877,7 @@
     }
   },
   "notification": {
+    "title": "Envoyer une notification",
     "type": {
       "title": "Type de notification",
       "email": "E-mail",

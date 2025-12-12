@@ -410,12 +410,6 @@
                 </z-dropdown-menu-item>
               }
             }
-            @if (row.status === TransactionStatus.Paid) {
-              <z-dropdown-menu-item (click)="onGeneratePublicReceipt(row)">
-                <z-icon zType="copy" zSize="sm" class="mr-2" />
-                <span>{{ 'transaction.list.publicReceipt' | translate }}</span>
-              </z-dropdown-menu-item>
-            }
             @if (canSendNotification(row)) {
               <z-dropdown-menu-item (click)="onSendNotification(row)">
                 <z-icon zType="send" zSize="sm" class="mr-2" />
