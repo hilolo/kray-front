@@ -939,5 +939,293 @@
       "error": "Échec de la vérification WhatsApp. Veuillez réessayer.",
       "errorTitle": "Échec de la vérification WhatsApp"
     }
+  },
+  "keys": {
+    "edit": {
+      "title": "Modifier la clé",
+      "addTitle": "Ajouter une clé",
+      "addNewTitle": "Ajouter une nouvelle clé",
+      "editDescription": "Mettez à jour les informations de la clé ci-dessous",
+      "addDescription": "Créez une nouvelle clé en remplissant les informations ci-dessous",
+      "loading": "Chargement des données de la clé...",
+      "basicInformation": "Informations de base",
+      "basicInformationDescription": "Entrez les détails de base de la clé",
+      "name": "Nom",
+      "namePlaceholder": "Entrez le nom de la clé",
+      "nameRequired": "Le nom est requis",
+      "description": "Description",
+      "descriptionSection": "Description",
+      "descriptionSectionDescription": "Entrez une description détaillée pour cette clé (optionnel)",
+      "descriptionPlaceholder": "Entrez la description de la clé (optionnel)",
+      "property": "Propriété",
+      "propertySection": "Propriété",
+      "propertySectionDescription": "Sélectionnez la propriété à laquelle appartient cette clé",
+      "propertyRequired": "La propriété est requise",
+      "propertyPlaceholder": "Sélectionner une propriété...",
+      "propertySearchPlaceholder": "Rechercher des propriétés...",
+      "propertyEmptyText": "Aucune propriété trouvée",
+      "uploadImage": "Téléverser une image",
+      "keyImage": "Image de la clé",
+      "saving": "Enregistrement...",
+      "saveKey": "Enregistrer la clé",
+      "cancel": "Annuler"
+    }
+  },
+  "bank": {
+    "edit": {
+      "title": "Modifier la banque",
+      "addTitle": "Ajouter une banque",
+      "addNewTitle": "Ajouter une nouvelle banque",
+      "editDescription": "Mettez à jour les informations bancaires ci-dessous",
+      "addDescription": "Créez un nouveau compte bancaire en remplissant les informations ci-dessous",
+      "loading": "Chargement des données bancaires...",
+      "basicInformation": "Informations de base",
+      "basicInformationDescription": "Entrez les détails de base du compte bancaire",
+      "contact": "Contact",
+      "contactRequired": "Le contact est requis",
+      "contactPlaceholder": "Sélectionner un contact...",
+      "contactSearchPlaceholder": "Rechercher des contacts...",
+      "contactEmptyText": "Aucun contact trouvé",
+      "bankName": "Nom de la banque",
+      "bankNamePlaceholder": "Entrez le nom de la banque (optionnel)",
+      "accountInformation": "Informations sur le compte",
+      "accountInformationDescription": "Entrez les détails du compte bancaire",
+      "rib": "RIB",
+      "ribRequired": "Le RIB est requis",
+      "ribPlaceholder": "Entrez le RIB",
+      "iban": "IBAN",
+      "ibanPlaceholder": "Entrez l'IBAN (optionnel)",
+      "swift": "SWIFT",
+      "swiftPlaceholder": "Entrez le code SWIFT (optionnel)",
+      "saving": "Enregistrement...",
+      "saveBank": "Enregistrer la banque",
+      "cancel": "Annuler"
+    }
+  },
+  "building": {
+    "edit": {
+      "title": "Modifier le bâtiment",
+      "addTitle": "Ajouter un bâtiment",
+      "addNewTitle": "Ajouter un nouveau bâtiment",
+      "editDescription": "Mettez à jour les informations du bâtiment ci-dessous",
+      "addDescription": "Créez un nouveau bâtiment en remplissant les informations ci-dessous",
+      "loading": "Chargement des données du bâtiment...",
+      "basicInformation": "Informations de base",
+      "basicInformationDescription": "Entrez les détails de base du bâtiment",
+      "name": "Nom",
+      "namePlaceholder": "Entrez le nom du bâtiment",
+      "city": "Ville",
+      "cityPlaceholder": "Sélectionner une ville",
+      "address": "Adresse",
+      "addressPlaceholder": "Entrez l'adresse",
+      "description": "Description",
+      "descriptionPlaceholder": "Entrez la description du bâtiment",
+      "buildingDetails": "Détails du bâtiment",
+      "buildingDetailsDescription": "Entrez les spécifications du bâtiment",
+      "constructionYear": "Année de construction",
+      "floors": "Étages",
+      "currentAssociatedProperties": "Propriétés associées actuelles",
+      "currentAssociatedPropertiesDescription": "Propriétés actuellement associées à ce bâtiment",
+      "loadingProperties": "Chargement des propriétés...",
+      "noPropertiesAssociated": "Aucune propriété associée à ce bâtiment",
+      "view": "Voir",
+      "detach": "Détacher",
+      "detaching": "Détachement...",
+      "attachProperties": "Attacher des propriétés",
+      "attachPropertiesDescription": "Attacher des propriétés qui n'ont pas de bâtiment assigné à ce bâtiment",
+      "noUnattachedProperties": "Aucune propriété non attachée disponible",
+      "attach": "Attacher",
+      "attaching": "Attachement...",
+      "changeImage": "Changer l'image",
+      "removeImage": "Supprimer l'image",
+      "buildingImage": "Image du bâtiment",
+      "saving": "Enregistrement...",
+      "saveBuilding": "Enregistrer le bâtiment",
+      "cancel": "Annuler"
+    }
+  },
+  "tasks": {
+    "edit": {
+      "title": "Modifier la tâche",
+      "createTitle": "Créer une tâche",
+      "taskTitle": "Titre de la tâche",
+      "taskTitlePlaceholder": "Entrez le titre de la tâche",
+      "assignTo": "Assigner à",
+      "priority": "Priorité",
+      "status": "Statut",
+      "scheduledDate": "Date prévue",
+      "pickDate": "Choisir une date",
+      "linkTo": "Lier à",
+      "contact": "Contact",
+      "contactSearchPlaceholder": "Rechercher des contacts...",
+      "contactEmptyText": "Aucun contact trouvé",
+      "property": "Propriété",
+      "propertySearchPlaceholder": "Rechercher des propriétés...",
+      "propertyEmptyText": "Aucune propriété trouvée",
+      "description": "Description",
+      "descriptionPlaceholder": "Entrez la description de la tâche",
+      "updateTask": "Mettre à jour la tâche",
+      "createTask": "Créer la tâche",
+      "cancel": "Annuler"
+    }
+  },
+  "maintenance": {
+    "edit": {
+      "property": "Propriété",
+      "propertyPlaceholder": "Sélectionner une propriété...",
+      "propertySearchPlaceholder": "Rechercher des propriétés...",
+      "propertyEmptyText": "Aucune propriété trouvée",
+      "service": "Service",
+      "servicePlaceholder": "Sélectionner un service...",
+      "serviceSearchPlaceholder": "Rechercher des services...",
+      "serviceEmptyText": "Aucun service trouvé",
+      "subject": "Sujet",
+      "subjectPlaceholder": "Entrez le sujet",
+      "description": "Description",
+      "descriptionPlaceholder": "Entrez la description",
+      "priority": "Priorité",
+      "status": "Statut",
+      "scheduledDate": "Date prévue",
+      "scheduledTime": "Heure prévue",
+      "pickDate": "Choisir une date",
+      "pickTime": "Choisir une heure",
+      "update": "Mettre à jour",
+      "create": "Créer",
+      "saving": "Enregistrement...",
+      "cancel": "Annuler"
+    }
+  },
+  "property": {
+    "edit": {
+      "title": "Modifier la propriété",
+      "addTitle": "Ajouter une propriété",
+      "addNewTitle": "Ajouter une nouvelle propriété",
+      "editDescription": "Mettez à jour les informations de la propriété ci-dessous",
+      "addDescription": "Créez une nouvelle propriété en remplissant les informations ci-dessous",
+      "loading": "Chargement des données de la propriété...",
+      "basicInformation": "Informations de base",
+      "basicInformationDescription": "Entrez les détails de base de la propriété",
+      "saving": "Enregistrement...",
+      "saveProperty": "Enregistrer la propriété",
+      "cancel": "Annuler",
+      "generateIdentifier": "Générer l'identifiant"
+    }
+  },
+  "contact": {
+    "edit": {
+      "title": "Modifier le contact",
+      "addTitle": "Ajouter un contact",
+      "addNewTitle": "Ajouter un nouveau contact",
+      "editDescription": "Mettez à jour les informations du contact ci-dessous",
+      "addDescription": "Créez un nouveau contact en remplissant les informations ci-dessous",
+      "loading": "Chargement des données du contact...",
+      "saving": "Enregistrement...",
+      "saveContact": "Enregistrer le contact",
+      "cancel": "Annuler"
+    }
+  },
+  "reservation": {
+    "edit": {
+      "title": "Modifier la réservation",
+      "addTitle": "Ajouter une réservation",
+      "addNewTitle": "Ajouter une nouvelle réservation",
+      "editDescription": "Mettez à jour les informations de la réservation ci-dessous. La propriété et le contact ne peuvent pas être modifiés.",
+      "addDescription": "Créez une nouvelle réservation en remplissant les informations ci-dessous",
+      "loading": "Chargement des données de la réservation...",
+      "propertyContact": "Propriété et Contact",
+      "updateReservation": "Mettre à jour la réservation",
+      "createReservation": "Créer la réservation",
+      "saving": "Enregistrement...",
+      "cancel": "Annuler"
+    }
+  },
+  "document": {
+    "edit": {
+      "saving": "Enregistrement...",
+      "createDocument": "Créer un document",
+      "updateDocument": "Mettre à jour le document",
+      "loading": "Chargement des données du document...",
+      "displayLogoInPage": "Afficher le logo dans la page",
+      "displayCacheInPage": "Afficher le cache dans la page",
+      "documentDetails": "Détails du document",
+      "pdfPreview": "Aperçu PDF",
+      "view": "Voir",
+      "generatingPdf": "Génération du PDF...",
+      "pdfPreviewWillAppear": "L'aperçu PDF apparaîtra ici",
+      "startTypingToGeneratePreview": "Commencez à taper dans l'éditeur pour générer l'aperçu",
+      "documentContent": "Contenu du document",
+      "editDocumentContent": "Modifiez le contenu de votre document",
+      "textSize": "Taille du texte :",
+      "normal": "Normal",
+      "large": "Grand",
+      "extraLarge": "Très grand",
+      "startTypingPlaceholder": "Commencez à taper le contenu de votre document ici...",
+      "debugInformation": "Informations de débogage",
+      "hide": "Masquer",
+      "insertHtmlIntoEditor": "Insérer du HTML dans l'éditeur",
+      "pasteHtmlPlaceholder": "Collez le contenu HTML ici...",
+      "generatePdfFromJson": "Générer un PDF à partir du JSON PDFMake",
+      "pastePdfMakeJsonPlaceholder": "Collez le JSON PDFMake ici...",
+      "generating": "Génération...",
+      "generatePdfFromJsonButton": "Générer un PDF à partir du JSON",
+      "htmlContent": "Contenu HTML (Final - après suppression de line-height)",
+      "pdfMakeJson": "JSON PDFMake",
+      "empty": "(vide)",
+      "newDocument": "Nouveau document",
+      "document": "Document"
+    }
+  },
+  "transaction": {
+    "add": {
+      "revenue": {
+        "title": "Ajouter des revenus",
+        "description": "Créez une nouvelle transaction de revenus en remplissant les informations ci-dessous",
+        "generalInfo": "Informations générales",
+        "generalInfoDescription": "Entrez le type de transaction et la date",
+        "createRevenue": "Créer des revenus",
+        "saving": "Enregistrement...",
+        "cancel": "Annuler"
+      },
+      "expense": {
+        "title": "Ajouter une dépense",
+        "description": "Créez une nouvelle transaction de dépense en remplissant les informations ci-dessous",
+        "allocation": "Allocation",
+        "allocationDescription": "Sélectionnez la propriété et éventuellement la location pour cette transaction",
+        "createExpense": "Créer une dépense",
+        "saving": "Enregistrement...",
+        "cancel": "Annuler"
+      }
+    }
+  },
+  "page": {
+    "dashboard": {
+      "title": "Bienvenue sur le tableau de bord",
+      "description": "Ceci est votre zone de contenu du tableau de bord. Vous pouvez ajouter vos widgets, graphiques et autres composants ici.",
+      "comingSoon": "Bientôt disponible"
+    }
+  },
+  "dialog": {
+    "defaultCancel": "Annuler",
+    "defaultOk": "OK",
+    "defaultContinue": "Continuer"
+  },
+  "leasing": {
+    "edit": {
+      "title": "Modifier la location",
+      "addTitle": "Ajouter une location",
+      "addNewTitle": "Ajouter une nouvelle location",
+      "editDescription": "Mettez à jour les informations de la location ci-dessous. La propriété et le locataire ne peuvent pas être modifiés.",
+      "addDescription": "Créez une nouvelle location en remplissant les informations ci-dessous",
+      "loading": "Chargement des données de la location...",
+      "propertyTenant": "Propriété et Locataire",
+      "propertyTenantEditDescription": "Informations sur la propriété et le locataire (ne peuvent pas être modifiées)",
+      "propertyTenantAddDescription": "Sélectionnez la propriété et le locataire pour cette location",
+      "updateLease": "Mettre à jour la location",
+      "createLease": "Créer la location",
+      "saving": "Enregistrement...",
+      "cancel": "Annuler",
+      "leaseUpdatedSuccessfully": "Location mise à jour avec succès",
+      "leaseCreatedSuccessfully": "Location créée avec succès"
+    }
   }
 }

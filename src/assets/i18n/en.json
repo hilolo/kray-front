@@ -939,5 +939,293 @@
       "error": "Failed to check WhatsApp. Please try again.",
       "errorTitle": "WhatsApp Check Failed"
     }
+  },
+  "keys": {
+    "edit": {
+      "title": "Edit Key",
+      "addTitle": "Add Key",
+      "addNewTitle": "Add New Key",
+      "editDescription": "Update the key information below",
+      "addDescription": "Create a new key by filling in the information below",
+      "loading": "Loading key data...",
+      "basicInformation": "Basic Information",
+      "basicInformationDescription": "Enter the basic details of the key",
+      "name": "Name",
+      "namePlaceholder": "Enter key name",
+      "nameRequired": "Name is required",
+      "description": "Description",
+      "descriptionSection": "Description",
+      "descriptionSectionDescription": "Enter a detailed description for this key (optional)",
+      "descriptionPlaceholder": "Enter key description (optional)",
+      "property": "Property",
+      "propertySection": "Property",
+      "propertySectionDescription": "Select the property this key belongs to",
+      "propertyRequired": "Property is required",
+      "propertyPlaceholder": "Select property...",
+      "propertySearchPlaceholder": "Search properties...",
+      "propertyEmptyText": "No properties found",
+      "uploadImage": "Upload image",
+      "keyImage": "Key image",
+      "saving": "Saving...",
+      "saveKey": "Save Key",
+      "cancel": "Cancel"
+    }
+  },
+  "bank": {
+    "edit": {
+      "title": "Edit Bank",
+      "addTitle": "Add Bank",
+      "addNewTitle": "Add New Bank",
+      "editDescription": "Update the bank information below",
+      "addDescription": "Create a new bank account by filling in the information below",
+      "loading": "Loading bank data...",
+      "basicInformation": "Basic Information",
+      "basicInformationDescription": "Enter the basic details of the bank account",
+      "contact": "Contact",
+      "contactRequired": "Contact is required",
+      "contactPlaceholder": "Select contact...",
+      "contactSearchPlaceholder": "Search contacts...",
+      "contactEmptyText": "No contacts found",
+      "bankName": "Bank Name",
+      "bankNamePlaceholder": "Enter bank name (optional)",
+      "accountInformation": "Account Information",
+      "accountInformationDescription": "Enter the bank account details",
+      "rib": "RIB",
+      "ribRequired": "RIB is required",
+      "ribPlaceholder": "Enter RIB",
+      "iban": "IBAN",
+      "ibanPlaceholder": "Enter IBAN (optional)",
+      "swift": "SWIFT",
+      "swiftPlaceholder": "Enter SWIFT code (optional)",
+      "saving": "Saving...",
+      "saveBank": "Save Bank",
+      "cancel": "Cancel"
+    }
+  },
+  "building": {
+    "edit": {
+      "title": "Edit Building",
+      "addTitle": "Add Building",
+      "addNewTitle": "Add New Building",
+      "editDescription": "Update the building information below",
+      "addDescription": "Create a new building by filling in the information below",
+      "loading": "Loading building data...",
+      "basicInformation": "Basic Information",
+      "basicInformationDescription": "Enter the basic details of the building",
+      "name": "Name",
+      "namePlaceholder": "Enter building name",
+      "city": "City",
+      "cityPlaceholder": "Select city",
+      "address": "Address",
+      "addressPlaceholder": "Enter address",
+      "description": "Description",
+      "descriptionPlaceholder": "Enter building description",
+      "buildingDetails": "Building Details",
+      "buildingDetailsDescription": "Enter the building specifications",
+      "constructionYear": "Construction Year",
+      "floors": "Floors",
+      "currentAssociatedProperties": "Current Associated Properties",
+      "currentAssociatedPropertiesDescription": "Properties currently associated with this building",
+      "loadingProperties": "Loading properties...",
+      "noPropertiesAssociated": "No properties associated with this building",
+      "view": "View",
+      "detach": "Detach",
+      "detaching": "Detaching...",
+      "attachProperties": "Attach Properties",
+      "attachPropertiesDescription": "Attach properties that don't have a building assigned to this building",
+      "noUnattachedProperties": "No unattached properties available",
+      "attach": "Attach",
+      "attaching": "Attaching...",
+      "changeImage": "Change image",
+      "removeImage": "Remove image",
+      "buildingImage": "Building image",
+      "saving": "Saving...",
+      "saveBuilding": "Save Building",
+      "cancel": "Cancel"
+    }
+  },
+  "tasks": {
+    "edit": {
+      "title": "Edit Task",
+      "createTitle": "Create Task",
+      "taskTitle": "Task Title",
+      "taskTitlePlaceholder": "Enter task title",
+      "assignTo": "Assign To",
+      "priority": "Priority",
+      "status": "Status",
+      "scheduledDate": "Scheduled Date",
+      "pickDate": "Pick a date",
+      "linkTo": "Link To",
+      "contact": "Contact",
+      "contactSearchPlaceholder": "Search contacts...",
+      "contactEmptyText": "No contacts found",
+      "property": "Property",
+      "propertySearchPlaceholder": "Search properties...",
+      "propertyEmptyText": "No properties found",
+      "description": "Description",
+      "descriptionPlaceholder": "Enter task description",
+      "updateTask": "Update Task",
+      "createTask": "Create Task",
+      "cancel": "Cancel"
+    }
+  },
+  "maintenance": {
+    "edit": {
+      "property": "Property",
+      "propertyPlaceholder": "Select property...",
+      "propertySearchPlaceholder": "Search properties...",
+      "propertyEmptyText": "No properties found",
+      "service": "Service",
+      "servicePlaceholder": "Select service...",
+      "serviceSearchPlaceholder": "Search services...",
+      "serviceEmptyText": "No services found",
+      "subject": "Subject",
+      "subjectPlaceholder": "Enter subject",
+      "description": "Description",
+      "descriptionPlaceholder": "Enter description",
+      "priority": "Priority",
+      "status": "Status",
+      "scheduledDate": "Scheduled Date",
+      "scheduledTime": "Scheduled Time",
+      "pickDate": "Pick a date",
+      "pickTime": "Pick a time",
+      "update": "Update",
+      "create": "Create",
+      "saving": "Saving...",
+      "cancel": "Cancel"
+    }
+  },
+  "property": {
+    "edit": {
+      "title": "Edit Property",
+      "addTitle": "Add Property",
+      "addNewTitle": "Add New Property",
+      "editDescription": "Update the property information below",
+      "addDescription": "Create a new property by filling in the information below",
+      "loading": "Loading property data...",
+      "basicInformation": "Basic Information",
+      "basicInformationDescription": "Enter the basic details of the property",
+      "saving": "Saving...",
+      "saveProperty": "Save Property",
+      "cancel": "Cancel",
+      "generateIdentifier": "Generate identifier"
+    }
+  },
+  "contact": {
+    "edit": {
+      "title": "Edit Contact",
+      "addTitle": "Add Contact",
+      "addNewTitle": "Add New Contact",
+      "editDescription": "Update the contact information below",
+      "addDescription": "Create a new contact by filling in the information below",
+      "loading": "Loading contact data...",
+      "saving": "Saving...",
+      "saveContact": "Save Contact",
+      "cancel": "Cancel"
+    }
+  },
+  "reservation": {
+    "edit": {
+      "title": "Edit Reservation",
+      "addTitle": "Add Reservation",
+      "addNewTitle": "Add New Reservation",
+      "editDescription": "Update the reservation information below. Property and contact cannot be changed.",
+      "addDescription": "Create a new reservation by filling in the information below",
+      "loading": "Loading reservation data...",
+      "propertyContact": "Property & Contact",
+      "updateReservation": "Update Reservation",
+      "createReservation": "Create Reservation",
+      "saving": "Saving...",
+      "cancel": "Cancel"
+    }
+  },
+  "document": {
+    "edit": {
+      "saving": "Saving...",
+      "createDocument": "Create Document",
+      "updateDocument": "Update Document",
+      "loading": "Loading document data...",
+      "displayLogoInPage": "Display Logo in Page",
+      "displayCacheInPage": "Display Cache in Page",
+      "documentDetails": "Document Details",
+      "pdfPreview": "PDF Preview",
+      "view": "View",
+      "generatingPdf": "Generating PDF...",
+      "pdfPreviewWillAppear": "PDF preview will appear here",
+      "startTypingToGeneratePreview": "Start typing in the editor to generate preview",
+      "documentContent": "Document Content",
+      "editDocumentContent": "Edit your document content",
+      "textSize": "Text Size:",
+      "normal": "Normal",
+      "large": "Large",
+      "extraLarge": "Extra Large",
+      "startTypingPlaceholder": "Start typing your document content here...",
+      "debugInformation": "Debug Information",
+      "hide": "Hide",
+      "insertHtmlIntoEditor": "Insert HTML into Editor",
+      "pasteHtmlPlaceholder": "Paste HTML content here...",
+      "generatePdfFromJson": "Generate PDF from PDFMake JSON",
+      "pastePdfMakeJsonPlaceholder": "Paste PDFMake JSON here...",
+      "generating": "Generating...",
+      "generatePdfFromJsonButton": "Generate PDF from JSON",
+      "htmlContent": "HTML Content (Final - after removing line-height)",
+      "pdfMakeJson": "PDFMake JSON",
+      "empty": "(empty)",
+      "newDocument": "New Document",
+      "document": "Document"
+    }
+  },
+  "transaction": {
+    "add": {
+      "revenue": {
+        "title": "Add Revenue",
+        "description": "Create a new revenue transaction by filling in the information below",
+        "generalInfo": "General Info",
+        "generalInfoDescription": "Enter the transaction type and date",
+        "createRevenue": "Create Revenue",
+        "saving": "Saving...",
+        "cancel": "Cancel"
+      },
+      "expense": {
+        "title": "Add Expense",
+        "description": "Create a new expense transaction by filling in the information below",
+        "allocation": "Allocation",
+        "allocationDescription": "Select the property and optionally the lease for this transaction",
+        "createExpense": "Create Expense",
+        "saving": "Saving...",
+        "cancel": "Cancel"
+      }
+    }
+  },
+  "page": {
+    "dashboard": {
+      "title": "Welcome to Dashboard",
+      "description": "This is your dashboard content area. You can add your widgets, charts, and other components here.",
+      "comingSoon": "Coming Soon"
+    }
+  },
+  "dialog": {
+    "defaultCancel": "Cancel",
+    "defaultOk": "OK",
+    "defaultContinue": "Continue"
+  },
+  "leasing": {
+    "edit": {
+      "title": "Edit Lease",
+      "addTitle": "Add Lease",
+      "addNewTitle": "Add New Lease",
+      "editDescription": "Update the lease information below. Property and tenant cannot be changed.",
+      "addDescription": "Create a new lease by filling in the information below",
+      "loading": "Loading lease data...",
+      "propertyTenant": "Property & Tenant",
+      "propertyTenantEditDescription": "Property and tenant information (cannot be changed)",
+      "propertyTenantAddDescription": "Select the property and tenant for this lease",
+      "updateLease": "Update Lease",
+      "createLease": "Create Lease",
+      "saving": "Saving...",
+      "cancel": "Cancel",
+      "leaseUpdatedSuccessfully": "Lease updated successfully",
+      "leaseCreatedSuccessfully": "Lease created successfully"
+    }
   }
 }
