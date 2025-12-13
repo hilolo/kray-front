@@ -667,12 +667,33 @@ export class SendNotificationComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Get transaction to generate receipt
+    // Get transaction to generate receipt (for Paid Loyer transactions and all Maintenance transactions)
     let receiptBase64: string | null = null;
     try {
       const transaction = await this.transactionService.getById(this.transactionId).pipe(takeUntil(this.destroy$)).toPromise();
       if (transaction) {
-        receiptBase64 = await this.generateReceiptBase64(transaction);
+        const transactionType = transaction.type ?? transaction.category;
+        const isLoyer = transactionType === TransactionType.Revenue && transaction.revenueType === RevenueType.Loyer;
+        const isMaintenanceRevenue = transactionType === TransactionType.Revenue && transaction.revenueType === RevenueType.Maintenance;
+        const isMaintenanceExpense = transactionType === TransactionType.Expense && transaction.expenseType === ExpenseType.Maintenance;
+        const isMaintenance = isMaintenanceRevenue || isMaintenanceExpense;
+        const isPaid = transaction.status === TransactionStatus.Paid;
+        
+        // Generate receipt for:
+        // 1. Paid Loyer transactions
+        // 2. All Maintenance transactions (regardless of status - they always need the receipt)
+        if ((isLoyer && isPaid) || isMaintenance) {
+          receiptBase64 = await this.generateReceiptBase64(transaction);
+        } else {
+          console.log('[Notification] Skipping receipt generation', {
+            isLoyer,
+            isPaid,
+            isMaintenance,
+            status: transaction.status,
+            revenueType: transaction.revenueType,
+            expenseType: transaction.expenseType
+          });
+        }
       }
     } catch (error) {
       console.error('[Notification] Error fetching transaction for receipt generation:', error);
