@@ -19,6 +19,7 @@ import { Contact } from '@shared/models/contact/contact.model';
 import { PdfGenerationService } from '@shared/services/pdf-generation.service';
 import { Transaction, TransactionType, RevenueType, ExpenseType, TransactionStatus } from '@shared/models/transaction/transaction.model';
 import { Subject, takeUntil } from 'rxjs';
+import { DocumentType } from '@shared/services/document.service';
 
 interface SendNotificationData {
   transactionId: string;
@@ -584,20 +585,20 @@ export class SendNotificationComponent implements OnInit, OnDestroy {
       
       if (transactionType === TransactionType.Revenue) {
         if (transaction.revenueType === RevenueType.Loyer) {
-          receiptObservable = this.transactionService.generateLeasingReceipt(transaction.id);
+          receiptObservable = this.transactionService.generateReceipt(transaction.id, DocumentType.Lease);
         } else if (transaction.revenueType === RevenueType.Caution) {
-          receiptObservable = this.transactionService.generateDepositReceipt(transaction.id);
+          receiptObservable = this.transactionService.generateReceipt(transaction.id, DocumentType.Deposit);
         } else if (transaction.revenueType === RevenueType.FraisAgence) {
-          receiptObservable = this.transactionService.generateFeesReceipt(transaction.id);
+          receiptObservable = this.transactionService.generateReceipt(transaction.id, DocumentType.Fees);
         } else if (transaction.revenueType === RevenueType.Maintenance) {
-          receiptObservable = this.transactionService.generateMaintenanceReceipt(transaction.id);
+          receiptObservable = this.transactionService.generateReceipt(transaction.id, DocumentType.Maintenance);
         } else {
           console.log('[Notification] No receipt type available for revenue type:', transaction.revenueType);
           return null;
         }
       } else if (transactionType === TransactionType.Expense) {
         if (transaction.expenseType === ExpenseType.Maintenance) {
-          receiptObservable = this.transactionService.generateMaintenanceReceipt(transaction.id);
+          receiptObservable = this.transactionService.generateReceipt(transaction.id, DocumentType.Maintenance);
         } else {
           console.log('[Notification] No receipt type available for expense type:', transaction.expenseType);
           return null;

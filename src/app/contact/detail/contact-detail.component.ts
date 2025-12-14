@@ -42,6 +42,7 @@ import { ZardAlertDialogService } from '@shared/components/alert-dialog/alert-di
 import { ViewContainerRef } from '@angular/core';
 import { takeUntil } from 'rxjs';
 import { Subject } from 'rxjs';
+import { DocumentType } from '@shared/services/document.service';
 
 @Component({
   selector: 'app-contact-detail',
@@ -940,7 +941,7 @@ export class ContactDetailComponent implements OnInit, OnDestroy {
 
     this.isGeneratingReceipt.set(true);
 
-    this.transactionService.generateLeasingReceipt(transaction.id).pipe(
+    this.transactionService.generateReceipt(transaction.id, DocumentType.Lease).pipe(
       takeUntil(this.destroy$)
     ).subscribe({
       next: async (pdfMakeData) => {
@@ -1003,7 +1004,7 @@ export class ContactDetailComponent implements OnInit, OnDestroy {
 
     this.isGeneratingReceipt.set(true);
 
-    this.transactionService.generateDepositReceipt(transaction.id).pipe(
+    this.transactionService.generateReceipt(transaction.id, DocumentType.Deposit).pipe(
       takeUntil(this.destroy$)
     ).subscribe({
       next: async (pdfMakeData) => {
@@ -1066,7 +1067,7 @@ export class ContactDetailComponent implements OnInit, OnDestroy {
 
     this.isGeneratingReceipt.set(true);
 
-    this.transactionService.generateFeesReceipt(transaction.id).pipe(
+    this.transactionService.generateReceipt(transaction.id, DocumentType.Fees).pipe(
       takeUntil(this.destroy$)
     ).subscribe({
       next: async (pdfMakeData) => {

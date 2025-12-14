@@ -41,6 +41,7 @@ import { PdfGenerationService } from '@shared/services/pdf-generation.service';
 import { ZardPdfViewerComponent } from '@shared/pdf-viewer/pdf-viewer.component';
 import { takeUntil } from 'rxjs';
 import { Subject } from 'rxjs';
+import { DocumentType } from '@shared/services/document.service';
 
 @Component({
   selector: 'app-property-detail',
@@ -1575,7 +1576,7 @@ export class PropertyDetailComponent implements OnInit, OnDestroy {
 
     this.isGeneratingReceipt.set(true);
 
-    this.transactionService.generateLeasingReceipt(transaction.id).pipe(
+    this.transactionService.generateReceipt(transaction.id, DocumentType.Lease).pipe(
       takeUntil(this.destroy$)
     ).subscribe({
       next: async (pdfMakeData) => {
@@ -1638,7 +1639,7 @@ export class PropertyDetailComponent implements OnInit, OnDestroy {
 
     this.isGeneratingReceipt.set(true);
 
-    this.transactionService.generateDepositReceipt(transaction.id).pipe(
+    this.transactionService.generateReceipt(transaction.id, DocumentType.Deposit).pipe(
       takeUntil(this.destroy$)
     ).subscribe({
       next: async (pdfMakeData) => {
@@ -1701,7 +1702,7 @@ export class PropertyDetailComponent implements OnInit, OnDestroy {
 
     this.isGeneratingReceipt.set(true);
 
-    this.transactionService.generateFeesReceipt(transaction.id).pipe(
+    this.transactionService.generateReceipt(transaction.id, DocumentType.Fees).pipe(
       takeUntil(this.destroy$)
     ).subscribe({
       next: async (pdfMakeData) => {

@@ -25,7 +25,8 @@ export enum DocumentType {
   ReservationFull = 3,
   ReservationPart = 4,
   Fees = 5,
-  Deposit = 6
+  Deposit = 6,
+  Maintenance = 7
 }
 
 export interface DocumentListRequest {

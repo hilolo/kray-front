@@ -38,6 +38,7 @@ import { ZardPdfViewerComponent } from '@shared/pdf-viewer/pdf-viewer.component'
 import { PdfGenerationService } from '@shared/services/pdf-generation.service';
 import { ZardDialogService } from '@shared/components/dialog/dialog.service';
 import { SendNotificationComponent } from '@shared/components/send-notification/send-notification.component';
+import { DocumentType } from '@shared/services/document.service';
 
 @Component({
   selector: 'app-transaction-list',
@@ -959,7 +960,7 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
     this.isGeneratingReceipt.set(true);
     this.cdr.markForCheck();
 
-    this.transactionService.generateLeasingReceipt(transaction.id).pipe(
+    this.transactionService.generateReceipt(transaction.id, DocumentType.Lease).pipe(
       takeUntil(this.destroy$)
     ).subscribe({
       next: async (pdfMakeData) => {
@@ -1033,7 +1034,7 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
     this.isGeneratingReceipt.set(true);
     this.cdr.markForCheck();
 
-    this.transactionService.generateDepositReceipt(transaction.id).pipe(
+    this.transactionService.generateReceipt(transaction.id, DocumentType.Deposit).pipe(
       takeUntil(this.destroy$)
     ).subscribe({
       next: async (pdfMakeData) => {
@@ -1106,7 +1107,7 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
     this.isGeneratingReceipt.set(true);
     this.cdr.markForCheck();
 
-    this.transactionService.generateFeesReceipt(transaction.id).pipe(
+    this.transactionService.generateReceipt(transaction.id, DocumentType.Fees).pipe(
       takeUntil(this.destroy$)
     ).subscribe({
       next: async (pdfMakeData) => {
@@ -1180,7 +1181,7 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
     this.isGeneratingReceipt.set(true);
     this.cdr.markForCheck();
 
-    this.transactionService.generateMaintenanceReceipt(transaction.id).pipe(
+    this.transactionService.generateReceipt(transaction.id, DocumentType.Maintenance).pipe(
       takeUntil(this.destroy$)
     ).subscribe({
       next: async (pdfMakeData) => {
@@ -1255,13 +1256,13 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
 
     if (transactionType === TransactionType.Revenue) {
       if (transaction.revenueType === RevenueType.Loyer) {
-        receiptObservable = this.transactionService.generateLeasingReceipt(transaction.id);
+        receiptObservable = this.transactionService.generateReceipt(transaction.id, DocumentType.Lease);
       } else if (transaction.revenueType === RevenueType.Caution) {
-        receiptObservable = this.transactionService.generateDepositReceipt(transaction.id);
+        receiptObservable = this.transactionService.generateReceipt(transaction.id, DocumentType.Deposit);
       } else if (transaction.revenueType === RevenueType.FraisAgence) {
-        receiptObservable = this.transactionService.generateFeesReceipt(transaction.id);
+        receiptObservable = this.transactionService.generateReceipt(transaction.id, DocumentType.Fees);
       } else if (transaction.revenueType === RevenueType.Maintenance) {
-        receiptObservable = this.transactionService.generateMaintenanceReceipt(transaction.id);
+        receiptObservable = this.transactionService.generateReceipt(transaction.id, DocumentType.Maintenance);
       } else {
         this.toastService.error('Receipt type not supported for this transaction');
         return;

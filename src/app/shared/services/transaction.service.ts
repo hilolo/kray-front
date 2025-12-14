@@ -80,43 +80,58 @@ export class TransactionService {
   }
 
   /**
+   * Generate receipt PDF for a transaction
+   * POST api/Transaction/{id}/receipt
+   * @param id Transaction ID
+   * @param type Receipt type (Lease, Deposit, Fees, or Maintenance)
+   * @returns Observable of processed PDFMake JSON object with placeholders replaced
+   */
+  generateReceipt(id: string, type: number): Observable<any> {
+    return this.apiService.post<any>(`Transaction/${id}/receipt`, { type });
+  }
+
+  /**
    * Generate leasing receipt PDF for a transaction with RevenueType = Loyer
-   * POST api/Transaction/{id}/leasingreceipt
+   * @deprecated Use generateReceipt(id, DocumentType.Lease) instead
+   * POST api/Transaction/{id}/receipt
    * @param id Transaction ID
    * @returns Observable of processed PDFMake JSON object with placeholders replaced
    */
   generateLeasingReceipt(id: string): Observable<any> {
-    return this.apiService.post<any>(`Transaction/${id}/leasingreceipt`, {});
+    return this.generateReceipt(id, 2); // DocumentType.Lease = 2
   }
 
   /**
    * Generate deposit receipt PDF for a transaction with RevenueType = Caution
-   * POST api/Transaction/{id}/depositreceipt
+   * @deprecated Use generateReceipt(id, DocumentType.Deposit) instead
+   * POST api/Transaction/{id}/receipt
    * @param id Transaction ID
    * @returns Observable of processed PDFMake JSON object with placeholders replaced
    */
   generateDepositReceipt(id: string): Observable<any> {
-    return this.apiService.post<any>(`Transaction/${id}/depositreceipt`, {});
+    return this.generateReceipt(id, 6); // DocumentType.Deposit = 6
   }
 
   /**
    * Generate fees receipt PDF for a transaction with RevenueType = FraisAgence
-   * POST api/Transaction/{id}/feesreceipt
+   * @deprecated Use generateReceipt(id, DocumentType.Fees) instead
+   * POST api/Transaction/{id}/receipt
    * @param id Transaction ID
    * @returns Observable of processed PDFMake JSON object with placeholders replaced
    */
   generateFeesReceipt(id: string): Observable<any> {
-    return this.apiService.post<any>(`Transaction/${id}/feesreceipt`, {});
+    return this.generateReceipt(id, 5); // DocumentType.Fees = 5
   }
 
   /**
    * Generate maintenance receipt PDF for a transaction with RevenueType = Maintenance
-   * POST api/Transaction/{id}/maintenancereceipt
+   * @deprecated Use generateReceipt(id, DocumentType.Maintenance) instead
+   * POST api/Transaction/{id}/receipt
    * @param id Transaction ID
    * @returns Observable of processed PDFMake JSON object with placeholders replaced
    */
   generateMaintenanceReceipt(id: string): Observable<any> {
-    return this.apiService.post<any>(`Transaction/${id}/maintenancereceipt`, {});
+    return this.generateReceipt(id, 7); // DocumentType.Maintenance = 7
   }
 
   /**
