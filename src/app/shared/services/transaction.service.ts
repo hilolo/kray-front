@@ -84,10 +84,11 @@ export class TransactionService {
    * POST api/Transaction/{id}/receipt
    * @param id Transaction ID
    * @param type Receipt type (Lease, Deposit, Fees, or Maintenance)
+   * @param isNotification If true, uses PdfmakeNotification instead of Pdfmake
    * @returns Observable of processed PDFMake JSON object with placeholders replaced
    */
-  generateReceipt(id: string, type: number): Observable<any> {
-    return this.apiService.post<any>(`Transaction/${id}/receipt`, { type });
+  generateReceipt(id: string, type: number, isNotification: boolean = false): Observable<any> {
+    return this.apiService.post<any>(`Transaction/${id}/receipt`, { type, isNotification });
   }
 
   /**
