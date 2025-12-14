@@ -19,7 +19,6 @@ export interface CreateLeaseRequest {
   notificationEmail: boolean;
   specialTerms: string;
   privateNote: string;
-  companyId?: string;
   attachments: AttachmentInput[];
 }
 

@@ -444,12 +444,10 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
 
   loadProperties(): void {
     this.isLoadingProperties.set(true);
-    const companyId = this.userService.getCurrentUser()?.companyId;
     const request = {
       currentPage: 1,
       pageSize: 500, // Reduced from 1000 to improve initial load performance
       ignore: false,
-      companyId: companyId,
       category: PropertyCategory.Location, // Only show properties with category "location"
     };
 
@@ -486,13 +484,11 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
 
   loadTenants(): void {
     this.isLoadingTenants.set(true);
-    const companyId = this.userService.getCurrentUser()?.companyId;
     const request = {
       currentPage: 1,
       pageSize: 500, // Reduced from 1000 to improve initial load performance
       ignore: false,
       type: ContactType.Tenant,
-      companyId: companyId,
     };
 
     // Use setTimeout to defer loading and allow initial render to complete
@@ -766,7 +762,6 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
     }
 
     this.isSaving.set(true);
-    const companyId = this.userService.getCurrentUser()?.companyId;
 
     // Convert uploaded files to AttachmentInput (async)
     const filePromises = this.uploadedFiles().map((file) => {
@@ -810,7 +805,6 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
         notificationEmail: this.formData().notificationEmail,
         specialTerms: this.formData().specialTerms,
         privateNote: this.formData().privateNote,
-        companyId: companyId,
         attachmentsToAdd: attachments,
         attachmentsToDelete: Array.from(this.filesToDelete()),
       };
@@ -843,7 +837,6 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
         notificationEmail: this.formData().notificationEmail,
         specialTerms: this.formData().specialTerms,
         privateNote: this.formData().privateNote,
-        companyId: companyId,
         attachments: attachments,
       };
 

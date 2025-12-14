@@ -8,7 +8,6 @@ export interface LeaseListRequest {
   pageSize: number;
   ignore: boolean;
   searchQuery?: string;
-  companyId?: string;
   propertyId?: string;
   contactId?: string;
   status?: LeasingStatus;

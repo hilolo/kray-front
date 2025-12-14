@@ -20,7 +20,6 @@ export interface UpdateLeaseRequest {
   notificationEmail: boolean;
   specialTerms: string;
   privateNote: string;
-  companyId?: string;
   attachmentsToAdd: AttachmentInput[];
   attachmentsToDelete: string[];
 }

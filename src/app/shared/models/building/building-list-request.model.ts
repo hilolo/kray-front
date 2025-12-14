@@ -6,7 +6,6 @@ export interface BuildingListRequest {
   pageSize: number;
   ignore: boolean;
   searchQuery?: string;
-  companyId?: string;
   isArchived?: boolean;
 }
 

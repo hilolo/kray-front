@@ -244,12 +244,10 @@ export class AddExpenseComponent implements OnInit, OnDestroy {
 
   loadProperties(): void {
     this.isLoadingProperties.set(true);
-    const companyId = this.userService.getCurrentUser()?.companyId;
     const request = {
       currentPage: 1,
       pageSize: 1000,
       ignore: true,
-      companyId: companyId,
       isArchived: false,
     };
 
@@ -288,12 +286,10 @@ export class AddExpenseComponent implements OnInit, OnDestroy {
     }
 
     this.isLoadingLeases.set(true);
-    const companyId = this.userService.getCurrentUser()?.companyId;
     const request = {
       currentPage: 1,
       pageSize: 1000,
       ignore: true,
-      companyId: companyId,
       propertyId: this.formData().propertyId,
       isArchived: false,
     };
@@ -448,8 +444,6 @@ export class AddExpenseComponent implements OnInit, OnDestroy {
         this.filesToDelete.set(new Set());
 
         // Load properties and contacts first, then set selected values
-        const companyId = this.userService.getCurrentUser()?.companyId;
-
         // Load contacts based on expense type
         const contactRequest: any = {
           currentPage: 1,
@@ -467,7 +461,6 @@ export class AddExpenseComponent implements OnInit, OnDestroy {
             currentPage: 1,
             pageSize: 1000,
             ignore: true,
-            companyId: companyId,
             isArchived: false,
           }),
           contacts: this.contactService.list(contactRequest),
@@ -496,13 +489,10 @@ export class AddExpenseComponent implements OnInit, OnDestroy {
               }
             }
 
-            // Filter contacts by companyId if available (contacts that belong to current company, not shared)
-            const filteredContacts = companyId
-              ? (contacts.result || []).filter(contact => contact.companyId === companyId)
-              : (contacts.result || []);
-
-            this.contacts.set(filteredContacts);
-            const contactOptions: ZardComboboxOption[] = filteredContacts.map((contact) => {
+            // Backend now filters by companyId from session automatically
+            const contactList = contacts.result || [];
+            this.contacts.set(contactList);
+            const contactOptions: ZardComboboxOption[] = contactList.map((contact: Contact) => {
               let name = '';
               if (contact.isACompany) {
                 name = contact.companyName || '';

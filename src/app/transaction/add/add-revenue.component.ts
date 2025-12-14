@@ -390,13 +390,10 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
     this.isLoadingProperties.set(true);
     this.isLoadingContacts.set(true);
 
-    const companyId = this.userService.getCurrentUser()?.companyId;
-
     const propertiesRequest: any = {
       currentPage: 1,
       pageSize: 1000,
       ignore: true,
-      companyId: companyId,
       isArchived: false,
     };
 
@@ -451,14 +448,10 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
         this.propertyOptions.set(propertyOptions);
         this.isLoadingProperties.set(false);
 
-        // Combine owners and tenants, then filter by companyId if available
+        // Backend now filters by companyId from session automatically
         const allContacts = [...(owners.result || []), ...(tenants.result || [])];
-        const filteredContacts = companyId
-          ? allContacts.filter(contact => contact.companyId === companyId)
-          : allContacts;
-
-        this.contacts.set(filteredContacts);
-        const contactOptions: ZardComboboxOption[] = filteredContacts.map((contact) => {
+        this.contacts.set(allContacts);
+        const contactOptions: ZardComboboxOption[] = allContacts.map((contact: Contact) => {
           let name = '';
           if (contact.isACompany) {
             name = contact.companyName || '';
@@ -634,12 +627,10 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
 
   loadProperties(): void {
     this.isLoadingProperties.set(true);
-    const companyId = this.userService.getCurrentUser()?.companyId;
     const request: any = {
       currentPage: 1,
       pageSize: 1000,
       ignore: true,
-      companyId: companyId,
       isArchived: false,
     };
 
@@ -687,12 +678,10 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
     }
 
     this.isLoadingLeases.set(true);
-    const companyId = this.userService.getCurrentUser()?.companyId;
     const request = {
       currentPage: 1,
       pageSize: 1000,
       ignore: true,
-      companyId: companyId,
       propertyId: this.formData().propertyId,
       isArchived: false,
     };
@@ -737,13 +726,10 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
       setTimeout(() => {
         this.contactService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
           next: (response) => {
-            const companyId = this.userService.getCurrentUser()?.companyId;
-            const filteredContacts = companyId
-              ? (response.result || []).filter(contact => contact.companyId === companyId)
-              : (response.result || []);
-
-            this.contacts.set(filteredContacts);
-            const options: ZardComboboxOption[] = filteredContacts.map((contact) => {
+            // Backend now filters by companyId from session automatically
+            const contacts = response.result || [];
+            this.contacts.set(contacts);
+            const options: ZardComboboxOption[] = contacts.map((contact: Contact) => {
               let name = '';
               if (contact.isACompany) {
                 name = contact.companyName || '';
@@ -793,14 +779,10 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
           tenants: this.contactService.list(tenantRequest),
         }).pipe(takeUntil(this.destroy$)).subscribe({
           next: ({ owners, tenants }) => {
-            const companyId = this.userService.getCurrentUser()?.companyId;
+            // Backend now filters by companyId from session automatically
             const allContacts = [...(owners.result || []), ...(tenants.result || [])];
-            const filteredContacts = companyId
-              ? allContacts.filter(contact => contact.companyId === companyId)
-              : allContacts;
-
-            this.contacts.set(filteredContacts);
-            const options: ZardComboboxOption[] = filteredContacts.map((contact) => {
+            this.contacts.set(allContacts);
+            const options: ZardComboboxOption[] = allContacts.map((contact: Contact) => {
               let name = '';
               if (contact.isACompany) {
                 name = contact.companyName || '';
@@ -831,12 +813,10 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
 
   loadReservations(): void {
     this.isLoadingReservations.set(true);
-    const companyId = this.userService.getCurrentUser()?.companyId;
     const request = {
       currentPage: 1,
       pageSize: 1000,
       ignore: true,
-      companyId: companyId,
       isArchived: false,
     };
 
@@ -1106,7 +1086,6 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
           currentPage: 1,
           pageSize: 1000,
           ignore: true,
-          companyId: this.userService.getCurrentUser()?.companyId,
           isArchived: false,
         };
 
@@ -1147,14 +1126,10 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
               }
             }
 
-            // Filter contacts by companyId if available (contacts that belong to current company, not shared)
-            const companyId = this.userService.getCurrentUser()?.companyId;
-            const filteredContacts = companyId
-              ? (contacts.result || []).filter(contact => contact.companyId === companyId)
-              : (contacts.result || []);
-
-            this.contacts.set(filteredContacts);
-            const contactOptions: ZardComboboxOption[] = filteredContacts.map((contact) => {
+            // Backend now filters by companyId from session automatically
+            const contactList = contacts.result || [];
+            this.contacts.set(contactList);
+            const contactOptions: ZardComboboxOption[] = contactList.map((contact: Contact) => {
               let name = '';
               if (contact.isACompany) {
                 name = contact.companyName || '';

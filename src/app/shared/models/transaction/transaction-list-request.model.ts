@@ -8,7 +8,6 @@ export interface TransactionListRequest {
   pageSize: number;
   ignore: boolean;
   searchQuery?: string;
-  companyId?: string;
   type?: TransactionType;
   revenueTypes?: RevenueType[]; // Filter by multiple revenue types
   expenseTypes?: ExpenseType[]; // Filter by multiple expense types

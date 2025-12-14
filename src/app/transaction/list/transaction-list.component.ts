@@ -353,7 +353,6 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
 
   loadTransactions(): void {
     this.isLoading.set(true);
-    const companyId = this.userService.getCurrentUser()?.companyId;
     
     const searchQuery = this.searchQuery() && this.searchQuery().trim().length >= 3 
       ? this.searchQuery().trim() 
@@ -363,7 +362,6 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
       currentPage: this.currentPage(),
       pageSize: this.pageSize(),
       ignore: false,
-      companyId: companyId,
       type: this.selectedType(),
       revenueTypes: this.selectedRevenueTypes().length > 0 ? this.selectedRevenueTypes() : undefined,
       expenseTypes: this.selectedExpenseTypes().length > 0 ? this.selectedExpenseTypes() : undefined,
@@ -431,7 +429,6 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
 
   loadContacts(): void {
     this.isLoadingContacts.set(true);
-    const companyId = this.userService.getCurrentUser()?.companyId;
     
     // Load all contacts with a single call
     // Using ignore: true to get all contacts without pagination
@@ -446,15 +443,12 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
     // Make a single API call
     this.contactService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response) => {
-        // Filter by companyId if available (contacts that belong to current company, not shared)
-        const filteredContacts = companyId 
-          ? (response.result || []).filter(contact => contact.companyId === companyId)
-          : (response.result || []);
-        
-        this.contacts.set(filteredContacts);
+        // Backend now filters by companyId from session automatically
+        const contacts = response.result || [];
+        this.contacts.set(contacts);
         
         // Convert contacts to combobox options with name and identifier
-        const options: ZardComboboxOption[] = filteredContacts.map(contact => {
+        const options: ZardComboboxOption[] = contacts.map((contact: Contact) => {
           // Build display name: name (identifier) or identifier if name is missing
           let displayName = '';
           if (contact.isACompany) {

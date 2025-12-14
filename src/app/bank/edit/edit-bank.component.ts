@@ -329,7 +329,6 @@ export class EditBankComponent implements OnInit, OnDestroy {
       // Update existing bank
       const request: UpdateBankRequest = {
         id: bankId,
-        companyId: currentUser.companyId,
         contactId: data.contactId,
         bankName: data.bankName.trim() || undefined,
         rib: data.rib.trim(),
@@ -362,7 +361,6 @@ export class EditBankComponent implements OnInit, OnDestroy {
     } else {
       // Create new bank
       const request: CreateBankRequest = {
-        companyId: currentUser.companyId,
         contactId: data.contactId,
         bankName: data.bankName.trim() || undefined,
         rib: data.rib.trim(),

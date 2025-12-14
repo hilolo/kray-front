@@ -10,7 +10,6 @@ export interface PropertyListRequest {
   pageSize: number;
   ignore: boolean;
   searchQuery?: string;
-  companyId?: string;
   identifier?: string;
   typeProperty?: string;
   typeProperties?: string[]; // Multiple property types

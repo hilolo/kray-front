@@ -8,7 +8,6 @@ export interface ReservationListRequest {
   pageSize: number;
   ignore: boolean;
   searchQuery?: string;
-  companyId?: string;
   contactId?: string;
   propertyId?: string;
   status?: ReservationStatus;

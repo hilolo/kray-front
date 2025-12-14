@@ -207,13 +207,10 @@ export class ReservationListComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const companyId = this.userService.getCurrentUser()?.companyId;
-    
     const request: ReservationListRequest = {
       currentPage: 1,
       pageSize: 10000, // Load all reservations for calendar
       ignore: true, // Ignore pagination
-      companyId: companyId,
       propertyId: this.selectedProperty() || undefined,
     };
 
@@ -287,14 +284,11 @@ export class ReservationListComponent implements OnInit, OnDestroy {
 
   loadReservations(): void {
     this.isLoading.set(true);
-    const companyId = this.userService.getCurrentUser()?.companyId;
-    
     const request: ReservationListRequest = {
       currentPage: this.currentPage(),
       pageSize: this.pageSize(),
       ignore: false,
       searchQuery: this.searchQuery() || undefined,
-      companyId: companyId,
       propertyId: this.selectedProperty() || undefined,
       contactId: this.selectedTenant() || undefined,
     };
@@ -338,13 +332,11 @@ export class ReservationListComponent implements OnInit, OnDestroy {
 
   loadTenants(): void {
     this.isLoadingTenants.set(true);
-    const companyId = this.userService.getCurrentUser()?.companyId;
     const request = {
       currentPage: 1,
       pageSize: 1000,
       ignore: false,
       type: ContactType.Tenant,
-      companyId: companyId,
     };
     
     this.contactService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
@@ -366,14 +358,12 @@ export class ReservationListComponent implements OnInit, OnDestroy {
 
   loadProperties(): void {
     this.isLoadingProperties.set(true);
-    const companyId = this.userService.getCurrentUser()?.companyId;
     
     // Only fetch properties with category "location vacances"
     const request = {
       currentPage: 1,
       pageSize: 1000,
       ignore: false,
-      companyId: companyId,
       category: PropertyCategory.LocationVacances,
     };
 

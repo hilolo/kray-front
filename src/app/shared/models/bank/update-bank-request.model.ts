@@ -3,7 +3,6 @@
  */
 export interface UpdateBankRequest {
   id: string;
-  companyId: string;
   contactId: string;
   bankName?: string;
   rib: string;

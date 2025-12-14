@@ -433,14 +433,12 @@ export class EditReservationComponent implements OnInit, OnDestroy {
     }
 
     this.isLoadingProperties.set(true);
-    const companyId = this.userService.getCurrentUser()?.companyId;
     
     // Only fetch properties with category "location vacances"
     const request = {
       currentPage: 1,
       pageSize: 500,
       ignore: false,
-      companyId: companyId,
       category: PropertyCategory.LocationVacances,
     };
 
@@ -475,13 +473,11 @@ export class EditReservationComponent implements OnInit, OnDestroy {
 
   loadContacts(): void {
     this.isLoadingContacts.set(true);
-    const companyId = this.userService.getCurrentUser()?.companyId;
     const request = {
       currentPage: 1,
       pageSize: 500,
       ignore: false,
       type: ContactType.Tenant, // Using Tenant as default, but will get all contacts
-      companyId: companyId,
     };
 
     setTimeout(() => {
@@ -746,7 +742,6 @@ export class EditReservationComponent implements OnInit, OnDestroy {
     }
 
     this.isSaving.set(true);
-    const companyId = this.userService.getCurrentUser()?.companyId;
 
     const filePromises = this.uploadedFiles().map((file) => {
       return new Promise<AttachmentInput>((resolve) => {
@@ -843,7 +838,6 @@ export class EditReservationComponent implements OnInit, OnDestroy {
         totalAmount: this.formData().totalAmount,
         description: this.formData().description,
         privateNote: this.formData().privateNote,
-        companyId: companyId,
         attachments: attachments,
       };
 
@@ -1119,7 +1113,6 @@ export class EditReservationComponent implements OnInit, OnDestroy {
   }
 
   private async saveSectionData(sectionName: string): Promise<void> {
-    const companyId = this.userService.getCurrentUser()?.companyId;
     const reservationId = this.reservationId()!;
     const data = this.formData();
 

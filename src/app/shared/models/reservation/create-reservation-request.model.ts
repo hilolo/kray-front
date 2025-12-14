@@ -11,7 +11,6 @@ export interface CreateReservationRequest {
   totalAmount: number;
   description: string;
   privateNote: string;
-  companyId?: string;
   attachments: AttachmentInput[];
 }
 

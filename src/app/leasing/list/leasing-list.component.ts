@@ -398,14 +398,11 @@ export class LeasingListComponent implements OnInit, OnDestroy {
 
   loadLeases(): void {
     this.isLoading.set(true);
-    const companyId = this.userService.getCurrentUser()?.companyId;
-    
     const request: LeaseListRequest = {
       currentPage: this.currentPage(),
       pageSize: this.pageSize(),
       ignore: false,
       searchQuery: this.searchQuery() || undefined,
-      companyId: companyId,
       propertyId: this.selectedProperty() || undefined,
       contactId: this.selectedTenant() || undefined,
       // Only include isArchived when showing archived (true), otherwise omit it so backend defaults to false
@@ -457,13 +454,11 @@ export class LeasingListComponent implements OnInit, OnDestroy {
 
   loadTenants(): void {
     this.isLoadingTenants.set(true);
-    const companyId = this.userService.getCurrentUser()?.companyId;
     const request = {
       currentPage: 1,
       pageSize: 1000,
       ignore: false,
       type: ContactType.Tenant,
-      companyId: companyId,
     };
     
     this.contactService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
@@ -485,12 +480,10 @@ export class LeasingListComponent implements OnInit, OnDestroy {
 
   loadProperties(): void {
     this.isLoadingProperties.set(true);
-    const companyId = this.userService.getCurrentUser()?.companyId;
     const request = {
       currentPage: 1,
       pageSize: 1000,
       ignore: false,
-      companyId: companyId,
       category: PropertyCategory.Location, // Only show properties with category "location"
     };
     

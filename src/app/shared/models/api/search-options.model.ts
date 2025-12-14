@@ -15,9 +15,6 @@ export interface SearchOptions {
   /** Whether to ignore/include archived/deleted items */
   ignore?: boolean;
   
-  /** Optional company ID filter */
-  companyId?: string | null;
-  
   /** Additional dynamic filters that can be added per module */
   [key: string]: any;
 }
@@ -30,7 +27,6 @@ export const DEFAULT_SEARCH_OPTIONS: SearchOptions = {
   pageSize: 10,
   searchQuery: '',
   ignore: false,
-  companyId: null,
 };
 
 /**
