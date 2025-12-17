@@ -1,4 +1,4 @@
-import { Injectable, signal, inject } from '@angular/core';
+import { Injectable, signal, inject, NgZone } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 
 export type Language = 'en' | 'fr';
@@ -9,15 +9,16 @@ export type Language = 'en' | 'fr';
 export class LanguageService {
   private readonly storageKey = 'language';
   private readonly currentLanguage = signal<Language>(this.getInitialLanguage());
-  private translateService: TranslateService | null = null;
+  private readonly translateService = inject(TranslateService);
+  private readonly ngZone = inject(NgZone);
 
   constructor() {
-    // TranslateService will be injected after initialization
-    // We'll set it up in AppComponent
+    // Initialize language after TranslateService is injected
+    this.initLanguage();
   }
 
   setTranslateService(translateService: TranslateService): void {
-    this.translateService = translateService;
+    // This method is kept for backward compatibility but TranslateService is now injected
     // Initialize language after TranslateService is set
     this.initLanguage();
   }
@@ -38,16 +39,63 @@ export class LanguageService {
 
   setLanguage(language: Language): void {
     this.currentLanguage.set(language);
-    this.applyLanguage(language);
-    if (this.translateService) {
-      // Ensure translations are loaded when changing language
+    localStorage.setItem(this.storageKey, language);
+    
+    const previousLang = this.translateService.currentLang;
+    
+    // If same language, force a reload by switching to temp language then back
+    // This ensures the translate pipe detects the change
+    if (previousLang === language) {
+      const tempLang = language === 'en' ? 'fr' : 'en';
+      
+      // Switch to temp language first
+      this.translateService.use(tempLang).subscribe({
+        next: () => {
+          // Switch back to desired language - this will trigger the change event
+          this.translateService.use(language).subscribe({
+            next: () => {
+              // Wait a microtask to ensure translations are fully stored
+              Promise.resolve().then(() => {
+                // Ensure change detection is triggered
+                this.ngZone.run(() => {
+                  this.applyLanguage(language);
+                });
+              });
+            },
+            error: () => {
+              this.applyLanguage(language);
+            }
+          });
+        },
+        error: () => {
+          // Fallback: try to use the language directly
+          this.translateService.use(language).subscribe({
+            next: () => {
+              this.applyLanguage(language);
+            },
+            error: () => {
+              this.applyLanguage(language);
+            }
+          });
+        }
+      });
+    } else {
+      // Load new language
       this.translateService.use(language).subscribe({
-        error: (err) => {
-          console.error('Error loading translations:', err);
+        next: () => {
+          // Wait a microtask to ensure translations are fully stored
+          Promise.resolve().then(() => {
+            // Ensure change detection is triggered
+            this.ngZone.run(() => {
+              this.applyLanguage(language);
+            });
+          });
+        },
+        error: () => {
+          this.applyLanguage(language);
         }
       });
     }
-    localStorage.setItem(this.storageKey, language);
   }
 
   getCurrentLanguage(): Language {
@@ -69,15 +117,8 @@ export class LanguageService {
 
   private applyLanguage(language: Language): void {
     document.documentElement.setAttribute('lang', language);
-    // Set initial language for TranslateService if it's available
-    // Use subscribe to ensure translations are loaded before continuing
-    if (this.translateService && this.translateService.currentLang !== language) {
-      this.translateService.use(language).subscribe({
-        error: (err) => {
-          console.error('Error loading translations:', err);
-        }
-      });
-    }
   }
+
 }
+
 

@@ -58,5 +58,11 @@ export class AppComponent implements OnInit {
     if (this.translateService.currentLang !== currentLang) {
       this.translateService.use(currentLang).subscribe();
     }
+    
+    // Expose language service to window for debugging (development only)
+    if (typeof window !== 'undefined' && !(window as any).languageService) {
+      (window as any).languageService = this.languageService;
+      (window as any).translateService = this.translateService;
+    }
   }
 }

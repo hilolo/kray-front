@@ -1194,29 +1194,6 @@
       "errorTitle": "WhatsApp Check Failed"
     }
   },
-      "basicInformation": "Basic Information",
-      "basicInformationDescription": "Enter the basic details of the key",
-      "name": "Name",
-      "namePlaceholder": "Enter key name",
-      "nameRequired": "Name is required",
-      "description": "Description",
-      "descriptionSection": "Description",
-      "descriptionSectionDescription": "Enter a detailed description for this key (optional)",
-      "descriptionPlaceholder": "Enter key description (optional)",
-      "property": "Property",
-      "propertySection": "Property",
-      "propertySectionDescription": "Select the property this key belongs to",
-      "propertyRequired": "Property is required",
-      "propertyPlaceholder": "Select property...",
-      "propertySearchPlaceholder": "Search properties...",
-      "propertyEmptyText": "No properties found",
-      "uploadImage": "Upload image",
-      "keyImage": "Key image",
-      "saving": "Saving...",
-      "saveKey": "Save Key",
-      "cancel": "Cancel"
-    }
-  },
   "dialog": {
     "defaultCancel": "Cancel",
     "defaultOk": "OK",

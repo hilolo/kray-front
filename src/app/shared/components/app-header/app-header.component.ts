@@ -7,7 +7,6 @@ import { ZardIconComponent } from '@shared/components/icon/icon.component';
 import { ZardButtonComponent } from '@shared/components/button/button.component';
 import { DarkModeService } from '@shared/services/darkmode.service';
 import { LanguageService } from '@shared/services/language.service';
-import { ZardDropdownModule } from '@shared/components/dropdown/dropdown.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { ZardAlertDialogService } from '@shared/components/alert-dialog/alert-dialog.service';
 import { AuthService } from '@shared/services/auth.service';
@@ -19,7 +18,7 @@ import { WhatsAppQrComponent } from '@shared/components/whatsapp-qr/whatsapp-qr.
   selector: 'app-header',
   exportAs: 'appHeader',
   standalone: true,
-  imports: [LayoutModule, ZardIconComponent, ZardButtonComponent, ZardDropdownModule, TranslateModule],
+  imports: [LayoutModule, ZardIconComponent, ZardButtonComponent, TranslateModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   templateUrl: './app-header.component.html',
@@ -439,8 +438,10 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
     this.darkmodeService.toggleTheme();
   }
 
-  setLanguage(lang: 'en' | 'fr'): void {
-    this.languageService.setLanguage(lang);
+  toggleLanguage(): void {
+    const currentLang = this.currentLanguage();
+    const newLang = currentLang === 'en' ? 'fr' : 'en';
+    this.languageService.setLanguage(newLang);
   }
 
   onMobileMenuClick(): void {
