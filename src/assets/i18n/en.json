@@ -588,6 +588,8 @@
       "depositReceipt": "Deposit Receipt",
       "feesReceipt": "Fees Receipt",
       "maintenanceReceipt": "Maintenance Receipt",
+      "reservationFullReceipt": "Reservation Full Receipt",
+      "reservationPartReceipt": "Reservation Part Receipt",
       "publicReceipt": "Public Receipt",
       "generateReceipt": "Generate Receipt",
       "sendNotification": "Send Notification"

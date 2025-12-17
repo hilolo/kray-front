@@ -77,8 +77,6 @@ interface ExistingAttachment {
     ZardComboboxComponent,
     ZardDatePickerComponent,
     ZardFileViewerComponent,
-    ZardAccordionComponent,
-    ZardAccordionItemComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './edit-reservation.component.html',

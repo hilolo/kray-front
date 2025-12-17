@@ -589,6 +589,8 @@
       "depositReceipt": "Reçu de dépôt",
       "feesReceipt": "Reçu de frais",
       "maintenanceReceipt": "Reçu de maintenance",
+      "reservationFullReceipt": "Reçu de réservation complète",
+      "reservationPartReceipt": "Reçu de réservation partielle",
       "publicReceipt": "Reçu public",
       "generateReceipt": "Générer un reçu",
       "sendNotification": "Envoyer une notification"

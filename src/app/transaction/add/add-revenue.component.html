@@ -75,7 +75,8 @@
                   <z-combobox [options]="reservationOptions()" [value]="formData().reservationId"
                     [placeholder]="'Select reservation...'" [searchPlaceholder]="'Search reservations...'"
                     [emptyText]="'No reservations found'" [searchable]="true" [disabled]="isLoadingReservations()"
-                    [zWidth]="'lg'" (zValueChange)="updateReservationId($event || '')" class="w-full" />
+                    [zWidth]="'full'" (zValueChange)="updateReservationId($event || '')" 
+                    class="w-full text-base [&_button]:text-base [&_button]:min-h-[48px] [&_button]:py-3 [&_z-command-list]:max-h-[500px] [&_z-popover]:!w-[600px]" />
                 </z-form-control>
               </z-form-field>
             </div>

@@ -409,6 +409,18 @@
                   <span>{{ 'transaction.list.maintenanceReceipt' | translate }}</span>
                 </z-dropdown-menu-item>
               }
+              @if (row.revenueType === RevenueType.ReservationFull) {
+                <z-dropdown-menu-item (click)="onGenerateReservationFullReceipt(row)">
+                  <z-icon zType="file-text" zSize="sm" class="mr-2" />
+                  <span>{{ 'transaction.list.reservationFullReceipt' | translate }}</span>
+                </z-dropdown-menu-item>
+              }
+              @if (row.revenueType === RevenueType.ReservationPart) {
+                <z-dropdown-menu-item (click)="onGenerateReservationPartReceipt(row)">
+                  <z-icon zType="file-text" zSize="sm" class="mr-2" />
+                  <span>{{ 'transaction.list.reservationPartReceipt' | translate }}</span>
+                </z-dropdown-menu-item>
+              }
             }
             @if (canSendNotification(row)) {
               <z-dropdown-menu-item (click)="onSendNotification(row)">

@@ -595,6 +595,10 @@ export class SendNotificationComponent implements OnInit, OnDestroy {
           receiptObservable = this.transactionService.generateReceipt(transaction.id, DocumentType.Fees, isNotification);
         } else if (transaction.revenueType === RevenueType.Maintenance) {
           receiptObservable = this.transactionService.generateReceipt(transaction.id, DocumentType.Maintenance, isNotification);
+        } else if (transaction.revenueType === RevenueType.ReservationFull) {
+          receiptObservable = this.transactionService.generateReceipt(transaction.id, DocumentType.ReservationFull, isNotification);
+        } else if (transaction.revenueType === RevenueType.ReservationPart) {
+          receiptObservable = this.transactionService.generateReceipt(transaction.id, DocumentType.ReservationPart, isNotification);
         } else {
           console.log('[Notification] No receipt type available for revenue type:', transaction.revenueType);
           return null;

@@ -787,7 +787,9 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
     return transaction.revenueType === RevenueType.Loyer ||
            transaction.revenueType === RevenueType.Caution ||
            transaction.revenueType === RevenueType.FraisAgence ||
-           transaction.revenueType === RevenueType.Maintenance;
+           transaction.revenueType === RevenueType.Maintenance ||
+           transaction.revenueType === RevenueType.ReservationFull ||
+           transaction.revenueType === RevenueType.ReservationPart;
   }
 
   /**
@@ -810,6 +812,12 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
         break;
       case RevenueType.Maintenance:
         this.onGenerateMaintenanceReceipt(transaction);
+        break;
+      case RevenueType.ReservationFull:
+        this.onGenerateReservationFullReceipt(transaction);
+        break;
+      case RevenueType.ReservationPart:
+        this.onGenerateReservationPartReceipt(transaction);
         break;
     }
   }
@@ -1229,6 +1237,154 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
   }
 
   /**
+   * Generate and display reservation full receipt for a transaction
+   * Only available for Paid ReservationFull transactions
+   */
+  onGenerateReservationFullReceipt(transaction: Transaction): void {
+    if (this.isGeneratingReceipt()) {
+      return;
+    }
+
+    // Validate transaction type and status
+    const transactionType = transaction.type ?? transaction.category;
+    if (transactionType !== TransactionType.Revenue || 
+        transaction.revenueType !== RevenueType.ReservationFull ||
+        transaction.status !== TransactionStatus.Paid) {
+      this.toastService.error('Receipt can only be generated for paid reservation full transactions');
+      return;
+    }
+
+    this.isGeneratingReceipt.set(true);
+    this.cdr.markForCheck();
+
+    this.transactionService.generateReceipt(transaction.id, DocumentType.ReservationFull).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: async (pdfMakeData) => {
+        try {
+          // Handle response format (may be wrapped in data property)
+          let dataToProcess: any = pdfMakeData;
+          if (typeof pdfMakeData === 'object' && pdfMakeData !== null && 'data' in pdfMakeData) {
+            dataToProcess = (pdfMakeData as any).data;
+          }
+
+          // Parse PDFMake JSON if needed
+          let pdfMakeJson: any;
+          if (typeof dataToProcess === 'string') {
+            pdfMakeJson = JSON.parse(dataToProcess);
+          } else if (typeof dataToProcess === 'object' && dataToProcess !== null) {
+            pdfMakeJson = dataToProcess;
+          } else {
+            throw new Error('Invalid PDFMake data format');
+          }
+
+          // Validate PDFMake structure
+          if (!pdfMakeJson || (!pdfMakeJson.content && !pdfMakeJson.text)) {
+            throw new Error('PDFMake data is missing required content property');
+          }
+
+          // Convert PDFMake JSON to PDF data URL
+          const pdfResult = await this.pdfGenerationService.generatePdfFromJson(pdfMakeJson);
+
+          // Show PDF in viewer
+          this.pdfViewerUrl.set(pdfResult.dataUrl);
+          this.pdfViewerName.set(`Reservation Full Receipt - ${transaction.propertyIdentifier || transaction.propertyName || 'Transaction'} - ${this.formatDate(transaction)}`);
+          this.showPdfViewer.set(true);
+          this.isGeneratingReceipt.set(false);
+          this.cdr.markForCheck();
+        } catch (error: any) {
+          console.error('Error generating reservation full receipt:', error);
+          const errorMessage = error?.message || 'Failed to generate reservation full receipt';
+          this.toastService.error(errorMessage);
+          this.isGeneratingReceipt.set(false);
+          this.cdr.markForCheck();
+        }
+      },
+      error: (error) => {
+        console.error('Error fetching reservation full receipt:', error);
+        const errorMessage = error?.error?.message || error?.message || 'Failed to generate reservation full receipt';
+        this.toastService.error(errorMessage);
+        this.isGeneratingReceipt.set(false);
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  /**
+   * Generate and display reservation part receipt for a transaction
+   * Only available for Paid ReservationPart transactions
+   */
+  onGenerateReservationPartReceipt(transaction: Transaction): void {
+    if (this.isGeneratingReceipt()) {
+      return;
+    }
+
+    // Validate transaction type and status
+    const transactionType = transaction.type ?? transaction.category;
+    if (transactionType !== TransactionType.Revenue || 
+        transaction.revenueType !== RevenueType.ReservationPart ||
+        transaction.status !== TransactionStatus.Paid) {
+      this.toastService.error('Receipt can only be generated for paid reservation part transactions');
+      return;
+    }
+
+    this.isGeneratingReceipt.set(true);
+    this.cdr.markForCheck();
+
+    this.transactionService.generateReceipt(transaction.id, DocumentType.ReservationPart).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: async (pdfMakeData) => {
+        try {
+          // Handle response format (may be wrapped in data property)
+          let dataToProcess: any = pdfMakeData;
+          if (typeof pdfMakeData === 'object' && pdfMakeData !== null && 'data' in pdfMakeData) {
+            dataToProcess = (pdfMakeData as any).data;
+          }
+
+          // Parse PDFMake JSON if needed
+          let pdfMakeJson: any;
+          if (typeof dataToProcess === 'string') {
+            pdfMakeJson = JSON.parse(dataToProcess);
+          } else if (typeof dataToProcess === 'object' && dataToProcess !== null) {
+            pdfMakeJson = dataToProcess;
+          } else {
+            throw new Error('Invalid PDFMake data format');
+          }
+
+          // Validate PDFMake structure
+          if (!pdfMakeJson || (!pdfMakeJson.content && !pdfMakeJson.text)) {
+            throw new Error('PDFMake data is missing required content property');
+          }
+
+          // Convert PDFMake JSON to PDF data URL
+          const pdfResult = await this.pdfGenerationService.generatePdfFromJson(pdfMakeJson);
+
+          // Show PDF in viewer
+          this.pdfViewerUrl.set(pdfResult.dataUrl);
+          this.pdfViewerName.set(`Reservation Part Receipt - ${transaction.propertyIdentifier || transaction.propertyName || 'Transaction'} - ${this.formatDate(transaction)}`);
+          this.showPdfViewer.set(true);
+          this.isGeneratingReceipt.set(false);
+          this.cdr.markForCheck();
+        } catch (error: any) {
+          console.error('Error generating reservation part receipt:', error);
+          const errorMessage = error?.message || 'Failed to generate reservation part receipt';
+          this.toastService.error(errorMessage);
+          this.isGeneratingReceipt.set(false);
+          this.cdr.markForCheck();
+        }
+      },
+      error: (error) => {
+        console.error('Error fetching reservation part receipt:', error);
+        const errorMessage = error?.error?.message || error?.message || 'Failed to generate reservation part receipt';
+        this.toastService.error(errorMessage);
+        this.isGeneratingReceipt.set(false);
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  /**
    * Generate public receipt PDF and copy base64 to clipboard
    * Only available for Paid transactions
    * Generates base64 entirely on frontend using appropriate receipt type
@@ -1257,6 +1413,10 @@ export class TransactionListComponent implements OnInit, AfterViewInit, OnDestro
         receiptObservable = this.transactionService.generateReceipt(transaction.id, DocumentType.Fees);
       } else if (transaction.revenueType === RevenueType.Maintenance) {
         receiptObservable = this.transactionService.generateReceipt(transaction.id, DocumentType.Maintenance);
+      } else if (transaction.revenueType === RevenueType.ReservationFull) {
+        receiptObservable = this.transactionService.generateReceipt(transaction.id, DocumentType.ReservationFull);
+      } else if (transaction.revenueType === RevenueType.ReservationPart) {
+        receiptObservable = this.transactionService.generateReceipt(transaction.id, DocumentType.ReservationPart);
       } else {
         this.toastService.error('Receipt type not supported for this transaction');
         return;
