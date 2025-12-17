@@ -1,4 +1,4 @@
-import { TransactionType, RevenueType, ExpenseType } from './transaction.model';
+import { TransactionType, RevenueType, ExpenseType, TransactionStatus } from './transaction.model';
 import { Payment } from './transaction.model';
 import { AttachmentInput } from '@shared/models/contact/create-contact-request.model';
 
@@ -18,6 +18,7 @@ export interface UpdateTransactionRequest {
   payments: Payment[];
   depositPrice?: number;
   description: string;
+  status?: TransactionStatus; // Optional - status for the transaction
   attachmentsToAdd?: AttachmentInput[];
   attachmentsToDelete?: string[];
 }

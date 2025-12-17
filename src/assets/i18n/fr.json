@@ -603,7 +603,10 @@
         "generalInfoDescription": "Entrez le type de transaction et la date",
         "createRevenue": "Créer des revenus",
         "saving": "Enregistrement...",
-        "cancel": "Annuler"
+        "cancel": "Annuler",
+        "paymentStatus": "Statut de paiement",
+        "paymentStatusPaid": "Payé",
+        "paymentStatusPending": "En attente"
       },
       "expense": {
         "title": "Ajouter une dépense",

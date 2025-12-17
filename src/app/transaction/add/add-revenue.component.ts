@@ -18,6 +18,8 @@ import { ZardFileViewerComponent } from '@shared/components/file-viewer/file-vie
 import { ZardImageHoverPreviewDirective } from '@shared/components/image-hover-preview/image-hover-preview.component';
 import { ZardAccordionComponent } from '@shared/components/accordion/accordion.component';
 import { ZardAccordionItemComponent } from '@shared/components/accordion/accordion-item.component';
+import { ZardSwitchComponent } from '@shared/components/switch/switch.component';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ImageItem } from '@shared/image-viewer/image-viewer.component';
 import { getFileViewerType } from '@shared/utils/file-type.util';
 import { AttachmentInput } from '@shared/models/contact/create-contact-request.model';
@@ -79,6 +81,8 @@ interface ExistingAttachment {
     ZardImageHoverPreviewDirective,
     ZardAccordionComponent,
     ZardAccordionItemComponent,
+    ZardSwitchComponent,
+    TranslateModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './add-revenue.component.html',
@@ -93,6 +97,7 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
   private readonly contactService = inject(ContactService);
   private readonly toastService = inject(ToastService);
   private readonly userService = inject(UserService);
+  private readonly translateService = inject(TranslateService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroy$ = new Subject<void>();
 
@@ -102,6 +107,9 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
 
   // Status from query params (for deposit transactions)
   readonly initialStatus = signal<TransactionStatus | null>(null);
+
+  // Payment status toggle (default to Pending)
+  readonly paymentStatus = signal<TransactionStatus>(TransactionStatus.Pending);
 
   // Edit mode
   readonly transactionId = signal<string | null>(null);
@@ -347,6 +355,25 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
       return sum + amountWithVat;
     }, 0);
   });
+
+  // Computed properties for payment status display
+  readonly isPaid = computed(() => this.paymentStatus() === TransactionStatus.Paid);
+  readonly statusLabel = computed(() => {
+    return this.isPaid() 
+      ? this.translateService.instant('transaction.add.revenue.paymentStatusPaid')
+      : this.translateService.instant('transaction.add.revenue.paymentStatusPending');
+  });
+  readonly statusColorClass = computed(() => {
+    return this.isPaid() 
+      ? 'bg-green-500 text-white' 
+      : 'bg-yellow-500 text-white';
+  });
+
+  // Toggle payment status
+  onPaymentStatusToggle(checked: boolean): void {
+    this.paymentStatus.set(checked ? TransactionStatus.Paid : TransactionStatus.Pending);
+    this.cdr.markForCheck();
+  }
 
   ngOnInit(): void {
     // Check if we're in edit mode
@@ -610,6 +637,8 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
       const status = parseInt(queryParams['status'], 10);
       console.log('[AddRevenue] Setting initialStatus:', status);
       this.initialStatus.set(status as TransactionStatus);
+      // Also set the payment status for the toggle
+      this.paymentStatus.set(status as TransactionStatus);
     }
 
     console.log('[AddRevenue] Final form data:', this.formData());
@@ -1035,6 +1064,9 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
           this.payments.set(transaction.payments);
         }
 
+        // Set payment status from transaction
+        this.paymentStatus.set(transaction.status || TransactionStatus.Pending);
+
         // Load attachments
         if (transaction.attachments && transaction.attachments.length > 0) {
           this.existingAttachments.set(
@@ -1324,6 +1356,7 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
           date: normalizedDate || data.date,
           payments: this.payments(),
           description: data.description,
+          status: this.paymentStatus(), // Include status in update request
           attachmentsToAdd: attachmentsToAdd.length > 0 ? attachmentsToAdd : undefined,
           attachmentsToDelete: Array.from(this.filesToDelete()).length > 0 ? Array.from(this.filesToDelete()) : undefined,
         };
@@ -1335,6 +1368,7 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
           category: updateRequest.category,
           date: updateRequest.date,
           dateType: typeof updateRequest.date,
+          status: updateRequest.status,
         });
 
         this.transactionService.update(transactionId, updateRequest).pipe(takeUntil(this.destroy$)).subscribe({
@@ -1357,6 +1391,20 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
         const normalizedDate = normalizeDateToUTCMidnight(data.date);
         const isAutreType = data.revenueType === RevenueType.Autre;
         const useOtherContact = data.isOtherContact || isAutreType;
+        // Always use paymentStatus() as it reflects the current toggle state
+        // The initialStatus is only used to set the initial value when the form loads
+        // After that, paymentStatus is the source of truth
+        const statusToSet = this.paymentStatus();
+        
+        console.log('[AddRevenue] Creating transaction with status:', {
+          paymentStatus: this.paymentStatus(),
+          initialStatus: this.initialStatus(),
+          statusToSet: statusToSet,
+          isPaid: this.isPaid(),
+          TransactionStatusPaid: TransactionStatus.Paid,
+          TransactionStatusPending: TransactionStatus.Pending
+        });
+        
         const createRequest: CreateTransactionRequest = {
           category: TransactionType.Revenue, // Maps to TransactionCategory.Revenue (0) in backend
           revenueType: data.revenueType,
@@ -1368,33 +1416,21 @@ export class AddRevenueComponent implements OnInit, OnDestroy {
           date: normalizedDate || data.date,
           payments: this.payments(),
           description: data.description,
+          status: statusToSet, // Always send status (0 for Pending, 2 for Paid)
           attachments: attachments,
         };
+        
+        console.log('[AddRevenue] Create request with status:', {
+          ...createRequest,
+          status: createRequest.status,
+          statusType: typeof createRequest.status
+        });
 
         this.transactionService.create(createRequest).pipe(takeUntil(this.destroy$)).subscribe({
           next: (createdTransaction) => {
-            // If initial status is provided (e.g., Paid for deposits), update it
-            const statusToSet = this.initialStatus();
-            if (statusToSet !== null && createdTransaction.id) {
-              this.transactionService.updateStatus(createdTransaction.id, statusToSet).pipe(takeUntil(this.destroy$)).subscribe({
-                next: () => {
-                  this.toastService.success('Revenue transaction created successfully');
-                  this.router.navigate(['/transaction']);
-                  this.isSaving.set(false);
-                },
-                error: (error) => {
-                  console.error('Error updating transaction status:', error);
-                  // Still show success since transaction was created
-                  this.toastService.success('Revenue transaction created successfully');
-                  this.router.navigate(['/transaction']);
-                  this.isSaving.set(false);
-                },
-              });
-            } else {
-              this.toastService.success('Revenue transaction created successfully');
-              this.router.navigate(['/transaction']);
-              this.isSaving.set(false);
-            }
+            this.toastService.success('Revenue transaction created successfully');
+            this.router.navigate(['/transaction']);
+            this.isSaving.set(false);
           },
           error: (error) => {
             console.error('Error creating transaction:', error);

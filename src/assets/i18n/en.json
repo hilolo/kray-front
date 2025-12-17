@@ -602,7 +602,10 @@
         "generalInfoDescription": "Enter the transaction type and date",
         "createRevenue": "Create Revenue",
         "saving": "Saving...",
-        "cancel": "Cancel"
+        "cancel": "Cancel",
+        "paymentStatus": "Payment Status",
+        "paymentStatusPaid": "Paid",
+        "paymentStatusPending": "Pending"
       },
       "expense": {
         "title": "Add Expense",

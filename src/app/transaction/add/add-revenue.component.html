@@ -31,7 +31,24 @@
 
     <!-- Main Form -->
     <div class="flex-1 min-h-0 overflow-y-auto">
-      <z-card class="max-w-7xl mx-auto">
+      <z-card class="max-w-7xl mx-auto relative">
+        <!-- Payment Status Toggle - Sticky Top Right -->
+        <div class="sticky top-0 right-0 z-10 flex justify-end p-8 pb-4 bg-card">
+          <div class="flex items-center gap-3">
+            <span class="text-sm font-medium">{{ 'transaction.add.revenue.paymentStatus' | translate }}</span>
+            <span 
+              class="px-3 py-1.5 rounded-md text-sm font-semibold transition-colors"
+              [class]="statusColorClass()">
+              {{ statusLabel() }}
+            </span>
+            <z-switch 
+              [ngModel]="isPaid()" 
+              (checkChange)="onPaymentStatusToggle($event)"
+              [disabled]="isSaving()"
+              class="[&_button]:!data-[state=checked]:!bg-green-500 [&_button]:!data-[state=unchecked]:!bg-yellow-500" />
+          </div>
+        </div>
+
         <div class="p-8 space-y-8">
           <!-- General Info Section -->
           <div class="space-y-6 pb-6 border-b">
