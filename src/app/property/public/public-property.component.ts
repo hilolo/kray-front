@@ -350,6 +350,7 @@ export class PublicPropertyComponent implements OnInit {
           endDate: pr.endDate,
           durationDays: 0,
           numberOfNights: 0,
+          maxGuests: 4, // Default value since PublicReservation doesn't include this field
           totalAmount: 0,
           reason: '',
           description: '',

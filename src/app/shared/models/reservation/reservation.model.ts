@@ -42,6 +42,7 @@ export interface Reservation {
   endDate: string; // ISO date string
   durationDays: number;
   numberOfNights: number;
+  maxGuests: number;
   totalAmount: number;
   
   // Request Information

@@ -121,6 +121,7 @@ export class EditReservationComponent implements OnInit, OnDestroy {
       return today;
     })() as Date | null,
     endDate: null as Date | null,
+    maxGuests: 4,
     totalAmount: 0,
     description: '',
     privateNote: '',
@@ -360,6 +361,7 @@ export class EditReservationComponent implements OnInit, OnDestroy {
           contactId: reservation.contactId,
           startDate: startDate,
           endDate: endDate,
+          maxGuests: reservation.maxGuests ?? 4,
           totalAmount: reservation.totalAmount,
           description: reservation.description || '',
           privateNote: reservation.privateNote || '',
@@ -807,6 +809,7 @@ export class EditReservationComponent implements OnInit, OnDestroy {
         propertyId: this.formData().propertyId,
         startDate: formatDateAsUTCMidnight(normalizedStartDate),
         endDate: formatDateAsUTCMidnight(normalizedEndDate),
+        maxGuests: this.formData().maxGuests,
         totalAmount: this.formData().totalAmount,
         description: this.formData().description,
         privateNote: this.formData().privateNote,
@@ -833,6 +836,7 @@ export class EditReservationComponent implements OnInit, OnDestroy {
         propertyId: this.formData().propertyId,
         startDate: formatDateAsUTCMidnight(normalizedStartDate),
         endDate: formatDateAsUTCMidnight(normalizedEndDate),
+        maxGuests: this.formData().maxGuests,
         totalAmount: this.formData().totalAmount,
         description: this.formData().description,
         privateNote: this.formData().privateNote,
@@ -1000,6 +1004,10 @@ export class EditReservationComponent implements OnInit, OnDestroy {
     this.formData.update((data) => ({ ...data, totalAmount: +value }));
   }
 
+  updateMaxGuests(value: string): void {
+    this.formData.update((data) => ({ ...data, maxGuests: +value }));
+  }
+
   updatePrivateNote(value: string): void {
     this.formData.update((data) => ({ ...data, privateNote: value }));
   }
@@ -1156,6 +1164,7 @@ export class EditReservationComponent implements OnInit, OnDestroy {
       propertyId: data.propertyId,
       startDate: formatDateAsUTCMidnight(normalizedStartDate),
       endDate: formatDateAsUTCMidnight(normalizedEndDate),
+      maxGuests: data.maxGuests,
       totalAmount: data.totalAmount,
       description: data.description,
       privateNote: data.privateNote,

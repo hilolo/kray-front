@@ -43,5 +43,6 @@ export const DOCUMENT_TYPE_FIELDS: Record<string, DocumentDataField[]> = {
   'reservationfull': [],
   'reservationpart': [],
   'fees': [],
+  'booking': [],
 };
 

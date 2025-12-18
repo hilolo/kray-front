@@ -9,6 +9,7 @@ export interface UpdateReservationRequest {
   propertyId: string;
   startDate: string; // ISO date string
   endDate: string; // ISO date string
+  maxGuests: number;
   totalAmount: number;
   description: string;
   privateNote: string;

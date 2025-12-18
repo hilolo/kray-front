@@ -64,6 +64,7 @@ export class DocumentEditComponent implements OnInit {
     { value: 'reservationpart', label: 'Reservation Part' },
     { value: 'fees', label: 'Fees' },
     { value: 'deposit', label: 'Deposit' },
+    { value: 'booking', label: 'Booking' },
   ];
 
   readonly pageTitle = computed(() => {

@@ -316,6 +316,23 @@
                 </z-form-field>
 
                 <z-form-field>
+                  <z-form-label zRequired>Max Guests</z-form-label>
+                  <z-form-control>
+                    <input
+                      z-input
+                      type="number"
+                      min="1"
+                      [ngModel]="formData().maxGuests"
+                      (ngModelChange)="updateMaxGuests($event)"
+                      placeholder="4"
+                      class="w-full"
+                    />
+                  </z-form-control>
+                </z-form-field>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                <z-form-field>
                   <z-form-label>Status</z-form-label>
                   <z-form-control>
                     <z-select

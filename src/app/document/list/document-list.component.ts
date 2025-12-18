@@ -94,6 +94,7 @@ export class DocumentListComponent implements OnInit, OnDestroy {
     { value: 'reservationpart', label: 'Reservation Part', enum: DocumentType.ReservationPart },
     { value: 'fees', label: 'Fees', enum: DocumentType.Fees },
     { value: 'deposit', label: 'Deposit', enum: DocumentType.Deposit },
+    { value: 'booking', label: 'Booking', enum: DocumentType.Booking },
   ];
 
 
