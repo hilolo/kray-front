@@ -67,7 +67,6 @@ interface ExistingAttachment {
     ZardInputGroupComponent,
     ZardSelectComponent,
     ZardSelectItemComponent,
-    ZardCheckboxComponent,
     ZardCardComponent,
     ZardImageHoverPreviewDirective,
     ZardComboboxComponent,
