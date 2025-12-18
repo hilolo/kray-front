@@ -114,9 +114,6 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
     paymentDate: 1,
     rentPrice: 0,
     depositPrice: 0,
-    enableReceipts: false,
-    notificationWhatsapp: false,
-    notificationEmail: false,
     specialTerms: '',
     privateNote: '',
   });
@@ -382,9 +379,6 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
           paymentDate: lease.paymentDate,
           rentPrice: lease.rentPrice,
           depositPrice: lease.depositPrice,
-          enableReceipts: lease.enableReceipts,
-          notificationWhatsapp: lease.notificationWhatsapp,
-          notificationEmail: lease.notificationEmail,
           specialTerms: lease.specialTerms || '',
           privateNote: lease.privateNote || '',
         });
@@ -800,9 +794,6 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
         paymentDate: this.formData().paymentDate,
         rentPrice: this.formData().rentPrice,
         depositPrice: this.formData().depositPrice,
-        enableReceipts: this.formData().enableReceipts,
-        notificationWhatsapp: this.formData().notificationWhatsapp,
-        notificationEmail: this.formData().notificationEmail,
         specialTerms: this.formData().specialTerms,
         privateNote: this.formData().privateNote,
         attachmentsToAdd: attachments,
@@ -832,9 +823,6 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
         paymentDate: this.formData().paymentDate,
         rentPrice: this.formData().rentPrice,
         depositPrice: this.formData().depositPrice,
-        enableReceipts: this.formData().enableReceipts,
-        notificationWhatsapp: this.formData().notificationWhatsapp,
-        notificationEmail: this.formData().notificationEmail,
         specialTerms: this.formData().specialTerms,
         privateNote: this.formData().privateNote,
         attachments: attachments,
@@ -922,17 +910,7 @@ export class EditLeasingComponent implements OnInit, OnDestroy {
     this.formData.update((data) => ({ ...data, paymentDate: +value }));
   }
 
-  updateEnableReceipts(value: boolean): void {
-    this.formData.update((data) => ({ ...data, enableReceipts: value }));
-  }
 
-  updateNotificationEmail(value: boolean): void {
-    this.formData.update((data) => ({ ...data, notificationEmail: value }));
-  }
-
-  updateNotificationWhatsapp(value: boolean): void {
-    this.formData.update((data) => ({ ...data, notificationWhatsapp: value }));
-  }
 
   updateSpecialTerms(value: string): void {
     this.formData.update((data) => ({ ...data, specialTerms: value }));

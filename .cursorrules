@@ -337,3 +337,30 @@ When the user says "copy from front project" or similar instructions:
 - **ALWAYS** separate HTML templates into `.html` files - **NEVER** use inline `template` property
 - **ALWAYS** use `templateUrl` pointing to a separate HTML file in the same directory
 
+## Entity Framework Migrations - **CRITICAL RULE**
+
+**IMPORTANT**: When working with Entity Framework migrations in the backend (C#/.NET):
+
+1. **NEVER edit migration files directly** - Migration files are auto-generated and should NOT be manually edited
+2. **ALWAYS create migrations using the dotnet ef command** - Use the Entity Framework CLI to generate migrations
+3. **Migration Command Pattern**:
+   ```powershell
+   cd "C:\Users\mehdi\OneDrive\Bureau\zaRD UI ADMIN TEMPLATE\CRMRealestate-main"
+   dotnet ef migrations add <MigrationName> --project "src\ImmoGest.Infrastructure" --startup-project "src\ImmoGest.Api" --context ApplicationDbContext
+   ```
+4. **When database schema changes are needed**:
+   - ✅ First, modify the entity classes (Domain/Entities)
+   - ✅ Then, modify the DTOs (Application/DTOs)
+   - ✅ Then, modify the configuration classes (Infrastructure/Configuration)
+   - ✅ Finally, run the migration command to generate the migration file
+   - ❌ **NEVER** manually edit the generated migration file
+5. **Migration file location**: `CRMRealestate-main/src/ImmoGest.Infrastructure/Migrations/`
+6. **If a migration needs changes**:
+   - Remove the incorrect migration using: `dotnet ef migrations remove --project "src\ImmoGest.Infrastructure" --startup-project "src\ImmoGest.Api" --context ApplicationDbContext`
+   - Fix the entity/DTO/configuration files
+   - Create a new migration using the command above
+7. **Review migrations before applying**: Always review the generated migration file to ensure it's correct, but do NOT edit it manually
+8. **Apply migrations**: Use `dotnet ef database update --project "src\ImmoGest.Infrastructure" --startup-project "src\ImmoGest.Api" --context ApplicationDbContext` to apply migrations
+
+**Summary**: Migrations are auto-generated code. Always use the Entity Framework CLI commands to create, remove, or update migrations. Never manually edit migration files - if changes are needed, fix the source entities/DTOs/configurations and regenerate the migration.
+

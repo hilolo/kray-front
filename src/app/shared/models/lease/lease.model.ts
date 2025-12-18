@@ -68,11 +68,6 @@ export interface Lease {
   rentPrice: number;
   depositPrice: number;
   
-  // Receipt Information
-  enableReceipts: boolean;
-  notificationWhatsapp: boolean;
-  notificationEmail: boolean;
-  
   // Additional Information
   specialTerms: string;
   privateNote: string;

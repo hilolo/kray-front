@@ -72,9 +72,6 @@ export interface Lease {
   paymentDate: number;
   rentPrice: number;
   depositPrice: number;
-  enableReceipts: boolean;
-  notificationWhatsapp: boolean;
-  notificationEmail: boolean;
   specialTerms: string;
   privateNote: string;
   status: number; // LeasingStatus enum
