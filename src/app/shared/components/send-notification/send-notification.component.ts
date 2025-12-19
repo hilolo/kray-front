@@ -804,18 +804,24 @@ export class SendNotificationComponent implements OnInit, OnDestroy {
           const isMaintenanceRevenue = transactionType === TransactionType.Revenue && transaction.revenueType === RevenueType.Maintenance;
           const isMaintenanceExpense = transactionType === TransactionType.Expense && transaction.expenseType === ExpenseType.Maintenance;
           const isMaintenance = isMaintenanceRevenue || isMaintenanceExpense;
+          const isReservationFull = transactionType === TransactionType.Revenue && transaction.revenueType === RevenueType.ReservationFull;
+          const isReservationPart = transactionType === TransactionType.Revenue && transaction.revenueType === RevenueType.ReservationPart;
           const isPaid = transaction.status === TransactionStatus.Paid;
           
           // Generate receipt for:
           // 1. Paid Loyer transactions
           // 2. All Maintenance transactions (regardless of status - they always need the receipt)
-          if ((isLoyer && isPaid) || isMaintenance) {
+          // 3. All ReservationFull transactions (regardless of status)
+          // 4. All ReservationPart transactions (regardless of status)
+          if ((isLoyer && isPaid) || isMaintenance || isReservationFull || isReservationPart) {
             receiptBase64 = await this.generateReceiptBase64(transaction);
           } else {
             console.log('[Notification] Skipping receipt generation', {
               isLoyer,
               isPaid,
               isMaintenance,
+              isReservationFull,
+              isReservationPart,
               status: transaction.status,
               revenueType: transaction.revenueType,
               expenseType: transaction.expenseType
