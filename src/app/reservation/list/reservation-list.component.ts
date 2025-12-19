@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, OnDestroy, OnInit, signal, TemplateRef, ViewContainerRef, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, inject, OnDestroy, OnInit, signal, TemplateRef, ViewContainerRef, viewChild } from '@angular/core';
 import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -33,12 +33,15 @@ import { RoutePreferencesService } from '@shared/services/route-preferences.serv
 import { ToastService } from '@shared/services/toast.service';
 import { UserService } from '@shared/services/user.service';
 import { ContactService } from '@shared/services/contact.service';
+import { PdfGenerationService } from '@shared/services/pdf-generation.service';
 import { PropertyService } from '@shared/services/property.service';
 import type { Contact } from '@shared/models/contact/contact.model';
 import { ContactType } from '@shared/models/contact/contact.model';
 import type { Property } from '@shared/models/property/property.model';
 import { PropertyCategory } from '@shared/models/property/property.model';
 import { TransactionType, RevenueType, TransactionStatus, type Transaction } from '@shared/models/transaction/transaction.model';
+import { ZardPdfViewerComponent } from '@shared/pdf-viewer/pdf-viewer.component';
+import { SendNotificationComponent } from '@shared/components/send-notification/send-notification.component';
 
 @Component({
   selector: 'app-reservation-list',
@@ -65,6 +68,7 @@ import { TransactionType, RevenueType, TransactionStatus, type Transaction } fro
     ZardCalendarYearViewComponent,
     TranslateModule,
     PropertyPricePipe,
+    ZardPdfViewerComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './reservation-list.component.html',
@@ -82,6 +86,8 @@ export class ReservationListComponent implements OnInit, OnDestroy {
   private readonly contactService = inject(ContactService);
   private readonly propertyService = inject(PropertyService);
   private readonly translateService = inject(TranslateService);
+  private readonly pdfGenerationService = inject(PdfGenerationService);
+  private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroy$ = new Subject<void>();
   private readonly searchInputSubject = new Subject<string>();
 
@@ -101,6 +107,12 @@ export class ReservationListComponent implements OnInit, OnDestroy {
   readonly totalItems = signal(0);
   readonly selectedTenant = signal<string | null>(null);
   readonly selectedProperty = signal<string | null>(null);
+  
+  // PDF Viewer state
+  readonly showPdfViewer = signal(false);
+  readonly pdfViewerUrl = signal<string>('');
+  readonly pdfViewerName = signal<string>('');
+  readonly isGeneratingReceipt = signal(false);
   
   // Tenants and Properties for filtering
   readonly tenants = signal<Contact[]>([]);
@@ -927,6 +939,114 @@ export class ReservationListComponent implements OnInit, OnDestroy {
     };
 
     this.router.navigate(['/transaction/add/revenue'], { queryParams });
+  }
+
+  /**
+   * Check if send notification should be available for a reservation
+   * Show for all reservation types
+   */
+  canSendNotification(reservation: Reservation): boolean {
+    // Show for all reservation types
+    return true;
+  }
+
+  /**
+   * Open send notification modal
+   * Sends booking receipt notification for approved reservations
+   */
+  onSendNotification(reservation: Reservation): void {
+    const dialogRef = this.dialogService.create({
+      zContent: SendNotificationComponent,
+      zTitle: this.translateService.instant('notification.title'),
+      zWidth: '600px',
+      zCustomClasses: 'max-w-[calc(100vw-2rem)] sm:max-w-[600px] max-h-[90vh] overflow-y-auto',
+      zData: {
+        reservationId: reservation.id,
+      },
+      zHideFooter: true,
+      zClosable: true,
+    });
+
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result) => {
+      if (result && result.success) {
+        // Notification was sent successfully
+        this.toastService.success('Notification sent successfully');
+      }
+    });
+  }
+
+  /**
+   * Generate and display reservation receipt PDF
+   * Calls backend to generate PDF from Booking document template with reservation data
+   * Available for all reservation types
+   */
+  onGenerateReservationReceipt(reservation: Reservation): void {
+    if (this.isGeneratingReceipt()) {
+      return;
+    }
+
+    this.isGeneratingReceipt.set(true);
+    this.cdr.markForCheck();
+
+    this.reservationService.generateReceipt(reservation.id, false).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: async (pdfMakeData) => {
+        try {
+          // Handle response format (may be wrapped in data property)
+          let dataToProcess: any = pdfMakeData;
+          if (typeof pdfMakeData === 'object' && pdfMakeData !== null && 'data' in pdfMakeData) {
+            dataToProcess = (pdfMakeData as any).data;
+          }
+
+          // Parse PDFMake JSON if needed
+          let pdfMakeJson: any;
+          if (typeof dataToProcess === 'string') {
+            pdfMakeJson = JSON.parse(dataToProcess);
+          } else if (typeof dataToProcess === 'object' && dataToProcess !== null) {
+            pdfMakeJson = dataToProcess;
+          } else {
+            throw new Error('Invalid PDFMake data format');
+          }
+
+          // Validate PDFMake structure
+          if (!pdfMakeJson || (!pdfMakeJson.content && !pdfMakeJson.text)) {
+            throw new Error('PDFMake data is missing required content property');
+          }
+
+          // Convert PDFMake JSON to PDF data URL
+          const pdfResult = await this.pdfGenerationService.generatePdfFromJson(pdfMakeJson);
+
+          // Format date for filename
+          const checkInDate = new Date(reservation.startDate);
+          const checkInDateFormatted = checkInDate.toLocaleDateString('fr-FR', { 
+            day: '2-digit', 
+            month: 'long', 
+            year: 'numeric' 
+          });
+
+          // Show PDF in viewer
+          this.pdfViewerUrl.set(pdfResult.dataUrl);
+          this.pdfViewerName.set(`Confirmation de Réservation - ${reservation.propertyIdentifier || reservation.propertyName || 'Reservation'} - ${checkInDateFormatted}`);
+          this.showPdfViewer.set(true);
+          this.isGeneratingReceipt.set(false);
+          this.cdr.markForCheck();
+        } catch (error: any) {
+          console.error('Error generating reservation receipt:', error);
+          const errorMessage = error?.message || 'Failed to generate reservation receipt';
+          this.toastService.error(errorMessage);
+          this.isGeneratingReceipt.set(false);
+          this.cdr.markForCheck();
+        }
+      },
+      error: (error) => {
+        console.error('Error fetching reservation receipt:', error);
+        const errorMessage = error?.error?.message || error?.message || 'Failed to generate reservation receipt';
+        this.toastService.error(errorMessage);
+        this.isGeneratingReceipt.set(false);
+        this.cdr.markForCheck();
+      }
+    });
   }
 }
 

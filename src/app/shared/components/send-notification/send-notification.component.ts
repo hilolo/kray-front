@@ -14,6 +14,7 @@ import { ToastService } from '@shared/services/toast.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { NotificationType } from '@shared/models/notification/notification.model';
 import { TransactionService } from '@shared/services/transaction.service';
+import { ReservationService } from '@shared/services/reservation.service';
 import { ContactService } from '@shared/services/contact.service';
 import { Contact } from '@shared/models/contact/contact.model';
 import { PdfGenerationService } from '@shared/services/pdf-generation.service';
@@ -22,7 +23,8 @@ import { Subject, takeUntil } from 'rxjs';
 import { DocumentType } from '@shared/services/document.service';
 
 interface SendNotificationData {
-  transactionId: string;
+  transactionId?: string;
+  reservationId?: string;
 }
 
 @Component({
@@ -51,6 +53,7 @@ export class SendNotificationComponent implements OnInit, OnDestroy {
   private readonly toastService = inject(ToastService);
   private readonly translateService = inject(TranslateService);
   private readonly transactionService = inject(TransactionService);
+  private readonly reservationService = inject(ReservationService);
   private readonly contactService = inject(ContactService);
   private readonly pdfGenerationService = inject(PdfGenerationService);
   private readonly destroy$ = new Subject<void>();
@@ -69,6 +72,7 @@ export class SendNotificationComponent implements OnInit, OnDestroy {
   readonly whatsAppErrors = signal<Map<number, string>>(new Map());
 
   readonly transactionId = this.dialogData?.transactionId || '';
+  readonly reservationId = this.dialogData?.reservationId || '';
 
   ngOnInit(): void {
     this.checkWhatsAppStatus();
@@ -109,9 +113,55 @@ export class SendNotificationComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Load contact information from transaction and populate contacts field
+   * Load contact information from transaction or reservation and populate contacts field
    */
   private loadTransactionContact(type: NotificationType): void {
+    // Handle reservation case
+    if (this.reservationId && !this.transactionId) {
+      this.isLoadingContact.set(true);
+      this.reservationService.getById(this.reservationId)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (reservation) => {
+            if (reservation.contactId) {
+              this.contactService.getById(reservation.contactId, false)
+                .pipe(takeUntil(this.destroy$))
+                .subscribe({
+                  next: (contact) => {
+                    this.loadedContact.set(contact);
+                    this.populateContactFields(contact, type);
+                    this.isLoadingContact.set(false);
+                  },
+                  error: (error) => {
+                    console.error('Error loading contact:', error);
+                    this.contacts.set(['']);
+                    this.isContactFieldDisabled.set(false);
+                    this.transactionContactIndices.set(new Set());
+                    this.loadedContact.set(null);
+                    this.isLoadingContact.set(false);
+                  }
+                });
+            } else {
+              this.contacts.set(['']);
+              this.isContactFieldDisabled.set(false);
+              this.transactionContactIndices.set(new Set());
+              this.loadedContact.set(null);
+              this.isLoadingContact.set(false);
+            }
+          },
+          error: (error) => {
+            console.error('Error loading reservation:', error);
+            this.contacts.set(['']);
+            this.isContactFieldDisabled.set(false);
+            this.transactionContactIndices.set(new Set());
+            this.loadedContact.set(null);
+            this.isLoadingContact.set(false);
+          }
+        });
+      return;
+    }
+
+    // Handle transaction case
     if (!this.transactionId) {
       this.contacts.set(['']);
       this.isContactFieldDisabled.set(false);
@@ -319,9 +369,13 @@ export class SendNotificationComponent implements OnInit, OnDestroy {
         return this.translateService.instant('notification.error.invalidEmail') || 'Invalid email address';
       }
     } else if (this.selectedType() === NotificationType.WhatsApp) {
-      // Basic phone validation (at least 8 digits)
-      const phoneRegex = /^[\d\s\+\-\(\)]{8,}$/;
-      if (!phoneRegex.test(contact.replace(/\s/g, ''))) {
+      // Remove spaces, dashes, parentheses for validation
+      const cleanedPhone = contact.replace(/[\s\-\(\)]/g, '');
+      
+      // Check if phone number contains only digits and optional + prefix
+      // Must have at least 8 digits (excluding + if present)
+      const phoneRegex = /^(\+?)[0-9]{8,}$/;
+      if (!phoneRegex.test(cleanedPhone)) {
         return this.translateService.instant('notification.error.invalidPhone') || 'Invalid phone number';
       }
     }
@@ -572,6 +626,58 @@ export class SendNotificationComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Generate receipt PDF base64 for reservation (Booking receipt)
+   */
+  private async generateReservationReceiptBase64(reservationId: string): Promise<string | null> {
+    try {
+      console.log('[Notification] Generating booking receipt for reservation:', reservationId);
+      
+      // Pass true to use PdfmakeNotification instead of Pdfmake for notifications
+      const isNotification = true;
+      
+      // Generate Booking receipt with isNotification=true
+      const receiptObservable = this.reservationService.generateReceipt(reservationId, isNotification);
+
+      // Get PDFMake JSON from backend
+      const pdfMakeData = await receiptObservable.pipe(takeUntil(this.destroy$)).toPromise();
+      
+      // Handle response format (may be wrapped in data property)
+      let dataToProcess: any = pdfMakeData;
+      if (typeof pdfMakeData === 'object' && pdfMakeData !== null && 'data' in pdfMakeData) {
+        dataToProcess = (pdfMakeData as any).data;
+      }
+
+      // Parse PDFMake JSON if needed
+      let pdfMakeJson: any;
+      if (typeof dataToProcess === 'string') {
+        pdfMakeJson = JSON.parse(dataToProcess);
+      } else if (typeof dataToProcess === 'object' && dataToProcess !== null) {
+        pdfMakeJson = dataToProcess;
+      } else {
+        throw new Error('Invalid PDFMake data format');
+      }
+
+      // Validate PDFMake structure
+      if (!pdfMakeJson || (!pdfMakeJson.content && !pdfMakeJson.text)) {
+        throw new Error('PDFMake data is missing required content property');
+      }
+
+      // Convert PDFMake JSON to PDF data URL
+      const pdfResult = await this.pdfGenerationService.generatePdfFromJson(pdfMakeJson);
+      
+      // Extract base64 from data URL (remove "data:application/pdf;base64," prefix)
+      const base64Receipt = pdfResult.dataUrl.split(',')[1];
+      
+      console.log('[Notification] Booking receipt generated successfully, base64 length:', base64Receipt?.length);
+      return base64Receipt;
+    } catch (error: any) {
+      console.error('[Notification] Error generating booking receipt:', error);
+      // Don't fail the notification if receipt generation fails
+      return null;
+    }
+  }
+
+  /**
    * Generate receipt PDF base64 for the transaction
    */
   private async generateReceiptBase64(transaction: Transaction): Promise<string | null> {
@@ -675,44 +781,59 @@ export class SendNotificationComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Get transaction to generate receipt (for Paid Loyer transactions and all Maintenance transactions)
+    // Generate receipt - handle both transaction and reservation cases
     let receiptBase64: string | null = null;
-    try {
-      const transaction = await this.transactionService.getById(this.transactionId).pipe(takeUntil(this.destroy$)).toPromise();
-      if (transaction) {
-        const transactionType = transaction.type ?? transaction.category;
-        const isLoyer = transactionType === TransactionType.Revenue && transaction.revenueType === RevenueType.Loyer;
-        const isMaintenanceRevenue = transactionType === TransactionType.Revenue && transaction.revenueType === RevenueType.Maintenance;
-        const isMaintenanceExpense = transactionType === TransactionType.Expense && transaction.expenseType === ExpenseType.Maintenance;
-        const isMaintenance = isMaintenanceRevenue || isMaintenanceExpense;
-        const isPaid = transaction.status === TransactionStatus.Paid;
-        
-        // Generate receipt for:
-        // 1. Paid Loyer transactions
-        // 2. All Maintenance transactions (regardless of status - they always need the receipt)
-        if ((isLoyer && isPaid) || isMaintenance) {
-          receiptBase64 = await this.generateReceiptBase64(transaction);
-        } else {
-          console.log('[Notification] Skipping receipt generation', {
-            isLoyer,
-            isPaid,
-            isMaintenance,
-            status: transaction.status,
-            revenueType: transaction.revenueType,
-            expenseType: transaction.expenseType
-          });
-        }
+    
+    // Handle reservation case
+    if (this.reservationId && !this.transactionId) {
+      try {
+        // Generate booking receipt for reservation
+        receiptBase64 = await this.generateReservationReceiptBase64(this.reservationId);
+      } catch (error) {
+        console.error('[Notification] Error generating reservation receipt:', error);
+        // Continue without receipt if receipt generation fails
       }
-    } catch (error) {
-      console.error('[Notification] Error fetching transaction for receipt generation:', error);
-      // Continue without receipt if transaction fetch fails
+    }
+    // Handle transaction case
+    else if (this.transactionId) {
+      try {
+        const transaction = await this.transactionService.getById(this.transactionId).pipe(takeUntil(this.destroy$)).toPromise();
+        if (transaction) {
+          const transactionType = transaction.type ?? transaction.category;
+          const isLoyer = transactionType === TransactionType.Revenue && transaction.revenueType === RevenueType.Loyer;
+          const isMaintenanceRevenue = transactionType === TransactionType.Revenue && transaction.revenueType === RevenueType.Maintenance;
+          const isMaintenanceExpense = transactionType === TransactionType.Expense && transaction.expenseType === ExpenseType.Maintenance;
+          const isMaintenance = isMaintenanceRevenue || isMaintenanceExpense;
+          const isPaid = transaction.status === TransactionStatus.Paid;
+          
+          // Generate receipt for:
+          // 1. Paid Loyer transactions
+          // 2. All Maintenance transactions (regardless of status - they always need the receipt)
+          if ((isLoyer && isPaid) || isMaintenance) {
+            receiptBase64 = await this.generateReceiptBase64(transaction);
+          } else {
+            console.log('[Notification] Skipping receipt generation', {
+              isLoyer,
+              isPaid,
+              isMaintenance,
+              status: transaction.status,
+              revenueType: transaction.revenueType,
+              expenseType: transaction.expenseType
+            });
+          }
+        }
+      } catch (error) {
+        console.error('[Notification] Error fetching transaction for receipt generation:', error);
+        // Continue without receipt if transaction fetch fails
+      }
     }
 
     const request = {
       type,
       contacts: validContacts,
       message: '',
-      transactionId: this.transactionId,
+      transactionId: this.transactionId || undefined,
+      reservationId: this.reservationId || undefined,
       file: receiptBase64 || undefined, // Base64 receipt PDF
     };
 

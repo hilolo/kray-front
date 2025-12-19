@@ -23,7 +23,8 @@ export interface CreateNotificationRequest {
   type: NotificationType;
   contacts: string[]; // List of emails or phone numbers
   message: string;
-  transactionId: string;
+  transactionId?: string; // Optional - for transaction-based notifications
+  reservationId?: string; // Optional - for reservation-based notifications (booking receipt)
   repeat?: number;
   scheduledSent?: string; // ISO date string
   file?: string; // Base64 encoded receipt PDF

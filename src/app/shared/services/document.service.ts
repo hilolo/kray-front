@@ -10,6 +10,9 @@ export interface Document {
   isLogo: boolean;
   isCachet: boolean;
   htmlBody: string;
+  pdfmake?: string; // PDFMake JSON template
+  pdfmakeNotification?: string; // PDFMake JSON for notifications
+  jsonPdfExample?: string; // Example PDFMake JSON with placeholders replaced
   example: Record<string, string> | null;
   leaseeId: string | null;
   transactionId: string | null;

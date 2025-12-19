@@ -126,5 +126,16 @@ export class ReservationService {
   getPublicReservations(propertyId: string): Observable<PublicReservation[]> {
     return this.apiService.get<PublicReservation[]>(`public/properties/${propertyId}/reservations`);
   }
+
+  /**
+   * Generate booking receipt PDF for a reservation
+   * POST api/Reservation/{id}/receipt?isNotification={isNotification}
+   * @param id Reservation ID
+   * @param isNotification If true, uses PdfmakeNotification instead of Pdfmake
+   * @returns Observable of processed PDFMake JSON object with placeholders replaced
+   */
+  generateReceipt(id: string, isNotification: boolean = false): Observable<any> {
+    return this.apiService.post<any>(`Reservation/${id}/receipt?isNotification=${isNotification}`, null);
+  }
 }
 

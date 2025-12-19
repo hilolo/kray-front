@@ -304,6 +304,17 @@
               <span>{{ 'common.edit' | translate }}</span>
             </z-dropdown-menu-item>
             <z-divider class="my-1" />
+            <z-dropdown-menu-item (click)="onGenerateReservationReceipt(row)">
+              <z-icon zType="file-text" zSize="sm" class="mr-2" />
+              <span>Générer la confirmation</span>
+            </z-dropdown-menu-item>
+            @if (canSendNotification(row)) {
+              <z-dropdown-menu-item (click)="onSendNotification(row)">
+                <z-icon zType="send" zSize="sm" class="mr-2" />
+                <span>{{ 'transaction.list.sendNotification' | translate }}</span>
+              </z-dropdown-menu-item>
+            }
+            <z-divider class="my-1" />
             <z-dropdown-menu-item (click)="onDeleteReservation(row)" class="text-destructive focus:text-destructive">
               <z-icon zType="x" zSize="sm" class="mr-2" />
               <span>{{ 'common.delete' | translate }}</span>
@@ -324,6 +335,17 @@
                   <z-icon zType="pencil" zSize="sm" class="mr-2" />
                   <span>Edit</span>
                 </z-dropdown-menu-item>
+                <z-divider class="my-1" />
+                <z-dropdown-menu-item (click)="onGenerateReservationReceipt(row)">
+                  <z-icon zType="file-text" zSize="sm" class="mr-2" />
+                  <span>Générer la confirmation</span>
+                </z-dropdown-menu-item>
+                @if (canSendNotification(row)) {
+                  <z-dropdown-menu-item (click)="onSendNotification(row)">
+                    <z-icon zType="send" zSize="sm" class="mr-2" />
+                    <span>{{ 'transaction.list.sendNotification' | translate }}</span>
+                  </z-dropdown-menu-item>
+                }
                 <z-divider class="my-1" />
                 <z-dropdown-menu-item (click)="onDeleteReservation(row)" class="text-destructive focus:text-destructive">
                   <z-icon zType="x" zSize="sm" class="mr-2" />
@@ -459,9 +481,17 @@
         [zPageSizeOptions]="pageSizeOptions()"
         [zShow]="hasData()"
         (zPageChange)="onPageChange($event)"
-        (zPageSizeChange)="onPageSizeChange($event)"
-      />
-    }
-  </div>
+      (zPageSizeChange)="onPageSizeChange($event)"
+    />
+  }
+</div>
+
+<!-- PDF Viewer for Reservation Receipt -->
+<z-pdf-viewer
+  [isOpen]="showPdfViewer()"
+  [pdfUrl]="pdfViewerUrl()"
+  [pdfName]="pdfViewerName()"
+  (zClose)="showPdfViewer.set(false)"
+/>
 </z-page>
 
