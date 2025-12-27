@@ -4,6 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve --configuration development",
+    "start:prod": "serve -s dist/admintemmplate/browser -l ${PORT:-3000}",
     "build": "ng build --configuration production",
     "build:dev": "ng build --configuration development",
     "watch": "ng build --watch --configuration development",
@@ -54,6 +55,7 @@
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
     "postcss": "^8.5.6",
+    "serve": "^14.2.1",
     "tailwindcss": "^4.1.17",
     "tailwindcss-animate": "^1.0.7",
     "typescript": "^5.8.0"
