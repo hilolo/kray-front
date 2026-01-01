@@ -940,13 +940,14 @@
         "signatureUpdated": "Signature updated successfully",
         "instructions": "Upload a signature image for your company",
         "maxFileSize": "Maximum file size: 5MB",
-        "supportedFormats": "Supported formats: JPG, PNG, GIF"
+        "supportedFormats": "Supported formats: PNG, JPG only"
       }
     },
     "errors": {
       "failedToReadImageFile": "Failed to read image file",
       "pleaseSelectImageFile": "Please select an image file",
-      "imageSizeTooLarge": "Image size must be less than 5MB"
+      "imageSizeTooLarge": "Image size must be less than 5MB",
+      "onlyPngJpgAllowed": "Only PNG and JPG image formats are allowed for signature"
     }
   },
   "datatable": {

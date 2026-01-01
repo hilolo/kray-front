@@ -154,19 +154,30 @@ export class SettingsComponent implements OnInit, OnDestroy {
   /**
    * Get formatted signature image URL
    * Ensures base64 images have the proper data URL prefix
+   * Format should be: data:image/png;base64,... or data:image/jpeg;base64,...
    */
   getSignatureImageUrl(signature?: string): string {
     const sig = signature || this.signatureImageUrl();
     if (!sig) return '';
     
     // If it already has data URL prefix, return as is
-    if (sig.startsWith('data:')) {
+    if (sig.startsWith('data:image/')) {
       return sig;
     }
     
     // Otherwise, assume it's a base64 string and add the prefix
+    // Check if it starts with PNG or JPG base64 signature
+    // PNG base64 starts with iVBORw0KGgo (after decoding)
+    // JPG base64 starts with /9j/ (after decoding)
+    const base64Data = sig.replace(/^data:image\/[a-z]+;base64,/, ''); // Remove any existing prefix
+    if (base64Data.startsWith('iVBORw0KGgo')) {
+      return `data:image/png;base64,${base64Data}`;
+    } else if (base64Data.startsWith('/9j/')) {
+      return `data:image/jpeg;base64,${base64Data}`;
+    }
+    
     // Default to image/png if we can't determine the type
-    return `data:image/png;base64,${sig}`;
+    return `data:image/png;base64,${base64Data}`;
   }
 
   // Password Form
@@ -813,9 +824,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
     const file = input.files?.[0];
 
     if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        this.toastService.error(this.translateService.instant('settings.errors.pleaseSelectImageFile'));
+      // Validate file type - only PNG and JPG allowed
+      const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+      if (!allowedTypes.includes(file.type)) {
+        this.toastService.error(this.translateService.instant('settings.errors.onlyPngJpgAllowed'));
         return;
       }
 
@@ -884,8 +896,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
       const reader = new FileReader();
       reader.onload = () => {
         const base64String = reader.result as string;
-        // Remove data URL prefix (e.g., "data:image/jpeg;base64,")
-        signatureBase64 = base64String.split(',')[1] || base64String;
+        // Keep the full data URL format with prefix (e.g., "data:image/png;base64,...")
+        // This ensures the format is always: data:image/png;base64, or data:image/jpeg;base64,
+        signatureBase64 = base64String;
         this.updateSignature(signatureBase64);
       };
       reader.onerror = () => {

@@ -941,13 +941,14 @@
         "signatureUpdated": "Signature mise à jour avec succès",
         "instructions": "Téléchargez une image de signature pour votre entreprise",
         "maxFileSize": "Taille maximale du fichier : 5 Mo",
-        "supportedFormats": "Formats pris en charge : JPG, PNG, GIF"
+        "supportedFormats": "Formats pris en charge : PNG, JPG uniquement"
       }
     },
     "errors": {
       "failedToReadImageFile": "Échec de la lecture du fichier image",
       "pleaseSelectImageFile": "Veuillez sélectionner un fichier image",
-      "imageSizeTooLarge": "La taille de l'image doit être inférieure à 5 Mo"
+      "imageSizeTooLarge": "La taille de l'image doit être inférieure à 5 Mo",
+      "onlyPngJpgAllowed": "Seuls les formats d'image PNG et JPG sont autorisés pour la signature"
     }
   },
   "datatable": {

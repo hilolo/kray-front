@@ -808,7 +808,7 @@
                               [title]="'settings.application.signature.uploadSignature' | translate">
                               <z-icon zType="camera" zSize="sm" />
                             </button>
-                            <input #signatureFileInput type="file" accept="image/*" (change)="onSignatureFileSelected($event)" class="hidden" />
+                            <input #signatureFileInput type="file" accept="image/png,image/jpeg,image/jpg" (change)="onSignatureFileSelected($event)" class="hidden" />
                           </div>
                         </div>
                         
