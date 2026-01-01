@@ -929,6 +929,19 @@
         "loadingNotificationSettings": "Chargement des paramètres de notification...",
         "notificationSettingsUpdated": "Paramètres de notification mis à jour avec succès",
         "failedToLoadNotificationSettings": "Échec du chargement des paramètres de notification"
+      },
+      "signature": {
+        "title": "Signature",
+        "description": "Téléchargez et gérez l'image de signature de votre entreprise",
+        "uploadSignature": "Télécharger la signature",
+        "saveSignature": "Enregistrer la signature",
+        "deleteSignature": "Supprimer la signature",
+        "deleteSignatureConfirm": "Êtes-vous sûr de vouloir supprimer la signature ?",
+        "saving": "Enregistrement...",
+        "signatureUpdated": "Signature mise à jour avec succès",
+        "instructions": "Téléchargez une image de signature pour votre entreprise",
+        "maxFileSize": "Taille maximale du fichier : 5 Mo",
+        "supportedFormats": "Formats pris en charge : JPG, PNG, GIF"
       }
     },
     "errors": {

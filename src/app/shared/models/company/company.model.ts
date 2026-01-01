@@ -12,6 +12,7 @@ export interface Company {
   rc: string;
   ice: string;
   image: string;
+  signature?: string;
   restricted: boolean;
   isDeleted: boolean;
   id: string;

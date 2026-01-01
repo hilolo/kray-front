@@ -777,6 +777,95 @@
               </z-accordion>
             </div>
 
+            <!-- Signature Settings -->
+            <div class="bg-card border border-border rounded-lg shadow-sm overflow-hidden">
+              <z-accordion zType="single" class="border-0">
+                <z-accordion-item [zTitle]="'settings.application.signature.title' | translate" zValue="signature" class="!px-6 !py-5 border-b-0 !text-lg">
+                  <div class="space-y-6">
+                    <div>
+                      <h3 class="text-xl font-semibold mb-2">{{ 'settings.application.signature.title' | translate }}</h3>
+                      <p class="text-sm text-muted-foreground mb-4">{{ 'settings.application.signature.description' | translate }}</p>
+                      
+                      <!-- Signature Image Display and Upload -->
+                      <div class="flex gap-6">
+                        <div class="flex-shrink-0">
+                          <div class="relative">
+                            @if (signatureImageUrl()) {
+                              <div class="w-64 h-32 border border-border rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+                                <img 
+                                  [src]="getSignatureImageUrl()" 
+                                  alt="Signature"
+                                  class="w-full h-full object-contain"
+                                />
+                              </div>
+                            } @else {
+                              <div class="w-64 h-32 border border-border rounded-lg flex items-center justify-center bg-muted">
+                                <z-icon zType="file" zSize="lg" class="text-muted-foreground" />
+                              </div>
+                            }
+                            <button type="button" (click)="onSignatureImageClick()"
+                              class="absolute -bottom-1 -right-1 bg-primary text-primary-foreground rounded-full p-2 hover:bg-primary/90 transition-colors"
+                              [title]="'settings.application.signature.uploadSignature' | translate">
+                              <z-icon zType="camera" zSize="sm" />
+                            </button>
+                            <input #signatureFileInput type="file" accept="image/*" (change)="onSignatureFileSelected($event)" class="hidden" />
+                          </div>
+                        </div>
+                        
+                        <div class="flex-1 space-y-4">
+                          <div>
+                            <p class="text-sm text-muted-foreground mb-2">{{ 'settings.application.signature.instructions' | translate }}</p>
+                            <ul class="text-sm text-muted-foreground list-disc list-inside space-y-1">
+                              <li>{{ 'settings.application.signature.maxFileSize' | translate }}</li>
+                              <li>{{ 'settings.application.signature.supportedFormats' | translate }}</li>
+                            </ul>
+                          </div>
+                          
+                          @if (signatureImageUrl()) {
+                            <div class="flex gap-3">
+                              <z-button [zType]="isSavingSignature() ? 'ghost' : 'default'"
+                                [disabled]="isSavingSignature()"
+                                (click)="!isSavingSignature() && saveSignature()">
+                                @if (isSavingSignature()) {
+                                  <span class="flex items-center gap-2">
+                                    <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+                                    {{ 'settings.application.signature.saving' | translate }}
+                                  </span>
+                                } @else {
+                                  {{ 'settings.application.signature.saveSignature' | translate }}
+                                }
+                              </z-button>
+                              <z-button zType="outline" zSize="default"
+                                [disabled]="isSavingSignature()"
+                                (click)="!isSavingSignature() && onDeleteSignature()"
+                                class="text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/50">
+                                <z-icon zType="x" zSize="sm" />
+                                {{ 'settings.application.signature.deleteSignature' | translate }}
+                              </z-button>
+                            </div>
+                          } @else {
+                            <z-button [zType]="isSavingSignature() ? 'ghost' : 'default'"
+                              [disabled]="isSavingSignature()"
+                              (click)="!isSavingSignature() && onSignatureImageClick()">
+                              @if (isSavingSignature()) {
+                                <span class="flex items-center gap-2">
+                                  <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+                                  {{ 'settings.application.signature.saving' | translate }}
+                                </span>
+                              } @else {
+                                <z-icon zType="upload" zSize="sm" />
+                                {{ 'settings.application.signature.uploadSignature' | translate }}
+                              }
+                            </z-button>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </z-accordion-item>
+              </z-accordion>
+            </div>
+
             <!-- Notification Settings -->
             <div class="bg-card border border-border rounded-lg shadow-sm overflow-hidden">
               <z-accordion zType="single" class="border-0">

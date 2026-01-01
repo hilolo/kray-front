@@ -80,6 +80,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
   // File input reference
   fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
+  
+  // Signature file input reference
+  signatureFileInput = viewChild.required<ElementRef<HTMLInputElement>>('signatureFileInput');
 
   // User Information
   userInfo = {
@@ -146,6 +149,24 @@ export class SettingsComponent implements OnInit, OnDestroy {
     // Otherwise, assume it's a base64 string and add the prefix
     // Default to image/png if we can't determine the type
     return `data:image/png;base64,${image}`;
+  }
+
+  /**
+   * Get formatted signature image URL
+   * Ensures base64 images have the proper data URL prefix
+   */
+  getSignatureImageUrl(signature?: string): string {
+    const sig = signature || this.signatureImageUrl();
+    if (!sig) return '';
+    
+    // If it already has data URL prefix, return as is
+    if (sig.startsWith('data:')) {
+      return sig;
+    }
+    
+    // Otherwise, assume it's a base64 string and add the prefix
+    // Default to image/png if we can't determine the type
+    return `data:image/png;base64,${sig}`;
   }
 
   // Password Form
@@ -250,6 +271,11 @@ export class SettingsComponent implements OnInit, OnDestroy {
   // Loading state for notification settings
   isLoadingNotificationSettings = signal(false);
   isSavingNotificationSettings = signal(false);
+
+  // Signature Settings
+  signatureImageUrl = signal<string | null>(null);
+  signatureImageFile = signal<File | null>(null);
+  isSavingSignature = signal(false);
 
   // Input states for adding new items
   showAddPropertyTypeInput = signal(false);
@@ -779,6 +805,154 @@ export class SettingsComponent implements OnInit, OnDestroy {
     input.value = '';
   }
 
+  /**
+   * Handle signature image selection
+   */
+  onSignatureFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        this.toastService.error(this.translateService.instant('settings.errors.pleaseSelectImageFile'));
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        this.toastService.error(this.translateService.instant('settings.errors.imageSizeTooLarge'));
+        return;
+      }
+
+      // Store the file
+      this.signatureImageFile.set(file);
+
+      // Create a preview URL
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        this.signatureImageUrl.set(result);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Reset the input so the same file can be selected again
+    input.value = '';
+  }
+
+  /**
+   * Handle signature image click to trigger file input
+   */
+  onSignatureImageClick(): void {
+    this.signatureFileInput().nativeElement.click();
+  }
+
+  /**
+   * Delete signature image
+   */
+  onDeleteSignature(): void {
+    const dialogRef = this.alertDialogService.confirm({
+      zTitle: this.translateService.instant('settings.signature.deleteSignature'),
+      zDescription: this.translateService.instant('settings.signature.deleteSignatureConfirm'),
+      zOkText: this.translateService.instant('common.delete'),
+      zCancelText: this.translateService.instant('common.cancel'),
+      zOkDestructive: true,
+      zViewContainerRef: this.viewContainerRef,
+    });
+
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((confirmed) => {
+      if (confirmed) {
+        this.signatureImageUrl.set(null);
+        this.signatureImageFile.set(null);
+        this.saveSignature();
+      }
+    });
+  }
+
+  /**
+   * Save signature
+   */
+  saveSignature(): void {
+    this.isSavingSignature.set(true);
+
+    const imageFile = this.signatureImageFile();
+    let signatureBase64 = '';
+
+    if (imageFile) {
+      // Convert file to base64
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64String = reader.result as string;
+        // Remove data URL prefix (e.g., "data:image/jpeg;base64,")
+        signatureBase64 = base64String.split(',')[1] || base64String;
+        this.updateSignature(signatureBase64);
+      };
+      reader.onerror = () => {
+        this.isSavingSignature.set(false);
+        this.toastService.error(this.translateService.instant('settings.errors.failedToReadImageFile'));
+      };
+      reader.readAsDataURL(imageFile);
+    } else if (!this.signatureImageUrl()) {
+      // Delete signature - send empty string
+      this.updateSignature('');
+    } else {
+      // No changes
+      this.isSavingSignature.set(false);
+    }
+  }
+
+  /**
+   * Update signature via settings API
+   */
+  private updateSignature(signatureBase64: string): void {
+    // Get current settings to preserve other values
+    this.settingsService.getSettings()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (currentSettings) => {
+          const updateRequest = {
+            defaultCity: currentSettings?.defaultCity || '',
+            categories: currentSettings?.categories || [],
+            features: currentSettings?.features || [],
+            amenities: currentSettings?.amenities || [],
+            propertyTypes: currentSettings?.propertyTypes || [],
+            emailNotification: currentSettings?.emailNotification || {
+              lease: { overdue: '', pending: '', paid: '' },
+              maintenance: { paid: '' },
+              reservation: { confirmation: '', enter: '', left: '' }
+            },
+            signature: signatureBase64,
+          };
+
+          this.settingsService.updateSettings(updateRequest)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+              next: (settings) => {
+                this.isSavingSignature.set(false);
+                this.signatureImageFile.set(null); // Clear file reference after successful update
+                
+                if (settings?.signature) {
+                  this.signatureImageUrl.set(this.getSignatureImageUrl(settings.signature));
+                } else {
+                  this.signatureImageUrl.set(null);
+                }
+                
+                this.toastService.success(this.translateService.instant('settings.signature.signatureUpdated'));
+              },
+              error: (error) => {
+                console.error('Error updating signature:', error);
+                this.isSavingSignature.set(false);
+              }
+            });
+        },
+        error: (error) => {
+          console.error('Error loading current settings:', error);
+          this.isSavingSignature.set(false);
+        }
+      });
+  }
+
 
   onSaveUserInfo(): void {
     // Mark form as submitted to show validation errors
@@ -939,6 +1113,13 @@ export class SettingsComponent implements OnInit, OnDestroy {
             // Update company image from settings
             if (settings.image) {
               this.companyInfo.image = settings.image;
+            }
+            
+            // Update signature from settings
+            if (settings.signature) {
+              this.signatureImageUrl.set(this.getSignatureImageUrl(settings.signature));
+            } else {
+              this.signatureImageUrl.set(null);
             }
           } else {
             console.warn('Settings is null or undefined');

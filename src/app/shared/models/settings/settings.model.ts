@@ -10,6 +10,7 @@ export interface Settings {
   propertyTypes: string[];
   emailNotification: EmailNotification;
   image: string;
+  signature: string;
 }
 
 export interface EmailNotification {

@@ -928,6 +928,19 @@
         "loadingNotificationSettings": "Loading notification settings...",
         "notificationSettingsUpdated": "Notification settings updated successfully",
         "failedToLoadNotificationSettings": "Failed to load notification settings"
+      },
+      "signature": {
+        "title": "Signature",
+        "description": "Upload and manage your company signature image",
+        "uploadSignature": "Upload Signature",
+        "saveSignature": "Save Signature",
+        "deleteSignature": "Delete Signature",
+        "deleteSignatureConfirm": "Are you sure you want to delete the signature?",
+        "saving": "Saving...",
+        "signatureUpdated": "Signature updated successfully",
+        "instructions": "Upload a signature image for your company",
+        "maxFileSize": "Maximum file size: 5MB",
+        "supportedFormats": "Supported formats: JPG, PNG, GIF"
       }
     },
     "errors": {

@@ -8,5 +8,6 @@ export interface UpdateSettingsRequest {
   amenities: string[];
   propertyTypes: string[];
   emailNotification: EmailNotification;
+  signature?: string;
 }
 
