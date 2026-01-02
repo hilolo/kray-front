@@ -865,8 +865,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
    */
   onDeleteSignature(): void {
     const dialogRef = this.alertDialogService.confirm({
-      zTitle: this.translateService.instant('settings.signature.deleteSignature'),
-      zDescription: this.translateService.instant('settings.signature.deleteSignatureConfirm'),
+      zTitle: this.translateService.instant('settings.application.signature.deleteSignature'),
+      zDescription: this.translateService.instant('settings.application.signature.deleteSignatureConfirm'),
       zOkText: this.translateService.instant('common.delete'),
       zCancelText: this.translateService.instant('common.cancel'),
       zOkDestructive: true,
@@ -951,7 +951,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
                   this.signatureImageUrl.set(null);
                 }
                 
-                this.toastService.success(this.translateService.instant('settings.signature.signatureUpdated'));
+                this.toastService.success(this.translateService.instant('settings.application.signature.signatureUpdated'));
               },
               error: (error) => {
                 console.error('Error updating signature:', error);
