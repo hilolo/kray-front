@@ -9,7 +9,13 @@
 >
   <div class="flex flex-col h-full p-2">
     <!-- Logo Section -->
-    <div class="flex items-center gap-3 px-2 py-4 mb-2 flex-shrink-0" [class.justify-center]="sidebarCollapsed()" [class.justify-start]="!sidebarCollapsed()">
+    <a 
+      routerLink="/" 
+      class="flex items-center gap-3 px-2 py-4 mb-2 flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity" 
+      [class.justify-center]="sidebarCollapsed()" 
+      [class.justify-start]="!sidebarCollapsed()"
+      (click)="onMenuItemClick($event)"
+    >
       @if (!logoError()) {
         <img 
           [src]="currentTheme() === 'dark' ? '/assets/logo-white.svg' : '/assets/logo.svg'" 
@@ -23,7 +29,7 @@
       @if (!sidebarCollapsed()) {
         <span class="text-sidebar-foreground/60 text-lg font-medium">Kray</span>
       }
-    </div>
+    </a>
     
     <z-sidebar-group class="flex-1 min-h-0 overflow-y-auto">
       <nav class="flex flex-col gap-4 px-2 py-2">
@@ -124,7 +130,11 @@
 <ng-template #mobileSidebarTemplate>
   <div class="flex flex-col h-full">
     <!-- Logo Section (Mobile) -->
-    <div class="flex items-center gap-3 px-2 py-4 mb-2 flex-shrink-0">
+    <a 
+      routerLink="/" 
+      class="flex items-center gap-3 px-2 py-4 mb-2 flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+      (click)="closeMobileSidebar()"
+    >
       @if (!logoError()) {
         <img 
           [src]="currentTheme() === 'dark' ? '/assets/logo-white.svg' : '/assets/logo.svg'" 
@@ -136,7 +146,7 @@
         <span class="text-lg font-semibold">Logo</span>
       }
       <span class="text-sidebar-foreground/60 text-lg font-medium">Kray</span>
-    </div>
+    </a>
     
     <z-sidebar-group class="flex-1 overflow-y-auto">
       <nav class="flex flex-col gap-4 p-3">
