@@ -1,11 +1,11 @@
-<z-page zTitle="Maintenance">
+<z-page [zTitle]="'maintenance.title' | translate">
   <div class="flex flex-col h-full min-h-0">
     <!-- Page Header -->
     <div class="flex-shrink-0 flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
       <div class="flex-1">
-        <h2 class="text-2xl md:text-3xl font-bold mb-2">Maintenance</h2>
+        <h2 class="text-2xl md:text-3xl font-bold mb-2">{{ 'maintenance.title' | translate }}</h2>
         <p class="text-muted-foreground text-sm md:text-base">
-          Manage your maintenance requests. View all tasks in the list or organize them using the Kanban board.
+          {{ 'maintenance.description' | translate }}
         </p>
       </div>
       
@@ -17,7 +17,7 @@
             zType="outline"
             zSize="icon"
             (click)="goToPreviousMonth()"
-            [attr.aria-label]="'Previous month'"
+            [attr.aria-label]="'maintenance.previousMonth' | translate"
           >
             <z-icon zType="chevron-left" zSize="sm" />
           </z-button>
@@ -30,7 +30,7 @@
             zType="outline"
             zSize="icon"
             (click)="goToNextMonth()"
-            [attr.aria-label]="'Next month'"
+            [attr.aria-label]="'maintenance.nextMonth' | translate"
           >
             <z-icon zType="chevron-right" zSize="sm" />
           </z-button>
@@ -44,7 +44,7 @@
           (click)="addNewMaintenance()"
         >
           <z-icon zType="plus" zSize="sm" />
-          <span>New Maintenance</span>
+          <span>{{ 'maintenance.newMaintenance' | translate }}</span>
         </z-button>
       </div>
     </div>
@@ -54,12 +54,12 @@
       <!-- Kanban Board -->
       <div class="flex-1 flex flex-col min-w-0 min-h-0">
         <div class="flex-shrink-0 mb-4">
-          <h3 class="text-lg font-semibold">Kanban Board</h3>
+          <h3 class="text-lg font-semibold">{{ 'maintenance.kanbanBoard' | translate }}</h3>
         </div>
         <div class="flex-1 min-h-0 overflow-hidden">
           @if (isLoading()) {
             <div class="flex items-center justify-center h-full">
-              <p class="text-muted-foreground">Loading maintenances...</p>
+              <p class="text-muted-foreground">{{ 'maintenance.loadingMaintenances' | translate }}</p>
             </div>
           } @else {
             <z-kanban 
@@ -75,12 +75,12 @@
       <!-- Right Side: Tasks List -->
       <div class="w-full md:w-[400px] flex-shrink-0 flex flex-col min-h-0">
         <div class="flex-shrink-0 mb-4">
-          <h3 class="text-lg font-semibold">All Maintenance Tasks</h3>
+          <h3 class="text-lg font-semibold">{{ 'maintenance.allMaintenanceTasks' | translate }}</h3>
         </div>
         <div class="flex-1 min-h-0 overflow-y-auto">
           @if (isLoading()) {
             <div class="flex items-center justify-center h-full">
-              <p class="text-muted-foreground text-sm">Loading maintenances...</p>
+              <p class="text-muted-foreground text-sm">{{ 'maintenance.loadingMaintenances' | translate }}</p>
             </div>
           } @else {
             <div class="flex flex-col gap-2">
@@ -115,7 +115,7 @@
                             <z-select-item [zValue]="option.value">
                               <div class="flex items-center gap-2">
                                 <z-icon [zType]="option.icon" zSize="sm" />
-                                <span>{{ option.label }}</span>
+                                <span>{{ option.labelKey | translate }}</span>
                               </div>
                             </z-select-item>
                           }
@@ -158,7 +158,7 @@
                 </div>
               } @empty {
                 <div class="px-4 py-12 text-center text-muted-foreground text-sm">
-                  No maintenance tasks found
+                  {{ 'maintenance.noMaintenanceTasksFound' | translate }}
                 </div>
               }
             </div>

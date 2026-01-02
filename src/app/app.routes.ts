@@ -6,6 +6,7 @@ import { HeroiconExampleComponent } from './shared/components/icon/heroicon-exam
 import { AiChatComponent } from './ai-chat/ai-chat.component';
 import { FileManagerComponent } from './file-manager/file-manager.component';
 import { MaintenanceComponent } from './maintenance/maintenance.component';
+import { CollaborationComponent } from './collaboration/collaboration.component';
 import { authGuard } from './shared/guards/auth.guard';
 import { loginGuard } from './shared/guards/login.guard';
 
@@ -79,6 +80,11 @@ export const routes: Routes = [
   {
     path: 'maintenance',
     component: MaintenanceComponent,
+    canActivate: [authGuard],
+  },
+  {
+    path: 'collaboration',
+    component: CollaborationComponent,
     canActivate: [authGuard],
   },
   {

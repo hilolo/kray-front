@@ -1084,6 +1084,33 @@ export class PropertyDetailComponent implements OnInit, OnDestroy {
     this.updatePropertyReservationShow(value);
   }
 
+  onToggleCollaboration(): void {
+    const property = this.property();
+    if (!property) return;
+    
+    const newStatus = !property.isCollaboration;
+    const action = newStatus 
+      ? this.translateService.instant('property.collaboration.enable')
+      : this.translateService.instant('property.collaboration.disable');
+    
+    this.propertyService.updateCollaborationStatus(property.id, newStatus)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (updatedProperty) => {
+          this.property.set(updatedProperty);
+          this.toastService.success(
+            this.translateService.instant('property.collaboration.updated', { 
+              status: action.toLowerCase() 
+            })
+          );
+        },
+        error: (error) => {
+          console.error('Error updating collaboration status:', error);
+          // Error is already handled by ApiService (toast notification)
+        },
+      });
+  }
+
   private updatePropertySharing(isPublic: boolean): void {
     const property = this.property();
     if (!property) return;

@@ -29,6 +29,21 @@
                 (keydown)="onSearchKeyDown($event)"
               />
             </div>
+            <!-- Collaboration filter -->
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                (click)="toggleShowCollaborationOnly(!showCollaborationOnly())"
+                class="p-2 rounded-md hover:bg-accent transition-colors"
+                [title]="'property.list.showCollaborationOnly' | translate"
+              >
+                <z-icon 
+                  zType="users" 
+                  zSize="lg"
+                  [class]="showCollaborationOnly() ? 'text-green-600 dark:text-green-500' : 'text-muted-foreground'"
+                />
+              </button>
+            </div>
             <!-- Filters group: Owner, Property Type, Category -->
             <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-shrink-0 w-full sm:w-auto">
               <!-- Owner select -->
@@ -202,6 +217,24 @@
           } @else {
             <span class="text-muted-foreground text-sm">-</span>
           }
+        </ng-template>
+
+        <!-- Collaboration Column Template -->
+        <ng-template #collaborationCell let-value let-row="row">
+          <div class="flex items-center justify-center">
+            <button
+              type="button"
+              (click)="onToggleCollaboration(row)"
+              class="p-2 rounded-md hover:bg-accent transition-colors"
+              [title]="row.isCollaboration ? ('property.collaboration.disable' | translate) : ('property.collaboration.enable' | translate)"
+            >
+              <z-icon 
+                zType="users" 
+                zSize="lg"
+                [class]="row.isCollaboration ? 'text-green-600 dark:text-green-500' : 'text-muted-foreground'"
+              />
+            </button>
+          </div>
         </ng-template>
 
         <!-- Type Column Template -->

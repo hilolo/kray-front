@@ -12,6 +12,7 @@ import { ToastService } from '@shared/services/toast.service';
 import { EditMaintenanceComponent } from './edit/edit-maintenance.component';
 import type { Maintenance } from '@shared/models/maintenance/maintenance.model';
 import { MaintenanceStatus, MaintenancePriority } from '@shared/models/maintenance/maintenance.model';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-maintenance',
@@ -23,6 +24,7 @@ import { MaintenanceStatus, MaintenancePriority } from '@shared/models/maintenan
     ZardIconComponent,
     ZardSelectComponent,
     ZardSelectItemComponent,
+    TranslateModule,
   ],
   templateUrl: './maintenance.component.html',
 })
@@ -30,6 +32,7 @@ export class MaintenanceComponent implements OnInit, OnDestroy {
   private readonly maintenanceService = inject(MaintenanceService);
   private readonly dialogService = inject(ZardDialogService);
   private readonly toastService = inject(ToastService);
+  private readonly translateService = inject(TranslateService);
   private readonly destroy$ = new Subject<void>();
 
   readonly currentDate = signal<Date>(new Date());
@@ -52,19 +55,19 @@ export class MaintenanceComponent implements OnInit, OnDestroy {
   readonly kanbanColumns = signal<KanbanColumn[]>([
     {
       id: 'waiting',
-      title: 'Waiting',
+      title: this.translateService.instant('maintenance.kanban.waiting'),
       status: 'planned',
       tasks: [],
     },
     {
       id: 'in-progress',
-      title: 'In Progress',
+      title: this.translateService.instant('maintenance.kanban.inProgress'),
       status: 'in-progress',
       tasks: [],
     },
     {
       id: 'done',
-      title: 'Done',
+      title: this.translateService.instant('maintenance.kanban.done'),
       status: 'done',
       tasks: [],
     },
@@ -116,7 +119,7 @@ export class MaintenanceComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Error loading maintenances:', error);
-        this.toastService.error('Failed to load maintenances');
+        this.toastService.error(this.translateService.instant('maintenance.messages.failedToLoadMaintenances'));
         this.isLoading.set(false);
         // Reset columns on error
         this.updateKanbanColumns([]);
@@ -190,19 +193,19 @@ export class MaintenanceComponent implements OnInit, OnDestroy {
     const newColumns: KanbanColumn[] = [
       {
         id: 'waiting',
-        title: 'Waiting',
+        title: this.translateService.instant('maintenance.kanban.waiting'),
         status: 'planned',
         tasks: waiting.map(t => ({ ...t })), // Deep copy tasks
       },
       {
         id: 'in-progress',
-        title: 'In Progress',
+        title: this.translateService.instant('maintenance.kanban.inProgress'),
         status: 'in-progress',
         tasks: inProgress.map(t => ({ ...t })), // Deep copy tasks
       },
       {
         id: 'done',
-        title: 'Done',
+        title: this.translateService.instant('maintenance.kanban.done'),
         status: 'done',
         tasks: done.map(t => ({ ...t })), // Deep copy tasks
       },
@@ -289,13 +292,13 @@ export class MaintenanceComponent implements OnInit, OnDestroy {
     
     this.maintenanceService.updateStatus(maintenanceId, newStatus).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
-        this.toastService.success('Maintenance status updated');
+        this.toastService.success(this.translateService.instant('maintenance.messages.statusUpdated'));
         // Reload to ensure consistency
         this.loadMaintenances();
       },
       error: (error) => {
         console.error('Error updating maintenance status:', error);
-        this.toastService.error('Failed to update maintenance status');
+        this.toastService.error(this.translateService.instant('maintenance.messages.failedToUpdateStatus'));
         // Reload to revert UI changes
         this.loadMaintenances();
       },
@@ -305,22 +308,22 @@ export class MaintenanceComponent implements OnInit, OnDestroy {
   getPriorityLabel(priority: MaintenancePriority): string {
     switch (priority) {
       case MaintenancePriority.Urgent:
-        return 'Urgent';
+        return this.translateService.instant('maintenance.priority.urgent');
       case MaintenancePriority.Medium:
-        return 'Medium';
+        return this.translateService.instant('maintenance.priority.medium');
       case MaintenancePriority.Low:
-        return 'Low';
+        return this.translateService.instant('maintenance.priority.low');
       default:
-        return 'Medium';
+        return this.translateService.instant('maintenance.priority.medium');
     }
   }
 
-  // Status options with icons (matching edit component)
+  // Status options with icons (matching edit component) - labels will be translated in template
   readonly statusOptions = [
-    { value: String(MaintenanceStatus.Waiting), label: 'Waiting', icon: 'loader-circle' as const },
-    { value: String(MaintenanceStatus.InProgress), label: 'In Progress', icon: 'refresh-cw' as const },
-    { value: String(MaintenanceStatus.Done), label: 'Done', icon: 'check' as const },
-    { value: String(MaintenanceStatus.Cancelled), label: 'Cancelled', icon: 'x' as const },
+    { value: String(MaintenanceStatus.Waiting), labelKey: 'maintenance.status.waiting', icon: 'loader-circle' as const },
+    { value: String(MaintenanceStatus.InProgress), labelKey: 'maintenance.status.inProgress', icon: 'refresh-cw' as const },
+    { value: String(MaintenanceStatus.Done), labelKey: 'maintenance.status.done', icon: 'check' as const },
+    { value: String(MaintenanceStatus.Cancelled), labelKey: 'maintenance.status.cancelled', icon: 'x' as const },
   ];
 
   getStatusValue(status: MaintenanceStatus | string): string {
@@ -356,7 +359,10 @@ export class MaintenanceComponent implements OnInit, OnDestroy {
     }
     
     const option = this.statusOptions.find(opt => Number(opt.value) === statusNum);
-    return option?.label || 'Waiting';
+    if (option?.labelKey) {
+      return this.translateService.instant(option.labelKey);
+    }
+    return this.translateService.instant('maintenance.status.waiting');
   }
 
   getSelectedStatusIcon(status: MaintenanceStatus | string): 'loader-circle' | 'refresh-cw' | 'check' | 'x' {
@@ -408,13 +414,13 @@ export class MaintenanceComponent implements OnInit, OnDestroy {
     // Send update to API
     this.maintenanceService.updateStatus(event.taskId, newMaintenanceStatus).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
-        this.toastService.success('Maintenance status updated');
+        this.toastService.success(this.translateService.instant('maintenance.messages.statusUpdated'));
         // Reload to ensure consistency
         this.loadMaintenances();
       },
       error: (error) => {
         console.error('Error updating maintenance status:', error);
-        this.toastService.error('Failed to update maintenance status');
+        this.toastService.error(this.translateService.instant('maintenance.messages.failedToUpdateStatus'));
         // Reload to revert UI changes
         this.loadMaintenances();
       },
@@ -428,7 +434,7 @@ export class MaintenanceComponent implements OnInit, OnDestroy {
   addNewMaintenance(): void {
     const dialogRef = this.dialogService.create({
       zContent: EditMaintenanceComponent,
-      zTitle: 'New Maintenance',
+      zTitle: this.translateService.instant('maintenance.edit.newMaintenanceTitle'),
       zWidth: '800px',
       zCustomClasses: 'max-w-[calc(100vw-2rem)] sm:max-w-[800px] max-h-[90vh] overflow-hidden flex flex-col',
       zData: {},
@@ -448,7 +454,7 @@ export class MaintenanceComponent implements OnInit, OnDestroy {
   editMaintenance(maintenanceId: string): void {
     const dialogRef = this.dialogService.create({
       zContent: EditMaintenanceComponent,
-      zTitle: 'Edit Maintenance',
+      zTitle: this.translateService.instant('maintenance.edit.editMaintenanceTitle'),
       zWidth: '800px',
       zCustomClasses: 'max-w-[calc(100vw-2rem)] sm:max-w-[800px] max-h-[90vh] overflow-hidden flex flex-col',
       zData: { maintenanceId },

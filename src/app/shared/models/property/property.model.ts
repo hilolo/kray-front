@@ -136,6 +136,7 @@ export interface Property {
   isPublic: boolean;
   isPublicAdresse: boolean;
   isReservationShow: boolean;
+  isCollaboration: boolean;
   ownerName: string | null;
   contact: Contact | null;
   building: PropertyBuilding | null;

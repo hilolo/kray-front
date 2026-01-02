@@ -28,6 +28,9 @@ import { ZardCheckboxComponent } from '@shared/components/checkbox/checkbox.comp
 import type { UserPermissions } from '@shared/models/user/user-permissions.model';
 import { MODULES } from '@shared/constants/modules.constant';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { CollaborationService } from '@shared/services/collaboration.service';
+import type { Property } from '@shared/models/property/property.model';
+import { PropertyPricePipe } from '@shared/pipes/property-price.pipe';
 
 type SettingsSection = 'account' | 'security' | 'team' | 'application';
 
@@ -53,6 +56,7 @@ type SettingsSection = 'account' | 'security' | 'team' | 'application';
     ZardBadgeComponent,
     ZardCheckboxComponent,
     TranslateModule,
+    PropertyPricePipe,
   ],
   templateUrl: './settings.component.html',
 })
@@ -65,6 +69,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
   private readonly themeService = inject(ThemeService);
   private readonly settingsService = inject(SettingsService);
   private readonly translateService = inject(TranslateService);
+  private readonly collaborationService = inject(CollaborationService);
   private readonly destroy$ = new Subject<void>();
 
   activeSection = signal<SettingsSection>('account');
@@ -283,6 +288,12 @@ export class SettingsComponent implements OnInit, OnDestroy {
   isLoadingNotificationSettings = signal(false);
   isSavingNotificationSettings = signal(false);
 
+  // Collaboration Settings
+  sharedProperties = signal<Property[]>([]);
+  selectedPropertyIds = signal<Set<string>>(new Set());
+  isLoadingSharedProperties = signal(false);
+  isUnsharing = signal(false);
+
   // Signature Settings
   signatureImageUrl = signal<string | null>(null);
   signatureImageFile = signal<File | null>(null);
@@ -351,6 +362,13 @@ export class SettingsComponent implements OnInit, OnDestroy {
           ice: company.ice || '',
           image: company.image || '',
         };
+      }
+    });
+
+    // Load shared properties when collaboration section is active
+    effect(() => {
+      if (this.activeSection() === 'application' && this.sharedProperties().length === 0) {
+        this.loadSharedProperties();
       }
     });
   }
@@ -1389,6 +1407,183 @@ export class SettingsComponent implements OnInit, OnDestroy {
           // Toast error is handled automatically by the API interceptor/service
         }
       });
+  }
+
+  /**
+   * Load shared properties (properties we have shared for collaboration)
+   */
+  loadSharedProperties(): void {
+    this.isLoadingSharedProperties.set(true);
+    this.collaborationService.getMySharedProperties()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (properties) => {
+          this.sharedProperties.set(properties);
+          this.isLoadingSharedProperties.set(false);
+        },
+        error: (error) => {
+          console.error('Error loading shared properties:', error);
+          this.isLoadingSharedProperties.set(false);
+          this.sharedProperties.set([]);
+        }
+      });
+  }
+
+  /**
+   * Toggle selection of a property
+   */
+  togglePropertySelection(propertyId: string): void {
+    const selected = new Set(this.selectedPropertyIds());
+    if (selected.has(propertyId)) {
+      selected.delete(propertyId);
+    } else {
+      selected.add(propertyId);
+    }
+    this.selectedPropertyIds.set(selected);
+  }
+
+  /**
+   * Select all properties
+   */
+  selectAllProperties(): void {
+    const allIds = new Set(this.sharedProperties().map(p => p.id));
+    this.selectedPropertyIds.set(allIds);
+  }
+
+  /**
+   * Deselect all properties
+   */
+  deselectAllProperties(): void {
+    this.selectedPropertyIds.set(new Set());
+  }
+
+  /**
+   * Check if a property is selected
+   */
+  isPropertySelected(propertyId: string): boolean {
+    return this.selectedPropertyIds().has(propertyId);
+  }
+
+  /**
+   * Check if all properties are selected
+   */
+  readonly areAllPropertiesSelected = computed(() => {
+    const properties = this.sharedProperties();
+    if (properties.length === 0) return false;
+    const selected = this.selectedPropertyIds();
+    return properties.every(p => selected.has(p.id));
+  });
+
+  /**
+   * Get count of selected properties
+   */
+  readonly selectedCount = computed(() => {
+    return this.selectedPropertyIds().size;
+  });
+
+  /**
+   * Get translated text for selected count
+   */
+  getSelectedCountText(): string {
+    const count = this.selectedCount();
+    if (count === 0) {
+      return this.translateService.instant('settings.application.collaboration.selectedCount.none');
+    } else if (count === 1) {
+      return this.translateService.instant('settings.application.collaboration.selectedCount.one');
+    } else {
+      return this.translateService.instant('settings.application.collaboration.selectedCount.many', { count });
+    }
+  }
+
+  /**
+   * Bulk unshare selected properties
+   */
+  onBulkUnshare(): void {
+    const selectedIds = Array.from(this.selectedPropertyIds());
+    if (selectedIds.length === 0) {
+      return;
+    }
+
+    const count = selectedIds.length;
+    const descriptionKey = count === 1 
+      ? 'settings.application.collaboration.bulkUnshare.description.one'
+      : 'settings.application.collaboration.bulkUnshare.description.many';
+    
+    const dialogRef = this.alertDialogService.confirm({
+      zTitle: this.translateService.instant('settings.application.collaboration.bulkUnshare.title'),
+      zDescription: this.translateService.instant(descriptionKey, { count }),
+      zOkText: this.translateService.instant('settings.application.collaboration.bulkUnshare.ok'),
+      zCancelText: this.translateService.instant('common.cancel'),
+      zOkDestructive: true,
+      zViewContainerRef: this.viewContainerRef,
+    });
+
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((confirmed) => {
+      if (confirmed) {
+        this.isUnsharing.set(true);
+        this.collaborationService.bulkUnshareProperties(selectedIds)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: (unsharedCount) => {
+              const successKey = unsharedCount === 1
+                ? 'settings.application.collaboration.bulkUnshare.success.one'
+                : 'settings.application.collaboration.bulkUnshare.success.many';
+              this.toastService.success(
+                this.translateService.instant(successKey, { count: unsharedCount })
+              );
+              this.deselectAllProperties();
+              this.loadSharedProperties(); // Reload to refresh the list
+              this.isUnsharing.set(false);
+            },
+            error: (error) => {
+              console.error('Error bulk unsharing properties:', error);
+              this.isUnsharing.set(false);
+            }
+          });
+      }
+    });
+  }
+
+  /**
+   * Unshare all properties
+   */
+  onUnshareAll(): void {
+    const allIds = this.sharedProperties().map(p => p.id);
+    if (allIds.length === 0) {
+      return;
+    }
+
+    const count = allIds.length;
+    const dialogRef = this.alertDialogService.confirm({
+      zTitle: this.translateService.instant('settings.application.collaboration.unshareAllDialog.title'),
+      zDescription: this.translateService.instant('settings.application.collaboration.unshareAllDialog.description', { count }),
+      zOkText: this.translateService.instant('settings.application.collaboration.unshareAllDialog.ok'),
+      zCancelText: this.translateService.instant('common.cancel'),
+      zOkDestructive: true,
+      zViewContainerRef: this.viewContainerRef,
+    });
+
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((confirmed) => {
+      if (confirmed) {
+        this.isUnsharing.set(true);
+        this.collaborationService.bulkUnshareProperties(allIds)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: (unsharedCount) => {
+              this.toastService.success(
+                this.translateService.instant('settings.application.collaboration.unshareAllDialog.success', { count: unsharedCount })
+              );
+              this.deselectAllProperties();
+              this.loadSharedProperties(); // Reload to refresh the list
+              this.isUnsharing.set(false);
+            },
+            error: (error) => {
+              console.error('Error unsharing all properties:', error);
+              this.isUnsharing.set(false);
+            }
+          });
+      }
+    });
   }
 
   ngOnDestroy(): void {

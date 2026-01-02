@@ -1,0 +1,449 @@
+<z-page [zTitle]="'collaboration.title' | translate">
+  <div class="flex flex-col h-full min-h-0">
+    <!-- Back button section -->
+    <div class="mb-6">
+      <z-button zType="outline" zSize="default" class="gap-2" (click)="backToApp()">
+        <z-icon zType="chevron-left" zSize="sm" />
+        {{ 'collaboration.backToApp' | translate }}
+      </z-button>
+    </div>
+
+
+    <!-- Header Section: Filters -->
+    <div class="mb-6 flex-shrink-0">
+      <div class="flex flex-col gap-2">
+        <!-- Filter Buttons Row -->
+        <div class="flex flex-wrap gap-3 items-center">
+          <!-- Category Filter -->
+          <div class="w-full sm:w-[200px]">
+            <z-combobox
+              [options]="categoryOptions()"
+              [value]="selectedCategory() !== null ? selectedCategory()!.toString() : null"
+              [placeholder]="'collaboration.filters.category' | translate"
+              [emptyText]="'collaboration.filters.noCategory' | translate"
+              [searchable]="false"
+              (zValueChange)="onCategoryChange($event)"
+              class="w-full"
+            />
+          </div>
+
+          <!-- Price Filter Button -->
+          <div class="relative">
+            <z-button 
+              zType="outline" 
+              zSize="default" 
+              class="gap-2 min-w-[140px] justify-between"
+              (click)="togglePricePanel()"
+            >
+              <span>{{ getPriceLabel() }}</span>
+              <z-icon zType="chevron-down" zSize="sm" [class.rotate-180]="isPricePanelOpen()" class="transition-transform" />
+            </z-button>
+            
+            <!-- Price Panel -->
+            @if (isPricePanelOpen()) {
+              <div class="absolute top-full left-0 mt-2 bg-card border border-border rounded-lg shadow-lg p-4 z-50 min-w-[400px]">
+                <div class="flex items-center gap-3">
+                  <div class="flex-1">
+                    <label class="block text-sm font-semibold mb-2">{{ 'collaboration.filters.minPrice' | translate }}</label>
+                    <z-combobox
+                      [options]="priceOptions()"
+                      [value]="minPrice() || ''"
+                      [placeholder]="'collaboration.filters.indifferent' | translate"
+                      [searchable]="false"
+                      (zValueChange)="onMinPriceChange($event)"
+                      class="w-full"
+                    />
+                  </div>
+                  <span class="text-muted-foreground mt-6">-</span>
+                  <div class="flex-1">
+                    <label class="block text-sm font-semibold mb-2">{{ 'collaboration.filters.maxPrice' | translate }}</label>
+                    <z-combobox
+                      [options]="priceOptions()"
+                      [value]="maxPrice() || ''"
+                      [placeholder]="'collaboration.filters.indifferent' | translate"
+                      [searchable]="false"
+                      (zValueChange)="onMaxPriceChange($event)"
+                      class="w-full"
+                    />
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Surface Filter Button -->
+          <div class="relative">
+            <z-button 
+              zType="outline" 
+              zSize="default" 
+              class="gap-2 min-w-[140px] justify-between"
+              (click)="toggleSurfacePanel()"
+            >
+              <span>{{ getSurfaceLabel() }}</span>
+              <z-icon zType="chevron-down" zSize="sm" [class.rotate-180]="isSurfacePanelOpen()" class="transition-transform" />
+            </z-button>
+            
+            <!-- Surface Panel -->
+            @if (isSurfacePanelOpen()) {
+              <div class="absolute top-full left-0 mt-2 bg-card border border-border rounded-lg shadow-lg p-4 z-50 min-w-[400px]">
+                <div class="flex items-center gap-3">
+                  <div class="flex-1">
+                    <label class="block text-sm font-semibold mb-2">{{ 'collaboration.filters.minSurface' | translate }}</label>
+                    <z-combobox
+                      [options]="surfaceOptions()"
+                      [value]="minArea() || ''"
+                      [placeholder]="'collaboration.filters.indifferent' | translate"
+                      [searchable]="false"
+                      (zValueChange)="onMinAreaChange($event)"
+                      class="w-full"
+                    />
+                  </div>
+                  <span class="text-muted-foreground mt-6">-</span>
+                  <div class="flex-1">
+                    <label class="block text-sm font-semibold mb-2">{{ 'collaboration.filters.maxSurface' | translate }}</label>
+                    <z-combobox
+                      [options]="surfaceOptions()"
+                      [value]="maxArea() || ''"
+                      [placeholder]="'collaboration.filters.indifferent' | translate"
+                      [searchable]="false"
+                      (zValueChange)="onMaxAreaChange($event)"
+                      class="w-full"
+                    />
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Bedrooms Filter Button -->
+          <div class="relative">
+            <z-button 
+              zType="outline" 
+              zSize="default" 
+              class="gap-2 min-w-[140px] justify-between"
+              (click)="toggleBedroomsPanel()"
+            >
+              <span>{{ getBedroomsLabel() }}</span>
+              <z-icon zType="chevron-down" zSize="sm" [class.rotate-180]="isBedroomsPanelOpen()" class="transition-transform" />
+            </z-button>
+            
+            <!-- Bedrooms Panel -->
+            @if (isBedroomsPanelOpen()) {
+              <div class="absolute top-full left-0 mt-2 bg-card border border-border rounded-lg shadow-lg p-4 z-50 min-w-[200px]">
+                <label class="block text-sm font-semibold mb-2">{{ 'collaboration.filters.bedrooms' | translate }}</label>
+                <z-combobox
+                  [options]="bedroomsOptions()"
+                  [value]="selectedBedrooms() || ''"
+                  [placeholder]="'collaboration.filters.indifferent' | translate"
+                  [searchable]="false"
+                  (zValueChange)="onBedroomsChange($event)"
+                  class="w-full"
+                />
+              </div>
+            }
+          </div>
+
+          <!-- Date Filter Button -->
+          <div class="relative">
+            <z-button 
+              zType="outline" 
+              zSize="default" 
+              class="gap-2 min-w-[200px] justify-between"
+              (click)="toggleDatePanel()"
+            >
+              <span>{{ getDateLabel() }}</span>
+              <z-icon zType="chevron-down" zSize="sm" [class.rotate-180]="isDatePanelOpen()" class="transition-transform" />
+            </z-button>
+            
+            <!-- Date Panel -->
+            @if (isDatePanelOpen()) {
+              <div class="absolute top-full left-0 mt-2 bg-card border border-border rounded-lg shadow-lg p-4 z-50 min-w-[400px]">
+                <div class="flex items-center gap-3">
+                  <div class="flex-1">
+                    <label class="block text-sm font-semibold mb-2">{{ 'collaboration.filters.dateFrom' | translate }}</label>
+                    <z-date-picker
+                      [value]="collaborationDateFrom()"
+                      [placeholder]="'collaboration.filters.indifferent' | translate"
+                      (dateChange)="onDateFromChange($event)"
+                      class="w-full"
+                    />
+                  </div>
+                  <span class="text-muted-foreground mt-6">-</span>
+                  <div class="flex-1">
+                    <label class="block text-sm font-semibold mb-2">{{ 'collaboration.filters.dateTo' | translate }}</label>
+                    <z-date-picker
+                      [value]="collaborationDateTo()"
+                      [placeholder]="'collaboration.filters.indifferent' | translate"
+                      [minDate]="collaborationDateFrom()"
+                      (dateChange)="onDateToChange($event)"
+                      class="w-full"
+                    />
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Reset Button -->
+          @if (hasActiveFilters()) {
+            <z-button zType="outline" zSize="default" class="gap-2" (click)="onResetFilters()">
+              <z-icon zType="x" zSize="sm" />
+              <span>{{ 'common.reset' | translate }}</span>
+            </z-button>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Properties Grid -->
+    <div class="flex-1 min-h-0 overflow-y-auto mb-6">
+      @if (isLoading()) {
+        <div class="flex items-center justify-center min-h-[400px]">
+          <div class="text-center space-y-4">
+            <z-icon zType="loader-circle" class="w-8 h-8 animate-spin mx-auto text-primary" />
+            <p class="text-sm text-muted-foreground">{{ 'common.loading' | translate }}</p>
+          </div>
+        </div>
+      } @else if (!hasData()) {
+        <div class="flex items-center justify-center min-h-[400px]">
+          <div class="text-center">
+            <p class="text-muted-foreground">{{ emptyMessage() }}</p>
+          </div>
+        </div>
+      } @else {
+        <div class="space-y-4">
+          @for (property of filteredProperties(); track property.id) {
+            <div class="flex flex-col sm:flex-row gap-4 border border-border rounded-lg bg-card hover:shadow-md transition-shadow overflow-hidden">
+              <!-- Image Carousel - Left Side -->
+              <div class="w-full sm:w-80 lg:w-96 h-64 sm:h-auto sm:min-h-[300px] flex-shrink-0 relative bg-muted">
+                @if (getCurrentImage(property)) {
+                  <img
+                    [src]="getCurrentImage(property)!"
+                    [alt]="getPropertyDisplayName(property)"
+                    class="w-full h-full object-cover"
+                  />
+                } @else {
+                  <div class="w-full h-full flex items-center justify-center">
+                    <span class="text-4xl font-semibold text-muted-foreground">{{ getInitials(property) }}</span>
+                  </div>
+                }
+                
+                <!-- Image Navigation Arrows - Always visible if multiple images -->
+                @if (getPropertyImages(property).length > 1) {
+                  <button
+                    type="button"
+                    (click)="previousImage(property.id, $event)"
+                    class="absolute left-2 top-1/2 -translate-y-1/2 bg-background/90 hover:bg-background rounded-full p-2 shadow-md z-10 transition-colors"
+                    aria-label="Previous image"
+                  >
+                    <z-icon zType="chevron-left" zSize="sm" />
+                  </button>
+                  <button
+                    type="button"
+                    (click)="nextImage(property.id, $event)"
+                    class="absolute right-2 top-1/2 -translate-y-1/2 bg-background/90 hover:bg-background rounded-full p-2 shadow-md z-10 transition-colors"
+                    aria-label="Next image"
+                  >
+                    <z-icon zType="chevron-right" zSize="sm" />
+                  </button>
+                  
+                  <!-- Image Indicator -->
+                  <div class="absolute bottom-2 left-1/2 -translate-x-1/2 bg-background/90 px-2 py-1 rounded-md text-xs font-medium">
+                    {{ getCurrentImageIndex(property.id) + 1 }} / {{ getPropertyImages(property).length }}
+                  </div>
+                }
+              </div>
+            
+              <!-- Content - Right Side -->
+              <div class="flex-1 p-6 flex flex-col gap-4 min-w-0">
+                <!-- Header: Price and Company -->
+                <div class="flex items-start justify-between gap-4">
+                  @if (property.price) {
+                    <span class="px-4 py-2 bg-primary/10 text-primary font-bold text-lg rounded-md">
+                      {{ property.price | propertyPrice:property.typePaiment }}
+                    </span>
+                  }
+                </div>
+
+                <!-- Title and Location -->
+                <div class="flex flex-col gap-1">
+                  <h3 class="font-semibold text-xl cursor-pointer hover:text-primary transition-colors" (click)="onViewProperty(property, $event)">
+                    {{ getPropertyDisplayName(property) }}
+                  </h3>
+                  @if (property.city) {
+                    <div class="flex items-center gap-1.5 text-sm text-muted-foreground">
+                      <z-icon zType="map-pin" zSize="sm" class="flex-shrink-0" />
+                      <span>{{ property.city }}</span>
+                    </div>
+                  }
+                </div>
+                
+                <!-- Property Details (Area, Rooms, Bathrooms) -->
+                <div class="flex flex-wrap gap-4 text-sm">
+                  @if (property.area) {
+                    <div class="flex items-center gap-1.5">
+                      <z-icon zType="maximize2" zSize="sm" class="text-muted-foreground" />
+                      <span class="font-medium">{{ property.area }} m²</span>
+                    </div>
+                  }
+                  @if (property.pieces) {
+                    <div class="flex items-center gap-1.5">
+                      <z-icon zType="layout-dashboard" zSize="sm" class="text-muted-foreground" />
+                      <span>{{ property.pieces }} {{ property.pieces > 1 ? ('collaboration.pieces' | translate) : ('collaboration.piece' | translate) }}</span>
+                    </div>
+                  }
+                  @if (property.bathrooms) {
+                    <div class="flex items-center gap-1.5">
+                      <z-icon zType="layers" zSize="sm" class="text-muted-foreground" />
+                      <span>{{ property.bathrooms }} {{ property.bathrooms > 1 ? ('collaboration.bathrooms' | translate) : ('collaboration.bathroom' | translate) }}</span>
+                    </div>
+                  }
+                </div>
+
+                <!-- Features and Equipment -->
+                @if ((property.features && property.features.length > 0) || (property.equipment && property.equipment.length > 0)) {
+                  <div class="flex flex-wrap gap-2">
+                    @if (property.features && property.features.length > 0) {
+                      @for (feature of property.features; track feature) {
+                        <span class="px-2.5 py-1 bg-muted text-xs rounded-md font-medium">{{ feature }}</span>
+                      }
+                    }
+                    @if (property.equipment && property.equipment.length > 0) {
+                      @for (equip of property.equipment; track equip) {
+                        <span class="px-2.5 py-1 bg-muted text-xs rounded-md font-medium">{{ equip }}</span>
+                      }
+                    }
+                  </div>
+                }
+
+                <!-- Description -->
+                @if (property.description) {
+                  <p class="text-sm text-muted-foreground line-clamp-3">
+                    {{ property.description }}
+                  </p>
+                }
+
+                <!-- Company and Contact Section -->
+                <div class="mt-auto pt-4 border-t border-border flex flex-col gap-3">
+                  <!-- Company Name with Logo -->
+                  @if (property.companyName) {
+                    <div class="flex items-center gap-2">
+                      @if (property.companyLogoUrl) {
+                        <img 
+                          [src]="property.companyLogoUrl" 
+                          [alt]="property.companyName"
+                          class="w-12 h-12 rounded object-cover border border-border flex-shrink-0"
+                          (error)="$any($event.target).style.display='none'"
+                        />
+                      }
+                      <z-icon zType="building" zSize="sm" class="text-muted-foreground" [class.hidden]="!!property.companyLogoUrl" />
+                      <span class="text-sm font-medium">{{ property.companyName }}</span>
+                    </div>
+                  }
+                  
+                  <!-- Collaboration Date -->
+                  @if (property.collaborationAt) {
+                    <div class="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <z-icon zType="calendar" zSize="sm" />
+                      <span>{{ 'collaboration.sharedOn' | translate }}: {{ formatDate(property.collaborationAt) }}</span>
+                    </div>
+                  }
+                  
+                  <!-- Contact Buttons -->
+                  <div class="flex flex-wrap gap-2">
+                    <z-button 
+                      zType="outline" 
+                      zSize="default" 
+                      class="gap-2"
+                      (click)="contactViaEmail(property); $event.stopPropagation()"
+                    >
+                      <z-icon zType="mail" zSize="sm" />
+                      {{ 'collaboration.contact' | translate }}
+                    </z-button>
+                    @if (property.companyPhone) {
+                      <z-button 
+                        zType="outline" 
+                        zSize="default" 
+                        class="gap-2"
+                        (click)="callCompany(property); $event.stopPropagation()"
+                      >
+                        <z-icon zType="smartphone" zSize="sm" />
+                        {{ 'collaboration.call' | translate }}
+                      </z-button>
+                      <z-button 
+                        zType="default" 
+                        zSize="default" 
+                        class="gap-2 bg-green-600 hover:bg-green-700 text-white border-green-600"
+                        (click)="contactViaWhatsApp(property); $event.stopPropagation()"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                        </svg>
+                        WhatsApp
+                      </z-button>
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Custom Pagination - At the bottom -->
+    @if (hasData()) {
+      <div class="flex-shrink-0 pt-6 border-t border-border flex flex-col gap-4 items-center justify-between sm:flex-row">
+        <!-- Results Info -->
+        <div class="text-sm text-muted-foreground">
+          {{ paginatedInfo().start }} - {{ paginatedInfo().end }} {{ 'collaboration.of' | translate }} {{ paginatedInfo().total }} {{ 'collaboration.results' | translate }} | {{ 'collaboration.page' | translate }} {{ currentPage() }} {{ 'collaboration.of' | translate }} {{ totalPages() }}
+        </div>
+        
+        <!-- Page Navigation -->
+        <div class="flex items-center gap-2">
+          <!-- Previous Button -->
+          <button
+            type="button"
+            [disabled]="currentPage() === 1"
+            (click)="previousPage()"
+            class="p-2 rounded-md border border-border disabled:opacity-50 disabled:cursor-not-allowed hover:bg-muted transition-colors"
+            [class.text-primary]="currentPage() > 1"
+            [class.text-muted-foreground]="currentPage() === 1"
+          >
+            <z-icon zType="chevron-left" zSize="sm" />
+          </button>
+          
+          <!-- Page Numbers -->
+          @for (pageNum of getVisiblePageNumbers(); track pageNum) {
+            <button
+              type="button"
+              (click)="goToPage(pageNum)"
+              class="min-w-[2.5rem] h-10 px-3 rounded-md text-sm font-medium transition-colors"
+              [class.bg-primary]="pageNum === currentPage()"
+              [class.text-primary-foreground]="pageNum === currentPage()"
+              [class.bg-background]="pageNum !== currentPage()"
+              [class.text-foreground]="pageNum !== currentPage()"
+              [class.border]="pageNum !== currentPage()"
+              [class.border-border]="pageNum !== currentPage()"
+              [class.hover:bg-muted]="pageNum !== currentPage()"
+            >
+              {{ pageNum }}
+            </button>
+          }
+          
+          <!-- Next Button -->
+          <button
+            type="button"
+            [disabled]="currentPage() === totalPages()"
+            (click)="nextPage()"
+            class="p-2 rounded-md border border-border disabled:opacity-50 disabled:cursor-not-allowed hover:bg-muted transition-colors"
+            [class.text-primary]="currentPage() < totalPages()"
+            [class.text-muted-foreground]="currentPage() === totalPages()"
+          >
+            <z-icon zType="chevron-right" zSize="sm" />
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</z-page>

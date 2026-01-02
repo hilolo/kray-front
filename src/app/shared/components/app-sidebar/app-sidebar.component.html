@@ -163,13 +163,16 @@
                   [routerLink]="item.route"
                   routerLinkActive="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
                   [routerLinkActiveOptions]="getRouterLinkActiveOptions(item.route)"
-                  class="flex items-center gap-2.5 px-3 py-2 rounded-md text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
+                  [class]="item.isActive ? 'flex items-center gap-2.5 px-3 py-2 rounded-md text-green-600 dark:text-green-500 bg-green-50 dark:bg-green-950/20 hover:bg-green-100 dark:hover:bg-green-950/30 transition-colors font-medium' : 'flex items-center gap-2.5 px-3 py-2 rounded-md text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors'"
                   (click)="closeMobileSidebar()"
                 >
                   @if (item.icon) {
-                    <z-icon [zType]="item.icon" class="shrink-0 w-4 h-4" />
+                    <z-icon 
+                      [zType]="item.icon" 
+                      [class]="item.isActive ? 'shrink-0 w-4 h-4 text-green-600 dark:text-green-500' : 'shrink-0 w-4 h-4'"
+                    />
                   }
-                  <span class="text-sm text-sidebar-foreground">{{ item.labelKey ? (item.labelKey | translate) : item.label }}</span>
+                  <span [class]="item.isActive ? 'text-sm text-green-600 dark:text-green-500 font-medium' : 'text-sm text-sidebar-foreground'">{{ item.labelKey ? (item.labelKey | translate) : item.label }}</span>
                 </a>
               }
             </div>

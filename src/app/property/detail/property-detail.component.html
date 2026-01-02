@@ -24,10 +24,21 @@
             </z-badge>
           }
         </div>
-        <z-button zType="default" [routerLink]="['/property', property()?.id]">
-          <z-icon zType="pencil" zSize="sm" />
-          {{ 'property.detail.editProperty' | translate }}
-        </z-button>
+        <div class="flex items-center gap-2">
+          <z-button 
+            zType="outline" 
+            [class.border-primary]="property()?.isCollaboration"
+            [class.text-primary]="property()?.isCollaboration"
+            (click)="onToggleCollaboration()"
+          >
+            <z-icon zType="users" zSize="sm" />
+            <span>{{ property()?.isCollaboration ? ('property.collaboration.disable' | translate) : ('property.collaboration.enable' | translate) }}</span>
+          </z-button>
+          <z-button zType="default" [routerLink]="['/property', property()?.id]">
+            <z-icon zType="pencil" zSize="sm" />
+            {{ 'property.detail.editProperty' | translate }}
+          </z-button>
+        </div>
       </div>
 
       <div class="flex flex-col lg:flex-row gap-2 h-full">

@@ -149,5 +149,19 @@ export class PropertyService {
   getPublicPropertyById(id: string): Observable<PublicProperty> {
     return this.apiService.get<PublicProperty>(`public/properties/${id}`);
   }
+
+  /**
+   * Update the collaboration status of a property
+   * PATCH api/Property/collaboration-status
+   * @param propertyId Property ID
+   * @param isCollaboration Collaboration status
+   * @returns Observable of updated property
+   */
+  updateCollaborationStatus(propertyId: string, isCollaboration: boolean): Observable<Property> {
+    return this.apiService.patch<Property>('Property/collaboration-status', {
+      propertyId,
+      isCollaboration,
+    });
+  }
 }
 

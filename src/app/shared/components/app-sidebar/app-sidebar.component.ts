@@ -53,16 +53,22 @@ export class AppSidebarComponent implements OnInit, OnDestroy {
         label: string;
         labelKey?: string;
         icon?: ZardIcon;
+        isActive?: boolean;
       }>;
     }>
   >([
+    {
+      items: [
+        { route: '/collaboration', label: 'Collaboration', labelKey: 'collaboration.title', icon: 'users', isActive: true },
+      ],
+    },
     {
       group: 'L\'essentiel',
       groupKey: 'sidebar.essential',
       items: [
         { route: '/', label: 'Dashboard', labelKey: 'menu.dashboard', icon: 'monitor' },
         { route: '/contact/tenants', label: 'Tenants', labelKey: 'menu.tenants', icon: 'user' },
-        { route: '/contact/owners', label: 'Owners', labelKey: 'menu.owners', icon: 'users' },
+        { route: '/contact/owners', label: 'Owners', labelKey: 'menu.owners', icon: 'house' },
         { route: '/contact/services', label: 'Services', labelKey: 'menu.services', icon: 'building' },
         { route: '/property', label: 'Properties', labelKey: 'menu.properties', icon: 'house' },
         { route: '/building', label: 'Buildings', labelKey: 'menu.buildings', icon: 'building' },

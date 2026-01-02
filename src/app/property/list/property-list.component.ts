@@ -76,6 +76,7 @@ export class PropertyListComponent implements OnInit, OnDestroy {
   readonly pageSize = signal(10); // Will be initialized from preferences in ngOnInit
   readonly viewMode = signal<'list' | 'card'>('list');
   readonly showArchived = signal(false);
+  readonly showCollaborationOnly = signal(false);
   readonly archivedProperties = signal<Property[]>([]);
   readonly properties = signal<Property[]>([]);
   readonly isLoading = signal(false);
@@ -113,6 +114,7 @@ export class PropertyListComponent implements OnInit, OnDestroy {
   readonly referenceCell = viewChild<TemplateRef<any>>('referenceCell');
   readonly addressCell = viewChild<TemplateRef<any>>('addressCell');
   readonly priceCell = viewChild<TemplateRef<any>>('priceCell');
+  readonly collaborationCell = viewChild<TemplateRef<any>>('collaborationCell');
   readonly typeCell = viewChild<TemplateRef<any>>('typeCell');
   readonly actionsCell = viewChild<TemplateRef<any>>('actionsCell');
 
@@ -142,6 +144,13 @@ export class PropertyListComponent implements OnInit, OnDestroy {
       cellTemplate: this.priceCell(),
     },
     {
+      key: 'collaboration',
+      label: this.translateService.instant('property.list.columns.collaboration'),
+      sortable: false,
+      width: '80px',
+      cellTemplate: this.collaborationCell(),
+    },
+    {
       key: 'type',
       label: this.translateService.instant('property.list.columns.type'),
       sortable: true,
@@ -156,6 +165,7 @@ export class PropertyListComponent implements OnInit, OnDestroy {
   ]);
 
   readonly filteredProperties = computed(() => {
+    // Properties are now filtered on the backend via API request
     return this.properties();
   });
 
@@ -185,7 +195,8 @@ export class PropertyListComponent implements OnInit, OnDestroy {
     return (this.searchQuery() && this.searchQuery().trim() !== '') || 
            this.selectedOwnerId() !== null || 
            this.selectedPropertyTypes().length > 0 ||
-           this.selectedCategory() !== null;
+           this.selectedCategory() !== null ||
+           this.showCollaborationOnly();
   });
 
   ngOnInit(): void {
@@ -249,6 +260,8 @@ export class PropertyListComponent implements OnInit, OnDestroy {
       ...(this.selectedCategory() !== null ? { category: this.selectedCategory()! } : {}),
       // Only include isArchived when showing archived (true), otherwise omit it so backend defaults to false
       ...(this.showArchived() ? { isArchived: true } : {}),
+      // Only include isCollaboration when filter is active (true), otherwise omit it
+      ...(this.showCollaborationOnly() ? { isCollaboration: true } : {}),
     };
     
     this.propertyService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
@@ -388,6 +401,9 @@ export class PropertyListComponent implements OnInit, OnDestroy {
     // Clear category selection
     this.selectedCategory.set(null);
     
+    // Clear collaboration filter
+    this.showCollaborationOnly.set(false);
+    
     // Reload properties
     this.loadProperties();
   }
@@ -437,6 +453,12 @@ export class PropertyListComponent implements OnInit, OnDestroy {
     // Save view type preference for current route
     const routeKey = this.getRouteKey();
     this.preferencesService.setViewType(routeKey, newViewMode);
+  }
+
+  toggleShowCollaborationOnly(value: boolean): void {
+    this.showCollaborationOnly.set(value);
+    this.currentPage.set(1);
+    this.loadProperties(); // Reload properties from backend with new filter
   }
 
   toggleShowArchived(value: boolean): void {
@@ -583,6 +605,50 @@ export class PropertyListComponent implements OnInit, OnDestroy {
           error: (error) => {
             console.error('Error deleting property:', error);
             this.isDeleting.set(false);
+            // Error is already handled by ApiService (toast notification)
+          },
+        });
+      }
+    });
+  }
+
+  onToggleCollaboration(property: Property): void {
+    const propertyName = property.name || property.identifier || this.translateService.instant('common.unnamedProperty');
+    const isCurrentlyCollaboration = property.isCollaboration;
+    
+    const dialogRef = this.alertDialogService.confirm({
+      zTitle: isCurrentlyCollaboration 
+        ? this.translateService.instant('property.collaboration.confirm.disable.title')
+        : this.translateService.instant('property.collaboration.confirm.enable.title'),
+      zDescription: isCurrentlyCollaboration
+        ? this.translateService.instant('property.collaboration.confirm.disable.description', { name: propertyName })
+        : this.translateService.instant('property.collaboration.confirm.enable.description', { name: propertyName }),
+      zOkText: isCurrentlyCollaboration 
+        ? this.translateService.instant('property.collaboration.confirm.disable.ok')
+        : this.translateService.instant('property.collaboration.confirm.enable.ok'),
+      zCancelText: this.translateService.instant('common.cancel'),
+      zOkDestructive: isCurrentlyCollaboration, // Destructive if disabling
+      zViewContainerRef: this.viewContainerRef,
+    });
+
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result) => {
+      if (result) {
+        this.isLoading.set(true); // Show loading indicator
+        this.propertyService.updateCollaborationStatus(property.id, !isCurrentlyCollaboration).pipe(takeUntil(this.destroy$)).subscribe({
+          next: (updatedProperty) => {
+            // Update the property in the list
+            const properties = this.properties();
+            const index = properties.findIndex(p => p.id === property.id);
+            if (index !== -1) {
+              properties[index] = updatedProperty;
+              this.properties.set([...properties]);
+            }
+            this.isLoading.set(false);
+            // Success notification is handled by ApiService
+          },
+          error: (error) => {
+            console.error('Error updating collaboration status:', error);
+            this.isLoading.set(false);
             // Error is already handled by ApiService (toast notification)
           },
         });

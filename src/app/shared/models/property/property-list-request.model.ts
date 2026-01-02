@@ -25,5 +25,6 @@ export interface PropertyListRequest {
   city?: string;
   address?: string;
   isArchived?: boolean;
+  isCollaboration?: boolean;
 }
 

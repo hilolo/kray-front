@@ -120,6 +120,23 @@
     "home": "Accueil"
   },
   "property": {
+    "collaboration": {
+      "enable": "Activer la collaboration",
+      "disable": "Désactiver la collaboration",
+      "confirm": {
+        "enable": {
+          "title": "Activer la collaboration",
+          "description": "Êtes-vous sûr de vouloir activer la collaboration pour le bien \"{{name}}\" ?",
+          "ok": "Activer"
+        },
+        "disable": {
+          "title": "Désactiver la collaboration",
+          "description": "Êtes-vous sûr de vouloir désactiver la collaboration pour le bien \"{{name}}\" ?",
+          "ok": "Désactiver"
+        }
+      },
+      "updated": "Collaboration mise à jour avec succès pour \"{{name}}\""
+    },
     "price": {
       "month": "mois",
       "week": "semaine",
@@ -128,6 +145,7 @@
     "list": {
       "title": "Biens",
       "showArchived": "Afficher les archives",
+      "showCollaborationOnly": "Collaboration activée uniquement",
       "searchPlaceholder": "Rechercher des biens...",
       "selectOwner": "Contacter le propriétaire...",
       "searchOwners": "Rechercher des propriétaires...",
@@ -150,6 +168,7 @@
         "reference": "Référence",
         "address": "Adresse",
         "price": "Prix",
+        "collaboration": "Collaboration",
         "type": "Type"
       },
       "confirmArchive": {
@@ -255,7 +274,11 @@
       "saveProperty": "Enregistrer le bien",
       "cancel": "Annuler",
       "generateIdentifier": "Générer l'identifiant"
-    }
+    },
+    "pieces": "Pièces",
+    "piece": "Pièce",
+    "bathrooms": "Salles de bain",
+    "bathroom": "Salle de bain"
   },
   "contact": {
     "list": {
@@ -930,6 +953,37 @@
         "notificationSettingsUpdated": "Paramètres de notification mis à jour avec succès",
         "failedToLoadNotificationSettings": "Échec du chargement des paramètres de notification"
       },
+      "collaboration": {
+        "title": "Collaboration",
+        "description": "Gérez les biens que vous partagez avec d'autres entreprises pour collaboration. Vous pouvez retirer le partage d'un ou plusieurs biens à tout moment.",
+        "loading": "Chargement des biens partagés...",
+        "empty": "Aucun bien n'a été partagé.",
+        "selectedCount": {
+          "none": "Aucun sélectionné",
+          "one": "1 bien sélectionné",
+          "many": "{{count}} biens sélectionnés"
+        },
+        "unshareSelected": "Retirer le partage ({{count}})",
+        "unshareAll": "Retirer le partage de tous",
+        "bulkUnshare": {
+          "title": "Retirer le partage",
+          "description": {
+            "one": "Êtes-vous sûr de vouloir retirer le partage de ce bien ? Les autres entreprises ne pourront plus le voir.",
+            "many": "Êtes-vous sûr de vouloir retirer le partage de ces {{count}} biens ? Les autres entreprises ne pourront plus les voir."
+          },
+          "ok": "Retirer le partage",
+          "success": {
+            "one": "Le partage a été retiré avec succès pour 1 bien.",
+            "many": "Le partage a été retiré avec succès pour {{count}} biens."
+          }
+        },
+        "unshareAllDialog": {
+          "title": "Retirer le partage de tous les biens",
+          "description": "Êtes-vous sûr de vouloir retirer le partage de tous les {count} biens ? Les autres entreprises ne pourront plus les voir.",
+          "ok": "Retirer le partage de tous",
+          "success": "Le partage a été retiré avec succès pour {count} biens."
+        }
+      },
       "signature": {
         "title": "Signature",
         "description": "Téléchargez et gérez l'image de signature de votre entreprise",
@@ -964,7 +1018,30 @@
     "allMaintenanceTasks": "Toutes les tâches de maintenance",
     "loadingMaintenances": "Chargement des maintenances...",
     "noMaintenanceTasksFound": "Aucune tâche de maintenance trouvée",
+    "status": {
+      "waiting": "En attente",
+      "inProgress": "En cours",
+      "done": "Terminé",
+      "cancelled": "Annulé"
+    },
+    "priority": {
+      "low": "Faible",
+      "medium": "Moyen",
+      "urgent": "Urgent"
+    },
+    "kanban": {
+      "waiting": "En attente",
+      "inProgress": "En cours",
+      "done": "Terminé"
+    },
+    "messages": {
+      "statusUpdated": "Statut de maintenance mis à jour",
+      "failedToUpdateStatus": "Échec de la mise à jour du statut de maintenance",
+      "failedToLoadMaintenances": "Échec du chargement des maintenances"
+    },
     "edit": {
+      "newMaintenanceTitle": "Nouvelle maintenance",
+      "editMaintenanceTitle": "Modifier la maintenance",
       "property": "Bien",
       "propertyPlaceholder": "Sélectionner un bien...",
       "propertySearchPlaceholder": "Rechercher des biens...",
@@ -1218,5 +1295,43 @@
     "defaultCancel": "Annuler",
     "defaultOk": "OK",
     "defaultContinue": "Continuer"
+  },
+  "collaboration": {
+    "title": "Collaboration",
+    "dashboardDescription": "Visualisez les biens que vous partagez avec d'autres entreprises pour collaboration",
+    "backToApp": "Retour à l'application",
+    "searchPlaceholder": "Rechercher des biens...",
+    "cardView": "Vue cartes",
+    "filters": {
+      "category": "Catégorie",
+      "noCategory": "Aucune catégorie",
+      "price": "Prix",
+      "minPrice": "Prix min",
+      "maxPrice": "Prix max",
+      "surface": "Surface",
+      "minSurface": "Surface min (m²)",
+      "maxSurface": "Surface max (m²)",
+      "bedrooms": "Chambres",
+      "noBedrooms": "Aucune",
+      "indifferent": "Indifférent",
+      "date": "Date",
+      "dateFrom": "Date de début",
+      "dateTo": "Date de fin"
+    },
+    "listView": "Vue liste",
+    "empty": "Aucun bien partagé pour le moment",
+    "emptySearch": "Aucun bien trouvé avec votre recherche",
+    "sharedOn": "Partagé le",
+    "viewSharedProperties": "Voir les biens partagés",
+    "pieces": "Pièces",
+    "piece": "Pièce",
+    "bathrooms": "Salles de bain",
+    "bathroom": "Salle de bain",
+    "of": "de",
+    "results": "résultats",
+    "page": "Page",
+    "pages": "pages",
+    "contact": "Contacter",
+    "call": "Appelez"
   }
 }
