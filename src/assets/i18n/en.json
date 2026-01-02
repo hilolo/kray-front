@@ -137,6 +137,7 @@
       "updated": "Collaboration updated successfully for \"{{name}}\""
     },
     "price": {
+      "currency": "MAD",
       "month": "month",
       "week": "week",
       "day": "day"

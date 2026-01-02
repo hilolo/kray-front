@@ -19,8 +19,10 @@ export class PropertyPricePipe implements PipeTransform {
       maximumFractionDigits: 0,
     });
 
+    const currency = this.translateService.instant('property.price.currency') || 'MAD';
+
     if (typePaiment === null || typePaiment === undefined) {
-      return `${formattedPrice} MAD`;
+      return `${formattedPrice} ${currency}`;
     }
 
     // Handle both enum values and string values from backend
@@ -28,15 +30,15 @@ export class PropertyPricePipe implements PipeTransform {
 
     switch (paymentType) {
       case TypePaiment.Monthly:
-        return `${formattedPrice} MAD/${this.translateService.instant('property.price.month')}`;
+        return `${formattedPrice} ${currency}/${this.translateService.instant('property.price.month')}`;
       case TypePaiment.Weekly:
-        return `${formattedPrice} MAD/${this.translateService.instant('property.price.week')}`;
+        return `${formattedPrice} ${currency}/${this.translateService.instant('property.price.week')}`;
       case TypePaiment.Daily:
-        return `${formattedPrice} MAD/${this.translateService.instant('property.price.day')}`;
+        return `${formattedPrice} ${currency}/${this.translateService.instant('property.price.day')}`;
       case TypePaiment.Fixed:
-        return `${formattedPrice} MAD`;
+        return `${formattedPrice} ${currency}`;
       default:
-        return `${formattedPrice} MAD`;
+        return `${formattedPrice} ${currency}`;
     }
   }
 

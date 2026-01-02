@@ -99,6 +99,10 @@ export class CollaborationComponent implements OnInit, OnDestroy {
   
   // Image navigation for each property card
   readonly currentImageIndices = signal<Map<string, number>>(new Map());
+  
+  // Favorites stored in localStorage
+  private readonly FAVORITES_STORAGE_KEY = 'collaboration_favorites';
+  readonly favoritePropertyIds = signal<Set<string>>(new Set());
 
   readonly filteredProperties = computed(() => {
     let filtered = this.properties();
@@ -287,8 +291,48 @@ export class CollaborationComponent implements OnInit, OnDestroy {
     this.loadCategoryOptions();
     this.loadBedroomsOptions();
     
+    // Load favorites from localStorage
+    this.loadFavorites();
+    
     // Load collaboration properties from API
     this.loadCollaborationProperties();
+  }
+
+  loadFavorites(): void {
+    try {
+      const stored = localStorage.getItem(this.FAVORITES_STORAGE_KEY);
+      if (stored) {
+        const favorites = JSON.parse(stored) as string[];
+        this.favoritePropertyIds.set(new Set(favorites));
+      }
+    } catch (error) {
+      console.error('Error loading favorites from localStorage:', error);
+    }
+  }
+
+  saveFavorites(): void {
+    try {
+      const favoritesArray = Array.from(this.favoritePropertyIds());
+      localStorage.setItem(this.FAVORITES_STORAGE_KEY, JSON.stringify(favoritesArray));
+    } catch (error) {
+      console.error('Error saving favorites to localStorage:', error);
+    }
+  }
+
+  toggleFavorite(propertyId: string, event: Event): void {
+    event.stopPropagation();
+    const favorites = new Set(this.favoritePropertyIds());
+    if (favorites.has(propertyId)) {
+      favorites.delete(propertyId);
+    } else {
+      favorites.add(propertyId);
+    }
+    this.favoritePropertyIds.set(favorites);
+    this.saveFavorites();
+  }
+
+  isFavorite(propertyId: string): boolean {
+    return this.favoritePropertyIds().has(propertyId);
   }
 
   loadCollaborationProperties(): void {
@@ -668,17 +712,6 @@ export class CollaborationComponent implements OnInit, OnDestroy {
     if (property.companyEmail) {
       window.location.href = `mailto:${property.companyEmail}`;
     }
-  }
-
-  toggleFavorite(propertyId: string, event: Event): void {
-    event.stopPropagation();
-    // TODO: Implement favorite functionality
-    console.log('Toggle favorite for property:', propertyId);
-  }
-
-  isFavorite(propertyId: string): boolean {
-    // TODO: Implement favorite check
-    return false;
   }
 }
 

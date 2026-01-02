@@ -213,7 +213,28 @@
       } @else {
         <div class="space-y-4">
           @for (property of filteredProperties(); track property.id) {
-            <div class="flex flex-col sm:flex-row gap-4 border border-border rounded-lg bg-card hover:shadow-md transition-shadow overflow-hidden">
+            <div class="flex flex-col sm:flex-row gap-4 border border-border rounded-lg bg-card hover:shadow-md transition-shadow overflow-hidden relative">
+              <!-- Favorite Button - Top Right -->
+              <button
+                type="button"
+                (click)="toggleFavorite(property.id, $event)"
+                class="absolute top-4 right-4 z-20 p-3 rounded-full bg-background/90 hover:bg-background border border-border shadow-md transition-all hover:scale-110"
+                [class.border-red-500]="isFavorite(property.id)"
+                [class.bg-red-50]="isFavorite(property.id)"
+                [class.dark:bg-red-950/20]="isFavorite(property.id)"
+                [attr.aria-label]="isFavorite(property.id) ? 'Remove from favorites' : 'Add to favorites'"
+              >
+                <z-icon 
+                  zType="heart" 
+                  zSize="default" 
+                  [class.text-red-500]="isFavorite(property.id)"
+                  [class.text-red-600]="isFavorite(property.id)"
+                  [class.text-muted-foreground]="!isFavorite(property.id)"
+                  [style.fill]="isFavorite(property.id) ? 'currentColor' : 'none'"
+                  class="transition-all w-5 h-5"
+                />
+              </button>
+              
               <!-- Image Carousel - Left Side -->
               <div class="w-full sm:w-80 lg:w-96 h-64 sm:h-auto sm:min-h-[300px] flex-shrink-0 relative bg-muted">
                 @if (getCurrentImage(property)) {
@@ -267,9 +288,16 @@
 
                 <!-- Title and Location -->
                 <div class="flex flex-col gap-1">
-                  <h3 class="font-semibold text-xl cursor-pointer hover:text-primary transition-colors" (click)="onViewProperty(property, $event)">
-                    {{ getPropertyDisplayName(property) }}
-                  </h3>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <h3 class="font-semibold text-xl cursor-pointer hover:text-primary transition-colors" (click)="onViewProperty(property, $event)">
+                      {{ getPropertyDisplayName(property) }}
+                    </h3>
+                    @if (property.identifier) {
+                      <span class="text-xs px-2 py-1 bg-muted rounded-md text-muted-foreground font-mono">
+                        {{ property.identifier }}
+                      </span>
+                    }
+                  </div>
                   @if (property.city) {
                     <div class="flex items-center gap-1.5 text-sm text-muted-foreground">
                       <z-icon zType="map-pin" zSize="sm" class="flex-shrink-0" />
