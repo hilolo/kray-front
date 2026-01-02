@@ -4,7 +4,6 @@ import { ZardPageComponent } from '../page/page.component';
 import { ZardButtonComponent } from '@shared/components/button/button.component';
 import { ZardIconComponent } from '@shared/components/icon/icon.component';
 import { ZardComboboxComponent, ZardComboboxOption } from '@shared/components/combobox/combobox.component';
-import { ZardDatePickerComponent } from '@shared/components/date-picker/date-picker.component';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -23,7 +22,6 @@ import type { CollaborationProperty } from '@shared/models/collaboration/collabo
     ZardButtonComponent,
     ZardIconComponent,
     ZardComboboxComponent,
-    ZardDatePickerComponent,
     TranslateModule,
     FormsModule,
     PropertyPricePipe,
@@ -51,14 +49,11 @@ export class CollaborationComponent implements OnInit, OnDestroy {
   readonly maxArea = signal<string | null>(null);
   readonly selectedBedrooms = signal<string | null>(null);
   readonly bedroomsOptions = signal<ZardComboboxOption[]>([]);
-  readonly collaborationDateFrom = signal<Date | null>(null);
-  readonly collaborationDateTo = signal<Date | null>(null);
   
   // Filter panel states
   readonly isPricePanelOpen = signal(false);
   readonly isSurfacePanelOpen = signal(false);
   readonly isBedroomsPanelOpen = signal(false);
-  readonly isDatePanelOpen = signal(false);
   
   // Price options
   readonly priceOptions = signal<ZardComboboxOption[]>([
@@ -144,27 +139,6 @@ export class CollaborationComponent implements OnInit, OnDestroy {
       filtered = filtered.filter(prop => prop.pieces >= bedroomsNum);
     }
     
-    // Filter by collaboration date
-    const dateFrom = this.collaborationDateFrom();
-    const dateTo = this.collaborationDateTo();
-    if (dateFrom) {
-      filtered = filtered.filter(prop => {
-        if (!prop.collaborationAt) return false;
-        const propDate = new Date(prop.collaborationAt);
-        return propDate >= dateFrom;
-      });
-    }
-    if (dateTo) {
-      filtered = filtered.filter(prop => {
-        if (!prop.collaborationAt) return false;
-        const propDate = new Date(prop.collaborationAt);
-        // Set time to end of day for inclusive comparison
-        const endOfDay = new Date(dateTo);
-        endOfDay.setHours(23, 59, 59, 999);
-        return propDate <= endOfDay;
-      });
-    }
-    
     // Apply pagination
     const start = (this.currentPage() - 1) * this.pageSize();
     const end = start + this.pageSize();
@@ -206,27 +180,6 @@ export class CollaborationComponent implements OnInit, OnDestroy {
     if (bedrooms && bedrooms !== '') {
       const bedroomsNum = parseInt(bedrooms, 10);
       filtered = filtered.filter(prop => prop.pieces >= bedroomsNum);
-    }
-    
-    // Filter by collaboration date
-    const dateFrom = this.collaborationDateFrom();
-    const dateTo = this.collaborationDateTo();
-    if (dateFrom) {
-      filtered = filtered.filter(prop => {
-        if (!prop.collaborationAt) return false;
-        const propDate = new Date(prop.collaborationAt);
-        return propDate >= dateFrom;
-      });
-    }
-    if (dateTo) {
-      filtered = filtered.filter(prop => {
-        if (!prop.collaborationAt) return false;
-        const propDate = new Date(prop.collaborationAt);
-        // Set time to end of day for inclusive comparison
-        const endOfDay = new Date(dateTo);
-        endOfDay.setHours(23, 59, 59, 999);
-        return propDate <= endOfDay;
-      });
     }
     
     const total = filtered.length;
@@ -277,9 +230,7 @@ export class CollaborationComponent implements OnInit, OnDestroy {
            (this.maxPrice() !== null && this.maxPrice() !== '') || 
            (this.minArea() !== null && this.minArea() !== '') || 
            (this.maxArea() !== null && this.maxArea() !== '') || 
-           (this.selectedBedrooms() !== null && this.selectedBedrooms() !== '') ||
-           this.collaborationDateFrom() !== null ||
-           this.collaborationDateTo() !== null;
+           (this.selectedBedrooms() !== null && this.selectedBedrooms() !== '');
   });
 
   readonly hasData = computed(() => {
@@ -386,7 +337,6 @@ export class CollaborationComponent implements OnInit, OnDestroy {
     if (this.isPricePanelOpen()) {
       this.isSurfacePanelOpen.set(false);
       this.isBedroomsPanelOpen.set(false);
-      this.isDatePanelOpen.set(false);
     }
   }
 
@@ -396,7 +346,6 @@ export class CollaborationComponent implements OnInit, OnDestroy {
     if (this.isSurfacePanelOpen()) {
       this.isPricePanelOpen.set(false);
       this.isBedroomsPanelOpen.set(false);
-      this.isDatePanelOpen.set(false);
     }
   }
 
@@ -406,17 +355,6 @@ export class CollaborationComponent implements OnInit, OnDestroy {
     if (this.isBedroomsPanelOpen()) {
       this.isPricePanelOpen.set(false);
       this.isSurfacePanelOpen.set(false);
-      this.isDatePanelOpen.set(false);
-    }
-  }
-
-  toggleDatePanel(): void {
-    this.isDatePanelOpen.set(!this.isDatePanelOpen());
-    // Close other panels
-    if (this.isDatePanelOpen()) {
-      this.isPricePanelOpen.set(false);
-      this.isSurfacePanelOpen.set(false);
-      this.isBedroomsPanelOpen.set(false);
     }
   }
 
@@ -455,44 +393,6 @@ export class CollaborationComponent implements OnInit, OnDestroy {
     this.isBedroomsPanelOpen.set(false);
   }
 
-  onDateFromChange(date: Date | null): void {
-    this.collaborationDateFrom.set(date);
-    this.currentPage.set(1);
-    // Close panel after selection
-    if (date) {
-      this.isDatePanelOpen.set(false);
-    }
-  }
-
-  onDateToChange(date: Date | null): void {
-    this.collaborationDateTo.set(date);
-    this.currentPage.set(1);
-    // Close panel after selection
-    if (date) {
-      this.isDatePanelOpen.set(false);
-    }
-  }
-
-  getDateLabel(): string {
-    const from = this.collaborationDateFrom();
-    const to = this.collaborationDateTo();
-    if (!from && !to) return this.translateService.instant('collaboration.filters.date');
-    if (from && to) {
-      return `${this.formatDateForLabel(from)} - ${this.formatDateForLabel(to)}`;
-    }
-    if (from) {
-      return `${this.formatDateForLabel(from)} +`;
-    }
-    if (to) {
-      return `jusqu'à ${this.formatDateForLabel(to)}`;
-    }
-    return this.translateService.instant('collaboration.filters.date');
-  }
-
-  formatDateForLabel(date: Date): string {
-    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
-  }
-
   onResetFilters(): void {
     this.selectedCategory.set(null);
     this.minPrice.set(null);
@@ -500,12 +400,9 @@ export class CollaborationComponent implements OnInit, OnDestroy {
     this.minArea.set(null);
     this.maxArea.set(null);
     this.selectedBedrooms.set(null);
-    this.collaborationDateFrom.set(null);
-    this.collaborationDateTo.set(null);
     this.isPricePanelOpen.set(false);
     this.isSurfacePanelOpen.set(false);
     this.isBedroomsPanelOpen.set(false);
-    this.isDatePanelOpen.set(false);
     this.currentPage.set(1);
   }
   
