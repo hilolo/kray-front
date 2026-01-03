@@ -18,6 +18,7 @@ export interface PropertyRequest {
   ville: string;
   description: string;
   isCollaborate: boolean;
+  collaborationDate: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -66,6 +67,8 @@ export interface UpdatePropertyRequestRequest {
 export interface PropertyRequestListRequest {
   searchQuery?: string;
   contactId?: string;
+  isCollaborate?: boolean;
+  category?: PropertyCategory;
   currentPage?: number;
   pageSize?: number;
   ignore?: boolean;

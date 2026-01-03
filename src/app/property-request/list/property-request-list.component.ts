@@ -18,8 +18,10 @@ import { ZardDatatablePaginationComponent } from '@shared/components/datatable/d
 import { ZardDialogService } from '@shared/components/dialog/dialog.service';
 import { PropertyRequestService } from '@shared/services/property-request.service';
 import { RoutePreferencesService } from '@shared/services/route-preferences.service';
+import { ZardComboboxComponent, ZardComboboxOption } from '@shared/components/combobox/combobox.component';
 import type { PropertyRequest } from '@shared/models/property-request/property-request.model';
 import type { PropertyRequestListRequest } from '@shared/models/property-request/property-request.model';
+import { PropertyCategory } from '@shared/models/property/property.model';
 import { EditPropertyRequestComponent } from '../edit/edit-property-request.component';
 
 @Component({
@@ -36,6 +38,7 @@ import { EditPropertyRequestComponent } from '../edit/edit-property-request.comp
     ZardDropdownMenuItemComponent,
     ZardDividerComponent,
     ZardDatatablePaginationComponent,
+    ZardComboboxComponent,
     TranslateModule,
     FormsModule,
   ],
@@ -63,9 +66,16 @@ export class PropertyRequestListComponent implements OnInit, OnDestroy {
   readonly isDeleting = signal(false);
   readonly totalPages = signal(1);
   readonly totalItems = signal(0);
+  readonly collaborationFilter = signal<boolean | undefined>(undefined);
+  readonly selectedCategory = signal<PropertyCategory | null>(null);
+  readonly categoryOptions = signal<ZardComboboxOption[]>([]);
+  readonly categoryComboboxRef = viewChild<ZardComboboxComponent>('categoryCombobox');
   
   readonly clientNameCell = viewChild<TemplateRef<any>>('clientNameCell');
   readonly categoryCell = viewChild<TemplateRef<any>>('categoryCell');
+  readonly budgetCell = viewChild<TemplateRef<any>>('budgetCell');
+  readonly piecesCell = viewChild<TemplateRef<any>>('piecesCell');
+  readonly isFurnishedCell = viewChild<TemplateRef<any>>('isFurnishedCell');
   readonly collaborationCell = viewChild<TemplateRef<any>>('collaborationCell');
   readonly actionsCell = viewChild<TemplateRef<any>>('actionsCell');
 
@@ -84,16 +94,19 @@ export class PropertyRequestListComponent implements OnInit, OnDestroy {
       key: 'budget',
       label: this.translateService.instant('propertyRequest.list.columns.budget'),
       sortable: true,
+      cellTemplate: this.budgetCell(),
     },
     {
-      key: 'surface',
-      label: this.translateService.instant('propertyRequest.list.columns.surface'),
+      key: 'pieces',
+      label: this.translateService.instant('propertyRequest.list.columns.pieces'),
       sortable: true,
+      cellTemplate: this.piecesCell(),
     },
     {
-      key: 'ville',
-      label: this.translateService.instant('propertyRequest.list.columns.ville'),
-      sortable: true,
+      key: 'isFurnished',
+      label: this.translateService.instant('propertyRequest.list.columns.isFurnished'),
+      width: '100px',
+      cellTemplate: this.isFurnishedCell(),
     },
     {
       key: 'collaboration',
@@ -120,7 +133,7 @@ export class PropertyRequestListComponent implements OnInit, OnDestroy {
   });
 
   readonly showResetButton = computed(() => {
-    return this.searchQuery() !== '';
+    return this.searchQuery() !== '' || this.collaborationFilter() !== undefined || this.selectedCategory() !== null;
   });
 
   ngOnInit(): void {
@@ -130,6 +143,7 @@ export class PropertyRequestListComponent implements OnInit, OnDestroy {
       this.pageSize.set(savedPageSize);
     }
 
+    this.loadCategories();
     this.setupSearchDebounce();
     this.loadPropertyRequests();
   }
@@ -164,6 +178,8 @@ export class PropertyRequestListComponent implements OnInit, OnDestroy {
       pageSize: this.pageSize(),
       ignore: false,
       ...(this.searchQuery() && this.searchQuery().trim() ? { searchQuery: this.searchQuery().trim() } : {}),
+      ...(this.collaborationFilter() !== undefined ? { isCollaborate: this.collaborationFilter() } : {}),
+      ...(this.selectedCategory() !== null ? { category: this.selectedCategory()! } : {}),
     };
     
     this.propertyRequestService.list(request).pipe(takeUntil(this.destroy$)).subscribe({
@@ -184,8 +200,67 @@ export class PropertyRequestListComponent implements OnInit, OnDestroy {
   onResetFilters(): void {
     this.searchInput.set('');
     this.searchQuery.set('');
+    this.collaborationFilter.set(undefined);
+    this.selectedCategory.set(null);
+    this.currentPage.set(1);
+    // Clear combobox internal value
+    setTimeout(() => {
+      const categoryCombobox = this.categoryComboboxRef();
+      if (categoryCombobox) {
+        (categoryCombobox as any).writeValue(null);
+      }
+    }, 0);
+    this.loadPropertyRequests();
+  }
+
+  onCollaborationFilterChange(value: boolean | undefined): void {
+    this.collaborationFilter.set(value);
     this.currentPage.set(1);
     this.loadPropertyRequests();
+  }
+
+  onCollaborationClick(propertyRequest: PropertyRequest, event: Event): void {
+    event.stopPropagation();
+    const requestName = propertyRequest.client || this.translateService.instant('common.unnamed');
+    const isCurrentlyCollaborate = propertyRequest.isCollaborate;
+    
+    const dialogRef = this.alertDialogService.confirm({
+      zTitle: isCurrentlyCollaborate 
+        ? this.translateService.instant('propertyRequest.collaboration.confirm.disable.title')
+        : this.translateService.instant('propertyRequest.collaboration.confirm.enable.title'),
+      zDescription: isCurrentlyCollaborate
+        ? this.translateService.instant('propertyRequest.collaboration.confirm.disable.description', { name: requestName })
+        : this.translateService.instant('propertyRequest.collaboration.confirm.enable.description', { name: requestName }),
+      zOkText: isCurrentlyCollaborate 
+        ? this.translateService.instant('propertyRequest.collaboration.confirm.disable.ok')
+        : this.translateService.instant('propertyRequest.collaboration.confirm.enable.ok'),
+      zCancelText: this.translateService.instant('common.cancel'),
+      zOkDestructive: isCurrentlyCollaborate, // Destructive if disabling
+    });
+
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result) => {
+      if (result) {
+        this.isLoading.set(true); // Show loading indicator
+        this.propertyRequestService.updateCollaborationStatus(propertyRequest.id, !isCurrentlyCollaborate).pipe(takeUntil(this.destroy$)).subscribe({
+          next: (updatedPropertyRequest) => {
+            // Update the property request in the list
+            const propertyRequests = this.propertyRequests();
+            const index = propertyRequests.findIndex(pr => pr.id === propertyRequest.id);
+            if (index !== -1) {
+              propertyRequests[index] = updatedPropertyRequest;
+              this.propertyRequests.set([...propertyRequests]);
+            }
+            this.isLoading.set(false);
+            // Success notification is handled by ApiService
+          },
+          error: (error) => {
+            console.error('Error updating collaboration status:', error);
+            this.isLoading.set(false);
+            // Error is already handled by ApiService (toast notification)
+          },
+        });
+      }
+    });
   }
 
   onSearchInputChange(value: string): void {
@@ -223,6 +298,22 @@ export class PropertyRequestListComponent implements OnInit, OnDestroy {
     this.preferencesService.setPageSize(routeKey, size);
     this.currentPage.set(1);
     this.loadPropertyRequests();
+  }
+
+  onViewPropertyRequest(propertyRequest: PropertyRequest): void {
+    const dialogRef = this.dialogService.create({
+      zContent: EditPropertyRequestComponent,
+      zTitle: this.translateService.instant('propertyRequest.edit.viewTitle'),
+      zWidth: '1200px',
+      zCustomClasses: 'max-w-[calc(100vw-2rem)] sm:max-w-[1200px] max-h-[90vh] overflow-hidden flex flex-col',
+      zData: { propertyRequestId: propertyRequest.id, viewMode: true },
+      zHideFooter: true,
+      zClosable: true,
+    });
+
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(() => {
+      // No need to reload on view close
+    });
   }
 
   onEditPropertyRequest(propertyRequest: PropertyRequest): void {
@@ -287,13 +378,33 @@ export class PropertyRequestListComponent implements OnInit, OnDestroy {
     });
   }
 
-  getCategoryLabel(category: number): string {
-    const categories = [
-      this.translateService.instant('property.category.location'),
-      this.translateService.instant('property.category.vente'),
-      this.translateService.instant('property.category.locationVacances'),
+  getCategoryLabel(category: PropertyCategory): string {
+    switch (category) {
+      case PropertyCategory.Location:
+        return this.translateService.instant('property.categories.location');
+      case PropertyCategory.Vente:
+        return this.translateService.instant('property.categories.vente');
+      case PropertyCategory.LocationVacances:
+        return this.translateService.instant('property.categories.locationVacances');
+      default:
+        return '';
+    }
+  }
+
+  loadCategories(): void {
+    const options: ZardComboboxOption[] = [
+      { value: PropertyCategory.Location.toString(), label: this.translateService.instant('property.categories.location') },
+      { value: PropertyCategory.Vente.toString(), label: this.translateService.instant('property.categories.vente') },
+      { value: PropertyCategory.LocationVacances.toString(), label: this.translateService.instant('property.categories.locationVacances') },
     ];
-    return categories[category] || '';
+    this.categoryOptions.set(options);
+  }
+
+  onCategoryChange(categoryId: string | null): void {
+    const category = categoryId !== null ? +categoryId as PropertyCategory : null;
+    this.selectedCategory.set(category);
+    this.currentPage.set(1);
+    this.loadPropertyRequests();
   }
 }
 

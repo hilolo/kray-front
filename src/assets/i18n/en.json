@@ -516,17 +516,37 @@
         "client": "Client",
         "category": "Category",
         "budget": "Budget",
-        "surface": "Surface",
-        "ville": "City"
-      }
+        "pieces": "Pieces",
+        "isFurnished": "Furnished"
+      },
+      "collaboration": "Collaboration"
+    },
+    "collaboration": {
+      "enable": "Enable collaboration",
+      "disable": "Disable collaboration",
+      "confirm": {
+        "enable": {
+          "title": "Enable collaboration",
+          "description": "Are you sure you want to enable collaboration for request \"{{name}}\"?",
+          "ok": "Enable"
+        },
+        "disable": {
+          "title": "Disable collaboration",
+          "description": "Are you sure you want to disable collaboration for request \"{{name}}\"?",
+          "ok": "Disable"
+        }
+      },
+      "updated": "Collaboration updated successfully for {{name}}"
     },
     "edit": {
       "title": "Edit Request",
       "addTitle": "Add Request",
       "editTitle": "Edit Request",
+      "viewTitle": "View Request",
       "addNewTitle": "Add New Request",
       "editDescription": "Update the request information below",
       "addDescription": "Create a new request by filling in the information below",
+      "viewDescription": "View the request information below",
       "loading": "Loading request data...",
       "essential": "Essential",
       "more": "More",
@@ -537,9 +557,11 @@
       "categoryRequired": "Category is required",
       "categoryPlaceholder": "Select a category...",
       "budget": "Budget",
+      "budgetRequired": "Budget is required",
       "budgetPlaceholder": "Enter budget",
-      "pieces": "Rooms",
-      "piecesPlaceholder": "Number of rooms",
+      "pieces": "Pieces",
+      "piecesRequired": "Pieces is required",
+      "piecesPlaceholder": "Number of pieces",
       "bathrooms": "Bathrooms",
       "bathroomsPlaceholder": "Number of bathrooms",
       "isFurnished": "Furnished",

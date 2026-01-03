@@ -20,6 +20,35 @@
                 (keydown)="onSearchKeyDown($event)"
               />
             </div>
+            <!-- Collaboration filter -->
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                (click)="onCollaborationFilterChange(collaborationFilter() === true ? undefined : true)"
+                class="p-2 rounded-md hover:bg-accent transition-colors"
+                [title]="'propertyRequest.list.collaboration' | translate"
+              >
+                <z-icon 
+                  zType="users" 
+                  zSize="lg"
+                  [class]="collaborationFilter() === true ? 'text-green-600 dark:text-green-500' : 'text-muted-foreground'"
+                />
+              </button>
+            </div>
+            <!-- Category filter -->
+            <div class="w-full sm:w-[200px]">
+              <z-combobox
+                #categoryCombobox
+                [options]="categoryOptions()"
+                [value]="selectedCategory() !== null ? selectedCategory()!.toString() : null"
+                [placeholder]="'property.list.selectCategory' | translate"
+                [searchPlaceholder]="'property.list.searchCategories' | translate"
+                [emptyText]="'property.list.noCategoriesFound' | translate"
+                [searchable]="true"
+                (zValueChange)="onCategoryChange($event)"
+                class="w-full"
+              />
+            </div>
           </div>
           <!-- Buttons on right - Reset, then Add Request -->
           <div class="flex gap-2 items-center ml-auto">
@@ -60,14 +89,45 @@
           <span class="text-sm">{{ getCategoryLabel(row.category) }}</span>
         </ng-template>
 
+        <!-- Budget Column Template -->
+        <ng-template #budgetCell let-value let-row="row">
+          <div class="flex items-center gap-1">
+            <span class="font-medium">{{ row.budget | number:'1.0-0' }}</span>
+            <span class="text-muted-foreground text-sm">MAD</span>
+          </div>
+        </ng-template>
+
+        <!-- Pieces Column Template -->
+        <ng-template #piecesCell let-value let-row="row">
+          <span class="text-sm">{{ row.pieces || 0 }}</span>
+        </ng-template>
+
+        <!-- Is Furnished Column Template -->
+        <ng-template #isFurnishedCell let-value let-row="row">
+          <div class="flex items-center justify-center">
+            @if (row.isFurnished) {
+              <z-icon zType="check" zSize="sm" class="text-green-600 dark:text-green-500" />
+            } @else {
+              <z-icon zType="x" zSize="sm" class="text-muted-foreground" />
+            }
+          </div>
+        </ng-template>
+
         <!-- Collaboration Column Template -->
         <ng-template #collaborationCell let-value let-row="row">
           <div class="flex items-center justify-center">
-            <z-icon 
-              zType="users" 
-              zSize="lg"
-              [class]="row.isCollaborate ? 'text-green-600 dark:text-green-500' : 'text-muted-foreground'"
-            />
+            <button
+              type="button"
+              (click)="onCollaborationClick(row, $event)"
+              class="p-2 rounded-md hover:bg-accent transition-colors"
+              [title]="row.isCollaborate ? ('propertyRequest.collaboration.disable' | translate) : ('propertyRequest.collaboration.enable' | translate)"
+            >
+              <z-icon 
+                zType="users" 
+                zSize="lg"
+                [class]="row.isCollaborate ? 'text-green-600 dark:text-green-500' : 'text-muted-foreground'"
+              />
+            </button>
           </div>
         </ng-template>
 
@@ -77,6 +137,10 @@
             <z-button zType="ghost" zSize="icon" class="h-8 w-8" dropdown-trigger>
               <z-icon zType="ellipsis" zSize="sm" />
             </z-button>
+            <z-dropdown-menu-item (click)="onViewPropertyRequest(row)">
+              <z-icon zType="eye" zSize="sm" class="mr-2" />
+              <span>{{ 'common.view' | translate }}</span>
+            </z-dropdown-menu-item>
             <z-dropdown-menu-item (click)="onEditPropertyRequest(row)">
               <z-icon zType="pencil" zSize="sm" class="mr-2" />
               <span>{{ 'common.edit' | translate }}</span>

@@ -66,5 +66,19 @@ export class PropertyRequestService {
   delete(id: string): Observable<void> {
     return this.apiService.delete<void>(`PropertyRequest/${id}`);
   }
+
+  /**
+   * Update the collaboration status of a property request
+   * PATCH api/PropertyRequest/collaboration-status
+   * @param propertyRequestId Property request ID
+   * @param isCollaborate Collaboration status
+   * @returns Observable of updated property request
+   */
+  updateCollaborationStatus(propertyRequestId: string, isCollaborate: boolean): Observable<PropertyRequest> {
+    return this.apiService.patch<PropertyRequest>('PropertyRequest/collaboration-status', {
+      propertyRequestId,
+      isCollaborate,
+    });
+  }
 }
 

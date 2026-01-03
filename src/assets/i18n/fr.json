@@ -517,17 +517,37 @@
         "client": "Client",
         "category": "Catégorie",
         "budget": "Budget",
-        "surface": "Surface",
-        "ville": "Ville"
-      }
+        "pieces": "Pièces",
+        "isFurnished": "Meublé"
+      },
+      "collaboration": "Collaboration"
+    },
+    "collaboration": {
+      "enable": "Activer la collaboration",
+      "disable": "Désactiver la collaboration",
+      "confirm": {
+        "enable": {
+          "title": "Activer la collaboration",
+          "description": "Êtes-vous sûr de vouloir activer la collaboration pour la demande \"{{name}}\" ?",
+          "ok": "Activer"
+        },
+        "disable": {
+          "title": "Désactiver la collaboration",
+          "description": "Êtes-vous sûr de vouloir désactiver la collaboration pour la demande \"{{name}}\" ?",
+          "ok": "Désactiver"
+        }
+      },
+      "updated": "Collaboration mise à jour avec succès pour {{name}}"
     },
     "edit": {
       "title": "Modifier la demande",
       "addTitle": "Ajouter une demande",
       "editTitle": "Modifier la demande",
+      "viewTitle": "Voir la demande",
       "addNewTitle": "Ajouter une nouvelle demande",
       "editDescription": "Mettez à jour les informations de la demande ci-dessous",
       "addDescription": "Créez une nouvelle demande en remplissant les informations ci-dessous",
+      "viewDescription": "Visualisez les informations de la demande ci-dessous",
       "loading": "Chargement des données de la demande...",
       "essential": "Essentiel",
       "more": "Le plus",
@@ -538,8 +558,10 @@
       "categoryRequired": "La catégorie est requise",
       "categoryPlaceholder": "Sélectionner une catégorie...",
       "budget": "Budget",
+      "budgetRequired": "Le budget est requis",
       "budgetPlaceholder": "Entrez le budget",
       "pieces": "Pièces",
+      "piecesRequired": "Le nombre de pièces est requis",
       "piecesPlaceholder": "Nombre de pièces",
       "bathrooms": "Salles de bain",
       "bathroomsPlaceholder": "Nombre de salles de bain",

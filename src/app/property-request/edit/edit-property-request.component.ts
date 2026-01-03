@@ -64,11 +64,12 @@ export class EditPropertyRequestComponent implements OnInit, OnDestroy {
   private readonly propertyRequestService = inject(PropertyRequestService);
   private readonly translateService = inject(TranslateService);
   readonly dialogRef = inject(ZardDialogRef, { optional: true });
-  private readonly dialogData = inject<{ propertyRequestId?: string }>(Z_MODAL_DATA, { optional: true });
+  private readonly dialogData = inject<{ propertyRequestId?: string; viewMode?: boolean }>(Z_MODAL_DATA, { optional: true });
   private readonly destroy$ = new Subject<void>();
 
   readonly propertyRequestId = signal<string | null>(null);
   readonly isEditMode = computed(() => this.propertyRequestId() !== null);
+  readonly isViewMode = signal(false);
   readonly isLoading = signal(false);
   readonly isSaving = signal(false);
   readonly isDialogMode = computed(() => this.dialogRef !== null);
@@ -117,7 +118,11 @@ export class EditPropertyRequestComponent implements OnInit, OnDestroy {
     const data = this.formData();
     return (
       data.clientName.trim() !== '' &&
-      data.category !== null
+      data.category !== null &&
+      data.budget !== null &&
+      data.budget > 0 &&
+      data.pieces !== null &&
+      data.pieces > 0
     );
   });
 
@@ -148,9 +153,38 @@ export class EditPropertyRequestComponent implements OnInit, OnDestroy {
     return this.formSubmitted() && this.formData().category === null;
   });
 
+  readonly budgetError = computed(() => {
+    if (!this.formSubmitted()) return '';
+    const value = this.formData().budget;
+    if (value === null || value <= 0) {
+      return this.translateService.instant('propertyRequest.edit.budgetRequired');
+    }
+    return '';
+  });
+
+  readonly piecesError = computed(() => {
+    if (!this.formSubmitted()) return '';
+    const value = this.formData().pieces;
+    if (value === null || value <= 0) {
+      return this.translateService.instant('propertyRequest.edit.piecesRequired');
+    }
+    return '';
+  });
+
+  readonly budgetHasError = computed(() => {
+    const value = this.formData().budget;
+    return this.formSubmitted() && (value === null || value <= 0);
+  });
+
+  readonly piecesHasError = computed(() => {
+    const value = this.formData().pieces;
+    return this.formSubmitted() && (value === null || value <= 0);
+  });
+
   ngOnInit(): void {
     if (this.dialogData?.propertyRequestId) {
       this.propertyRequestId.set(this.dialogData.propertyRequestId);
+      this.isViewMode.set(this.dialogData.viewMode || false);
       this.loadPropertyRequest(this.dialogData.propertyRequestId);
     }
   }
