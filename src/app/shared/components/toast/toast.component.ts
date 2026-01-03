@@ -32,7 +32,7 @@ export class ZardToastComponent {
   readonly variant = input<ZardToastVariants['variant']>('default');
   readonly theme = input<'light' | 'dark' | 'system'>('system');
   readonly position = input<'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right'>('bottom-right');
-  readonly richColors = input<boolean>(false);
+  readonly richColors = input<boolean>(true);
   readonly expand = input<boolean>(false);
   readonly duration = input<number>(4000);
   readonly visibleToasts = input<number>(3);

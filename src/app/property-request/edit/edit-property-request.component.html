@@ -5,14 +5,31 @@
       <div class="flex items-center justify-between">
         <div>
           <h2 class="text-2xl font-bold mb-1">
-            @if (isEditMode()) {
+            @if (isViewMode()) {
+              {{ 'propertyRequest.edit.viewTitle' | translate }}
+            } @else if (isEditMode()) {
               {{ 'propertyRequest.edit.editTitle' | translate }}
             } @else {
               {{ 'propertyRequest.edit.addTitle' | translate }}
             }
+            @if (formData().budget || formData().pieces) {
+              <span class="text-lg font-normal text-muted-foreground ml-2">
+                @if (formData().budget) {
+                  <span>{{ 'propertyRequest.edit.budget' | translate }}: {{ formData().budget | number }}</span>
+                }
+                @if (formData().budget && formData().pieces) {
+                  <span class="mx-1">•</span>
+                }
+                @if (formData().pieces) {
+                  <span>{{ 'propertyRequest.edit.pieces' | translate }}: {{ formData().pieces }}</span>
+                }
+              </span>
+            }
           </h2>
           <p class="text-sm text-muted-foreground">
-            @if (isEditMode()) {
+            @if (isViewMode()) {
+              {{ 'propertyRequest.edit.viewDescription' | translate }}
+            } @else if (isEditMode()) {
               {{ 'propertyRequest.edit.editDescription' | translate }}
             } @else {
               {{ 'propertyRequest.edit.addDescription' | translate }}
@@ -20,24 +37,30 @@
           </p>
         </div>
         <div class="flex gap-2">
-          <z-button zType="outline" zSize="default" [disabled]="isSaving()" (click)="!isSaving() && onCancel()">
-            {{ 'common.cancel' | translate }}
-          </z-button>
-          <z-button [zType]="isSaving() || !isFormValid() ? 'ghost' : 'default'" [disabled]="isSaving()" (click)="!isSaving() && onSave()">
-            @if (isSaving()) {
-              <span class="flex items-center gap-2">
-                <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
-                {{ 'propertyRequest.edit.saving' | translate }}
-              </span>
-            } @else {
-              <z-icon zType="check" zSize="sm" class="mr-2" />
-              @if (isEditMode()) {
-                {{ 'propertyRequest.edit.updatePropertyRequest' | translate }}
+          @if (!isViewMode()) {
+            <z-button zType="outline" zSize="default" [disabled]="isSaving()" (click)="!isSaving() && onCancel()">
+              {{ 'common.cancel' | translate }}
+            </z-button>
+            <z-button [zType]="isSaving() || !isFormValid() ? 'ghost' : 'default'" [disabled]="isSaving()" (click)="!isSaving() && onSave()">
+              @if (isSaving()) {
+                <span class="flex items-center gap-2">
+                  <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+                  {{ 'propertyRequest.edit.saving' | translate }}
+                </span>
               } @else {
-                {{ 'propertyRequest.edit.createPropertyRequest' | translate }}
+                <z-icon zType="check" zSize="sm" class="mr-2" />
+                @if (isEditMode()) {
+                  {{ 'propertyRequest.edit.updatePropertyRequest' | translate }}
+                } @else {
+                  {{ 'propertyRequest.edit.createPropertyRequest' | translate }}
+                }
               }
-            }
-          </z-button>
+            </z-button>
+          } @else {
+            <z-button zType="outline" zSize="default" (click)="onCancel()">
+              {{ 'common.close' | translate }}
+            </z-button>
+          }
         </div>
       </div>
     </div>
@@ -56,7 +79,7 @@
           <!-- Form Section --><z-card><div class="p-6 space-y-6"><div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Client -->
                 <z-form-field>
-                  <z-form-label zRequired>{{ 'propertyRequest.edit.client' | translate }}</z-form-label>
+                  <z-form-label [zRequired]="!isViewMode()">{{ 'propertyRequest.edit.client' | translate }}</z-form-label>
                   <z-form-control [errorMessage]="clientNameError()">
                     <z-input-group>
                       <input
@@ -65,6 +88,7 @@
                         [ngModel]="formData().clientName"
                         (ngModelChange)="updateClientName($event)"
                         [placeholder]="'propertyRequest.edit.clientPlaceholder' | translate"
+                        [disabled]="isViewMode()"
                       />
                     </z-input-group>
                   </z-form-control>
@@ -72,13 +96,14 @@
 
                 <!-- Category -->
                 <z-form-field>
-                  <z-form-label zRequired>{{ 'propertyRequest.edit.category' | translate }}</z-form-label>
+                  <z-form-label [zRequired]="!isViewMode()">{{ 'propertyRequest.edit.category' | translate }}</z-form-label>
                   <z-form-control [errorMessage]="categoryError()">
                     <z-select
                       [zValue]="formData().category?.toString() ?? ''"
                       [zLabel]="getCategoryLabel()"
                       [zPlaceholder]="'propertyRequest.edit.categoryPlaceholder' | translate"
                       (zSelectionChange)="updateCategory(+$event)"
+                      [zDisabled]="isViewMode()"
                     >
                       <z-select-item [zValue]="PropertyCategory.Location.toString()">{{ 'property.categories.location' | translate }}</z-select-item>
                       <z-select-item [zValue]="PropertyCategory.Vente.toString()">{{ 'property.categories.vente' | translate }}</z-select-item>
@@ -89,8 +114,8 @@
               
                 <!-- Budget -->
                 <z-form-field>
-                  <z-form-label>{{ 'propertyRequest.edit.budget' | translate }}</z-form-label>
-                  <z-form-control>
+                  <z-form-label [zRequired]="!isViewMode()">{{ 'propertyRequest.edit.budget' | translate }}</z-form-label>
+                  <z-form-control [errorMessage]="budgetError()">
                     <z-input-group>
                       <input
                         z-input
@@ -98,6 +123,7 @@
                         [ngModel]="formData().budget"
                         (ngModelChange)="updateBudget($event)"
                         [placeholder]="'propertyRequest.edit.budgetPlaceholder' | translate"
+                        [disabled]="isViewMode()"
                       />
                     </z-input-group>
                   </z-form-control>
@@ -105,8 +131,8 @@
 
                 <!-- Pieces -->
                 <z-form-field>
-                  <z-form-label>{{ 'propertyRequest.edit.pieces' | translate }}</z-form-label>
-                  <z-form-control>
+                  <z-form-label [zRequired]="!isViewMode()">{{ 'propertyRequest.edit.pieces' | translate }}</z-form-label>
+                  <z-form-control [errorMessage]="piecesError()">
                     <z-input-group>
                       <input
                         z-input
@@ -114,6 +140,7 @@
                         [ngModel]="formData().pieces"
                         (ngModelChange)="updatePieces($event)"
                         [placeholder]="'propertyRequest.edit.piecesPlaceholder' | translate"
+                        [disabled]="isViewMode()"
                       />
                     </z-input-group>
                   </z-form-control>
@@ -130,6 +157,7 @@
                         [ngModel]="formData().bathrooms"
                         (ngModelChange)="updateBathrooms($event)"
                         [placeholder]="'propertyRequest.edit.bathroomsPlaceholder' | translate"
+                        [disabled]="isViewMode()"
                       />
                     </z-input-group>
                   </z-form-control>
@@ -143,6 +171,7 @@
                       <z-checkbox
                         [ngModel]="formData().isFurnished"
                         (checkChange)="updateIsFurnished($event)"
+                        [disabled]="isViewMode()"
                       />
                       <span class="text-sm text-muted-foreground">{{ 'propertyRequest.edit.isFurnished' | translate }}</span>
                     </div>
@@ -160,6 +189,7 @@
                         [ngModel]="formData().price"
                         (ngModelChange)="updatePrice($event)"
                         [placeholder]="'propertyRequest.edit.pricePlaceholder' | translate"
+                        [disabled]="isViewMode()"
                       />
                     </z-input-group>
                   </z-form-control>
@@ -176,6 +206,7 @@
                         [ngModel]="formData().surface"
                         (ngModelChange)="updateSurface($event)"
                         [placeholder]="'propertyRequest.edit.surfacePlaceholder' | translate"
+                        [disabled]="isViewMode()"
                       />
                     </z-input-group>
                   </z-form-control>
@@ -192,6 +223,7 @@
                         [ngModel]="formData().zone"
                         (ngModelChange)="updateZone($event)"
                         [placeholder]="'propertyRequest.edit.zonePlaceholder' | translate"
+                        [disabled]="isViewMode()"
                       />
                     </z-input-group>
                   </z-form-control>
@@ -208,6 +240,7 @@
                         [ngModel]="formData().ville"
                         (ngModelChange)="updateVille($event)"
                         [placeholder]="'propertyRequest.edit.villePlaceholder' | translate"
+                        [disabled]="isViewMode()"
                       />
                     </z-input-group>
                   </z-form-control>
@@ -224,6 +257,7 @@
                     (ngModelChange)="updateDescription($event)"
                     [placeholder]="'propertyRequest.edit.descriptionPlaceholder' | translate"
                     rows="4"
+                    [disabled]="isViewMode()"
                   ></textarea>
                 </z-form-control>
               </z-form-field>
