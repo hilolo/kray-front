@@ -95,7 +95,8 @@
     "buildings": "Buildings",
     "aiChat": "AI Chat",
     "fileManager": "File Manager",
-    "documents": "Documents"
+    "documents": "Documents",
+    "propertyRequests": "Property Requests"
   },
   "sidebar": {
     "expand": "Expand sidebar",
@@ -496,6 +497,67 @@
       "keyImage": "Key image",
       "saving": "Saving...",
       "saveKey": "Save Key",
+      "cancel": "Cancel"
+    }
+  },
+  "propertyRequest": {
+    "list": {
+      "title": "Property Requests",
+      "searchPlaceholder": "Search requests...",
+      "selectClient": "Client...",
+      "searchClients": "Search clients...",
+      "noClientsFound": "No clients found",
+      "addPropertyRequest": "Add Request",
+      "emptySearch": "No requests match your search",
+      "empty": "No requests available",
+      "deleteTitle": "Delete Request",
+      "deleteMessage": "Are you sure you want to delete the request for {{name}}? This action cannot be undone.",
+      "columns": {
+        "client": "Client",
+        "category": "Category",
+        "budget": "Budget",
+        "surface": "Surface",
+        "ville": "City"
+      }
+    },
+    "edit": {
+      "title": "Edit Request",
+      "addTitle": "Add Request",
+      "editTitle": "Edit Request",
+      "addNewTitle": "Add New Request",
+      "editDescription": "Update the request information below",
+      "addDescription": "Create a new request by filling in the information below",
+      "loading": "Loading request data...",
+      "essential": "Essential",
+      "more": "More",
+      "client": "Client",
+      "clientRequired": "Client is required",
+      "clientPlaceholder": "Select a client...",
+      "category": "Category",
+      "categoryRequired": "Category is required",
+      "categoryPlaceholder": "Select a category...",
+      "budget": "Budget",
+      "budgetPlaceholder": "Enter budget",
+      "pieces": "Rooms",
+      "piecesPlaceholder": "Number of rooms",
+      "bathrooms": "Bathrooms",
+      "bathroomsPlaceholder": "Number of bathrooms",
+      "isFurnished": "Furnished",
+      "price": "Price",
+      "pricePlaceholder": "Enter price",
+      "surface": "Surface",
+      "surfacePlaceholder": "Surface in m²",
+      "zone": "Zone",
+      "zonePlaceholder": "Enter zone",
+      "ville": "City",
+      "villePlaceholder": "Enter city",
+      "description": "Description",
+      "descriptionPlaceholder": "Enter description",
+      "isCollaborate": "Collaboration",
+      "saving": "Saving...",
+      "savePropertyRequest": "Save Request",
+      "updatePropertyRequest": "Update Request",
+      "createPropertyRequest": "Create Request",
       "cancel": "Cancel"
     }
   },

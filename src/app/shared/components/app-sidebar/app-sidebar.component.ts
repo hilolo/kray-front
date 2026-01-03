@@ -88,6 +88,7 @@ export class AppSidebarComponent implements OnInit, OnDestroy {
         { route: '/bank', label: 'Banks', labelKey: 'menu.banks', icon: 'building-2' },
         { route: '/tasks', label: 'Tasks', labelKey: 'menu.tasks', icon: 'clipboard' },
         { route: '/maintenance', label: 'Maintenance', labelKey: 'menu.maintenance', icon: 'settings' },
+        { route: '/property-request', label: 'Property Requests', labelKey: 'menu.propertyRequests', icon: 'search' },
         { route: '/ai-chat', label: 'AI Chat', labelKey: 'menu.aiChat', icon: 'sparkles' },
         { route: '/file-manager', label: 'File Manager', labelKey: 'menu.fileManager', icon: 'folder' },
         { route: '/document', label: 'Documents', labelKey: 'menu.documents', icon: 'file' },

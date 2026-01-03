@@ -127,4 +127,9 @@ export const routes: Routes = [
     loadChildren: () => import('./document/document.routes').then((m) => m.documentRoutes),
     canActivate: [authGuard],
   },
+  {
+    path: 'property-request',
+    loadChildren: () => import('./property-request/property-request.routes').then((m) => m.propertyRequestRoutes),
+    canActivate: [authGuard],
+  },
 ];

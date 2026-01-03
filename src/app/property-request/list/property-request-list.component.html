@@ -1,0 +1,110 @@
+<z-page [zTitle]="'propertyRequest.list.title' | translate">
+  <div class="flex flex-col h-full min-h-0">
+    <!-- Header Section -->
+    <div class="space-y-6 pb-6 flex-shrink-0">
+      <!-- Filter and Action Bar -->
+      <div class="flex flex-col gap-4">
+        <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+          <!-- Search on left -->
+          <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-1">
+            <!-- Search input -->
+            <div class="relative flex-1 sm:flex-initial w-full sm:w-[300px]">
+              <z-icon zType="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" zSize="sm" />
+              <input
+                z-input
+                type="text"
+                [placeholder]="'propertyRequest.list.searchPlaceholder' | translate"
+                class="pl-9 w-full"
+                [value]="searchInput()"
+                (input)="onSearchInputChange($any($event.target).value)"
+                (keydown)="onSearchKeyDown($event)"
+              />
+            </div>
+          </div>
+          <!-- Buttons on right - Reset, then Add Request -->
+          <div class="flex gap-2 items-center ml-auto">
+            <!-- Reset button -->
+            @if (showResetButton()) {
+              <z-button zType="outline" zSize="default" class="gap-2 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground" (click)="onResetFilters()">
+                <z-icon zType="x" zSize="sm" />
+                <span>{{ 'common.reset' | translate }}</span>
+              </z-button>
+            }
+            <z-button zType="default" zSize="default" class="gap-2" (click)="onAddPropertyRequest()">
+              <z-icon zType="plus" zSize="sm" />
+              {{ 'propertyRequest.list.addPropertyRequest' | translate }}
+            </z-button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Datatable -->
+    <div class="flex-1 min-h-0 overflow-y-auto pb-4 -mx-6 px-6">
+      <z-datatable
+        [zData]="propertyRequests()"
+        [zColumns]="columns()"
+        [zViewMode]="'list'"
+        [zEmptyMessage]="emptyMessage()"
+        [zLoading]="isLoading()"
+      >
+        <!-- Client Name Column Template -->
+        <ng-template #clientNameCell let-value let-row="row">
+          <div class="flex items-center gap-2">
+            <span class="font-medium">{{ row.client || 'N/A' }}</span>
+          </div>
+        </ng-template>
+
+        <!-- Category Column Template -->
+        <ng-template #categoryCell let-value let-row="row">
+          <span class="text-sm">{{ getCategoryLabel(row.category) }}</span>
+        </ng-template>
+
+        <!-- Collaboration Column Template -->
+        <ng-template #collaborationCell let-value let-row="row">
+          <div class="flex items-center justify-center">
+            <z-icon 
+              zType="users" 
+              zSize="lg"
+              [class]="row.isCollaborate ? 'text-green-600 dark:text-green-500' : 'text-muted-foreground'"
+            />
+          </div>
+        </ng-template>
+
+        <!-- Actions Column Template -->
+        <ng-template #actionsCell let-value let-row="row">
+          <z-dropdown-menu>
+            <z-button zType="ghost" zSize="icon" class="h-8 w-8" dropdown-trigger>
+              <z-icon zType="ellipsis" zSize="sm" />
+            </z-button>
+            <z-dropdown-menu-item (click)="onEditPropertyRequest(row)">
+              <z-icon zType="pencil" zSize="sm" class="mr-2" />
+              <span>{{ 'common.edit' | translate }}</span>
+            </z-dropdown-menu-item>
+            <z-divider class="my-1" />
+            <z-dropdown-menu-item (click)="onDeletePropertyRequest(row)" class="text-destructive focus:text-destructive">
+              <z-icon zType="x" zSize="sm" class="mr-2" />
+              <span>{{ 'common.delete' | translate }}</span>
+            </z-dropdown-menu-item>
+          </z-dropdown-menu>
+        </ng-template>
+      </z-datatable>
+    </div>
+
+    <!-- Pagination -->
+    @if (totalItems() > 0) {
+      <div class="flex-shrink-0 pt-4 border-t">
+        <z-datatable-pagination
+          [zCurrentPage]="currentPage()"
+          [zTotalPages]="totalPages()"
+          [zPageSize]="pageSize()"
+          [zPageSizeOptions]="pageSizeOptions()"
+          [zShow]="totalItems() > 0"
+          (zPageChange)="onPageChange($event)"
+          (zPageSizeChange)="onPageSizeChange($event)"
+        />
+      </div>
+    }
+  </div>
+</z-page>
+

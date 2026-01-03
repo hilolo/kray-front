@@ -95,7 +95,8 @@
     "buildings": "Bâtiments",
     "aiChat": "Chat IA",
     "fileManager": "Gestionnaire de fichiers",
-    "documents": "Documents"
+    "documents": "Documents",
+    "propertyRequests": "Demandes de biens"
   },
   "sidebar": {
     "expand": "Développer la barre latérale",
@@ -497,6 +498,67 @@
       "keyImage": "Image de la clé",
       "saving": "Enregistrement...",
       "saveKey": "Enregistrer la clé",
+      "cancel": "Annuler"
+    }
+  },
+  "propertyRequest": {
+    "list": {
+      "title": "Demandes de biens",
+      "searchPlaceholder": "Rechercher des demandes...",
+      "selectClient": "Client...",
+      "searchClients": "Rechercher des clients...",
+      "noClientsFound": "Aucun client trouvé",
+      "addPropertyRequest": "Ajouter une demande",
+      "emptySearch": "Aucune demande ne correspond à votre recherche",
+      "empty": "Aucune demande disponible",
+      "deleteTitle": "Supprimer la demande",
+      "deleteMessage": "Êtes-vous sûr de vouloir supprimer la demande de {{name}} ? Cette action est irréversible.",
+      "columns": {
+        "client": "Client",
+        "category": "Catégorie",
+        "budget": "Budget",
+        "surface": "Surface",
+        "ville": "Ville"
+      }
+    },
+    "edit": {
+      "title": "Modifier la demande",
+      "addTitle": "Ajouter une demande",
+      "editTitle": "Modifier la demande",
+      "addNewTitle": "Ajouter une nouvelle demande",
+      "editDescription": "Mettez à jour les informations de la demande ci-dessous",
+      "addDescription": "Créez une nouvelle demande en remplissant les informations ci-dessous",
+      "loading": "Chargement des données de la demande...",
+      "essential": "Essentiel",
+      "more": "Le plus",
+      "client": "Client",
+      "clientRequired": "Le client est requis",
+      "clientPlaceholder": "Sélectionner un client...",
+      "category": "Catégorie",
+      "categoryRequired": "La catégorie est requise",
+      "categoryPlaceholder": "Sélectionner une catégorie...",
+      "budget": "Budget",
+      "budgetPlaceholder": "Entrez le budget",
+      "pieces": "Pièces",
+      "piecesPlaceholder": "Nombre de pièces",
+      "bathrooms": "Salles de bain",
+      "bathroomsPlaceholder": "Nombre de salles de bain",
+      "isFurnished": "Meublé",
+      "price": "Prix",
+      "pricePlaceholder": "Entrez le prix",
+      "surface": "Surface",
+      "surfacePlaceholder": "Surface en m²",
+      "zone": "Zone",
+      "zonePlaceholder": "Entrez la zone",
+      "ville": "Ville",
+      "villePlaceholder": "Entrez la ville",
+      "description": "Description",
+      "descriptionPlaceholder": "Entrez la description",
+      "isCollaborate": "Collaboration",
+      "saving": "Enregistrement...",
+      "savePropertyRequest": "Enregistrer la demande",
+      "updatePropertyRequest": "Mettre à jour la demande",
+      "createPropertyRequest": "Créer la demande",
       "cancel": "Annuler"
     }
   },
