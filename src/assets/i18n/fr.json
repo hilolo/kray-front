@@ -135,7 +135,7 @@
           "ok": "Désactiver"
         }
       },
-      "updated": "Collaboration mise à jour avec succès pour \"{{name}}\""
+      "updated": "Collaboration mise à jour avec succès pour {{name}}"
     },
     "price": {
       "currency": "MAD",

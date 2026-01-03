@@ -134,7 +134,7 @@
           "ok": "Disable"
         }
       },
-      "updated": "Collaboration updated successfully for \"{{name}}\""
+      "updated": "Collaboration updated successfully for {{name}}"
     },
     "price": {
       "currency": "MAD",

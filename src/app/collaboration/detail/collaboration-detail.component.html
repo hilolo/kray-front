@@ -57,7 +57,7 @@
           <z-card class="p-0 overflow-hidden" zBodySpacing="none">
             <!-- Mobile: Horizontal scrollable gallery -->
             @if (attachments().length > 0) {
-              <div class="md:hidden relative w-full aspect-[4/3] bg-muted">
+              <div class="md:hidden relative w-full aspect-[3/2] bg-muted">
                 <div class="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide h-full" style="scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;">
                   @for (attachment of attachments(); track attachment.url; let i = $index) {
                     <div class="flex-shrink-0 w-full h-full snap-center relative">
@@ -77,14 +77,14 @@
                 </div>
               </div>
             } @else {
-              <div class="md:hidden relative w-full aspect-[4/3] bg-muted flex items-center justify-center">
+              <div class="md:hidden relative w-full aspect-[3/2] bg-muted flex items-center justify-center">
                 <z-icon zType="image" class="w-12 h-12 text-muted-foreground" />
               </div>
             }
 
             <!-- Desktop: Single image with navigation -->
             <div 
-              class="hidden md:block relative w-full aspect-[4/3] bg-muted flex items-center justify-center overflow-hidden"
+              class="hidden md:block relative w-full aspect-[3/2] bg-muted flex items-center justify-center overflow-hidden"
               (touchstart)="onTouchStart($event)"
               (touchend)="onTouchEnd($event)"
             >

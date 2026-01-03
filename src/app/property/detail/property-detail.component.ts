@@ -1100,7 +1100,7 @@ export class PropertyDetailComponent implements OnInit, OnDestroy {
           this.property.set(updatedProperty);
           this.toastService.success(
             this.translateService.instant('property.collaboration.updated', { 
-              status: action.toLowerCase() 
+              name: updatedProperty.name || property.name || ''
             })
           );
         },
