@@ -88,6 +88,11 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: 'collaboration/detail/:id',
+    loadComponent: () => import('./collaboration/detail/collaboration-detail.component').then((m) => m.CollaborationDetailComponent),
+    canActivate: [authGuard],
+  },
+  {
     path: 'tasks',
     loadChildren: () => import('./tasks/tasks.routes').then((m) => m.tasksRoutes),
     canActivate: [authGuard],

@@ -1337,6 +1337,11 @@
     "page": "Page",
     "pages": "pages",
     "contact": "Contacter",
-    "call": "Appelez"
+    "call": "Appelez",
+    "favorite": "Favoris",
+    "detail": {
+      "title": "Détails du bien",
+      "propertyNotAvailable": "Bien non disponible"
+    }
   }
 }

@@ -1,0 +1,174 @@
+<div class="flex flex-row gap-0 border border-border rounded-lg overflow-hidden bg-card relative w-full">
+  <!-- Image Carousel - Left Side (Fixed Size) -->
+  <div class="w-80 md:w-96 h-auto min-h-[400px] flex-shrink-0 relative bg-muted overflow-hidden cursor-pointer" (click)="onViewProperty($event)">
+    <!-- Heart icon (top left of image) -->
+    <button
+      type="button"
+      (click)="onFavoriteClick($event)"
+      class="absolute top-2 left-2 z-20 p-2 rounded-md hover:bg-accent transition-colors bg-background/80 backdrop-blur-sm"
+      [attr.aria-label]="isFavorite() ? 'Remove from favorites' : 'Add to favorites'"
+    >
+      <z-icon 
+        zType="heart" 
+        zSize="default" 
+        [class.text-red-600]="isFavorite()"
+        [class.text-red-500]="isFavorite()"
+        [class.text-muted-foreground]="!isFavorite()"
+        [style.fill]="isFavorite() ? 'currentColor' : 'none'"
+        class="w-6 h-6"
+      />
+    </button>
+    
+    @if (currentImage()) {
+      <img
+        [src]="currentImage()!"
+        [alt]="propertyDisplayName()"
+        class="w-full h-full min-h-[400px] object-cover"
+      />
+    } @else {
+      <div class="w-full h-full min-h-[400px] flex items-center justify-center">
+        <span class="text-4xl font-semibold text-muted-foreground">{{ propertyInitials() }}</span>
+      </div>
+    }
+    
+    <!-- Image Navigation Arrows - Always visible if multiple images -->
+    @if (hasMultipleImages()) {
+      <button
+        type="button"
+        (click)="onPreviousImage($event)"
+        class="absolute left-2 top-1/2 -translate-y-1/2 bg-background/90 hover:bg-background rounded-full p-2 shadow-md z-10 transition-colors"
+        aria-label="Previous image"
+      >
+        <z-icon zType="chevron-left" zSize="sm" />
+      </button>
+      <button
+        type="button"
+        (click)="onNextImage($event)"
+        class="absolute right-2 top-1/2 -translate-y-1/2 bg-background/90 hover:bg-background rounded-full p-2 shadow-md z-10 transition-colors"
+        aria-label="Next image"
+      >
+        <z-icon zType="chevron-right" zSize="sm" />
+      </button>
+      
+      <!-- Image Indicator -->
+      <div class="absolute bottom-2 left-1/2 -translate-x-1/2 bg-background/90 px-2 py-1 rounded-md text-xs font-medium">
+        {{ currentImageIndex() + 1 }} / {{ images().length }}
+      </div>
+    }
+  </div>
+
+  <!-- Content - Right Side -->
+  <div class="flex-1 flex flex-col p-4 gap-3 min-w-0">
+    <!-- Price and Title Row -->
+    <div class="flex items-start justify-between gap-4">
+      <div class="flex-1 flex flex-col gap-1">
+        <!-- Title/Reference -->
+        <div class="flex items-center gap-2 flex-wrap">
+          @if (property().name) {
+            <span class="font-semibold text-lg text-orange-600 dark:text-orange-500">{{ property().name }}</span>
+          }
+          @if (property().identifier) {
+            <span class="text-sm text-muted-foreground">{{ property().identifier }}</span>
+          }
+        </div>
+        
+        <!-- Location -->
+        @if (property().city) {
+          <div class="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <z-icon zType="map-pin" zSize="sm" class="flex-shrink-0" />
+            <span>{{ property().city }}</span>
+          </div>
+        }
+      </div>
+      
+      <!-- Price Badge - Dark gray with white text (Bigger) -->
+      @if (property().price) {
+        <div class="flex-shrink-0 bg-gray-700 dark:bg-gray-600 text-white px-4 py-2 rounded font-bold text-lg">
+          {{ property().price | propertyPrice:property().typePaiment }}
+        </div>
+      }
+    </div>
+    
+    <!-- Property Details: Surface and Pieces -->
+    <div class="flex items-center gap-4 text-sm">
+      @if (property().area) {
+        <div class="flex items-center gap-1.5">
+          <z-icon zType="file" zSize="sm" class="text-muted-foreground flex-shrink-0" />
+          <span class="text-muted-foreground">{{ 'collaboration.area' | translate }}:</span>
+          <span class="font-medium">{{ property().area }} m²</span>
+        </div>
+      }
+      @if (property().pieces) {
+        <div class="flex items-center gap-1.5">
+          <z-icon zType="house" zSize="sm" class="text-muted-foreground flex-shrink-0" />
+          <span class="text-muted-foreground">{{ 'collaboration.pieces' | translate }}:</span>
+          <span class="font-medium">{{ property().pieces }} {{ property().pieces === 1 ? ('collaboration.piece' | translate) : ('collaboration.pieces' | translate) }}</span>
+        </div>
+      }
+    </div>
+    
+    <!-- Description -->
+    @if (property().description) {
+      <p class="text-sm text-muted-foreground line-clamp-2">{{ property().description }}</p>
+    }
+    
+    <!-- Amenities/Equipment -->
+    @if (property().equipment && property().equipment.length > 0) {
+      <div class="flex flex-col gap-1.5">
+        <span class="text-sm font-medium">{{ 'collaboration.amenities' | translate }}:</span>
+        <div class="flex flex-wrap gap-2">
+          @for (item of property().equipment; track item) {
+            <div class="flex items-center gap-1.5 text-sm">
+              <z-icon zType="check" zSize="sm" class="text-green-600 dark:text-green-500 flex-shrink-0" />
+              <span>{{ item }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+    
+    <!-- Features/Characteristics -->
+    @if (property().features && property().features.length > 0) {
+      <div class="flex flex-col gap-1.5">
+        <span class="text-sm font-medium">{{ 'collaboration.features' | translate }}:</span>
+        <div class="flex flex-wrap gap-2">
+          @for (item of property().features; track item) {
+            <div class="flex items-center gap-1.5 text-sm">
+              <z-icon zType="star" zSize="sm" class="text-yellow-600 dark:text-yellow-500 flex-shrink-0" />
+              <span>{{ item }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+    
+    <!-- Lister Information -->
+    <div class="flex flex-col gap-1 text-sm text-muted-foreground mt-auto">
+      @if (property().companyName) {
+        <span>{{ property().companyName }}</span>
+      }
+      @if (property().collaborationAt) {
+        <span>{{ 'collaboration.sharedOn' | translate }}: {{ formatDate(property().collaborationAt!) }}</span>
+      }
+    </div>
+    
+    <!-- Contact Buttons -->
+    <div class="flex items-center gap-2 mt-2">
+      <z-button zType="outline" zSize="sm" class="flex-1" (click)="onContactEmail($event)">
+        <z-icon zType="mail" zSize="sm" class="mr-2" />
+        <span>{{ 'collaboration.contact' | translate }}</span>
+      </z-button>
+      @if (property().companyPhone) {
+        <z-button zType="outline" zSize="sm" class="flex-1" (click)="onContactCall($event)">
+          <z-icon zType="smartphone" zSize="sm" class="mr-2" />
+          <span>{{ 'collaboration.call' | translate }}</span>
+        </z-button>
+        <z-button zType="default" zSize="sm" class="flex-1 bg-green-600 hover:bg-green-700 text-white border-green-600 hover:border-green-700" (click)="onContactWhatsApp($event)">
+          <z-icon zType="message-circle" zSize="sm" class="mr-2" />
+          <span>WhatsApp</span>
+        </z-button>
+      }
+    </div>
+  </div>
+</div>
+

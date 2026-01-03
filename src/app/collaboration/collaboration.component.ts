@@ -8,10 +8,10 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
-import { PropertyPricePipe } from '@shared/pipes/property-price.pipe';
 import { PropertyCategory, TypePaiment } from '@shared/models/property/property.model';
 import { CollaborationService } from '@shared/services/collaboration.service';
 import type { CollaborationProperty } from '@shared/models/collaboration/collaboration-property.model';
+import { CollaborationPropertyCardComponent } from './collaboration-property-card/collaboration-property-card.component';
 
 @Component({
   selector: 'app-collaboration',
@@ -24,7 +24,7 @@ import type { CollaborationProperty } from '@shared/models/collaboration/collabo
     ZardComboboxComponent,
     TranslateModule,
     FormsModule,
-    PropertyPricePipe,
+    CollaborationPropertyCardComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './collaboration.component.html',
@@ -270,8 +270,10 @@ export class CollaborationComponent implements OnInit, OnDestroy {
     }
   }
 
-  toggleFavorite(propertyId: string, event: Event): void {
-    event.stopPropagation();
+  toggleFavorite(propertyId: string, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
     const favorites = new Set(this.favoritePropertyIds());
     if (favorites.has(propertyId)) {
       favorites.delete(propertyId);
@@ -280,6 +282,20 @@ export class CollaborationComponent implements OnInit, OnDestroy {
     }
     this.favoritePropertyIds.set(favorites);
     this.saveFavorites();
+  }
+
+  onFavoriteToggle(propertyId: string): void {
+    this.toggleFavorite(propertyId);
+  }
+
+  onPreviousImage(propertyId: string): void {
+    const event = new Event('click');
+    this.previousImage(propertyId, event);
+  }
+
+  onNextImage(propertyId: string): void {
+    const event = new Event('click');
+    this.nextImage(propertyId, event);
   }
 
   isFavorite(propertyId: string): boolean {
@@ -465,8 +481,12 @@ export class CollaborationComponent implements OnInit, OnDestroy {
     if (event) {
       event.stopPropagation();
     }
-    // Navigate to property detail - you can adjust this route later
-    this.router.navigate(['/property/detail', property.id]);
+    // Navigate to collaboration property detail page
+    this.router.navigate(['/collaboration/detail', property.id]);
+  }
+
+  onViewPropertyFromCard(property: CollaborationProperty): void {
+    this.onViewProperty(property);
   }
 
   getCurrentImageIndex(propertyId: string): number {

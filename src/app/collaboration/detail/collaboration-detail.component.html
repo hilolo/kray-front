@@ -1,0 +1,324 @@
+<z-page [zTitle]="'collaboration.detail.title' | translate">
+  <div class="flex flex-col h-full min-h-0">
+    <!-- Back button section -->
+    <div class="mb-6">
+      <z-button zType="outline" zSize="default" class="gap-2" (click)="backToApp()">
+        <z-icon zType="chevron-left" zSize="sm" />
+        {{ 'collaboration.backToApp' | translate }}
+      </z-button>
+    </div>
+
+    @if (isLoading()) {
+      <div class="flex items-center justify-center min-h-[400px]">
+        <div class="text-center space-y-4">
+          <z-icon zType="loader-circle" class="w-8 h-8 animate-spin mx-auto text-primary" />
+          <p class="text-sm text-muted-foreground">{{ 'common.loading' | translate }}</p>
+        </div>
+      </div>
+    } @else if (error()) {
+      <div class="flex items-center justify-center min-h-[400px]">
+        <z-card class="max-w-md">
+          <div class="text-center space-y-4">
+            <div class="flex justify-center">
+              <div class="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
+                <z-icon zType="circle-x" class="w-8 h-8 text-destructive" />
+              </div>
+            </div>
+            <div class="space-y-2">
+              <h2 class="text-xl font-semibold">{{ 'collaboration.detail.propertyNotAvailable' | translate }}</h2>
+              <p class="text-sm text-muted-foreground">{{ error() }}</p>
+            </div>
+          </div>
+        </z-card>
+      </div>
+    } @else if (property()) {
+      <div class="flex flex-col lg:flex-row gap-6">
+        <!-- Left Section: Property Details -->
+        <div class="flex-1 space-y-6 min-w-0">
+          <!-- Property Header -->
+          <div class="space-y-2">
+            @if (property()?.identifier) {
+              <z-badge zType="outline" class="inline-flex items-center gap-2 px-3 py-1">
+                <z-icon zType="id-card" zSize="sm" class="text-muted-foreground" />
+                <span class="text-xs font-medium text-muted-foreground">{{ 'common.reference' | translate }}:</span>
+                <span class="text-xs font-semibold text-foreground">{{ property()?.identifier }}</span>
+              </z-badge>
+            }
+            <h1 class="text-3xl font-bold">{{ propertyName() }}</h1>
+            @if (propertyLocation()) {
+              <div class="flex items-center gap-2 text-muted-foreground">
+                <z-icon zType="map-pin" zSize="sm" />
+                <span class="text-sm">{{ propertyLocation() }}</span>
+              </div>
+            }
+          </div>
+
+          <!-- Property Media -->
+          <z-card class="p-0 overflow-hidden" zBodySpacing="none">
+            <!-- Mobile: Horizontal scrollable gallery -->
+            @if (attachments().length > 0) {
+              <div class="md:hidden relative w-full aspect-[4/3] bg-muted">
+                <div class="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide h-full" style="scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;">
+                  @for (attachment of attachments(); track attachment.url; let i = $index) {
+                    <div class="flex-shrink-0 w-full h-full snap-center relative">
+                      <img 
+                        [src]="attachment.url" 
+                        [alt]="propertyName() + ' - Image ' + (i + 1)" 
+                        class="w-full h-full object-cover cursor-pointer"
+                        (click)="openImageViewer($event); imageViewerIndex.set(i)"
+                      />
+                    </div>
+                  }
+                </div>
+                <div class="absolute top-2 right-2 z-20 pointer-events-auto">
+                  <z-button zType="ghost" zSize="sm" class="text-xs bg-background/80 hover:bg-background/90 shadow-lg">
+                    {{ attachments().length }}
+                  </z-button>
+                </div>
+              </div>
+            } @else {
+              <div class="md:hidden relative w-full aspect-[4/3] bg-muted flex items-center justify-center">
+                <z-icon zType="image" class="w-12 h-12 text-muted-foreground" />
+              </div>
+            }
+
+            <!-- Desktop: Single image with navigation -->
+            <div 
+              class="hidden md:block relative w-full aspect-[4/3] bg-muted flex items-center justify-center overflow-hidden"
+              (touchstart)="onTouchStart($event)"
+              (touchend)="onTouchEnd($event)"
+            >
+              @if (currentImage()) {
+                <img 
+                  [src]="currentImage()!" 
+                  [alt]="propertyName()" 
+                  class="w-full h-full object-cover absolute inset-0 cursor-pointer touch-none select-none"
+                  (click)="openImageViewer($event)"
+                />
+              } @else {
+                <z-icon zType="image" class="w-12 h-12 text-muted-foreground" />
+              }
+              @if (attachments().length > 0) {
+                <div class="absolute top-2 right-2 z-20 pointer-events-auto">
+                  <z-button zType="ghost" zSize="sm" class="text-xs bg-background/80 hover:bg-background/90 shadow-lg">
+                    {{ currentImageIndex() + 1 }} / {{ attachments().length }}
+                  </z-button>
+                </div>
+                @if (attachments().length > 1) {
+                  <div class="absolute left-2 top-1/2 -translate-y-1/2 z-20 pointer-events-auto">
+                    <z-button 
+                      zType="ghost" 
+                      zSize="sm" 
+                      type="button"
+                      class="rounded-full bg-background/80 hover:bg-background/90 select-none shadow-lg" 
+                      (click)="previousImage($event); $event.stopPropagation()"
+                      (mousedown)="$event.preventDefault(); $event.stopPropagation()"
+                    >
+                      <z-icon zType="chevron-left" />
+                    </z-button>
+                  </div>
+                  <div class="absolute right-2 top-1/2 -translate-y-1/2 z-20 pointer-events-auto">
+                    <z-button 
+                      zType="ghost" 
+                      zSize="sm" 
+                      type="button"
+                      class="rounded-full bg-background/80 hover:bg-background/90 select-none shadow-lg" 
+                      (click)="nextImage($event); $event.stopPropagation()"
+                      (mousedown)="$event.preventDefault(); $event.stopPropagation()"
+                    >
+                      <z-icon zType="chevron-right" />
+                    </z-button>
+                  </div>
+                }
+              }
+            </div>
+          </z-card>
+
+          <!-- Price and Category -->
+          <z-card>
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-3xl font-bold">{{ price() | propertyPrice: typePaiment() }}</div>
+                @if (property()?.furnished) {
+                  <div class="mt-1">
+                    <z-badge zType="secondary" class="flex items-center gap-1 w-fit">
+                      <z-icon zType="house" zSize="sm" />
+                      <span>{{ 'property.public.furnished' | translate }}</span>
+                    </z-badge>
+                  </div>
+                }
+              </div>
+              <z-badge zType="default" class="text-sm px-3 py-1">
+                {{ getCategoryLabel(property()!.category) }}
+              </z-badge>
+            </div>
+          </z-card>
+
+          <!-- Property Details -->
+          <z-card [zTitle]="'property.public.propertyDetails' | translate">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              @if (property()?.area) {
+                <div class="space-y-1">
+                  <div class="flex items-center gap-2 text-muted-foreground">
+                    <z-icon zType="file" zSize="sm" />
+                    <span class="text-xs">{{ 'collaboration.area' | translate }}</span>
+                  </div>
+                  <div class="text-sm font-semibold">{{ property()!.area }} m²</div>
+                </div>
+              }
+              @if (property()?.pieces) {
+                <div class="space-y-1">
+                  <div class="flex items-center gap-2 text-muted-foreground">
+                    <z-icon zType="house" zSize="sm" />
+                    <span class="text-xs">{{ 'collaboration.rooms' | translate }}</span>
+                  </div>
+                  <div class="text-sm font-semibold">{{ property()!.pieces }}</div>
+                </div>
+              }
+              @if (property()?.bathrooms) {
+                <div class="space-y-1">
+                  <div class="flex items-center gap-2 text-muted-foreground">
+                    <z-icon zType="file" zSize="sm" />
+                    <span class="text-xs">{{ 'collaboration.bathrooms' | translate }}</span>
+                  </div>
+                  <div class="text-sm font-semibold">{{ property()!.bathrooms }}</div>
+                </div>
+              }
+            </div>
+          </z-card>
+
+          <!-- Description -->
+          @if (description()) {
+            <z-card [zTitle]="'property.public.description' | translate">
+              <p class="text-sm text-muted-foreground whitespace-pre-line break-words">{{ description() }}</p>
+            </z-card>
+          }
+
+          <!-- Features -->
+          @if (features().length > 0) {
+            <z-card [zTitle]="'collaboration.features' | translate">
+              <div class="flex flex-wrap gap-2">
+                @for (feature of features(); track feature) {
+                  <z-badge zType="secondary" class="text-xs">{{ feature }}</z-badge>
+                }
+              </div>
+            </z-card>
+          }
+
+          <!-- Equipment -->
+          @if (equipment().length > 0) {
+            <z-card [zTitle]="'collaboration.amenities' | translate">
+              <div class="flex flex-wrap gap-2">
+                @for (item of equipment(); track item) {
+                  <z-badge zType="outline" class="text-xs">{{ item }}</z-badge>
+                }
+              </div>
+            </z-card>
+          }
+        </div>
+
+        <!-- Right Section: Company Information -->
+        @if (hasCompanyInfo()) {
+          <div class="w-full lg:w-80 space-y-6 shrink-0 lg:pt-[136px]">
+            <z-card [zTitle]="'property.public.contactInformation' | translate">
+              <div class="space-y-4">
+                @if (companyLogoDataUrl() && !companyLogoError()) {
+                  <div class="flex justify-center mb-4">
+                    <img 
+                      [src]="companyLogoDataUrl()!" 
+                      [alt]="property()!.companyName || 'Company logo'"
+                      class="max-w-32 max-h-32 object-contain"
+                      (error)="onCompanyLogoError()"
+                    />
+                  </div>
+                }
+                @if ((!companyLogoDataUrl() || companyLogoError()) && property()?.companyName) {
+                  <div class="flex justify-center mb-4">
+                    <z-avatar zSize="lg" class="text-2xl">
+                      {{ (property()?.companyName || 'C').charAt(0).toUpperCase() }}
+                    </z-avatar>
+                  </div>
+                }
+                
+                @if (property()?.companyName) {
+                  <div class="text-center">
+                    <h3 class="font-semibold text-lg">{{ property()!.companyName }}</h3>
+                  </div>
+                }
+
+                <div class="space-y-3 pt-2">
+                  @if (property()?.companyPhone) {
+                    <div class="flex items-center gap-3">
+                      <z-icon zType="smartphone" zSize="sm" class="text-muted-foreground shrink-0" />
+                      <a 
+                        [href]="'tel:' + property()!.companyPhone" 
+                        class="text-sm text-primary hover:underline"
+                      >
+                        {{ property()!.companyPhone }}
+                      </a>
+                    </div>
+                  }
+
+                  @if (property()?.companyEmail) {
+                    <div class="flex items-center gap-3">
+                      <z-icon zType="mail" zSize="sm" class="text-muted-foreground shrink-0" />
+                      <a 
+                        [href]="'mailto:' + property()!.companyEmail" 
+                        class="text-sm text-primary hover:underline break-all"
+                      >
+                        {{ property()!.companyEmail }}
+                      </a>
+                    </div>
+                  }
+                </div>
+
+                <div class="pt-4 border-t space-y-2">
+                  @if (property()?.companyPhone) {
+                    <z-button 
+                      zType="default" 
+                      class="w-full" 
+                      (click)="callCompany()"
+                    >
+                      <z-icon zType="smartphone" zSize="sm" />
+                      {{ 'collaboration.call' | translate }}
+                    </z-button>
+                    <z-button 
+                      zType="default" 
+                      class="w-full bg-green-600 hover:bg-green-700 text-white border-green-600" 
+                      (click)="contactViaWhatsApp()"
+                    >
+                      <z-icon zType="message-circle" zSize="sm" />
+                      WhatsApp
+                    </z-button>
+                  }
+                  @if (property()?.companyEmail) {
+                    <z-button 
+                      zType="outline" 
+                      class="w-full" 
+                      (click)="emailCompany()"
+                    >
+                      <z-icon zType="mail" zSize="sm" />
+                      {{ 'collaboration.contact' | translate }}
+                    </z-button>
+                  }
+                </div>
+              </div>
+            </z-card>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Image Viewer -->
+    @if (isImageViewerOpen() && imageItems().length > 0) {
+      <z-image-viewer
+        [images]="imageItems()"
+        [currentIndex]="imageViewerIndex()"
+        [isOpen]="isImageViewerOpen()"
+        (close)="closeImageViewer()"
+        (imageChanged)="onImageChanged($event)"
+      />
+    }
+  </div>
+</z-page>
+

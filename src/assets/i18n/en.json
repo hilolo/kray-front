@@ -1332,6 +1332,11 @@
     "page": "Page",
     "pages": "pages",
     "contact": "Contact",
-    "call": "Call"
+    "call": "Call",
+    "favorite": "Favorite",
+    "detail": {
+      "title": "Property Details",
+      "propertyNotAvailable": "Property not available"
+    }
   }
 }

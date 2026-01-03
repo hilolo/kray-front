@@ -40,5 +40,15 @@ export class CollaborationService {
   bulkUnshareProperties(propertyIds: string[]): Observable<number> {
     return this.apiService.post<number>('Collaboration/bulk-unshare', { propertyIds });
   }
+
+  /**
+   * Get a single collaboration property by ID
+   * GET api/Collaboration/properties/{id}
+   * @param id Property ID
+   * @returns Observable of collaboration property
+   */
+  getCollaborationPropertyById(id: string): Observable<CollaborationProperty> {
+    return this.apiService.get<CollaborationProperty>(`Collaboration/properties/${id}`);
+  }
 }
 
