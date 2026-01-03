@@ -40,6 +40,8 @@ export class AppSidebarComponent implements OnInit, OnDestroy {
   private readonly darkmodeService = inject(DarkModeService);
   private readonly destroy$ = new Subject<void>();
   private readonly storageKey = 'sidebarCollapsed';
+  private readonly essentialGroupStorageKey = 'sidebarEssentialGroupCollapsed';
+  private readonly moreGroupStorageKey = 'sidebarMoreGroupCollapsed';
 
   @ViewChild('mobileSidebarTemplate', { static: true }) mobileSidebarTemplate!: TemplateRef<any>;
 
@@ -120,12 +122,28 @@ export class AppSidebarComponent implements OnInit, OnDestroy {
   readonly currentTheme = this.darkmodeService.getCurrentThemeSignal();
   readonly logoError = signal(false);
   private mobileSidebarRef: ZardSheetRef | null = null;
+  
+  // Group collapse states
+  readonly essentialGroupCollapsed = signal(this.loadEssentialGroupCollapsedState());
+  readonly moreGroupCollapsed = signal(this.loadMoreGroupCollapsedState());
 
   constructor() {
     // Persist sidebar collapsed state to localStorage whenever it changes
     effect(() => {
       const collapsed = this.sidebarCollapsed();
       localStorage.setItem(this.storageKey, String(collapsed));
+    });
+
+    // Persist essential group collapsed state to localStorage whenever it changes
+    effect(() => {
+      const collapsed = this.essentialGroupCollapsed();
+      localStorage.setItem(this.essentialGroupStorageKey, String(collapsed));
+    });
+
+    // Persist more group collapsed state to localStorage whenever it changes
+    effect(() => {
+      const collapsed = this.moreGroupCollapsed();
+      localStorage.setItem(this.moreGroupStorageKey, String(collapsed));
     });
 
     // Hide all tooltips when navigation starts (immediate hide on click)
@@ -159,6 +177,16 @@ export class AppSidebarComponent implements OnInit, OnDestroy {
 
   private loadCollapsedState(): boolean {
     const saved = localStorage.getItem(this.storageKey);
+    return saved === 'true';
+  }
+
+  private loadEssentialGroupCollapsedState(): boolean {
+    const saved = localStorage.getItem(this.essentialGroupStorageKey);
+    return saved === 'true';
+  }
+
+  private loadMoreGroupCollapsedState(): boolean {
+    const saved = localStorage.getItem(this.moreGroupStorageKey);
     return saved === 'true';
   }
 
@@ -281,6 +309,24 @@ export class AppSidebarComponent implements OnInit, OnDestroy {
         this.authService.logout();
       }
     });
+  }
+
+  toggleEssentialGroup(): void {
+    this.essentialGroupCollapsed.set(!this.essentialGroupCollapsed());
+  }
+
+  toggleMoreGroup(): void {
+    this.moreGroupCollapsed.set(!this.moreGroupCollapsed());
+  }
+
+  isGroupCollapsed(groupKey?: string): boolean {
+    if (groupKey === 'sidebar.essential') {
+      return this.essentialGroupCollapsed();
+    }
+    if (groupKey === 'sidebar.more') {
+      return this.moreGroupCollapsed();
+    }
+    return false;
   }
 
   ngOnDestroy(): void {

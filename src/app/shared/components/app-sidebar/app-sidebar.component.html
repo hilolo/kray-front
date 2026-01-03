@@ -36,12 +36,30 @@
         @for (group of zSidebarItems(); track group.groupKey || group.group) {
           <div class="flex flex-col gap-1">
             @if (!sidebarCollapsed() && (group.group || group.groupKey)) {
-              <div class="px-3 py-1.5 text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider">
-                {{ group.groupKey ? (group.groupKey | translate) : group.group }}
+              <div class="flex items-center justify-between px-3 py-1.5 group-header">
+                <div class="text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider">
+                  {{ group.groupKey ? (group.groupKey | translate) : group.group }}
+                </div>
+                @if (group.groupKey === 'sidebar.essential' || group.groupKey === 'sidebar.more') {
+                  <button
+                    type="button"
+                    (click)="group.groupKey === 'sidebar.essential' ? toggleEssentialGroup() : toggleMoreGroup(); $event.stopPropagation()"
+                    class="p-1 rounded hover:bg-sidebar-accent/50 transition-colors"
+                    [attr.aria-label]="isGroupCollapsed(group.groupKey) ? 'Expand group' : 'Collapse group'"
+                  >
+                    <z-icon 
+                      zType="chevron-down" 
+                      zSize="sm" 
+                      class="text-sidebar-foreground/60 transition-transform"
+                      [class.rotate-180]="!isGroupCollapsed(group.groupKey)"
+                    />
+                  </button>
+                }
               </div>
             }
-            <div class="flex flex-col gap-0.5">
-              @for (item of group.items; track item.route) {
+            @if (sidebarCollapsed() || !group.groupKey || !isGroupCollapsed(group.groupKey)) {
+              <div class="flex flex-col gap-0.5">
+                @for (item of group.items; track item.route) {
                 @if (sidebarCollapsed()) {
                   <a
                     [routerLink]="item.route"
@@ -72,7 +90,8 @@
                   </a>
                 }
               }
-            </div>
+              </div>
+            }
           </div>
         }
       </nav>
@@ -153,12 +172,30 @@
         @for (group of zSidebarItems(); track group.groupKey || group.group) {
           <div class="flex flex-col gap-1">
             @if (group.group || group.groupKey) {
-              <div class="px-3 py-1.5 text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider">
-                {{ group.groupKey ? (group.groupKey | translate) : group.group }}
+              <div class="flex items-center justify-between px-3 py-1.5 group-header">
+                <div class="text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider">
+                  {{ group.groupKey ? (group.groupKey | translate) : group.group }}
+                </div>
+                @if (group.groupKey === 'sidebar.essential' || group.groupKey === 'sidebar.more') {
+                  <button
+                    type="button"
+                    (click)="group.groupKey === 'sidebar.essential' ? toggleEssentialGroup() : toggleMoreGroup(); $event.stopPropagation()"
+                    class="p-1 rounded hover:bg-sidebar-accent/50 transition-colors"
+                    [attr.aria-label]="isGroupCollapsed(group.groupKey) ? 'Expand group' : 'Collapse group'"
+                  >
+                    <z-icon 
+                      zType="chevron-down" 
+                      zSize="sm" 
+                      class="text-sidebar-foreground/60 transition-transform"
+                      [class.rotate-180]="!isGroupCollapsed(group.groupKey)"
+                    />
+                  </button>
+                }
               </div>
             }
-            <div class="flex flex-col gap-0.5">
-              @for (item of group.items; track item.route) {
+            @if (!group.groupKey || !isGroupCollapsed(group.groupKey)) {
+              <div class="flex flex-col gap-0.5">
+                @for (item of group.items; track item.route) {
                 <a
                   [routerLink]="item.route"
                   routerLinkActive="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
@@ -175,7 +212,8 @@
                   <span [class]="item.isActive ? 'text-sm text-green-600 dark:text-green-500 font-medium' : 'text-sm text-sidebar-foreground'">{{ item.labelKey ? (item.labelKey | translate) : item.label }}</span>
                 </a>
               }
-            </div>
+              </div>
+            }
           </div>
         }
       </nav>
