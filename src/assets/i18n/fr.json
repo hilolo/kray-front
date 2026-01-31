@@ -1069,6 +1069,37 @@
           "success": "Le partage a été retiré avec succès pour {count} biens."
         }
       },
+      "collaborationRequests": {
+        "title": "Demandes de biens",
+        "description": "Gérez les demandes de biens que vous partagez avec d'autres entreprises pour la collaboration. Vous pouvez retirer le partage d'une ou plusieurs demandes à tout moment.",
+        "loading": "Chargement des demandes partagées...",
+        "empty": "Aucune demande de bien n'a été partagée.",
+        "selectedCount": {
+          "none": "Aucun sélectionné",
+          "one": "1 demande sélectionnée",
+          "many": "{{count}} demandes sélectionnées"
+        },
+        "unshareSelected": "Retirer le partage ({{count}})",
+        "unshareAll": "Retirer le partage de toutes",
+        "bulkUnshare": {
+          "title": "Retirer le partage des demandes",
+          "description": {
+            "one": "Êtes-vous sûr de vouloir retirer le partage de cette demande ? Les autres entreprises ne pourront plus la voir.",
+            "many": "Êtes-vous sûr de vouloir retirer le partage de ces {{count}} demandes ? Les autres entreprises ne pourront plus les voir."
+          },
+          "ok": "Retirer le partage",
+          "success": {
+            "one": "Le partage a été retiré avec succès pour 1 demande.",
+            "many": "Le partage a été retiré avec succès pour {{count}} demandes."
+          }
+        },
+        "unshareAllDialog": {
+          "title": "Retirer le partage de toutes les demandes",
+          "description": "Êtes-vous sûr de vouloir retirer le partage de toutes les {count} demandes ? Les autres entreprises ne pourront plus les voir.",
+          "ok": "Retirer le partage de toutes",
+          "success": "Le partage a été retiré avec succès pour {count} demandes."
+        }
+      },
       "signature": {
         "title": "Signature",
         "description": "Téléchargez et gérez l'image de signature de votre entreprise",

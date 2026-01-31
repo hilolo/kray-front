@@ -1,4 +1,5 @@
 import { Component, computed, effect, ElementRef, inject, signal, TemplateRef, viewChild, ViewContainerRef, OnInit, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ZardPageComponent } from '../page/page.component';
 import { ZardFormFieldComponent, ZardFormControlComponent, ZardFormLabelComponent } from '@shared/components/form/form.component';
@@ -29,7 +30,8 @@ import type { UserPermissions } from '@shared/models/user/user-permissions.model
 import { MODULES } from '@shared/constants/modules.constant';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { CollaborationService } from '@shared/services/collaboration.service';
-import type { Property } from '@shared/models/property/property.model';
+import { PropertyCategory, type Property } from '@shared/models/property/property.model';
+import type { PropertyRequest } from '@shared/models/property-request/property-request.model';
 import { PropertyPricePipe } from '@shared/pipes/property-price.pipe';
 
 type SettingsSection = 'account' | 'security' | 'team' | 'application';
@@ -38,6 +40,7 @@ type SettingsSection = 'account' | 'security' | 'team' | 'application';
   selector: 'app-settings',
   standalone: true,
   imports: [
+    CommonModule,
     FormsModule,
     ZardPageComponent,
     ZardFormFieldComponent,
@@ -293,6 +296,14 @@ export class SettingsComponent implements OnInit, OnDestroy {
   selectedPropertyIds = signal<Set<string>>(new Set());
   isLoadingSharedProperties = signal(false);
   isUnsharing = signal(false);
+  hasLoadedSharedProperties = signal(false);
+
+  // Collaboration Property Requests Settings
+  sharedRequests = signal<PropertyRequest[]>([]);
+  selectedRequestIds = signal<Set<string>>(new Set());
+  isLoadingSharedRequests = signal(false);
+  isUnsharingRequests = signal(false);
+  hasLoadedSharedRequests = signal(false);
 
   // Signature Settings
   signatureImageUrl = signal<string | null>(null);
@@ -365,10 +376,15 @@ export class SettingsComponent implements OnInit, OnDestroy {
       }
     });
 
-    // Load shared properties when collaboration section is active
+    // Load shared properties and requests when application section is active (once per visit)
     effect(() => {
-      if (this.activeSection() === 'application' && this.sharedProperties().length === 0) {
-        this.loadSharedProperties();
+      if (this.activeSection() === 'application') {
+        if (!this.hasLoadedSharedProperties()) {
+          this.loadSharedProperties();
+        }
+        if (!this.hasLoadedSharedRequests()) {
+          this.loadSharedRequests();
+        }
       }
     });
   }
@@ -1419,14 +1435,51 @@ export class SettingsComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (properties) => {
           this.sharedProperties.set(properties);
+          this.hasLoadedSharedProperties.set(true);
           this.isLoadingSharedProperties.set(false);
         },
         error: (error) => {
           console.error('Error loading shared properties:', error);
-          this.isLoadingSharedProperties.set(false);
           this.sharedProperties.set([]);
+          this.hasLoadedSharedProperties.set(true);
+          this.isLoadingSharedProperties.set(false);
         }
       });
+  }
+
+  /**
+   * Load shared property requests (requests we have shared for collaboration)
+   */
+  loadSharedRequests(): void {
+    this.isLoadingSharedRequests.set(true);
+    this.collaborationService.getMySharedRequests()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (requests) => {
+          this.sharedRequests.set(requests);
+          this.hasLoadedSharedRequests.set(true);
+          this.isLoadingSharedRequests.set(false);
+        },
+        error: (error) => {
+          console.error('Error loading shared property requests:', error);
+          this.sharedRequests.set([]);
+          this.hasLoadedSharedRequests.set(true);
+          this.isLoadingSharedRequests.set(false);
+        }
+      });
+  }
+
+  getRequestCategoryLabel(request: PropertyRequest): string {
+    switch (request.category) {
+      case PropertyCategory.Location:
+        return this.translateService.instant('property.categories.location');
+      case PropertyCategory.Vente:
+        return this.translateService.instant('property.categories.vente');
+      case PropertyCategory.LocationVacances:
+        return this.translateService.instant('property.categories.locationVacances');
+      default:
+        return '';
+    }
   }
 
   /**
@@ -1580,6 +1633,130 @@ export class SettingsComponent implements OnInit, OnDestroy {
             error: (error) => {
               console.error('Error unsharing all properties:', error);
               this.isUnsharing.set(false);
+            }
+          });
+      }
+    });
+  }
+
+  toggleRequestSelection(requestId: string): void {
+    const selected = new Set(this.selectedRequestIds());
+    if (selected.has(requestId)) {
+      selected.delete(requestId);
+    } else {
+      selected.add(requestId);
+    }
+    this.selectedRequestIds.set(selected);
+  }
+
+  selectAllRequests(): void {
+    const allIds = new Set(this.sharedRequests().map(r => r.id));
+    this.selectedRequestIds.set(allIds);
+  }
+
+  deselectAllRequests(): void {
+    this.selectedRequestIds.set(new Set());
+  }
+
+  isRequestSelected(requestId: string): boolean {
+    return this.selectedRequestIds().has(requestId);
+  }
+
+  readonly areAllRequestsSelected = computed(() => {
+    const requests = this.sharedRequests();
+    if (requests.length === 0) return false;
+    const selected = this.selectedRequestIds();
+    return requests.every(r => selected.has(r.id));
+  });
+
+  readonly selectedRequestCount = computed(() => this.selectedRequestIds().size);
+
+  getSelectedRequestCountText(): string {
+    const count = this.selectedRequestCount();
+    if (count === 0) {
+      return this.translateService.instant('settings.application.collaborationRequests.selectedCount.none');
+    } else if (count === 1) {
+      return this.translateService.instant('settings.application.collaborationRequests.selectedCount.one');
+    } else {
+      return this.translateService.instant('settings.application.collaborationRequests.selectedCount.many', { count });
+    }
+  }
+
+  onBulkUnshareRequests(): void {
+    const selectedIds = Array.from(this.selectedRequestIds());
+    if (selectedIds.length === 0) return;
+
+    const count = selectedIds.length;
+    const descriptionKey = count === 1
+      ? 'settings.application.collaborationRequests.bulkUnshare.description.one'
+      : 'settings.application.collaborationRequests.bulkUnshare.description.many';
+
+    const dialogRef = this.alertDialogService.confirm({
+      zTitle: this.translateService.instant('settings.application.collaborationRequests.bulkUnshare.title'),
+      zDescription: this.translateService.instant(descriptionKey, { count }),
+      zOkText: this.translateService.instant('settings.application.collaborationRequests.bulkUnshare.ok'),
+      zCancelText: this.translateService.instant('common.cancel'),
+      zOkDestructive: true,
+      zViewContainerRef: this.viewContainerRef,
+    });
+
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((confirmed) => {
+      if (confirmed) {
+        this.isUnsharingRequests.set(true);
+        this.collaborationService.bulkUnshareRequests(selectedIds)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: (unsharedCount) => {
+              const successKey = unsharedCount === 1
+                ? 'settings.application.collaborationRequests.bulkUnshare.success.one'
+                : 'settings.application.collaborationRequests.bulkUnshare.success.many';
+              this.toastService.success(
+                this.translateService.instant(successKey, { count: unsharedCount })
+              );
+              this.deselectAllRequests();
+              this.loadSharedRequests();
+              this.isUnsharingRequests.set(false);
+            },
+            error: (error) => {
+              console.error('Error bulk unsharing property requests:', error);
+              this.isUnsharingRequests.set(false);
+            }
+          });
+      }
+    });
+  }
+
+  onUnshareAllRequests(): void {
+    const allIds = this.sharedRequests().map(r => r.id);
+    if (allIds.length === 0) return;
+
+    const count = allIds.length;
+    const dialogRef = this.alertDialogService.confirm({
+      zTitle: this.translateService.instant('settings.application.collaborationRequests.unshareAllDialog.title'),
+      zDescription: this.translateService.instant('settings.application.collaborationRequests.unshareAllDialog.description', { count }),
+      zOkText: this.translateService.instant('settings.application.collaborationRequests.unshareAllDialog.ok'),
+      zCancelText: this.translateService.instant('common.cancel'),
+      zOkDestructive: true,
+      zViewContainerRef: this.viewContainerRef,
+    });
+
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((confirmed) => {
+      if (confirmed) {
+        this.isUnsharingRequests.set(true);
+        this.collaborationService.bulkUnshareRequests(allIds)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: (unsharedCount) => {
+              this.toastService.success(
+                this.translateService.instant('settings.application.collaborationRequests.unshareAllDialog.success', { count: unsharedCount })
+              );
+              this.deselectAllRequests();
+              this.loadSharedRequests();
+              this.isUnsharingRequests.set(false);
+            },
+            error: (error) => {
+              console.error('Error unsharing all property requests:', error);
+              this.isUnsharingRequests.set(false);
             }
           });
       }

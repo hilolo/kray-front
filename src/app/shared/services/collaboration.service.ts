@@ -4,6 +4,7 @@ import { ApiService } from './api.service';
 import type { CollaborationProperty } from '../models/collaboration/collaboration-property.model';
 import type { CollaborationRequest } from '../models/collaboration/collaboration-request.model';
 import type { Property } from '../models/property/property.model';
+import type { PropertyRequest } from '../models/property-request/property-request.model';
 
 /**
  * Service for collaboration-related API calls
@@ -49,6 +50,25 @@ export class CollaborationService {
    */
   bulkUnshareProperties(propertyIds: string[]): Observable<number> {
     return this.apiService.post<number>('Collaboration/bulk-unshare', { propertyIds });
+  }
+
+  /**
+   * Get all collaboration-enabled property requests from the current company (requests we have shared)
+   * GET api/Collaboration/my-requests
+   * @returns Observable of property request list
+   */
+  getMySharedRequests(): Observable<PropertyRequest[]> {
+    return this.apiService.get<PropertyRequest[]>('Collaboration/my-requests');
+  }
+
+  /**
+   * Bulk unshare property requests (set IsCollaborate = false for multiple requests)
+   * POST api/Collaboration/bulk-unshare-requests
+   * @param propertyRequestIds List of property request IDs to unshare
+   * @returns Observable of number of requests successfully unshared
+   */
+  bulkUnshareRequests(propertyRequestIds: string[]): Observable<number> {
+    return this.apiService.post<number>('Collaboration/bulk-unshare-requests', { propertyRequestIds });
   }
 
   /**

@@ -975,6 +975,103 @@
                       }
                     </div>
                     }
+
+                    <!-- Property Requests (collaboration bulk disable) -->
+                    <div class="mt-8 pt-8 border-t border-border">
+                      <h3 class="text-lg font-semibold mb-2">{{ 'settings.application.collaborationRequests.title' | translate }}</h3>
+                      <p class="text-sm text-muted-foreground mb-4">
+                        {{ 'settings.application.collaborationRequests.description' | translate }}
+                      </p>
+                      @if (isLoadingSharedRequests()) {
+                      <div class="flex items-center justify-center p-8">
+                        <div class="text-muted-foreground">{{ 'settings.application.collaborationRequests.loading' | translate }}</div>
+                      </div>
+                      } @else {
+                      @if (sharedRequests().length > 0) {
+                      <div class="flex items-center justify-between gap-4 pb-4 border-b">
+                        <div class="flex items-center gap-4">
+                          <z-checkbox
+                            [ngModel]="areAllRequestsSelected()"
+                            (checkChange)="areAllRequestsSelected() ? deselectAllRequests() : selectAllRequests()"
+                          />
+                          <span class="text-sm text-muted-foreground">
+                            {{ getSelectedRequestCountText() }}
+                          </span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                          @if (selectedRequestCount() > 0) {
+                          <z-button
+                            zType="outline"
+                            zSize="default"
+                            class="gap-2 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
+                            (click)="onBulkUnshareRequests()"
+                            [disabled]="isUnsharingRequests()"
+                          >
+                            <z-icon zType="x" zSize="sm" />
+                            {{ 'settings.application.collaborationRequests.unshareSelected' | translate: { count: selectedRequestCount() } }}
+                          </z-button>
+                          }
+                          <z-button
+                            zType="outline"
+                            zSize="default"
+                            class="gap-2 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
+                            (click)="onUnshareAllRequests()"
+                            [disabled]="isUnsharingRequests()"
+                          >
+                            <z-icon zType="x" zSize="sm" />
+                            {{ 'settings.application.collaborationRequests.unshareAll' | translate }}
+                          </z-button>
+                        </div>
+                      </div>
+                      }
+                      @if (sharedRequests().length === 0) {
+                      <div class="flex flex-col items-center justify-center p-8 text-center">
+                        <z-icon zType="file-text" zSize="xl" class="text-muted-foreground mb-4" />
+                        <p class="text-muted-foreground">{{ 'settings.application.collaborationRequests.empty' | translate }}</p>
+                      </div>
+                      } @else {
+                      <div class="space-y-2 mt-4">
+                        @for (request of sharedRequests(); track request.id) {
+                        <div class="flex items-center gap-4 p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors">
+                          <z-checkbox
+                            [ngModel]="isRequestSelected(request.id)"
+                            (checkChange)="toggleRequestSelection(request.id)"
+                          />
+                          <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between gap-2 mb-2 flex-wrap">
+                              <div class="flex items-center gap-2">
+                                @if (request.zone || request.ville) {
+                                <span class="font-semibold text-base">{{ request.ville }}{{ request.ville && request.zone ? ' - ' : '' }}{{ request.zone || '' }}</span>
+                                }
+                                @if (getRequestCategoryLabel(request)) {
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-muted">{{ getRequestCategoryLabel(request) }}</span>
+                                }
+                              </div>
+                              @if (request.budget > 0) {
+                              <span class="text-sm font-medium text-primary">{{ request.budget | number:'1.0-0' }} MAD</span>
+                              }
+                            </div>
+                            <div class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                              @if (request.pieces > 0) {
+                              <span>{{ request.pieces }} {{ request.pieces === 1 ? ('collaboration.piece' | translate) : ('collaboration.pieces' | translate) }}</span>
+                              }
+                              @if (request.bathrooms > 0) {
+                              <span>{{ request.bathrooms }} {{ 'collaboration.bathroom' | translate }}</span>
+                              }
+                              @if (request.surface > 0) {
+                              <span>{{ request.surface }} m²</span>
+                              }
+                              @if (request.isFurnished) {
+                              <span>{{ 'property.detail.furnished' | translate }}</span>
+                              }
+                            </div>
+                          </div>
+                        </div>
+                        }
+                      </div>
+                      }
+                      }
+                    </div>
                   </div>
                   }
                 </z-accordion-item>
