@@ -546,673 +546,710 @@
 
         @case ('application') {
         <div class="space-y-8">
-          <h1 class="text-3xl font-bold">{{ 'settings.application.title' | translate }}</h1>
+          <!-- Header with title and back button -->
+          <div class="flex items-center gap-4">
+            @if (activeApplicationSubSection()) {
+            <button type="button" (click)="backToApplicationOverview()"
+              class="p-2 rounded-md hover:bg-accent transition-colors">
+              <z-icon zType="chevron-left" zSize="default" />
+            </button>
+            }
+            <h1 class="text-3xl font-bold">
+              @if (activeApplicationSubSection()) {
+                @switch (activeApplicationSubSection()) {
+                  @case ('layout') { {{ 'settings.application.layoutSettings.title' | translate }} }
+                  @case ('property') { {{ 'settings.application.property.title' | translate }} }
+                  @case ('signature') { {{ 'settings.application.signature.title' | translate }} }
+                  @case ('collaboration') { {{ 'settings.application.collaboration.title' | translate }} }
+                  @case ('notification') { {{ 'settings.application.notification.title' | translate }} }
+                }
+              } @else {
+                {{ 'settings.application.title' | translate }}
+              }
+            </h1>
+          </div>
 
-          <!-- Settings Accordion -->
-          <div class="space-y-4">
-            <!-- Layout Settings -->
-            <div class="bg-card border border-border rounded-lg shadow-sm overflow-hidden">
-              <z-accordion zType="single" class="border-0">
-                <z-accordion-item [zTitle]="'settings.application.layoutSettings.title' | translate" zValue="layout-settings"
-                  class="!px-6 !py-5 border-b-0 !text-lg">
-                  <div class="mb-6">
-                    <h3 class="text-sm font-medium mb-2">{{ 'settings.application.layoutSettings.preset' | translate }}</h3>
-                    <p class="text-sm text-muted-foreground mb-4">{{ 'settings.application.layoutSettings.chooseColorTheme' | translate }}</p>
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                      @for (preset of themePresets; track preset.value) {
-                      <button type="button" (click)="onThemeChange(preset.value)" [class]="currentTheme() === preset.value 
-                                ? 'border-2 border-primary bg-primary/5 ring-2 ring-primary/20'
-                                : 'border border-border hover:border-primary/50 hover:bg-accent/50'"
-                        class="relative flex flex-col items-center gap-3 p-4 rounded-lg bg-card transition-all cursor-pointer group">
-                        <!-- Color Swatch -->
-                        <div class="size-12 rounded-lg flex-shrink-0 shadow-sm border border-border/50"
-                          [style.background]="preset.color"></div>
+          @if (!activeApplicationSubSection()) {
+          <!-- Search Input -->
+          <div class="relative">
+            <z-icon zType="search" zSize="sm" class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <input z-input type="text" 
+              [ngModel]="applicationSearchQuery()" 
+              (ngModelChange)="applicationSearchQuery.set($event)"
+              [placeholder]="'common.search' | translate"
+              class="w-full pl-10" />
+            @if (applicationSearchQuery()) {
+            <button type="button" (click)="applicationSearchQuery.set('')"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+              <z-icon zType="x" zSize="sm" />
+            </button>
+            }
+          </div>
 
-                        <!-- Label -->
-                        <span class="text-sm font-medium text-center">{{ preset.label }}</span>
+          <!-- Settings Cards Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            @for (card of filteredApplicationSettingsCards(); track card.id) {
+            <button type="button" (click)="openApplicationSubSection(card.id)"
+              class="group bg-card border border-border rounded-lg p-6 text-left hover:border-primary/50 hover:shadow-md transition-all">
+              <div class="flex items-start gap-4">
+                <div class="flex-shrink-0 size-12 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                  <z-icon [zType]="$any(card.icon)" zSize="lg" class="text-primary" />
+                </div>
+                <div class="flex-1 min-w-0">
+                  <h3 class="font-semibold text-base mb-1 group-hover:text-primary transition-colors">
+                    {{ card.titleKey | translate }}
+                  </h3>
+                  <p class="text-sm text-muted-foreground line-clamp-2">
+                    {{ card.descriptionKey | translate }}
+                  </p>
+                </div>
+                <z-icon zType="chevron-right" zSize="sm" class="text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0 mt-1" />
+              </div>
+            </button>
+            }
+          </div>
 
-                        <!-- Selected Indicator -->
-                        @if (currentTheme() === preset.value) {
-                        <div class="absolute top-2 right-2">
-                          <div
-                            class="size-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
-                            <z-icon zType="check" zSize="sm" />
-                          </div>
+          @if (filteredApplicationSettingsCards().length === 0) {
+          <div class="flex flex-col items-center justify-center p-12 text-center">
+            <z-icon zType="search" zSize="xl" class="text-muted-foreground mb-4" />
+            <p class="text-muted-foreground">{{ 'common.noData' | translate }}</p>
+          </div>
+          }
+          } @else {
+          <!-- Sub-section content -->
+          @switch (activeApplicationSubSection()) {
+          @case ('layout') {
+          <!-- Layout Settings Content -->
+          <z-card>
+            <div class="space-y-6">
+              <div>
+                <h3 class="text-sm font-medium mb-2">{{ 'settings.application.layoutSettings.preset' | translate }}</h3>
+                <p class="text-sm text-muted-foreground mb-4">{{ 'settings.application.layoutSettings.chooseColorTheme' | translate }}</p>
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                  @for (preset of themePresets; track preset.value) {
+                  <button type="button" (click)="onThemeChange(preset.value)" [class]="currentTheme() === preset.value 
+                            ? 'border-2 border-primary bg-primary/5 ring-2 ring-primary/20'
+                            : 'border border-border hover:border-primary/50 hover:bg-accent/50'"
+                    class="relative flex flex-col items-center gap-3 p-4 rounded-lg bg-card transition-all cursor-pointer group">
+                    <div class="size-12 rounded-lg flex-shrink-0 shadow-sm border border-border/50"
+                      [style.background]="preset.color"></div>
+                    <span class="text-sm font-medium text-center">{{ preset.label }}</span>
+                    @if (currentTheme() === preset.value) {
+                    <div class="absolute top-2 right-2">
+                      <div class="size-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
+                        <z-icon zType="check" zSize="sm" />
+                      </div>
+                    </div>
+                    }
+                    <div class="absolute inset-0 rounded-lg bg-primary/0 group-hover:bg-primary/5 transition-colors pointer-events-none"></div>
+                  </button>
+                  }
+                </div>
+              </div>
+            </div>
+          </z-card>
+          }
+
+          @case ('property') {
+          <!-- Property Settings Content -->
+          <z-card>
+            @if (isLoadingPropertySettings()) {
+            <div class="flex items-center justify-center p-8">
+              <div class="text-muted-foreground">{{ 'settings.application.property.loadingPropertySettings' | translate }}</div>
+            </div>
+            } @else {
+            <div class="space-y-8">
+              <!-- Default City -->
+              <div>
+                <h3 class="text-xl font-semibold mb-2">{{ 'settings.application.property.defaultCity.title' | translate }}</h3>
+                <p class="text-sm text-muted-foreground mb-4">{{ 'settings.application.property.defaultCity.description' | translate }}</p>
+                <z-form-field>
+                  <z-form-label zRequired>{{ 'settings.application.property.defaultCity.label' | translate }}</z-form-label>
+                  <z-form-control>
+                    <z-select [zValue]="propertySettings.defaultCity()"
+                      [zLabel]="propertySettings.defaultCity() || ('settings.application.property.defaultCity.selectCity' | translate)" [zPlaceholder]="'settings.application.property.defaultCity.selectCity' | translate"
+                      (zSelectionChange)="propertySettings.defaultCity.set($event)" class="w-full">
+                      <z-select-item zValue="Tanger">Tanger</z-select-item>
+                      <z-select-item zValue="Casablanca">Casablanca</z-select-item>
+                      <z-select-item zValue="Rabat">Rabat</z-select-item>
+                      <z-select-item zValue="Kenitra">Kenitra</z-select-item>
+                      <z-select-item zValue="Agadir">Agadir</z-select-item>
+                    </z-select>
+                  </z-form-control>
+                </z-form-field>
+              </div>
+
+              <!-- Default Categories -->
+              <div>
+                <h3 class="text-xl font-semibold mb-2">{{ 'settings.application.property.defaultCategories.title' | translate }}</h3>
+                <p class="text-sm text-muted-foreground mb-4">{{ 'settings.application.property.defaultCategories.description' | translate }}</p>
+                <div class="grid grid-cols-3 gap-3 mb-4">
+                  @for (category of propertySettings.categories(); track category.key) {
+                  <div class="p-3 border rounded-lg bg-card">
+                    <z-form-field>
+                      <z-form-label zRequired>{{ category.key }}</z-form-label>
+                      <z-form-control>
+                        <input z-input type="text" [value]="category.reference"
+                          (blur)="updateCategoryReference(category.key, $event)" class="w-full" />
+                      </z-form-control>
+                    </z-form-field>
+                  </div>
+                  }
+                </div>
+              </div>
+
+              <!-- Property Types -->
+              <div>
+                <h3 class="text-xl font-semibold mb-2">{{ 'settings.application.property.propertyTypes.title' | translate }}</h3>
+                <p class="text-sm text-muted-foreground mb-4">{{ 'settings.application.property.propertyTypes.description' | translate }}</p>
+                <div class="flex flex-wrap gap-2 mb-4">
+                  @for (type of propertySettings.propertyTypes(); track type) {
+                  <z-badge zType="outline" class="flex items-center gap-1.5 px-3 py-1">
+                    <span>{{ type }}</span>
+                    <button type="button" (click)="removePropertyType(type)"
+                      class="hover:text-destructive transition-colors" [attr.aria-label]="'settings.application.property.propertyTypes.removePropertyType' | translate">
+                      <z-icon zType="x" zSize="sm" />
+                    </button>
+                  </z-badge>
+                  }
+                  @if (showAddPropertyTypeInput()) {
+                  <div class="flex items-center gap-2">
+                    <input z-input type="text" [ngModel]="newPropertyType()"
+                      (ngModelChange)="newPropertyType.set($event)" (keyup.enter)="addPropertyType()"
+                      (keyup.escape)="showAddPropertyTypeInput.set(false); newPropertyType.set('')"
+                      [placeholder]="'settings.application.property.propertyTypes.enterPropertyType' | translate" class="w-48" autofocus />
+                    <z-button zType="default" zSize="sm" (click)="addPropertyType()">
+                      <z-icon zType="check" zSize="sm" />
+                    </z-button>
+                    <z-button zType="outline" zSize="sm"
+                      (click)="showAddPropertyTypeInput.set(false); newPropertyType.set('')">
+                      <z-icon zType="x" zSize="sm" />
+                    </z-button>
+                  </div>
+                  } @else {
+                  <z-button zType="outline" zSize="sm" (click)="showAddPropertyTypeInput.set(true)"
+                    class="border-dashed border-primary/50 text-primary hover:bg-primary/5">
+                    <z-icon zType="plus" zSize="sm" />
+                    {{ 'settings.application.property.propertyTypes.addPropertyType' | translate }}
+                  </z-button>
+                  }
+                </div>
+              </div>
+
+              <!-- Property Characteristics (Features) -->
+              <div>
+                <h3 class="text-xl font-semibold mb-2">{{ 'settings.application.property.features.title' | translate }}</h3>
+                <p class="text-sm text-muted-foreground mb-4">{{ 'settings.application.property.features.description' | translate }}</p>
+                <div class="flex flex-wrap gap-2 mb-4">
+                  @for (feature of propertySettings.features(); track feature) {
+                  <z-badge zType="outline" class="flex items-center gap-1.5 px-3 py-1">
+                    <span>{{ feature }}</span>
+                    <button type="button" (click)="removeFeature(feature)"
+                      class="hover:text-destructive transition-colors" [attr.aria-label]="'settings.application.property.features.removeFeature' | translate">
+                      <z-icon zType="x" zSize="sm" />
+                    </button>
+                  </z-badge>
+                  }
+                  @if (showAddFeatureInput()) {
+                  <div class="flex items-center gap-2">
+                    <input z-input type="text" [ngModel]="newFeature()" (ngModelChange)="newFeature.set($event)"
+                      (keyup.enter)="addFeature()"
+                      (keyup.escape)="showAddFeatureInput.set(false); newFeature.set('')"
+                      [placeholder]="'settings.application.property.features.enterFeature' | translate" class="w-48" autofocus />
+                    <z-button zType="default" zSize="sm" (click)="addFeature()">
+                      <z-icon zType="check" zSize="sm" />
+                    </z-button>
+                    <z-button zType="outline" zSize="sm"
+                      (click)="showAddFeatureInput.set(false); newFeature.set('')">
+                      <z-icon zType="x" zSize="sm" />
+                    </z-button>
+                  </div>
+                  } @else {
+                  <z-button zType="outline" zSize="sm" (click)="showAddFeatureInput.set(true)"
+                    class="border-dashed border-primary/50 text-primary hover:bg-primary/5">
+                    <z-icon zType="plus" zSize="sm" />
+                    {{ 'settings.application.property.features.addFeature' | translate }}
+                  </z-button>
+                  }
+                </div>
+              </div>
+
+              <!-- Property Amenities -->
+              <div>
+                <h3 class="text-xl font-semibold mb-2">{{ 'settings.application.property.amenities.title' | translate }}</h3>
+                <p class="text-sm text-muted-foreground mb-4">{{ 'settings.application.property.amenities.description' | translate }}</p>
+                <div class="flex flex-wrap gap-2 mb-4">
+                  @for (amenity of propertySettings.amenities(); track amenity) {
+                  <z-badge zType="outline" class="flex items-center gap-1.5 px-3 py-1">
+                    <span>{{ amenity }}</span>
+                    <button type="button" (click)="removeAmenity(amenity)"
+                      class="hover:text-destructive transition-colors" [attr.aria-label]="'settings.application.property.amenities.removeAmenity' | translate">
+                      <z-icon zType="x" zSize="sm" />
+                    </button>
+                  </z-badge>
+                  }
+                  @if (showAddAmenityInput()) {
+                  <div class="flex items-center gap-2">
+                    <input z-input type="text" [ngModel]="newAmenity()" (ngModelChange)="newAmenity.set($event)"
+                      (keyup.enter)="addAmenity()"
+                      (keyup.escape)="showAddAmenityInput.set(false); newAmenity.set('')"
+                      [placeholder]="'settings.application.property.amenities.enterAmenity' | translate" class="w-48" autofocus />
+                    <z-button zType="default" zSize="sm" (click)="addAmenity()">
+                      <z-icon zType="check" zSize="sm" />
+                    </z-button>
+                    <z-button zType="outline" zSize="sm"
+                      (click)="showAddAmenityInput.set(false); newAmenity.set('')">
+                      <z-icon zType="x" zSize="sm" />
+                    </z-button>
+                  </div>
+                  } @else {
+                  <z-button zType="outline" zSize="sm" (click)="showAddAmenityInput.set(true)"
+                    class="border-dashed border-primary/50 text-primary hover:bg-primary/5">
+                    <z-icon zType="plus" zSize="sm" />
+                    {{ 'settings.application.property.amenities.addAmenity' | translate }}
+                  </z-button>
+                  }
+                </div>
+              </div>
+
+              <!-- Save Button -->
+              <div class="flex justify-end pt-4">
+                <z-button [zType]="isSavingPropertySettings() ? 'ghost' : 'default'"
+                  [disabled]="isSavingPropertySettings()"
+                  (click)="!isSavingPropertySettings() && onSavePropertySettings()">
+                  @if (isSavingPropertySettings()) {
+                  <span class="flex items-center gap-2">
+                    <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+                    {{ 'settings.application.property.saving' | translate }}
+                  </span>
+                  } @else {
+                  {{ 'settings.application.property.savePropertySettings' | translate }}
+                  }
+                </z-button>
+              </div>
+            </div>
+            }
+          </z-card>
+          }
+
+          @case ('signature') {
+          <!-- Signature Settings Content -->
+          <z-card>
+            <div class="space-y-6">
+              <div>
+                <p class="text-sm text-muted-foreground mb-4">{{ 'settings.application.signature.description' | translate }}</p>
+                
+                <div class="flex gap-6">
+                  <div class="flex-shrink-0">
+                    <div class="relative">
+                      @if (signatureImageUrl()) {
+                        <div class="w-64 h-32 border border-border rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+                          <img 
+                            [src]="getSignatureImageUrl()" 
+                            alt="Signature"
+                            class="w-full h-full object-contain"
+                          />
                         </div>
-                        }
-
-                        <!-- Hover Effect -->
-                        <div
-                          class="absolute inset-0 rounded-lg bg-primary/0 group-hover:bg-primary/5 transition-colors pointer-events-none">
+                      } @else {
+                        <div class="w-64 h-32 border border-border rounded-lg flex items-center justify-center bg-muted">
+                          <z-icon zType="file" zSize="lg" class="text-muted-foreground" />
                         </div>
+                      }
+                      <button type="button" (click)="onSignatureImageClick()"
+                        class="absolute -bottom-1 -right-1 bg-primary text-primary-foreground rounded-full p-2 hover:bg-primary/90 transition-colors"
+                        [title]="'settings.application.signature.uploadSignature' | translate">
+                        <z-icon zType="camera" zSize="sm" />
                       </button>
-                      }
+                      <input #signatureFileInput type="file" accept="image/png,image/jpeg,image/jpg" (change)="onSignatureFileSelected($event)" class="hidden" />
                     </div>
                   </div>
-                </z-accordion-item>
-              </z-accordion>
-            </div>
-
-            <!-- Property Settings -->
-            <div class="bg-card border border-border rounded-lg shadow-sm overflow-hidden">
-              <z-accordion zType="single" class="border-0">
-                <z-accordion-item [zTitle]="'settings.application.property.title' | translate" zValue="property" class="!px-6 !py-5 border-b-0 !text-lg">
-                  @if (isLoadingPropertySettings()) {
-                  <div class="flex items-center justify-center p-8">
-                    <div class="text-muted-foreground">{{ 'settings.application.property.loadingPropertySettings' | translate }}</div>
-                  </div>
-                  } @else {
-                  <div class="space-y-8">
-                    <!-- Default City -->
+                  
+                  <div class="flex-1 space-y-4">
                     <div>
-                      <h3 class="text-xl font-semibold mb-2">{{ 'settings.application.property.defaultCity.title' | translate }}</h3>
-                      <p class="text-sm text-muted-foreground mb-4">{{ 'settings.application.property.defaultCity.description' | translate }}</p>
-                      <z-form-field>
-                        <z-form-label zRequired>{{ 'settings.application.property.defaultCity.label' | translate }}</z-form-label>
-                        <z-form-control>
-                          <z-select [zValue]="propertySettings.defaultCity()"
-                            [zLabel]="propertySettings.defaultCity() || ('settings.application.property.defaultCity.selectCity' | translate)" [zPlaceholder]="'settings.application.property.defaultCity.selectCity' | translate"
-                            (zSelectionChange)="propertySettings.defaultCity.set($event)" class="w-full">
-                            <z-select-item zValue="Tanger">Tanger</z-select-item>
-                            <z-select-item zValue="Casablanca">Casablanca</z-select-item>
-                            <z-select-item zValue="Rabat">Rabat</z-select-item>
-                            <z-select-item zValue="Kenitra">Kenitra</z-select-item>
-                            <z-select-item zValue="Agadir">Agadir</z-select-item>
-                          </z-select>
-                        </z-form-control>
-                      </z-form-field>
+                      <p class="text-sm text-muted-foreground mb-2">{{ 'settings.application.signature.instructions' | translate }}</p>
+                      <ul class="text-sm text-muted-foreground list-disc list-inside space-y-1">
+                        <li>{{ 'settings.application.signature.maxFileSize' | translate }}</li>
+                        <li>{{ 'settings.application.signature.supportedFormats' | translate }}</li>
+                      </ul>
                     </div>
-
-                    <!-- Default Categories -->
-                    <div>
-                      <h3 class="text-xl font-semibold mb-2">{{ 'settings.application.property.defaultCategories.title' | translate }}</h3>
-                      <p class="text-sm text-muted-foreground mb-4">{{ 'settings.application.property.defaultCategories.description' | translate }}</p>
-                      <div class="grid grid-cols-3 gap-3 mb-4">
-                        @for (category of propertySettings.categories(); track category.key) {
-                        <div class="p-3 border rounded-lg bg-card">
-                          <z-form-field>
-                            <z-form-label zRequired>{{ category.key }}</z-form-label>
-                            <z-form-control>
-                              <input z-input type="text" [value]="category.reference"
-                                (blur)="updateCategoryReference(category.key, $event)" class="w-full" />
-                            </z-form-control>
-                          </z-form-field>
-                        </div>
-                        }
-                      </div>
-                    </div>
-
-                    <!-- Property Types -->
-                    <div>
-                      <h3 class="text-xl font-semibold mb-2">{{ 'settings.application.property.propertyTypes.title' | translate }}</h3>
-                      <p class="text-sm text-muted-foreground mb-4">{{ 'settings.application.property.propertyTypes.description' | translate }}</p>
-                      <div class="flex flex-wrap gap-2 mb-4">
-                        @for (type of propertySettings.propertyTypes(); track type) {
-                        <z-badge zType="outline" class="flex items-center gap-1.5 px-3 py-1">
-                          <span>{{ type }}</span>
-                          <button type="button" (click)="removePropertyType(type)"
-                            class="hover:text-destructive transition-colors" [attr.aria-label]="'settings.application.property.propertyTypes.removePropertyType' | translate">
-                            <z-icon zType="x" zSize="sm" />
-                          </button>
-                        </z-badge>
-                        }
-                        @if (showAddPropertyTypeInput()) {
-                        <div class="flex items-center gap-2">
-                          <input z-input type="text" [ngModel]="newPropertyType()"
-                            (ngModelChange)="newPropertyType.set($event)" (keyup.enter)="addPropertyType()"
-                            (keyup.escape)="showAddPropertyTypeInput.set(false); newPropertyType.set('')"
-                            [placeholder]="'settings.application.property.propertyTypes.enterPropertyType' | translate" class="w-48" autofocus />
-                          <z-button zType="default" zSize="sm" (click)="addPropertyType()">
-                            <z-icon zType="check" zSize="sm" />
-                          </z-button>
-                          <z-button zType="outline" zSize="sm"
-                            (click)="showAddPropertyTypeInput.set(false); newPropertyType.set('')">
-                            <z-icon zType="x" zSize="sm" />
-                          </z-button>
-                        </div>
-                        } @else {
-                        <z-button zType="outline" zSize="sm" (click)="showAddPropertyTypeInput.set(true)"
-                          class="border-dashed border-primary/50 text-primary hover:bg-primary/5">
-                          <z-icon zType="plus" zSize="sm" />
-                          {{ 'settings.application.property.propertyTypes.addPropertyType' | translate }}
-                        </z-button>
-                        }
-                      </div>
-                    </div>
-
-                    <!-- Property Characteristics (Features) -->
-                    <div>
-                      <h3 class="text-xl font-semibold mb-2">{{ 'settings.application.property.features.title' | translate }}</h3>
-                      <p class="text-sm text-muted-foreground mb-4">{{ 'settings.application.property.features.description' | translate }}</p>
-                      <div class="flex flex-wrap gap-2 mb-4">
-                        @for (feature of propertySettings.features(); track feature) {
-                        <z-badge zType="outline" class="flex items-center gap-1.5 px-3 py-1">
-                          <span>{{ feature }}</span>
-                          <button type="button" (click)="removeFeature(feature)"
-                            class="hover:text-destructive transition-colors" [attr.aria-label]="'settings.application.property.features.removeFeature' | translate">
-                            <z-icon zType="x" zSize="sm" />
-                          </button>
-                        </z-badge>
-                        }
-                        @if (showAddFeatureInput()) {
-                        <div class="flex items-center gap-2">
-                          <input z-input type="text" [ngModel]="newFeature()" (ngModelChange)="newFeature.set($event)"
-                            (keyup.enter)="addFeature()"
-                            (keyup.escape)="showAddFeatureInput.set(false); newFeature.set('')"
-                            [placeholder]="'settings.application.property.features.enterFeature' | translate" class="w-48" autofocus />
-                          <z-button zType="default" zSize="sm" (click)="addFeature()">
-                            <z-icon zType="check" zSize="sm" />
-                          </z-button>
-                          <z-button zType="outline" zSize="sm"
-                            (click)="showAddFeatureInput.set(false); newFeature.set('')">
-                            <z-icon zType="x" zSize="sm" />
-                          </z-button>
-                        </div>
-                        } @else {
-                        <z-button zType="outline" zSize="sm" (click)="showAddFeatureInput.set(true)"
-                          class="border-dashed border-primary/50 text-primary hover:bg-primary/5">
-                          <z-icon zType="plus" zSize="sm" />
-                          {{ 'settings.application.property.features.addFeature' | translate }}
-                        </z-button>
-                        }
-                      </div>
-                    </div>
-
-                    <!-- Property Amenities -->
-                    <div>
-                      <h3 class="text-xl font-semibold mb-2">{{ 'settings.application.property.amenities.title' | translate }}</h3>
-                      <p class="text-sm text-muted-foreground mb-4">{{ 'settings.application.property.amenities.description' | translate }}</p>
-                      <div class="flex flex-wrap gap-2 mb-4">
-                        @for (amenity of propertySettings.amenities(); track amenity) {
-                        <z-badge zType="outline" class="flex items-center gap-1.5 px-3 py-1">
-                          <span>{{ amenity }}</span>
-                          <button type="button" (click)="removeAmenity(amenity)"
-                            class="hover:text-destructive transition-colors" [attr.aria-label]="'settings.application.property.amenities.removeAmenity' | translate">
-                            <z-icon zType="x" zSize="sm" />
-                          </button>
-                        </z-badge>
-                        }
-                        @if (showAddAmenityInput()) {
-                        <div class="flex items-center gap-2">
-                          <input z-input type="text" [ngModel]="newAmenity()" (ngModelChange)="newAmenity.set($event)"
-                            (keyup.enter)="addAmenity()"
-                            (keyup.escape)="showAddAmenityInput.set(false); newAmenity.set('')"
-                            [placeholder]="'settings.application.property.amenities.enterAmenity' | translate" class="w-48" autofocus />
-                          <z-button zType="default" zSize="sm" (click)="addAmenity()">
-                            <z-icon zType="check" zSize="sm" />
-                          </z-button>
-                          <z-button zType="outline" zSize="sm"
-                            (click)="showAddAmenityInput.set(false); newAmenity.set('')">
-                            <z-icon zType="x" zSize="sm" />
-                          </z-button>
-                        </div>
-                        } @else {
-                        <z-button zType="outline" zSize="sm" (click)="showAddAmenityInput.set(true)"
-                          class="border-dashed border-primary/50 text-primary hover:bg-primary/5">
-                          <z-icon zType="plus" zSize="sm" />
-                          {{ 'settings.application.property.amenities.addAmenity' | translate }}
-                        </z-button>
-                        }
-                      </div>
-                    </div>
-
-                    <!-- Save Button -->
-                    <div class="flex justify-end pt-4">
-                      <z-button [zType]="isSavingPropertySettings() ? 'ghost' : 'default'"
-                        [disabled]="isSavingPropertySettings()"
-                        (click)="!isSavingPropertySettings() && onSavePropertySettings()">
-                        @if (isSavingPropertySettings()) {
-                        <span class="flex items-center gap-2">
-                          <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
-                          {{ 'settings.application.property.saving' | translate }}
-                        </span>
-                        } @else {
-                        {{ 'settings.application.property.savePropertySettings' | translate }}
-                        }
-                      </z-button>
-                    </div>
-                  </div>
-                  }
-                </z-accordion-item>
-              </z-accordion>
-            </div>
-
-            <!-- Signature Settings -->
-            <div class="bg-card border border-border rounded-lg shadow-sm overflow-hidden">
-              <z-accordion zType="single" class="border-0">
-                <z-accordion-item [zTitle]="'settings.application.signature.title' | translate" zValue="signature" class="!px-6 !py-5 border-b-0 !text-lg">
-                  <div class="space-y-6">
-                    <div>
-                      <h3 class="text-xl font-semibold mb-2">{{ 'settings.application.signature.title' | translate }}</h3>
-                      <p class="text-sm text-muted-foreground mb-4">{{ 'settings.application.signature.description' | translate }}</p>
-                      
-                      <!-- Signature Image Display and Upload -->
-                      <div class="flex gap-6">
-                        <div class="flex-shrink-0">
-                          <div class="relative">
-                            @if (signatureImageUrl()) {
-                              <div class="w-64 h-32 border border-border rounded-lg overflow-hidden bg-muted flex items-center justify-center">
-                                <img 
-                                  [src]="getSignatureImageUrl()" 
-                                  alt="Signature"
-                                  class="w-full h-full object-contain"
-                                />
-                              </div>
-                            } @else {
-                              <div class="w-64 h-32 border border-border rounded-lg flex items-center justify-center bg-muted">
-                                <z-icon zType="file" zSize="lg" class="text-muted-foreground" />
-                              </div>
-                            }
-                            <button type="button" (click)="onSignatureImageClick()"
-                              class="absolute -bottom-1 -right-1 bg-primary text-primary-foreground rounded-full p-2 hover:bg-primary/90 transition-colors"
-                              [title]="'settings.application.signature.uploadSignature' | translate">
-                              <z-icon zType="camera" zSize="sm" />
-                            </button>
-                            <input #signatureFileInput type="file" accept="image/png,image/jpeg,image/jpg" (change)="onSignatureFileSelected($event)" class="hidden" />
-                          </div>
-                        </div>
-                        
-                        <div class="flex-1 space-y-4">
-                          <div>
-                            <p class="text-sm text-muted-foreground mb-2">{{ 'settings.application.signature.instructions' | translate }}</p>
-                            <ul class="text-sm text-muted-foreground list-disc list-inside space-y-1">
-                              <li>{{ 'settings.application.signature.maxFileSize' | translate }}</li>
-                              <li>{{ 'settings.application.signature.supportedFormats' | translate }}</li>
-                            </ul>
-                          </div>
-                          
-                          @if (signatureImageUrl()) {
-                            <div class="flex gap-3">
-                              <z-button [zType]="isSavingSignature() ? 'ghost' : 'default'"
-                                [disabled]="isSavingSignature()"
-                                (click)="!isSavingSignature() && saveSignature()">
-                                @if (isSavingSignature()) {
-                                  <span class="flex items-center gap-2">
-                                    <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
-                                    {{ 'settings.application.signature.saving' | translate }}
-                                  </span>
-                                } @else {
-                                  {{ 'settings.application.signature.saveSignature' | translate }}
-                                }
-                              </z-button>
-                              <z-button zType="outline" zSize="default"
-                                [disabled]="isSavingSignature()"
-                                (click)="!isSavingSignature() && onDeleteSignature()"
-                                class="text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/50">
-                                <z-icon zType="x" zSize="sm" />
-                                {{ 'settings.application.signature.deleteSignature' | translate }}
-                              </z-button>
-                            </div>
+                    
+                    @if (signatureImageUrl()) {
+                      <div class="flex gap-3">
+                        <z-button [zType]="isSavingSignature() ? 'ghost' : 'default'"
+                          [disabled]="isSavingSignature()"
+                          (click)="!isSavingSignature() && saveSignature()">
+                          @if (isSavingSignature()) {
+                            <span class="flex items-center gap-2">
+                              <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+                              {{ 'settings.application.signature.saving' | translate }}
+                            </span>
                           } @else {
-                            <z-button [zType]="isSavingSignature() ? 'ghost' : 'default'"
-                              [disabled]="isSavingSignature()"
-                              (click)="!isSavingSignature() && onSignatureImageClick()">
-                              @if (isSavingSignature()) {
-                                <span class="flex items-center gap-2">
-                                  <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
-                                  {{ 'settings.application.signature.saving' | translate }}
-                                </span>
-                              } @else {
-                                <z-icon zType="upload" zSize="sm" />
-                                {{ 'settings.application.signature.uploadSignature' | translate }}
-                              }
-                            </z-button>
+                            {{ 'settings.application.signature.saveSignature' | translate }}
                           }
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </z-accordion-item>
-              </z-accordion>
-            </div>
-
-            <!-- Collaboration Settings -->
-            <div class="bg-card border border-border rounded-lg shadow-sm overflow-hidden">
-              <z-accordion zType="single" class="border-0">
-                <z-accordion-item [zTitle]="'settings.application.collaboration.title' | translate" zValue="collaboration" class="!px-6 !py-5 border-b-0 !text-lg">
-                  @if (isLoadingSharedProperties()) {
-                  <div class="flex items-center justify-center p-8">
-                    <div class="text-muted-foreground">{{ 'settings.application.collaboration.loading' | translate }}</div>
-                  </div>
-                  } @else {
-                  <div class="space-y-6">
-                    <!-- Description -->
-                    <div>
-                      <p class="text-sm text-muted-foreground mb-4">
-                        {{ 'settings.application.collaboration.description' | translate }}
-                      </p>
-                    </div>
-
-                    <!-- Bulk Actions -->
-                    @if (sharedProperties().length > 0) {
-                    <div class="flex items-center justify-between gap-4 pb-4 border-b">
-                      <div class="flex items-center gap-4">
-                        <z-checkbox
-                          [ngModel]="areAllPropertiesSelected()"
-                          (checkChange)="areAllPropertiesSelected() ? deselectAllProperties() : selectAllProperties()"
-                        />
-                        <span class="text-sm text-muted-foreground">
-                          {{ getSelectedCountText() }}
-                        </span>
-                      </div>
-                      <div class="flex items-center gap-2">
-                        @if (selectedCount() > 0) {
-                        <z-button
-                          zType="outline"
-                          zSize="default"
-                          class="gap-2 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
-                          (click)="onBulkUnshare()"
-                          [disabled]="isUnsharing()"
-                        >
-                          <z-icon zType="x" zSize="sm" />
-                          {{ 'settings.application.collaboration.unshareSelected' | translate: { count: selectedCount() } }}
                         </z-button>
-                        }
-                        <z-button
-                          zType="outline"
-                          zSize="default"
-                          class="gap-2 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
-                          (click)="onUnshareAll()"
-                          [disabled]="isUnsharing()"
-                        >
+                        <z-button zType="outline" zSize="default"
+                          [disabled]="isSavingSignature()"
+                          (click)="!isSavingSignature() && onDeleteSignature()"
+                          class="text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/50">
                           <z-icon zType="x" zSize="sm" />
-                          {{ 'settings.application.collaboration.unshareAll' | translate }}
+                          {{ 'settings.application.signature.deleteSignature' | translate }}
                         </z-button>
                       </div>
-                    </div>
-                    }
-
-                    <!-- Properties List -->
-                    @if (sharedProperties().length === 0) {
-                    <div class="flex flex-col items-center justify-center p-8 text-center">
-                      <z-icon zType="users" zSize="xl" class="text-muted-foreground mb-4" />
-                      <p class="text-muted-foreground">{{ 'settings.application.collaboration.empty' | translate }}</p>
-                    </div>
                     } @else {
-                    <div class="space-y-2">
-                      @for (property of sharedProperties(); track property.id) {
-                      <div class="flex items-center gap-4 p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors">
-                        <z-checkbox
-                          [ngModel]="isPropertySelected(property.id)"
-                          (checkChange)="togglePropertySelection(property.id)"
-                        />
-                        <div class="flex-1 flex items-center gap-4">
-                          @if (property.defaultAttachmentUrl) {
-                          <img
-                            [src]="property.defaultAttachmentUrl"
-                            [alt]="property.name || property.identifier"
-                            class="w-16 h-16 object-cover rounded-md border border-border"
-                          />
-                          } @else {
-                          <div class="w-16 h-16 rounded-md border border-border bg-muted flex items-center justify-center">
-                            <z-icon zType="house" zSize="lg" class="text-muted-foreground" />
-                          </div>
-                          }
-                          <div class="flex-1 min-w-0">
-                            <div class="flex items-center gap-2 mb-1">
-                              @if (property.identifier) {
-                              <span class="font-semibold text-base">{{ property.identifier }}</span>
-                              }
-                              @if (property.name) {
-                              <span class="text-sm text-muted-foreground">{{ property.name }}</span>
-                              }
-                            </div>
-                            @if (property.address || property.city) {
-                            <div class="flex items-center gap-1.5 text-sm text-muted-foreground mb-1">
-                              <z-icon zType="map-pin" zSize="sm" />
-                              <span>{{ property.address }}{{ property.address && property.city ? ', ' : '' }}{{ property.city || '' }}</span>
-                            </div>
-                            }
-                            @if (property.price) {
-                            <div class="flex items-center gap-1.5 text-sm font-medium text-primary">
-                              <z-icon zType="banknote" zSize="sm" />
-                              <span>{{ property.price | propertyPrice:property.typePaiment }}</span>
-                            </div>
-                            }
-                          </div>
-                        </div>
-                      </div>
-                      }
-                    </div>
-                    }
-
-                    <!-- Property Requests (collaboration bulk disable) -->
-                    <div class="mt-8 pt-8 border-t border-border">
-                      <h3 class="text-lg font-semibold mb-2">{{ 'settings.application.collaborationRequests.title' | translate }}</h3>
-                      <p class="text-sm text-muted-foreground mb-4">
-                        {{ 'settings.application.collaborationRequests.description' | translate }}
-                      </p>
-                      @if (isLoadingSharedRequests()) {
-                      <div class="flex items-center justify-center p-8">
-                        <div class="text-muted-foreground">{{ 'settings.application.collaborationRequests.loading' | translate }}</div>
-                      </div>
-                      } @else {
-                      @if (sharedRequests().length > 0) {
-                      <div class="flex items-center justify-between gap-4 pb-4 border-b">
-                        <div class="flex items-center gap-4">
-                          <z-checkbox
-                            [ngModel]="areAllRequestsSelected()"
-                            (checkChange)="areAllRequestsSelected() ? deselectAllRequests() : selectAllRequests()"
-                          />
-                          <span class="text-sm text-muted-foreground">
-                            {{ getSelectedRequestCountText() }}
-                          </span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                          @if (selectedRequestCount() > 0) {
-                          <z-button
-                            zType="outline"
-                            zSize="default"
-                            class="gap-2 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
-                            (click)="onBulkUnshareRequests()"
-                            [disabled]="isUnsharingRequests()"
-                          >
-                            <z-icon zType="x" zSize="sm" />
-                            {{ 'settings.application.collaborationRequests.unshareSelected' | translate: { count: selectedRequestCount() } }}
-                          </z-button>
-                          }
-                          <z-button
-                            zType="outline"
-                            zSize="default"
-                            class="gap-2 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
-                            (click)="onUnshareAllRequests()"
-                            [disabled]="isUnsharingRequests()"
-                          >
-                            <z-icon zType="x" zSize="sm" />
-                            {{ 'settings.application.collaborationRequests.unshareAll' | translate }}
-                          </z-button>
-                        </div>
-                      </div>
-                      }
-                      @if (sharedRequests().length === 0) {
-                      <div class="flex flex-col items-center justify-center p-8 text-center">
-                        <z-icon zType="file-text" zSize="xl" class="text-muted-foreground mb-4" />
-                        <p class="text-muted-foreground">{{ 'settings.application.collaborationRequests.empty' | translate }}</p>
-                      </div>
-                      } @else {
-                      <div class="space-y-2 mt-4">
-                        @for (request of sharedRequests(); track request.id) {
-                        <div class="flex items-center gap-4 p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors">
-                          <z-checkbox
-                            [ngModel]="isRequestSelected(request.id)"
-                            (checkChange)="toggleRequestSelection(request.id)"
-                          />
-                          <div class="flex-1 min-w-0">
-                            <div class="flex items-center justify-between gap-2 mb-2 flex-wrap">
-                              <div class="flex items-center gap-2">
-                                @if (request.zone || request.ville) {
-                                <span class="font-semibold text-base">{{ request.ville }}{{ request.ville && request.zone ? ' - ' : '' }}{{ request.zone || '' }}</span>
-                                }
-                                @if (getRequestCategoryLabel(request)) {
-                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-muted">{{ getRequestCategoryLabel(request) }}</span>
-                                }
-                              </div>
-                              @if (request.budget > 0) {
-                              <span class="text-sm font-medium text-primary">{{ request.budget | number:'1.0-0' }} MAD</span>
-                              }
-                            </div>
-                            <div class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                              @if (request.pieces > 0) {
-                              <span>{{ request.pieces }} {{ request.pieces === 1 ? ('collaboration.piece' | translate) : ('collaboration.pieces' | translate) }}</span>
-                              }
-                              @if (request.bathrooms > 0) {
-                              <span>{{ request.bathrooms }} {{ 'collaboration.bathroom' | translate }}</span>
-                              }
-                              @if (request.surface > 0) {
-                              <span>{{ request.surface }} m²</span>
-                              }
-                              @if (request.isFurnished) {
-                              <span>{{ 'property.detail.furnished' | translate }}</span>
-                              }
-                            </div>
-                          </div>
-                        </div>
-                        }
-                      </div>
-                      }
-                      }
-                    </div>
-                  </div>
-                  }
-                </z-accordion-item>
-              </z-accordion>
-            </div>
-
-            <!-- Notification Settings -->
-            <div class="bg-card border border-border rounded-lg shadow-sm overflow-hidden">
-              <z-accordion zType="single" class="border-0">
-                <z-accordion-item [zTitle]="'settings.application.notification.title' | translate" zValue="notification" class="!px-6 !py-5 border-b-0 !text-lg">
-                  @if (isLoadingNotificationSettings()) {
-                  <div class="flex items-center justify-center p-8">
-                    <div class="text-muted-foreground">{{ 'settings.application.notification.loadingNotificationSettings' | translate }}</div>
-                  </div>
-                  } @else {
-                  <div class="space-y-8">
-                    <!-- Email Section -->
-                    <div>
-                      <h3 class="text-xl font-semibold mb-4">{{ 'settings.application.notification.emailSection.title' | translate }}</h3>
-                      
-                      <!-- Lease Section -->
-                      <div class="mb-6">
-                        <h4 class="text-lg font-medium mb-3">{{ 'settings.application.notification.lease.title' | translate }}</h4>
-                        
-                        <!-- Lease Overdue -->
-                        <div class="mb-4">
-                          <z-form-field>
-                            <z-form-label>{{ 'settings.application.notification.lease.overdue' | translate }}</z-form-label>
-                            <z-form-control>
-                              <textarea z-input [ngModel]="notificationSettings.lease.overdue()"
-                                (ngModelChange)="notificationSettings.lease.overdue.set($event)"
-                                rows="4" class="w-full resize-y"></textarea>
-                            </z-form-control>
-                          </z-form-field>
-                        </div>
-
-                        <!-- Lease Pending -->
-                        <div class="mb-4">
-                          <z-form-field>
-                            <z-form-label>{{ 'settings.application.notification.lease.pending' | translate }}</z-form-label>
-                            <z-form-control>
-                              <textarea z-input [ngModel]="notificationSettings.lease.pending()"
-                                (ngModelChange)="notificationSettings.lease.pending.set($event)"
-                                rows="4" class="w-full resize-y"></textarea>
-                            </z-form-control>
-                          </z-form-field>
-                        </div>
-
-                        <!-- Lease Paid -->
-                        <div class="mb-4">
-                          <z-form-field>
-                            <z-form-label>{{ 'settings.application.notification.lease.paid' | translate }}</z-form-label>
-                            <z-form-control>
-                              <textarea z-input [ngModel]="notificationSettings.lease.paid()"
-                                (ngModelChange)="notificationSettings.lease.paid.set($event)"
-                                rows="4" class="w-full resize-y"></textarea>
-                            </z-form-control>
-                          </z-form-field>
-                        </div>
-                      </div>
-
-                      <!-- Maintenance Section -->
-                      <div class="mb-6">
-                        <h4 class="text-lg font-medium mb-3">{{ 'settings.application.notification.maintenance.title' | translate }}</h4>
-                        
-                        <!-- Maintenance Paid -->
-                        <div class="mb-4">
-                          <z-form-field>
-                            <z-form-label>{{ 'settings.application.notification.maintenance.paid' | translate }}</z-form-label>
-                            <z-form-control>
-                              <textarea z-input [ngModel]="notificationSettings.maintenance.paid()"
-                                (ngModelChange)="notificationSettings.maintenance.paid.set($event)"
-                                rows="4" class="w-full resize-y"></textarea>
-                            </z-form-control>
-                          </z-form-field>
-                        </div>
-                      </div>
-
-                      <!-- Reservation Section -->
-                      <div class="mb-6">
-                        <h4 class="text-lg font-medium mb-3">{{ 'settings.application.notification.reservation.title' | translate }}</h4>
-                        
-                        <!-- Reservation Confirmation -->
-                        <div class="mb-4">
-                          <z-form-field>
-                            <z-form-label>{{ 'settings.application.notification.reservation.confirmation' | translate }}</z-form-label>
-                            <z-form-control>
-                              <textarea z-input [ngModel]="notificationSettings.reservation.confirmation()"
-                                (ngModelChange)="notificationSettings.reservation.confirmation.set($event)"
-                                rows="4" class="w-full resize-y"></textarea>
-                            </z-form-control>
-                          </z-form-field>
-                        </div>
-
-                        <!-- Reservation Enter -->
-                        <div class="mb-4">
-                          <z-form-field>
-                            <z-form-label>{{ 'settings.application.notification.reservation.enter' | translate }}</z-form-label>
-                            <z-form-control>
-                              <textarea z-input [ngModel]="notificationSettings.reservation.enter()"
-                                (ngModelChange)="notificationSettings.reservation.enter.set($event)"
-                                rows="4" class="w-full resize-y"></textarea>
-                            </z-form-control>
-                          </z-form-field>
-                        </div>
-
-                        <!-- Reservation Left -->
-                        <div class="mb-4">
-                          <z-form-field>
-                            <z-form-label>{{ 'settings.application.notification.reservation.left' | translate }}</z-form-label>
-                            <z-form-control>
-                              <textarea z-input [ngModel]="notificationSettings.reservation.left()"
-                                (ngModelChange)="notificationSettings.reservation.left.set($event)"
-                                rows="4" class="w-full resize-y"></textarea>
-                            </z-form-control>
-                          </z-form-field>
-                        </div>
-                      </div>
-
-                      <!-- Save Button -->
-                      <div class="flex justify-end pt-4">
-                        <z-button [zType]="isSavingNotificationSettings() ? 'ghost' : 'default'"
-                          [disabled]="isSavingNotificationSettings()"
-                          (click)="!isSavingNotificationSettings() && onSaveNotificationSettings()">
-                          @if (isSavingNotificationSettings()) {
+                      <z-button [zType]="isSavingSignature() ? 'ghost' : 'default'"
+                        [disabled]="isSavingSignature()"
+                        (click)="!isSavingSignature() && onSignatureImageClick()">
+                        @if (isSavingSignature()) {
                           <span class="flex items-center gap-2">
                             <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
-                            {{ 'settings.application.notification.saving' | translate }}
+                            {{ 'settings.application.signature.saving' | translate }}
                           </span>
-                          } @else {
-                          {{ 'settings.application.notification.saveNotificationSettings' | translate }}
+                        } @else {
+                          <z-icon zType="upload" zSize="sm" />
+                          {{ 'settings.application.signature.uploadSignature' | translate }}
+                        }
+                      </z-button>
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+          </z-card>
+          }
+
+          @case ('collaboration') {
+          <!-- Collaboration Settings Content -->
+          <z-card>
+            @if (isLoadingSharedProperties()) {
+            <div class="flex items-center justify-center p-8">
+              <div class="text-muted-foreground">{{ 'settings.application.collaboration.loading' | translate }}</div>
+            </div>
+            } @else {
+            <div class="space-y-6">
+              <div>
+                <p class="text-sm text-muted-foreground mb-4">
+                  {{ 'settings.application.collaboration.description' | translate }}
+                </p>
+              </div>
+
+              @if (sharedProperties().length > 0) {
+              <div class="flex items-center justify-between gap-4 pb-4 border-b">
+                <div class="flex items-center gap-4">
+                  <z-checkbox
+                    [ngModel]="areAllPropertiesSelected()"
+                    (checkChange)="areAllPropertiesSelected() ? deselectAllProperties() : selectAllProperties()"
+                  />
+                  <span class="text-sm text-muted-foreground">
+                    {{ getSelectedCountText() }}
+                  </span>
+                </div>
+                <div class="flex items-center gap-2">
+                  @if (selectedCount() > 0) {
+                  <z-button
+                    zType="outline"
+                    zSize="default"
+                    class="gap-2 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
+                    (click)="onBulkUnshare()"
+                    [disabled]="isUnsharing()"
+                  >
+                    <z-icon zType="x" zSize="sm" />
+                    {{ 'settings.application.collaboration.unshareSelected' | translate: { count: selectedCount() } }}
+                  </z-button>
+                  }
+                  <z-button
+                    zType="outline"
+                    zSize="default"
+                    class="gap-2 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
+                    (click)="onUnshareAll()"
+                    [disabled]="isUnsharing()"
+                  >
+                    <z-icon zType="x" zSize="sm" />
+                    {{ 'settings.application.collaboration.unshareAll' | translate }}
+                  </z-button>
+                </div>
+              </div>
+              }
+
+              @if (sharedProperties().length === 0) {
+              <div class="flex flex-col items-center justify-center p-8 text-center">
+                <z-icon zType="users" zSize="xl" class="text-muted-foreground mb-4" />
+                <p class="text-muted-foreground">{{ 'settings.application.collaboration.empty' | translate }}</p>
+              </div>
+              } @else {
+              <div class="space-y-2">
+                @for (property of sharedProperties(); track property.id) {
+                <div class="flex items-center gap-4 p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors">
+                  <z-checkbox
+                    [ngModel]="isPropertySelected(property.id)"
+                    (checkChange)="togglePropertySelection(property.id)"
+                  />
+                  <div class="flex-1 flex items-center gap-4">
+                    @if (property.defaultAttachmentUrl) {
+                    <img
+                      [src]="property.defaultAttachmentUrl"
+                      [alt]="property.name || property.identifier"
+                      class="w-16 h-16 object-cover rounded-md border border-border"
+                    />
+                    } @else {
+                    <div class="w-16 h-16 rounded-md border border-border bg-muted flex items-center justify-center">
+                      <z-icon zType="house" zSize="lg" class="text-muted-foreground" />
+                    </div>
+                    }
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center gap-2 mb-1">
+                        @if (property.identifier) {
+                        <span class="font-semibold text-base">{{ property.identifier }}</span>
+                        }
+                        @if (property.name) {
+                        <span class="text-sm text-muted-foreground">{{ property.name }}</span>
+                        }
+                      </div>
+                      @if (property.address || property.city) {
+                      <div class="flex items-center gap-1.5 text-sm text-muted-foreground mb-1">
+                        <z-icon zType="map-pin" zSize="sm" />
+                        <span>{{ property.address }}{{ property.address && property.city ? ', ' : '' }}{{ property.city || '' }}</span>
+                      </div>
+                      }
+                      @if (property.price) {
+                      <div class="flex items-center gap-1.5 text-sm font-medium text-primary">
+                        <z-icon zType="banknote" zSize="sm" />
+                        <span>{{ property.price | propertyPrice:property.typePaiment }}</span>
+                      </div>
+                      }
+                    </div>
+                  </div>
+                </div>
+                }
+              </div>
+              }
+
+              <!-- Property Requests -->
+              <div class="mt-8 pt-8 border-t border-border">
+                <h3 class="text-lg font-semibold mb-2">{{ 'settings.application.collaborationRequests.title' | translate }}</h3>
+                <p class="text-sm text-muted-foreground mb-4">
+                  {{ 'settings.application.collaborationRequests.description' | translate }}
+                </p>
+                @if (isLoadingSharedRequests()) {
+                <div class="flex items-center justify-center p-8">
+                  <div class="text-muted-foreground">{{ 'settings.application.collaborationRequests.loading' | translate }}</div>
+                </div>
+                } @else {
+                @if (sharedRequests().length > 0) {
+                <div class="flex items-center justify-between gap-4 pb-4 border-b">
+                  <div class="flex items-center gap-4">
+                    <z-checkbox
+                      [ngModel]="areAllRequestsSelected()"
+                      (checkChange)="areAllRequestsSelected() ? deselectAllRequests() : selectAllRequests()"
+                    />
+                    <span class="text-sm text-muted-foreground">
+                      {{ getSelectedRequestCountText() }}
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    @if (selectedRequestCount() > 0) {
+                    <z-button
+                      zType="outline"
+                      zSize="default"
+                      class="gap-2 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
+                      (click)="onBulkUnshareRequests()"
+                      [disabled]="isUnsharingRequests()"
+                    >
+                      <z-icon zType="x" zSize="sm" />
+                      {{ 'settings.application.collaborationRequests.unshareSelected' | translate: { count: selectedRequestCount() } }}
+                    </z-button>
+                    }
+                    <z-button
+                      zType="outline"
+                      zSize="default"
+                      class="gap-2 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
+                      (click)="onUnshareAllRequests()"
+                      [disabled]="isUnsharingRequests()"
+                    >
+                      <z-icon zType="x" zSize="sm" />
+                      {{ 'settings.application.collaborationRequests.unshareAll' | translate }}
+                    </z-button>
+                  </div>
+                </div>
+                }
+                @if (sharedRequests().length === 0) {
+                <div class="flex flex-col items-center justify-center p-8 text-center">
+                  <z-icon zType="file-text" zSize="xl" class="text-muted-foreground mb-4" />
+                  <p class="text-muted-foreground">{{ 'settings.application.collaborationRequests.empty' | translate }}</p>
+                </div>
+                } @else {
+                <div class="space-y-2 mt-4">
+                  @for (request of sharedRequests(); track request.id) {
+                  <div class="flex items-center gap-4 p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors">
+                    <z-checkbox
+                      [ngModel]="isRequestSelected(request.id)"
+                      (checkChange)="toggleRequestSelection(request.id)"
+                    />
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center justify-between gap-2 mb-2 flex-wrap">
+                        <div class="flex items-center gap-2">
+                          @if (request.zone || request.ville) {
+                          <span class="font-semibold text-base">{{ request.ville }}{{ request.ville && request.zone ? ' - ' : '' }}{{ request.zone || '' }}</span>
                           }
-                        </z-button>
+                          @if (getRequestCategoryLabel(request)) {
+                          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-muted">{{ getRequestCategoryLabel(request) }}</span>
+                          }
+                        </div>
+                        @if (request.budget > 0) {
+                        <span class="text-sm font-medium text-primary">{{ request.budget | number:'1.0-0' }} MAD</span>
+                        }
+                      </div>
+                      <div class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                        @if (request.pieces > 0) {
+                        <span>{{ request.pieces }} {{ request.pieces === 1 ? ('collaboration.piece' | translate) : ('collaboration.pieces' | translate) }}</span>
+                        }
+                        @if (request.bathrooms > 0) {
+                        <span>{{ request.bathrooms }} {{ 'collaboration.bathroom' | translate }}</span>
+                        }
+                        @if (request.surface > 0) {
+                        <span>{{ request.surface }} m²</span>
+                        }
+                        @if (request.isFurnished) {
+                        <span>{{ 'property.detail.furnished' | translate }}</span>
+                        }
                       </div>
                     </div>
                   </div>
                   }
-                </z-accordion-item>
-              </z-accordion>
+                </div>
+                }
+                }
+              </div>
             </div>
-          </div>
+            }
+          </z-card>
+          }
+
+          @case ('notification') {
+          <!-- Notification Settings Content -->
+          <z-card>
+            @if (isLoadingNotificationSettings()) {
+            <div class="flex items-center justify-center p-8">
+              <div class="text-muted-foreground">{{ 'settings.application.notification.loadingNotificationSettings' | translate }}</div>
+            </div>
+            } @else {
+            <div class="space-y-8">
+              <div>
+                <h3 class="text-xl font-semibold mb-4">{{ 'settings.application.notification.emailSection.title' | translate }}</h3>
+                
+                <!-- Lease Section -->
+                <div class="mb-6">
+                  <h4 class="text-lg font-medium mb-3">{{ 'settings.application.notification.lease.title' | translate }}</h4>
+                  
+                  <div class="mb-4">
+                    <z-form-field>
+                      <z-form-label>{{ 'settings.application.notification.lease.overdue' | translate }}</z-form-label>
+                      <z-form-control>
+                        <textarea z-input [ngModel]="notificationSettings.lease.overdue()"
+                          (ngModelChange)="notificationSettings.lease.overdue.set($event)"
+                          rows="4" class="w-full resize-y"></textarea>
+                      </z-form-control>
+                    </z-form-field>
+                  </div>
+
+                  <div class="mb-4">
+                    <z-form-field>
+                      <z-form-label>{{ 'settings.application.notification.lease.pending' | translate }}</z-form-label>
+                      <z-form-control>
+                        <textarea z-input [ngModel]="notificationSettings.lease.pending()"
+                          (ngModelChange)="notificationSettings.lease.pending.set($event)"
+                          rows="4" class="w-full resize-y"></textarea>
+                      </z-form-control>
+                    </z-form-field>
+                  </div>
+
+                  <div class="mb-4">
+                    <z-form-field>
+                      <z-form-label>{{ 'settings.application.notification.lease.paid' | translate }}</z-form-label>
+                      <z-form-control>
+                        <textarea z-input [ngModel]="notificationSettings.lease.paid()"
+                          (ngModelChange)="notificationSettings.lease.paid.set($event)"
+                          rows="4" class="w-full resize-y"></textarea>
+                      </z-form-control>
+                    </z-form-field>
+                  </div>
+                </div>
+
+                <!-- Maintenance Section -->
+                <div class="mb-6">
+                  <h4 class="text-lg font-medium mb-3">{{ 'settings.application.notification.maintenance.title' | translate }}</h4>
+                  
+                  <div class="mb-4">
+                    <z-form-field>
+                      <z-form-label>{{ 'settings.application.notification.maintenance.paid' | translate }}</z-form-label>
+                      <z-form-control>
+                        <textarea z-input [ngModel]="notificationSettings.maintenance.paid()"
+                          (ngModelChange)="notificationSettings.maintenance.paid.set($event)"
+                          rows="4" class="w-full resize-y"></textarea>
+                      </z-form-control>
+                    </z-form-field>
+                  </div>
+                </div>
+
+                <!-- Reservation Section -->
+                <div class="mb-6">
+                  <h4 class="text-lg font-medium mb-3">{{ 'settings.application.notification.reservation.title' | translate }}</h4>
+                  
+                  <div class="mb-4">
+                    <z-form-field>
+                      <z-form-label>{{ 'settings.application.notification.reservation.confirmation' | translate }}</z-form-label>
+                      <z-form-control>
+                        <textarea z-input [ngModel]="notificationSettings.reservation.confirmation()"
+                          (ngModelChange)="notificationSettings.reservation.confirmation.set($event)"
+                          rows="4" class="w-full resize-y"></textarea>
+                      </z-form-control>
+                    </z-form-field>
+                  </div>
+
+                  <div class="mb-4">
+                    <z-form-field>
+                      <z-form-label>{{ 'settings.application.notification.reservation.enter' | translate }}</z-form-label>
+                      <z-form-control>
+                        <textarea z-input [ngModel]="notificationSettings.reservation.enter()"
+                          (ngModelChange)="notificationSettings.reservation.enter.set($event)"
+                          rows="4" class="w-full resize-y"></textarea>
+                      </z-form-control>
+                    </z-form-field>
+                  </div>
+
+                  <div class="mb-4">
+                    <z-form-field>
+                      <z-form-label>{{ 'settings.application.notification.reservation.left' | translate }}</z-form-label>
+                      <z-form-control>
+                        <textarea z-input [ngModel]="notificationSettings.reservation.left()"
+                          (ngModelChange)="notificationSettings.reservation.left.set($event)"
+                          rows="4" class="w-full resize-y"></textarea>
+                      </z-form-control>
+                    </z-form-field>
+                  </div>
+                </div>
+
+                <!-- Save Button -->
+                <div class="flex justify-end pt-4">
+                  <z-button [zType]="isSavingNotificationSettings() ? 'ghost' : 'default'"
+                    [disabled]="isSavingNotificationSettings()"
+                    (click)="!isSavingNotificationSettings() && onSaveNotificationSettings()">
+                    @if (isSavingNotificationSettings()) {
+                    <span class="flex items-center gap-2">
+                      <z-icon zType="loader-circle" zSize="sm" class="animate-spin" />
+                      {{ 'settings.application.notification.saving' | translate }}
+                    </span>
+                    } @else {
+                    {{ 'settings.application.notification.saveNotificationSettings' | translate }}
+                    }
+                  </z-button>
+                </div>
+              </div>
+            </div>
+            }
+          </z-card>
+          }
+          }
+          }
         </div>
         }
 

@@ -11,9 +11,6 @@ import { ZardCardComponent } from '@shared/components/card/card.component';
 import { ZardSelectComponent } from '@shared/components/select/select.component';
 import { ZardSelectItemComponent } from '@shared/components/select/select-item.component';
 import { ZardAvatarComponent } from '@shared/components/avatar/avatar.component';
-import { ZardDividerComponent } from '@shared/components/divider/divider.component';
-import { ZardAccordionComponent } from '@shared/components/accordion/accordion.component';
-import { ZardAccordionItemComponent } from '@shared/components/accordion/accordion-item.component';
 import { AuthService } from '@shared/services/auth.service';
 import { UserService } from '@shared/services/user.service';
 import { ZardAlertDialogService } from '@shared/components/alert-dialog/alert-dialog.service';
@@ -35,6 +32,15 @@ import type { PropertyRequest } from '@shared/models/property-request/property-r
 import { PropertyPricePipe } from '@shared/pipes/property-price.pipe';
 
 type SettingsSection = 'account' | 'security' | 'team' | 'application';
+type ApplicationSubSection = 'layout' | 'property' | 'signature' | 'collaboration' | 'notification' | null;
+
+interface ApplicationSettingsCard {
+  id: ApplicationSubSection;
+  icon: string;
+  titleKey: string;
+  descriptionKey: string;
+  keywords: string[];
+}
 
 @Component({
   selector: 'app-settings',
@@ -54,8 +60,6 @@ type SettingsSection = 'account' | 'security' | 'team' | 'application';
     ZardSelectComponent,
     ZardSelectItemComponent,
     ZardAvatarComponent,
-    ZardAccordionComponent,
-    ZardAccordionItemComponent,
     ZardBadgeComponent,
     ZardCheckboxComponent,
     TranslateModule,
@@ -76,6 +80,62 @@ export class SettingsComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
 
   activeSection = signal<SettingsSection>('account');
+  activeApplicationSubSection = signal<ApplicationSubSection>(null);
+  applicationSearchQuery = signal('');
+
+  // Application settings cards configuration
+  readonly applicationSettingsCards: ApplicationSettingsCard[] = [
+    {
+      id: 'layout',
+      icon: 'palette',
+      titleKey: 'settings.application.layoutSettings.title',
+      descriptionKey: 'settings.application.layoutSettings.chooseColorTheme',
+      keywords: ['theme', 'color', 'layout', 'preset', 'dark', 'light', 'couleur', 'mise en page']
+    },
+    {
+      id: 'property',
+      icon: 'house',
+      titleKey: 'settings.application.property.title',
+      descriptionKey: 'settings.application.property.defaultCity.description',
+      keywords: ['property', 'bien', 'city', 'ville', 'type', 'feature', 'amenity', 'categories']
+    },
+    {
+      id: 'signature',
+      icon: 'pencil',
+      titleKey: 'settings.application.signature.title',
+      descriptionKey: 'settings.application.signature.description',
+      keywords: ['signature', 'image', 'upload', 'document']
+    },
+    {
+      id: 'collaboration',
+      icon: 'users',
+      titleKey: 'settings.application.collaboration.title',
+      descriptionKey: 'settings.application.collaboration.description',
+      keywords: ['collaboration', 'share', 'partage', 'property', 'request', 'demande']
+    },
+    {
+      id: 'notification',
+      icon: 'bell',
+      titleKey: 'settings.application.notification.title',
+      descriptionKey: 'settings.application.notification.emailSection.title',
+      keywords: ['notification', 'email', 'lease', 'maintenance', 'reservation', 'location']
+    }
+  ];
+
+  // Filtered application settings cards based on search
+  readonly filteredApplicationSettingsCards = computed(() => {
+    const query = this.applicationSearchQuery().toLowerCase().trim();
+    if (!query) {
+      return this.applicationSettingsCards;
+    }
+    return this.applicationSettingsCards.filter(card => {
+      const title = this.translateService.instant(card.titleKey).toLowerCase();
+      const description = this.translateService.instant(card.descriptionKey).toLowerCase();
+      return title.includes(query) || 
+             description.includes(query) || 
+             card.keywords.some(keyword => keyword.toLowerCase().includes(query));
+    });
+  });
 
   // Icon templates for input groups
   userIconTemplate = viewChild.required<TemplateRef<void>>('userIconTemplate');
@@ -320,6 +380,14 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
   onThemeChange(theme: string): void {
     this.themeService.setTheme(theme as ThemePreset);
+  }
+
+  openApplicationSubSection(subSection: ApplicationSubSection): void {
+    this.activeApplicationSubSection.set(subSection);
+  }
+
+  backToApplicationOverview(): void {
+    this.activeApplicationSubSection.set(null);
   }
 
   /**
