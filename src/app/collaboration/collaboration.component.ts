@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, OnDestroy, OnInit, signal, ViewContainerRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { ZardPageComponent } from '../page/page.component';
 import { ZardButtonComponent } from '@shared/components/button/button.component';
@@ -10,6 +10,12 @@ import { CommonModule } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
 import { PropertyCategory } from '@shared/models/property/property.model';
 import { CollaborationService } from '@shared/services/collaboration.service';
+import { AuthService } from '@shared/services/auth.service';
+import { PropertyService } from '@shared/services/property.service';
+import { PropertyRequestService } from '@shared/services/property-request.service';
+import { ZardAlertDialogService } from '@shared/components/alert-dialog/alert-dialog.service';
+import { ToastService } from '@shared/services/toast.service';
+import type { Property } from '@shared/models/property/property.model';
 import type { CollaborationProperty } from '@shared/models/collaboration/collaboration-property.model';
 import type { CollaborationRequest } from '@shared/models/collaboration/collaboration-request.model';
 import { CollaborationPropertyCardComponent } from './collaboration-property-card/collaboration-property-card.component';
@@ -38,7 +44,15 @@ export class CollaborationComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly translateService = inject(TranslateService);
   private readonly collaborationService = inject(CollaborationService);
+  private readonly authService = inject(AuthService);
+  private readonly propertyService = inject(PropertyService);
+  private readonly propertyRequestService = inject(PropertyRequestService);
+  private readonly alertDialogService = inject(ZardAlertDialogService);
+  private readonly toastService = inject(ToastService);
+  private readonly viewContainerRef = inject(ViewContainerRef);
   private readonly destroy$ = new Subject<void>();
+
+  readonly currentCompanyId = computed(() => this.authService.currentUser()?.companyId ?? null);
 
   readonly currentPage = signal(1);
   readonly pageSize = signal(20); // Default page size
@@ -48,6 +62,15 @@ export class CollaborationComponent implements OnInit, OnDestroy {
   readonly isLoadingRequests = signal(false);
   readonly selectedViewType = signal<CollaborationViewType>('properties');
   private readonly requestsLoadedOnce = signal(false);
+
+  readonly isMySharedPanelOpen = signal(false);
+  readonly mySharedProperties = signal<Property[]>([]);
+  readonly isLoadingMyShared = signal(false);
+  readonly mySharedRequests = computed(() => {
+    const companyId = this.currentCompanyId();
+    if (!companyId) return [];
+    return this.requests().filter(r => r.companyId === companyId);
+  });
 
   // Filters
   readonly selectedCategory = signal<PropertyCategory | null>(null);
@@ -712,6 +735,115 @@ export class CollaborationComponent implements OnInit, OnDestroy {
   callRequestCompany(request: CollaborationRequest): void {
     if (request.companyPhone) {
       window.location.href = `tel:${request.companyPhone}`;
+    }
+  }
+
+  openMySharedPanel(): void {
+    this.isMySharedPanelOpen.set(true);
+    if (this.selectedViewType() === 'properties') {
+      this.loadMySharedProperties();
+    } else if (!this.requestsLoadedOnce()) {
+      this.loadCollaborationRequests();
+    }
+  }
+
+  closeMySharedPanel(): void {
+    this.isMySharedPanelOpen.set(false);
+  }
+
+  loadMySharedProperties(): void {
+    this.isLoadingMyShared.set(true);
+    this.collaborationService.getMySharedProperties()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (list) => {
+          this.mySharedProperties.set(list);
+          this.isLoadingMyShared.set(false);
+        },
+        error: (error) => {
+          console.error('Error loading my shared properties:', error);
+          this.mySharedProperties.set([]);
+          this.isLoadingMyShared.set(false);
+        }
+      });
+  }
+
+  onDisablePropertyCollaboration(propertyId: string): void {
+    const dialogRef = this.alertDialogService.confirm({
+      zTitle: this.translateService.instant('collaboration.confirmDisable.title'),
+      zDescription: this.translateService.instant('collaboration.confirmDisable.property'),
+      zOkText: this.translateService.instant('collaboration.confirmDisable.ok'),
+      zCancelText: this.translateService.instant('common.cancel'),
+      zOkDestructive: true,
+      zViewContainerRef: this.viewContainerRef,
+    });
+
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((confirmed) => {
+      if (confirmed) {
+        this.propertyService.updateCollaborationStatus(propertyId, false)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: () => {
+              this.toastService.success(this.translateService.instant('collaboration.disabled'));
+              this.loadCollaborationProperties();
+              this.loadMySharedProperties();
+            },
+            error: (error) => {
+              console.error('Error disabling collaboration for property:', error);
+              this.toastService.error(this.translateService.instant('common.error'));
+            }
+          });
+      }
+    });
+  }
+
+  onDisableRequestCollaboration(requestId: string): void {
+    const dialogRef = this.alertDialogService.confirm({
+      zTitle: this.translateService.instant('collaboration.confirmDisable.title'),
+      zDescription: this.translateService.instant('collaboration.confirmDisable.request'),
+      zOkText: this.translateService.instant('collaboration.confirmDisable.ok'),
+      zCancelText: this.translateService.instant('common.cancel'),
+      zOkDestructive: true,
+      zViewContainerRef: this.viewContainerRef,
+    });
+
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((confirmed) => {
+      if (confirmed) {
+        this.propertyRequestService.updateCollaborationStatus(requestId, false)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: () => {
+              this.toastService.success(this.translateService.instant('collaboration.disabled'));
+              this.loadCollaborationRequests();
+            },
+            error: (error) => {
+              console.error('Error disabling collaboration for request:', error);
+              this.toastService.error(this.translateService.instant('common.error'));
+            }
+          });
+      }
+    });
+  }
+
+  getPropertyDisplayLabel(property: Property): string {
+    return property.name || property.identifier || this.translateService.instant('common.unnamedProperty');
+  }
+
+  getRequestLocationLabel(request: CollaborationRequest): string {
+    if (request.ville && request.zone) return `${request.ville} - ${request.zone}`;
+    return request.ville || request.zone || '';
+  }
+
+  getRequestCategoryLabel(request: CollaborationRequest): string {
+    switch (request.category) {
+      case PropertyCategory.Location:
+        return this.translateService.instant('property.categories.location');
+      case PropertyCategory.Vente:
+        return this.translateService.instant('property.categories.vente');
+      case PropertyCategory.LocationVacances:
+        return this.translateService.instant('property.categories.locationVacances');
+      default:
+        return '';
     }
   }
 }

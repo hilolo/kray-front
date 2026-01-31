@@ -1435,6 +1435,18 @@
       "title": "Détails du bien",
       "propertyNotAvailable": "Bien non disponible"
     },
+    "myShared": "Mes partagés",
+    "mySharedProperties": "Mes biens partagés",
+    "mySharedRequests": "Mes demandes partagées",
+    "mySharedEmpty": "Aucun élément partagé",
+    "disableCollaboration": "Désactiver la collaboration",
+    "confirmDisable": {
+      "title": "Désactiver la collaboration",
+      "property": "Êtes-vous sûr de vouloir désactiver la collaboration pour ce bien ?",
+      "request": "Êtes-vous sûr de vouloir désactiver la collaboration pour cette demande ?",
+      "ok": "Désactiver"
+    },
+    "disabled": "Collaboration désactivée avec succès",
     "requestDetail": {
       "title": "Détails de la demande",
       "companyInfo": "Informations de l'entreprise"

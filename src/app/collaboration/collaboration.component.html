@@ -1,13 +1,12 @@
 <z-page [zTitle]="'collaboration.title' | translate">
-  <div class="flex flex-col h-full min-h-0">
-    <!-- Back button section -->
+  <div class="flex flex-col h-full min-h-0 relative">
+    <!-- Back button -->
     <div class="mb-6">
       <z-button zType="outline" zSize="default" class="gap-2" (click)="backToApp()">
         <z-icon zType="chevron-left" zSize="sm" />
         {{ 'collaboration.backToApp' | translate }}
       </z-button>
     </div>
-
 
     <!-- Header Section: Type Switcher and Filters -->
     <div class="mb-6 flex-shrink-0">
@@ -154,40 +153,46 @@
           }
           </div>
 
-          <!-- Type Switcher Tabs (Right Side) - Bien left, Demande right with colors -->
-          <div class="flex items-center bg-muted rounded-lg p-1">
-            <button
-              type="button"
-              (click)="onViewTypeChange('properties')"
-              class="px-4 py-2 text-sm font-medium rounded-md transition-colors"
-              [class.bg-orange-600]="selectedViewType() === 'properties'"
-              [class.text-white]="selectedViewType() === 'properties'"
-              [class.dark:bg-orange-500]="selectedViewType() === 'properties'"
-              [class.shadow-sm]="selectedViewType() === 'properties'"
-              [class.text-muted-foreground]="selectedViewType() !== 'properties'"
-              [class.hover:text-foreground]="selectedViewType() !== 'properties'"
-            >
-              <div class="flex items-center gap-2">
-                <z-icon zType="house" zSize="sm" />
-                <span>{{ 'collaboration.types.properties' | translate }}</span>
-              </div>
-            </button>
-            <button
-              type="button"
-              (click)="onViewTypeChange('requests')"
-              class="px-4 py-2 text-sm font-medium rounded-md transition-colors"
-              [class.bg-emerald-600]="selectedViewType() === 'requests'"
-              [class.text-white]="selectedViewType() === 'requests'"
-              [class.dark:bg-emerald-500]="selectedViewType() === 'requests'"
-              [class.shadow-sm]="selectedViewType() === 'requests'"
-              [class.text-muted-foreground]="selectedViewType() !== 'requests'"
-              [class.hover:text-foreground]="selectedViewType() !== 'requests'"
-            >
-              <div class="flex items-center gap-2">
-                <z-icon zType="file-text" zSize="sm" />
-                <span>{{ 'collaboration.types.requests' | translate }}</span>
-              </div>
-            </button>
+          <!-- My shared button + Type Switcher Tabs (Right Side) - Mes partagés on top, then Biens | Demandes -->
+          <div class="flex flex-col gap-2 items-end">
+            <z-button zType="outline" zSize="default" class="gap-2" (click)="openMySharedPanel()">
+              <z-icon zType="users" zSize="sm" />
+              {{ 'collaboration.myShared' | translate }}
+            </z-button>
+            <div class="flex items-center bg-muted rounded-lg p-1">
+              <button
+                type="button"
+                (click)="onViewTypeChange('properties')"
+                class="px-4 py-2 text-sm font-medium rounded-md transition-colors"
+                [class.bg-orange-600]="selectedViewType() === 'properties'"
+                [class.text-white]="selectedViewType() === 'properties'"
+                [class.dark:bg-orange-500]="selectedViewType() === 'properties'"
+                [class.shadow-sm]="selectedViewType() === 'properties'"
+                [class.text-muted-foreground]="selectedViewType() !== 'properties'"
+                [class.hover:text-foreground]="selectedViewType() !== 'properties'"
+              >
+                <div class="flex items-center gap-2">
+                  <z-icon zType="house" zSize="sm" />
+                  <span>{{ 'collaboration.types.properties' | translate }}</span>
+                </div>
+              </button>
+              <button
+                type="button"
+                (click)="onViewTypeChange('requests')"
+                class="px-4 py-2 text-sm font-medium rounded-md transition-colors"
+                [class.bg-emerald-600]="selectedViewType() === 'requests'"
+                [class.text-white]="selectedViewType() === 'requests'"
+                [class.dark:bg-emerald-500]="selectedViewType() === 'requests'"
+                [class.shadow-sm]="selectedViewType() === 'requests'"
+                [class.text-muted-foreground]="selectedViewType() !== 'requests'"
+                [class.hover:text-foreground]="selectedViewType() !== 'requests'"
+              >
+                <div class="flex items-center gap-2">
+                  <z-icon zType="file-text" zSize="sm" />
+                  <span>{{ 'collaboration.types.requests' | translate }}</span>
+                </div>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -295,5 +300,166 @@
         </div>
       </div>
     }
+
+    <!-- Backdrop when panel open -->
+    @if (isMySharedPanelOpen()) {
+      <button
+        type="button"
+        class="fixed inset-0 bg-black/20 z-40 transition-opacity"
+        [attr.aria-label]="'common.close' | translate"
+        (click)="closeMySharedPanel()"
+      ></button>
+    }
+    <!-- My shared panel (slide from right) -->
+    <div
+      class="fixed top-0 right-0 bottom-0 w-full max-w-md bg-card border-l border-border shadow-lg z-50 flex flex-col transition-transform duration-300 ease-out"
+      [class.translate-x-0]="isMySharedPanelOpen()"
+      [class.translate-x-full]="!isMySharedPanelOpen()"
+    >
+      <div class="flex-shrink-0 p-4 border-b border-border flex items-center justify-between">
+        <h3 class="text-lg font-semibold">
+          @if (selectedViewType() === 'properties') {
+            {{ 'collaboration.mySharedProperties' | translate }}
+          } @else {
+            {{ 'collaboration.mySharedRequests' | translate }}
+          }
+        </h3>
+        <button
+          type="button"
+          (click)="closeMySharedPanel()"
+          class="p-2 rounded-md hover:bg-muted transition-colors"
+          [attr.aria-label]="'common.close' | translate"
+        >
+          <z-icon zType="x" zSize="sm" />
+        </button>
+      </div>
+      <div class="flex-1 min-h-0 overflow-y-auto p-4">
+        @if (selectedViewType() === 'properties') {
+          @if (isLoadingMyShared()) {
+            <div class="flex items-center justify-center py-12">
+              <z-icon zType="loader-circle" class="w-8 h-8 animate-spin text-primary" />
+            </div>
+          } @else if (mySharedProperties().length === 0) {
+            <p class="text-sm text-muted-foreground text-center py-8">{{ 'collaboration.mySharedEmpty' | translate }}</p>
+          } @else {
+            <ul class="space-y-3">
+              @for (property of mySharedProperties(); track property.id) {
+                <li class="rounded-lg border border-border bg-background overflow-hidden">
+                  <div class="p-3 space-y-2">
+                    <div class="flex items-start justify-between gap-2">
+                      <div class="min-w-0 flex-1">
+                        <p class="font-semibold text-sm text-orange-600 dark:text-orange-500">{{ getPropertyDisplayLabel(property) }}</p>
+                        @if (property.identifier) {
+                          <p class="text-xs text-muted-foreground">{{ property.identifier }}</p>
+                        }
+                      </div>
+                      <z-button
+                        zType="outline"
+                        zSize="sm"
+                        class="flex-shrink-0 text-destructive hover:bg-destructive/10 hover:border-destructive/50 text-xs"
+                        (click)="onDisablePropertyCollaboration(property.id)"
+                      >
+                        <z-icon zType="ban" zSize="sm" class="mr-1" />
+                        {{ 'collaboration.disableCollaboration' | translate }}
+                      </z-button>
+                    </div>
+                    @if (property.city) {
+                      <div class="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <z-icon zType="map-pin" zSize="sm" class="flex-shrink-0 w-3 h-3" />
+                        <span>{{ property.city }}</span>
+                      </div>
+                    }
+                    <div class="flex flex-wrap gap-3 text-xs">
+                      @if (property.area > 0) {
+                        <span class="flex items-center gap-1">
+                          <z-icon zType="file" zSize="sm" class="w-3 h-3 text-muted-foreground" />
+                          {{ property.area }} m²
+                        </span>
+                      }
+                      @if (property.pieces > 0) {
+                        <span class="flex items-center gap-1">
+                          <z-icon zType="house" zSize="sm" class="w-3 h-3 text-muted-foreground" />
+                          {{ property.pieces }} {{ property.pieces === 1 ? ('collaboration.piece' | translate) : ('collaboration.pieces' | translate) }}
+                        </span>
+                      }
+                      @if (property.price > 0) {
+                        <span class="font-medium">{{ property.price | number:'1.0-0' }} DH</span>
+                      }
+                    </div>
+                    @if (property.description) {
+                      <p class="text-xs text-muted-foreground line-clamp-2">{{ property.description }}</p>
+                    }
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        } @else {
+          @if (mySharedRequests().length === 0) {
+            <p class="text-sm text-muted-foreground text-center py-8">{{ 'collaboration.mySharedEmpty' | translate }}</p>
+          } @else {
+            <ul class="space-y-3">
+              @for (request of mySharedRequests(); track request.id) {
+                <li class="rounded-lg border border-border bg-background overflow-hidden">
+                  <div class="p-3 space-y-2">
+                    <div class="flex items-start justify-between gap-2">
+                      <div class="min-w-0 flex-1">
+                        @if (getRequestLocationLabel(request)) {
+                          <p class="font-semibold text-sm text-emerald-600 dark:text-emerald-500">
+                            {{ getRequestLocationLabel(request) }}
+                          </p>
+                        }
+                        <p class="text-xs text-muted-foreground">{{ getRequestCategoryLabel(request) }}</p>
+                      </div>
+                      <z-button
+                        zType="outline"
+                        zSize="sm"
+                        class="flex-shrink-0 text-destructive hover:bg-destructive/10 hover:border-destructive/50 text-xs"
+                        (click)="onDisableRequestCollaboration(request.id)"
+                      >
+                        <z-icon zType="ban" zSize="sm" class="mr-1" />
+                        {{ 'collaboration.disableCollaboration' | translate }}
+                      </z-button>
+                    </div>
+                    @if (request.budget > 0) {
+                      <p class="text-sm font-medium">{{ request.budget | number:'1.0-0' }} DH</p>
+                    }
+                    <div class="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                      @if (request.surface > 0) {
+                        <span class="flex items-center gap-1">
+                          <z-icon zType="file" zSize="sm" class="w-3 h-3" />
+                          {{ request.surface }} m²
+                        </span>
+                      }
+                      @if (request.pieces > 0) {
+                        <span class="flex items-center gap-1">
+                          <z-icon zType="house" zSize="sm" class="w-3 h-3" />
+                          {{ request.pieces }} {{ request.pieces === 1 ? ('collaboration.piece' | translate) : ('collaboration.pieces' | translate) }}
+                        </span>
+                      }
+                      @if (request.bathrooms > 0) {
+                        <span class="flex items-center gap-1">
+                          <z-icon zType="layers" zSize="sm" class="w-3 h-3" />
+                          {{ request.bathrooms }} {{ 'collaboration.bathroom' | translate }}
+                        </span>
+                      }
+                      @if (request.isFurnished) {
+                        <span class="flex items-center gap-1">
+                          <z-icon zType="check" zSize="sm" class="w-3 h-3" />
+                          {{ 'property.detail.furnished' | translate }}
+                        </span>
+                      }
+                    </div>
+                    @if (request.description) {
+                      <p class="text-xs text-muted-foreground line-clamp-2">{{ request.description }}</p>
+                    }
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        }
+      </div>
+    </div>
   </div>
 </z-page>

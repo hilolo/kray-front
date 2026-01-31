@@ -1433,6 +1433,18 @@
     "requestDetail": {
       "title": "Request details",
       "companyInfo": "Company information"
-    }
+    },
+    "myShared": "My shared",
+    "mySharedProperties": "My shared properties",
+    "mySharedRequests": "My shared requests",
+    "mySharedEmpty": "No shared items",
+    "disableCollaboration": "Disable collaboration",
+    "confirmDisable": {
+      "title": "Disable collaboration",
+      "property": "Are you sure you want to disable collaboration for this property?",
+      "request": "Are you sure you want to disable collaboration for this request?",
+      "ok": "Disable"
+    },
+    "disabled": "Collaboration disabled successfully"
   }
 }
