@@ -20,21 +20,7 @@
                 (keydown)="onSearchKeyDown($event)"
               />
             </div>
-            <!-- Collaboration filter -->
-            <div class="flex items-center gap-2">
-              <button
-                type="button"
-                (click)="onCollaborationFilterChange(collaborationFilter() === true ? undefined : true)"
-                class="p-2 rounded-md hover:bg-accent transition-colors"
-                [title]="'propertyRequest.list.collaboration' | translate"
-              >
-                <z-icon 
-                  zType="users" 
-                  zSize="lg"
-                  [class]="collaborationFilter() === true ? 'text-green-600 dark:text-green-500' : 'text-muted-foreground'"
-                />
-              </button>
-            </div>
+          
             <!-- Category filter -->
             <div class="w-full sm:w-[200px]">
               <z-combobox
@@ -49,6 +35,21 @@
                 class="w-full"
               />
             </div>
+              <!-- Collaboration filter -->
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  (click)="onCollaborationFilterChange(collaborationFilter() === true ? undefined : true)"
+                  class="p-2 rounded-md hover:bg-accent transition-colors"
+                  [title]="'propertyRequest.list.collaboration' | translate"
+                >
+                  <z-icon 
+                    zType="users" 
+                    zSize="lg"
+                    [class]="collaborationFilter() === true ? 'text-green-600 dark:text-green-500' : 'text-muted-foreground'"
+                  />
+                </button>
+              </div>
           </div>
           <!-- Buttons on right - Reset, then Add Request -->
           <div class="flex gap-2 items-center ml-auto">
