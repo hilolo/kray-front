@@ -1,15 +1,15 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ZardButtonComponent } from '@shared/components/button/button.component';
 import { ZardIconComponent } from '@shared/components/icon/icon.component';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { ZardDialogService } from '@shared/components/dialog/dialog.service';
-import { CollaborationRequestDetailDialogComponent } from '../collaboration-request-detail-dialog/collaboration-request-detail-dialog.component';
+import { ZardDialogRef } from '@shared/components/dialog/dialog-ref';
+import { Z_MODAL_DATA } from '@shared/components/dialog/dialog.service';
 import type { CollaborationRequest } from '@shared/models/collaboration/collaboration-request.model';
 import { PropertyCategory } from '@shared/models/property/property.model';
 
 @Component({
-  selector: 'app-collaboration-request-card',
+  selector: 'app-collaboration-request-detail-dialog',
   standalone: true,
   imports: [
     CommonModule,
@@ -18,21 +18,15 @@ import { PropertyCategory } from '@shared/models/property/property.model';
     TranslateModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  templateUrl: './collaboration-request-card.component.html',
+  templateUrl: './collaboration-request-detail-dialog.component.html',
 })
-export class CollaborationRequestCardComponent {
+export class CollaborationRequestDetailDialogComponent {
   private readonly translateService = inject(TranslateService);
-  private readonly dialogService = inject(ZardDialogService);
+  readonly dialogRef = inject(ZardDialogRef);
+  readonly request = inject<CollaborationRequest>(Z_MODAL_DATA);
 
-  // Inputs
-  readonly request = input.required<CollaborationRequest>();
-
-  // Outputs
-  readonly contactCall = output<CollaborationRequest>();
-
-  // Computed
   readonly categoryLabel = computed(() => {
-    const category = this.request().category;
+    const category = this.request.category;
     switch (category) {
       case PropertyCategory.Location:
         return this.translateService.instant('property.categories.location');
@@ -46,7 +40,7 @@ export class CollaborationRequestCardComponent {
   });
 
   readonly categoryColor = computed(() => {
-    const category = this.request().category;
+    const category = this.request.category;
     switch (category) {
       case PropertyCategory.Location:
         return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
@@ -59,21 +53,16 @@ export class CollaborationRequestCardComponent {
     }
   });
 
-  onContactCall(event: Event): void {
-    event.stopPropagation();
-    this.contactCall.emit(this.request());
+  onCall(): void {
+    if (this.request.companyPhone) {
+      window.location.href = `tel:${this.request.companyPhone}`;
+    }
   }
 
-  openDetailDialog(event: Event): void {
-    event.stopPropagation();
-    this.dialogService.create({
-      zContent: CollaborationRequestDetailDialogComponent,
-      zTitle: this.translateService.instant('collaboration.requestDetail.title'),
-      zWidth: '720px',
-      zData: this.request(),
-      zHideFooter: true,
-      zClosable: true,
-    });
+  onEmail(): void {
+    if (this.request.companyEmail) {
+      window.location.href = `mailto:${this.request.companyEmail}`;
+    }
   }
 
   formatDate(dateString: string): string {

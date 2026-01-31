@@ -1,0 +1,87 @@
+<div class="flex flex-col gap-6 min-w-0 overflow-x-hidden">
+  <!-- Request summary -->
+  <div class="flex flex-wrap items-center justify-between gap-2">
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium" [class]="categoryColor()">
+        {{ categoryLabel() }}
+      </span>
+      @if (request.surface > 0) {
+        <span class="bg-muted px-2 py-1 rounded text-xs">{{ request.surface }} m²</span>
+      }
+      @if (request.pieces > 0) {
+        <span class="bg-muted px-2 py-1 rounded text-xs">{{ request.pieces }} {{ request.pieces === 1 ? ('collaboration.piece' | translate) : ('collaboration.pieces' | translate) }}</span>
+      }
+      @if (request.bathrooms > 0) {
+        <span class="bg-muted px-2 py-1 rounded text-xs">{{ request.bathrooms }} {{ request.bathrooms === 1 ? ('collaboration.bathroom' | translate) : ('collaboration.bathrooms' | translate) }}</span>
+      }
+      <span class="bg-muted px-2 py-1 rounded text-xs">{{ 'propertyRequest.edit.isFurnished' | translate }}: {{ request.isFurnished ? ('common.yes' | translate) : ('common.no' | translate) }}</span>
+    </div>
+    @if (request.budget > 0) {
+      <span class="bg-gray-800/90 dark:bg-gray-700/90 text-white px-2.5 py-1 rounded font-bold text-sm flex-shrink-0">
+        {{ formatPrice(request.budget) }}
+      </span>
+    }
+  </div>
+
+  <!-- Location -->
+  @if (request.ville || request.zone) {
+    <div class="flex items-center gap-2 text-sm">
+      <z-icon zType="map-pin" zSize="sm" class="text-orange-600 dark:text-orange-500 flex-shrink-0" />
+      <span>{{ request.ville && request.zone ? request.ville + ' - ' + request.zone : (request.ville || request.zone) }}</span>
+    </div>
+  }
+
+  <!-- Description (full, no truncation) -->
+  @if (request.description) {
+    <div class="min-w-0 max-h-[40vh] overflow-y-auto overflow-x-hidden rounded border border-border/50 p-2">
+      <p class="font-medium text-foreground mb-2">{{ 'propertyRequest.edit.description' | translate }}</p>
+      <p class="text-muted-foreground whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{{ request.description }}</p>
+    </div>
+  }
+
+  <!-- Company information -->
+  <div class="border-t border-border pt-4">
+    <h4 class="font-semibold text-foreground mb-3">{{ 'collaboration.requestDetail.companyInfo' | translate }}</h4>
+    <div class="flex items-start gap-4 p-4 bg-muted/50 rounded-lg">
+      @if (request.companyLogoUrl) {
+        <img [src]="request.companyLogoUrl" [alt]="request.companyName" class="w-16 h-16 rounded-lg object-cover flex-shrink-0" />
+      } @else {
+        <div class="w-16 h-16 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+          <span class="text-2xl font-bold text-primary">{{ request.companyName.charAt(0) }}</span>
+        </div>
+      }
+      <div class="flex-1 min-w-0 space-y-2">
+        <p class="font-semibold text-foreground">{{ request.companyName }}</p>
+        @if (request.companyPhone) {
+          <div class="flex items-center gap-2">
+            <z-icon zType="smartphone" zSize="sm" class="text-muted-foreground flex-shrink-0" />
+            <a [href]="'tel:' + request.companyPhone" class="text-primary hover:underline">{{ request.companyPhone }}</a>
+          </div>
+        }
+        @if (request.companyEmail) {
+          <div class="flex items-center gap-2">
+            <z-icon zType="mail" zSize="sm" class="text-muted-foreground flex-shrink-0" />
+            <a [href]="'mailto:' + request.companyEmail" class="text-primary hover:underline">{{ request.companyEmail }}</a>
+          </div>
+        }
+        @if (request.collaborationDate) {
+          <p class="text-xs text-muted-foreground">{{ 'collaboration.sharedOn' | translate }} {{ formatDate(request.collaborationDate) }}</p>
+        }
+      </div>
+      <div class="flex flex-col gap-2">
+        @if (request.companyPhone) {
+          <z-button zType="outline" zSize="sm" (click)="onCall()">
+            <z-icon zType="smartphone" zSize="sm" class="mr-1" />
+            {{ 'collaboration.call' | translate }}
+          </z-button>
+        }
+        @if (request.companyEmail) {
+          <z-button zType="outline" zSize="sm" (click)="onEmail()">
+            <z-icon zType="mail" zSize="sm" class="mr-1" />
+            {{ 'common.email' | translate }}
+          </z-button>
+        }
+      </div>
+    </div>
+  </div>
+</div>

@@ -73,7 +73,7 @@ export class ZardDialogOptions<T, U> {
       </header>
     }
 
-    <main class="flex flex-col space-y-4">
+    <main class="flex flex-col space-y-4 min-w-0 overflow-hidden">
       <ng-template cdkPortalOutlet></ng-template>
 
       @if (isStringContent) {
@@ -108,7 +108,8 @@ export class ZardDialogOptions<T, U> {
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '[class]': 'classes()',
-    '[style.width]': 'config.zWidth ? config.zWidth : null',
+    '[style.width]': 'config.zWidth ?? null',
+    '[style.max-width]': 'config.zWidth ?? null',
   },
 })
 export class ZardDialogComponent<T, U> extends BasePortalOutlet {

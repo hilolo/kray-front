@@ -714,13 +714,5 @@ export class CollaborationComponent implements OnInit, OnDestroy {
       window.location.href = `tel:${request.companyPhone}`;
     }
   }
-
-  contactRequestViaWhatsApp(request: CollaborationRequest): void {
-    if (request.companyPhone) {
-      const phone = request.companyPhone.replace(/[^\d+]/g, '');
-      const whatsappUrl = `https://wa.me/${phone}`;
-      window.open(whatsappUrl, '_blank');
-    }
-  }
 }
 

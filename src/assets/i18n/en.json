@@ -1423,10 +1423,16 @@
     "pages": "pages",
     "contact": "Contact",
     "call": "Call",
+    "showMore": "Show more",
+    "showLess": "Show less",
     "favorite": "Favorite",
     "detail": {
       "title": "Property Details",
       "propertyNotAvailable": "Property not available"
+    },
+    "requestDetail": {
+      "title": "Request details",
+      "companyInfo": "Company information"
     }
   }
 }

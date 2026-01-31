@@ -1428,10 +1428,16 @@
     "pages": "pages",
     "contact": "Contacter",
     "call": "Appelez",
+    "showMore": "Voir plus",
+    "showLess": "Voir moins",
     "favorite": "Favoris",
     "detail": {
       "title": "Détails du bien",
       "propertyNotAvailable": "Bien non disponible"
+    },
+    "requestDetail": {
+      "title": "Détails de la demande",
+      "companyInfo": "Informations de l'entreprise"
     }
   }
 }
