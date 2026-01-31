@@ -77,13 +77,6 @@
         [zEmptyMessage]="emptyMessage()"
         [zLoading]="isLoading()"
       >
-        <!-- Client Name Column Template -->
-        <ng-template #clientNameCell let-value let-row="row">
-          <div class="flex items-center gap-2">
-            <span class="font-medium">{{ row.client || 'N/A' }}</span>
-          </div>
-        </ng-template>
-
         <!-- Category Column Template -->
         <ng-template #categoryCell let-value let-row="row">
           <span class="text-sm">{{ getCategoryLabel(row.category) }}</span>

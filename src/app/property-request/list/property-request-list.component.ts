@@ -71,7 +71,6 @@ export class PropertyRequestListComponent implements OnInit, OnDestroy {
   readonly categoryOptions = signal<ZardComboboxOption[]>([]);
   readonly categoryComboboxRef = viewChild<ZardComboboxComponent>('categoryCombobox');
   
-  readonly clientNameCell = viewChild<TemplateRef<any>>('clientNameCell');
   readonly categoryCell = viewChild<TemplateRef<any>>('categoryCell');
   readonly budgetCell = viewChild<TemplateRef<any>>('budgetCell');
   readonly piecesCell = viewChild<TemplateRef<any>>('piecesCell');
@@ -80,11 +79,6 @@ export class PropertyRequestListComponent implements OnInit, OnDestroy {
   readonly actionsCell = viewChild<TemplateRef<any>>('actionsCell');
 
   readonly columns = computed<DatatableColumn<PropertyRequest>[]>(() => [
-    {
-      key: 'client',
-      label: this.translateService.instant('propertyRequest.list.columns.client'),
-      cellTemplate: this.clientNameCell(),
-    },
     {
       key: 'category',
       label: this.translateService.instant('propertyRequest.list.columns.category'),
@@ -221,7 +215,7 @@ export class PropertyRequestListComponent implements OnInit, OnDestroy {
 
   onCollaborationClick(propertyRequest: PropertyRequest, event: Event): void {
     event.stopPropagation();
-    const requestName = propertyRequest.client || this.translateService.instant('common.unnamed');
+    const requestName = `${this.getCategoryLabel(propertyRequest.category)} - ${propertyRequest.budget} MAD`;
     const isCurrentlyCollaborate = propertyRequest.isCollaborate;
     
     const dialogRef = this.alertDialogService.confirm({
@@ -353,10 +347,10 @@ export class PropertyRequestListComponent implements OnInit, OnDestroy {
   }
 
   onDeletePropertyRequest(propertyRequest: PropertyRequest): void {
-    const clientName = propertyRequest.client || 'this property request';
+    const requestName = `${this.getCategoryLabel(propertyRequest.category)} - ${propertyRequest.budget} MAD`;
     const dialogRef = this.alertDialogService.confirm({
       zTitle: this.translateService.instant('propertyRequest.list.deleteTitle'),
-      zDescription: this.translateService.instant('propertyRequest.list.deleteMessage', { name: clientName }),
+      zDescription: this.translateService.instant('propertyRequest.list.deleteMessage', { name: requestName }),
       zOkText: this.translateService.instant('common.delete'),
       zCancelText: this.translateService.instant('common.cancel'),
       zOkDestructive: true,

@@ -32,7 +32,7 @@
         </z-card>
       </div>
     } @else if (property()) {
-      <div class="flex flex-col lg:flex-row gap-6">
+      <div class="flex flex-col lg:flex-row lg:items-start gap-6">
         <!-- Left Section: Property Details -->
         <div class="flex-1 space-y-6 min-w-0">
           <!-- Property Header -->
@@ -54,10 +54,10 @@
           </div>
 
           <!-- Property Media -->
-          <z-card class="p-0 overflow-hidden" zBodySpacing="none">
+          <z-card class="p-2 overflow-hidden" zBodySpacing="none">
             <!-- Mobile: Horizontal scrollable gallery -->
             @if (attachments().length > 0) {
-              <div class="md:hidden relative w-full aspect-[3/2] bg-muted">
+              <div class="md:hidden relative w-full max-w-4xl mx-auto aspect-[4/3] bg-muted overflow-hidden">
                 <div class="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide h-full" style="scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;">
                   @for (attachment of attachments(); track attachment.url; let i = $index) {
                     <div class="flex-shrink-0 w-full h-full snap-center relative">
@@ -77,14 +77,14 @@
                 </div>
               </div>
             } @else {
-              <div class="md:hidden relative w-full aspect-[3/2] bg-muted flex items-center justify-center">
+              <div class="md:hidden relative w-full max-w-4xl mx-auto aspect-[4/3] bg-muted flex items-center justify-center">
                 <z-icon zType="image" class="w-12 h-12 text-muted-foreground" />
               </div>
             }
 
             <!-- Desktop: Single image with navigation -->
             <div 
-              class="hidden md:block relative w-full aspect-[3/2] bg-muted flex items-center justify-center overflow-hidden"
+              class="hidden md:block relative w-full max-w-4xl mx-auto aspect-[4/3] bg-muted flex items-center justify-center overflow-hidden"
               (touchstart)="onTouchStart($event)"
               (touchend)="onTouchEnd($event)"
             >
@@ -219,7 +219,7 @@
 
         <!-- Right Section: Company Information -->
         @if (hasCompanyInfo()) {
-          <div class="w-full lg:w-80 space-y-6 shrink-0 lg:pt-[136px]">
+          <div class="w-full lg:w-[420px] space-y-6 shrink-0 lg:pt-[136px]">
             <z-card [zTitle]="'property.public.contactInformation' | translate">
               <div class="space-y-4">
                 @if (companyLogoDataUrl() && !companyLogoError()) {
@@ -289,16 +289,6 @@
                     >
                       <z-icon zType="message-circle" zSize="sm" />
                       WhatsApp
-                    </z-button>
-                  }
-                  @if (property()?.companyEmail) {
-                    <z-button 
-                      zType="outline" 
-                      class="w-full" 
-                      (click)="emailCompany()"
-                    >
-                      <z-icon zType="mail" zSize="sm" />
-                      {{ 'collaboration.contact' | translate }}
                     </z-button>
                   }
                 </div>

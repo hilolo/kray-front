@@ -5,7 +5,6 @@ import type { PropertyCategory } from '../property/property.model';
  */
 export interface PropertyRequest {
   id: string;
-  client: string;
   companyId: string;
   category: PropertyCategory;
   budget: number;
@@ -27,7 +26,6 @@ export interface PropertyRequest {
  * Create PropertyRequest request model
  */
 export interface CreatePropertyRequestRequest {
-  client: string;
   category: PropertyCategory;
   budget: number;
   pieces: number;
@@ -43,10 +41,10 @@ export interface CreatePropertyRequestRequest {
 
 /**
  * Update PropertyRequest request model
+ * Note: isCollaborate is NOT included here - use updateCollaborationStatus() instead
  */
 export interface UpdatePropertyRequestRequest {
   id: string;
-  client?: string;
   companyId?: string;
   category?: PropertyCategory;
   budget?: number;
@@ -58,7 +56,6 @@ export interface UpdatePropertyRequestRequest {
   zone?: string;
   ville?: string;
   description?: string;
-  isCollaborate?: boolean;
 }
 
 /**

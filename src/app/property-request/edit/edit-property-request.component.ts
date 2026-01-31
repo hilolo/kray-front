@@ -22,8 +22,6 @@ import type { CreatePropertyRequestRequest, UpdatePropertyRequestRequest } from 
 import { PropertyCategory } from '@shared/models/property/property.model';
 
 type PropertyRequestFormData = {
-  clientName: string;
-  contactId: string;
   category: PropertyCategory | null;
   budget: number | null;
   pieces: number | null;
@@ -77,8 +75,6 @@ export class EditPropertyRequestComponent implements OnInit, OnDestroy {
 
   // Form data
   readonly formData = signal<PropertyRequestFormData>({
-    clientName: '',
-    contactId: '',
     category: null,
     budget: null,
     pieces: null,
@@ -117,7 +113,6 @@ export class EditPropertyRequestComponent implements OnInit, OnDestroy {
   readonly isFormValid = computed(() => {
     const data = this.formData();
     return (
-      data.clientName.trim() !== '' &&
       data.category !== null &&
       data.budget !== null &&
       data.budget > 0 &&
@@ -127,15 +122,6 @@ export class EditPropertyRequestComponent implements OnInit, OnDestroy {
   });
 
   // Error messages
-  readonly clientNameError = computed(() => {
-    if (!this.formSubmitted()) return '';
-    const value = this.formData().clientName;
-    if (!value || value.trim() === '') {
-      return this.translateService.instant('propertyRequest.edit.clientRequired');
-    }
-    return '';
-  });
-
   readonly categoryError = computed(() => {
     if (!this.formSubmitted()) return '';
     const value = this.formData().category;
@@ -143,10 +129,6 @@ export class EditPropertyRequestComponent implements OnInit, OnDestroy {
       return this.translateService.instant('propertyRequest.edit.categoryRequired');
     }
     return '';
-  });
-
-  readonly clientNameHasError = computed(() => {
-    return this.formSubmitted() && (!this.formData().clientName || this.formData().clientName.trim() === '');
   });
 
   readonly categoryHasError = computed(() => {
@@ -212,8 +194,6 @@ export class EditPropertyRequestComponent implements OnInit, OnDestroy {
 
   private populateFormFromPropertyRequest(propertyRequest: PropertyRequest): void {
     this.formData.set({
-      clientName: propertyRequest.client || '',
-      contactId: '', // No longer used
       category: propertyRequest.category,
       budget: propertyRequest.budget || null,
       pieces: propertyRequest.pieces || null,
@@ -225,10 +205,6 @@ export class EditPropertyRequestComponent implements OnInit, OnDestroy {
       ville: propertyRequest.ville || '',
       description: propertyRequest.description || '',
     });
-  }
-
-  updateClientName(value: string): void {
-    this.formData.update(data => ({ ...data, clientName: value }));
   }
 
   updateCategory(value: PropertyCategory): void {
@@ -289,7 +265,6 @@ export class EditPropertyRequestComponent implements OnInit, OnDestroy {
     if (this.isEditMode()) {
       const updateRequest: UpdatePropertyRequestRequest = {
         id: this.propertyRequestId()!,
-        client: data.clientName.trim() || undefined,
         category: data.category !== null ? data.category : undefined,
         budget: data.budget !== null ? data.budget : undefined,
         pieces: data.pieces !== null ? data.pieces : undefined,
@@ -319,7 +294,6 @@ export class EditPropertyRequestComponent implements OnInit, OnDestroy {
         });
     } else {
       const createRequest: CreatePropertyRequestRequest = {
-        client: data.clientName.trim(),
         category: data.category!,
         budget: data.budget || 0,
         pieces: data.pieces || 0,

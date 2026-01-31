@@ -1387,6 +1387,10 @@
     "backToApp": "Retour à l'application",
     "searchPlaceholder": "Rechercher des biens...",
     "cardView": "Vue cartes",
+    "types": {
+      "properties": "Biens",
+      "requests": "Demandes"
+    },
     "filters": {
       "category": "Catégorie",
       "noCategory": "Aucune catégorie",
@@ -1406,6 +1410,8 @@
     "listView": "Vue liste",
     "empty": "Aucun bien partagé pour le moment",
     "emptySearch": "Aucun bien trouvé avec votre recherche",
+    "emptyRequests": "Aucune demande partagée pour le moment",
+    "emptyRequestsSearch": "Aucune demande trouvée avec votre recherche",
     "sharedOn": "Partagé le",
     "viewSharedProperties": "Voir les biens partagés",
     "pieces": "Pièces",

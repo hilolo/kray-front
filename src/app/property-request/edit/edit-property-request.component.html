@@ -77,23 +77,6 @@
       } @else {
         <div class="space-y-6">
           <!-- Form Section --><z-card><div class="p-6 space-y-6"><div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Client -->
-                <z-form-field>
-                  <z-form-label [zRequired]="!isViewMode()">{{ 'propertyRequest.edit.client' | translate }}</z-form-label>
-                  <z-form-control [errorMessage]="clientNameError()">
-                    <z-input-group>
-                      <input
-                        z-input
-                        type="text"
-                        [ngModel]="formData().clientName"
-                        (ngModelChange)="updateClientName($event)"
-                        [placeholder]="'propertyRequest.edit.clientPlaceholder' | translate"
-                        [disabled]="isViewMode()"
-                      />
-                    </z-input-group>
-                  </z-form-control>
-                </z-form-field>
-
                 <!-- Category -->
                 <z-form-field>
                   <z-form-label [zRequired]="!isViewMode()">{{ 'propertyRequest.edit.category' | translate }}</z-form-label>

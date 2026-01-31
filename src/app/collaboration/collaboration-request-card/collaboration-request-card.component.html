@@ -1,0 +1,103 @@
+<div class="flex flex-col border border-border rounded-lg overflow-hidden bg-card relative w-full h-full">
+  <!-- Header with Category Badge -->
+  <div class="w-full p-3 bg-muted/50 border-b border-border">
+    <div class="flex items-center justify-between">
+      <!-- Category Badge -->
+      <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium" [class]="categoryColor()">
+        {{ categoryLabel() }}
+      </span>
+      
+      <!-- Budget Badge -->
+      @if (request().budget > 0) {
+        <div class="bg-gray-800/90 dark:bg-gray-700/90 text-white px-2.5 py-1 rounded font-bold text-sm">
+          {{ formatPrice(request().budget) }}
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Content Section -->
+  <div class="flex-1 flex flex-col p-3 gap-2 min-w-0">
+    <!-- Location -->
+    <div class="flex flex-col gap-1">
+      @if (request().ville || request().zone) {
+        <div class="flex items-center gap-1.5 text-sm font-medium">
+          <z-icon zType="map-pin" zSize="sm" class="flex-shrink-0 text-orange-600 dark:text-orange-500" />
+          <span class="text-foreground">
+            @if (request().ville && request().zone) {
+              {{ request().ville }} - {{ request().zone }}
+            } @else {
+              {{ request().ville || request().zone }}
+            }
+          </span>
+        </div>
+      }
+    </div>
+    
+    <!-- Property Requirements -->
+    <div class="flex flex-wrap items-center gap-3 text-xs">
+      @if (request().surface > 0) {
+        <div class="flex items-center gap-1 bg-muted px-2 py-1 rounded">
+          <z-icon zType="file" zSize="sm" class="text-muted-foreground w-3 h-3" />
+          <span class="font-medium">{{ request().surface }} m²</span>
+        </div>
+      }
+      @if (request().pieces > 0) {
+        <div class="flex items-center gap-1 bg-muted px-2 py-1 rounded">
+          <z-icon zType="house" zSize="sm" class="text-muted-foreground w-3 h-3" />
+          <span class="font-medium">{{ request().pieces }} {{ request().pieces === 1 ? ('collaboration.piece' | translate) : ('collaboration.pieces' | translate) }}</span>
+        </div>
+      }
+      @if (request().bathrooms > 0) {
+        <div class="flex items-center gap-1 bg-muted px-2 py-1 rounded">
+          <z-icon zType="layers" zSize="sm" class="text-muted-foreground w-3 h-3" />
+          <span class="font-medium">{{ request().bathrooms }} {{ 'collaboration.bathroom' | translate }}</span>
+        </div>
+      }
+      @if (request().isFurnished) {
+        <div class="flex items-center gap-1 bg-muted px-2 py-1 rounded">
+          <z-icon zType="check" zSize="sm" class="text-muted-foreground w-3 h-3" />
+          <span class="font-medium">{{ 'property.detail.furnished' | translate }}</span>
+        </div>
+      }
+    </div>
+    
+    <!-- Description -->
+    @if (request().description) {
+      <p class="text-xs text-muted-foreground line-clamp-3">{{ request().description }}</p>
+    }
+    
+    <!-- Company Information -->
+    <div class="flex items-center justify-between text-xs text-muted-foreground mt-auto pt-2 border-t border-border">
+      @if (request().companyName) {
+        <div class="flex items-center gap-2">
+          @if (request().companyLogoUrl) {
+            <img [src]="request().companyLogoUrl" [alt]="request().companyName" class="w-5 h-5 rounded-full object-cover" />
+          } @else {
+            <div class="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center">
+              <span class="text-[10px] font-medium text-primary">{{ request().companyName.charAt(0) }}</span>
+            </div>
+          }
+          <span class="truncate">{{ request().companyName }}</span>
+        </div>
+      }
+      @if (request().collaborationDate) {
+        <span class="flex-shrink-0">{{ formatDate(request().collaborationDate!) }}</span>
+      }
+    </div>
+    
+    <!-- Contact Buttons -->
+    @if (request().companyPhone) {
+      <div class="flex items-center gap-1.5 mt-1">
+        <z-button zType="outline" zSize="sm" class="flex-1 h-8 text-xs" (click)="onContactCall($event)">
+          <z-icon zType="smartphone" zSize="sm" class="mr-1 w-3 h-3" />
+          <span>{{ 'collaboration.call' | translate }}</span>
+        </z-button>
+        <z-button zType="default" zSize="sm" class="flex-1 h-8 bg-green-600 hover:bg-green-700 text-white border-green-600 hover:border-green-700" (click)="onContactWhatsApp($event)">
+          <z-icon zType="message-circle" zSize="sm" class="mr-1 w-3 h-3" />
+          <span>WhatsApp</span>
+        </z-button>
+      </div>
+    }
+  </div>
+</div>

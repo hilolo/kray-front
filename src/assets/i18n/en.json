@@ -1386,6 +1386,10 @@
     "backToApp": "Back to App",
     "searchPlaceholder": "Search properties...",
     "cardView": "Card View",
+    "types": {
+      "properties": "Properties",
+      "requests": "Requests"
+    },
     "filters": {
       "category": "Category",
       "noCategory": "No category",
@@ -1405,6 +1409,8 @@
     "listView": "List View",
     "empty": "No shared properties at the moment",
     "emptySearch": "No properties found matching your search",
+    "emptyRequests": "No shared requests at the moment",
+    "emptyRequestsSearch": "No requests found matching your search",
     "sharedOn": "Shared on",
     "viewSharedProperties": "View Shared Properties",
     "pieces": "Pieces",

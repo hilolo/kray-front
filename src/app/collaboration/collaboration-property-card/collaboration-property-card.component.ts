@@ -26,15 +26,12 @@ export class CollaborationPropertyCardComponent {
   // Inputs
   readonly property = input.required<CollaborationProperty>();
   readonly currentImageIndex = input<number>(0);
-  readonly isFavorite = input<boolean>(false);
   readonly images = input<string[]>([]);
 
   // Outputs
-  readonly favoriteToggle = output<string>();
   readonly previousImage = output<string>();
   readonly nextImage = output<string>();
   readonly viewProperty = output<CollaborationProperty>();
-  readonly contactEmail = output<CollaborationProperty>();
   readonly contactCall = output<CollaborationProperty>();
   readonly contactWhatsApp = output<CollaborationProperty>();
 
@@ -62,10 +59,14 @@ export class CollaborationPropertyCardComponent {
     return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
   });
 
-  onFavoriteClick(event: Event): void {
-    event.stopPropagation();
-    this.favoriteToggle.emit(this.property().id);
-  }
+  readonly companyInitials = computed(() => {
+    const name = this.property().companyName?.trim() ?? '';
+    if (!name) return '?';
+    const parts = name.split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return '?';
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+  });
 
   onPreviousImage(event: Event): void {
     event.stopPropagation();
@@ -80,11 +81,6 @@ export class CollaborationPropertyCardComponent {
   onViewProperty(event: Event): void {
     event.stopPropagation();
     this.viewProperty.emit(this.property());
-  }
-
-  onContactEmail(event: Event): void {
-    event.stopPropagation();
-    this.contactEmail.emit(this.property());
   }
 
   onContactCall(event: Event): void {

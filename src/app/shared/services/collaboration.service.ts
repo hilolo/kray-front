@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
 import type { CollaborationProperty } from '../models/collaboration/collaboration-property.model';
+import type { CollaborationRequest } from '../models/collaboration/collaboration-request.model';
 import type { Property } from '../models/property/property.model';
 
 /**
@@ -14,12 +15,21 @@ export class CollaborationService {
   private readonly apiService = inject(ApiService);
 
   /**
-   * Get all collaboration-enabled properties from other companies
+   * Get all collaboration-enabled properties (own company and others)
    * GET api/Collaboration/properties
    * @returns Observable of collaboration properties list
    */
   getCollaborationProperties(): Observable<CollaborationProperty[]> {
     return this.apiService.get<CollaborationProperty[]>('Collaboration/properties');
+  }
+
+  /**
+   * Get all collaboration-enabled property requests (own company and others)
+   * GET api/Collaboration/requests
+   * @returns Observable of collaboration property requests list
+   */
+  getCollaborationRequests(): Observable<CollaborationRequest[]> {
+    return this.apiService.get<CollaborationRequest[]>('Collaboration/requests');
   }
 
   /**

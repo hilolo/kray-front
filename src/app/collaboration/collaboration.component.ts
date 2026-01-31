@@ -8,10 +8,14 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
-import { PropertyCategory, TypePaiment } from '@shared/models/property/property.model';
+import { PropertyCategory } from '@shared/models/property/property.model';
 import { CollaborationService } from '@shared/services/collaboration.service';
 import type { CollaborationProperty } from '@shared/models/collaboration/collaboration-property.model';
+import type { CollaborationRequest } from '@shared/models/collaboration/collaboration-request.model';
 import { CollaborationPropertyCardComponent } from './collaboration-property-card/collaboration-property-card.component';
+import { CollaborationRequestCardComponent } from './collaboration-request-card/collaboration-request-card.component';
+
+export type CollaborationViewType = 'properties' | 'requests';
 
 @Component({
   selector: 'app-collaboration',
@@ -25,6 +29,7 @@ import { CollaborationPropertyCardComponent } from './collaboration-property-car
     TranslateModule,
     FormsModule,
     CollaborationPropertyCardComponent,
+    CollaborationRequestCardComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './collaboration.component.html',
@@ -36,10 +41,14 @@ export class CollaborationComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
 
   readonly currentPage = signal(1);
-  readonly pageSize = signal(33); // Default page size
+  readonly pageSize = signal(20); // Default page size
   readonly properties = signal<CollaborationProperty[]>([]);
+  readonly requests = signal<CollaborationRequest[]>([]);
   readonly isLoading = signal(false);
-  
+  readonly isLoadingRequests = signal(false);
+  readonly selectedViewType = signal<CollaborationViewType>('properties');
+  private readonly requestsLoadedOnce = signal(false);
+
   // Filters
   readonly selectedCategory = signal<PropertyCategory | null>(null);
   readonly categoryOptions = signal<ZardComboboxOption[]>([]);
@@ -55,11 +64,9 @@ export class CollaborationComponent implements OnInit, OnDestroy {
   readonly isSurfacePanelOpen = signal(false);
   readonly isBedroomsPanelOpen = signal(false);
   
-  // Price options
+  // Price options (minimum 3000 DH)
   readonly priceOptions = signal<ZardComboboxOption[]>([
     { value: '', label: 'Indifférent' },
-    { value: '1000', label: '1 000 DH' },
-    { value: '2000', label: '2 000 DH' },
     { value: '3000', label: '3 000 DH' },
     { value: '4000', label: '4 000 DH' },
     { value: '5000', label: '5 000 DH' },
@@ -94,10 +101,6 @@ export class CollaborationComponent implements OnInit, OnDestroy {
   
   // Image navigation for each property card
   readonly currentImageIndices = signal<Map<string, number>>(new Map());
-  
-  // Favorites stored in localStorage
-  private readonly FAVORITES_STORAGE_KEY = 'collaboration_favorites';
-  readonly favoritePropertyIds = signal<Set<string>>(new Set());
 
   readonly filteredProperties = computed(() => {
     let filtered = this.properties();
@@ -145,44 +148,133 @@ export class CollaborationComponent implements OnInit, OnDestroy {
     return filtered.slice(start, end);
   });
 
-  readonly paginatedInfo = computed(() => {
-    let filtered = this.properties();
+  readonly filteredRequests = computed(() => {
+    let filtered = this.requests();
     
-    // Apply same filters for total count
+    // Filter by category
     const category = this.selectedCategory();
     if (category !== null) {
-      filtered = filtered.filter(prop => prop.category === category);
+      filtered = filtered.filter(req => req.category === category);
     }
     
+    // Filter by price range (using budget for requests)
     const minPrice = this.minPrice();
     const maxPrice = this.maxPrice();
     if (minPrice && minPrice !== '') {
       const minPriceNum = parseFloat(minPrice);
-      filtered = filtered.filter(prop => prop.price >= minPriceNum);
+      filtered = filtered.filter(req => req.budget >= minPriceNum);
     }
     if (maxPrice && maxPrice !== '') {
       const maxPriceNum = parseFloat(maxPrice);
-      filtered = filtered.filter(prop => prop.price <= maxPriceNum);
+      filtered = filtered.filter(req => req.budget <= maxPriceNum);
     }
     
+    // Filter by area range (using surface for requests)
     const minArea = this.minArea();
     const maxArea = this.maxArea();
     if (minArea && minArea !== '') {
       const minAreaNum = parseFloat(minArea);
-      filtered = filtered.filter(prop => prop.area >= minAreaNum);
+      filtered = filtered.filter(req => req.surface >= minAreaNum);
     }
     if (maxArea && maxArea !== '') {
       const maxAreaNum = parseFloat(maxArea);
-      filtered = filtered.filter(prop => prop.area <= maxAreaNum);
+      filtered = filtered.filter(req => req.surface <= maxAreaNum);
     }
     
+    // Filter by bedrooms (using pieces for requests)
     const bedrooms = this.selectedBedrooms();
     if (bedrooms && bedrooms !== '') {
       const bedroomsNum = parseInt(bedrooms, 10);
-      filtered = filtered.filter(prop => prop.pieces >= bedroomsNum);
+      filtered = filtered.filter(req => req.pieces >= bedroomsNum);
     }
     
-    const total = filtered.length;
+    // Apply pagination
+    const start = (this.currentPage() - 1) * this.pageSize();
+    const end = start + this.pageSize();
+    return filtered.slice(start, end);
+  });
+
+  readonly paginatedInfo = computed(() => {
+    const viewType = this.selectedViewType();
+    let total = 0;
+    
+    if (viewType === 'properties') {
+      let filtered = this.properties();
+      
+      // Apply same filters for total count
+      const category = this.selectedCategory();
+      if (category !== null) {
+        filtered = filtered.filter(prop => prop.category === category);
+      }
+      
+      const minPrice = this.minPrice();
+      const maxPrice = this.maxPrice();
+      if (minPrice && minPrice !== '') {
+        const minPriceNum = parseFloat(minPrice);
+        filtered = filtered.filter(prop => prop.price >= minPriceNum);
+      }
+      if (maxPrice && maxPrice !== '') {
+        const maxPriceNum = parseFloat(maxPrice);
+        filtered = filtered.filter(prop => prop.price <= maxPriceNum);
+      }
+      
+      const minArea = this.minArea();
+      const maxArea = this.maxArea();
+      if (minArea && minArea !== '') {
+        const minAreaNum = parseFloat(minArea);
+        filtered = filtered.filter(prop => prop.area >= minAreaNum);
+      }
+      if (maxArea && maxArea !== '') {
+        const maxAreaNum = parseFloat(maxArea);
+        filtered = filtered.filter(prop => prop.area <= maxAreaNum);
+      }
+      
+      const bedrooms = this.selectedBedrooms();
+      if (bedrooms && bedrooms !== '') {
+        const bedroomsNum = parseInt(bedrooms, 10);
+        filtered = filtered.filter(prop => prop.pieces >= bedroomsNum);
+      }
+      
+      total = filtered.length;
+    } else {
+      let filtered = this.requests();
+      
+      const category = this.selectedCategory();
+      if (category !== null) {
+        filtered = filtered.filter(req => req.category === category);
+      }
+      
+      const minPrice = this.minPrice();
+      const maxPrice = this.maxPrice();
+      if (minPrice && minPrice !== '') {
+        const minPriceNum = parseFloat(minPrice);
+        filtered = filtered.filter(req => req.budget >= minPriceNum);
+      }
+      if (maxPrice && maxPrice !== '') {
+        const maxPriceNum = parseFloat(maxPrice);
+        filtered = filtered.filter(req => req.budget <= maxPriceNum);
+      }
+      
+      const minArea = this.minArea();
+      const maxArea = this.maxArea();
+      if (minArea && minArea !== '') {
+        const minAreaNum = parseFloat(minArea);
+        filtered = filtered.filter(req => req.surface >= minAreaNum);
+      }
+      if (maxArea && maxArea !== '') {
+        const maxAreaNum = parseFloat(maxArea);
+        filtered = filtered.filter(req => req.surface <= maxAreaNum);
+      }
+      
+      const bedrooms = this.selectedBedrooms();
+      if (bedrooms && bedrooms !== '') {
+        const bedroomsNum = parseInt(bedrooms, 10);
+        filtered = filtered.filter(req => req.pieces >= bedroomsNum);
+      }
+      
+      total = filtered.length;
+    }
+    
     const start = total > 0 ? (this.currentPage() - 1) * this.pageSize() + 1 : 0;
     const end = Math.min(this.currentPage() * this.pageSize(), total);
     return { start, end, total };
@@ -218,10 +310,15 @@ export class CollaborationComponent implements OnInit, OnDestroy {
                       this.maxArea() !== null || 
                       this.selectedBedrooms() !== null;
     
+    const viewType = this.selectedViewType();
     if (hasFilters) {
-      return this.translateService.instant('collaboration.emptySearch');
+      return viewType === 'properties' 
+        ? this.translateService.instant('collaboration.emptySearch')
+        : this.translateService.instant('collaboration.emptyRequestsSearch');
     }
-    return this.translateService.instant('collaboration.empty');
+    return viewType === 'properties'
+      ? this.translateService.instant('collaboration.empty')
+      : this.translateService.instant('collaboration.emptyRequests');
   });
 
   readonly hasActiveFilters = computed(() => {
@@ -234,58 +331,22 @@ export class CollaborationComponent implements OnInit, OnDestroy {
   });
 
   readonly hasData = computed(() => {
-    return this.filteredProperties().length > 0;
+    const viewType = this.selectedViewType();
+    return viewType === 'properties'
+      ? this.filteredProperties().length > 0
+      : this.filteredRequests().length > 0;
+  });
+
+  readonly isLoadingCurrentTab = computed(() => {
+    return this.selectedViewType() === 'properties'
+      ? this.isLoading()
+      : this.isLoadingRequests();
   });
 
   ngOnInit(): void {
-    // Initialize filter options
     this.loadCategoryOptions();
     this.loadBedroomsOptions();
-    
-    // Load favorites from localStorage
-    this.loadFavorites();
-    
-    // Load collaboration properties from API
     this.loadCollaborationProperties();
-  }
-
-  loadFavorites(): void {
-    try {
-      const stored = localStorage.getItem(this.FAVORITES_STORAGE_KEY);
-      if (stored) {
-        const favorites = JSON.parse(stored) as string[];
-        this.favoritePropertyIds.set(new Set(favorites));
-      }
-    } catch (error) {
-      console.error('Error loading favorites from localStorage:', error);
-    }
-  }
-
-  saveFavorites(): void {
-    try {
-      const favoritesArray = Array.from(this.favoritePropertyIds());
-      localStorage.setItem(this.FAVORITES_STORAGE_KEY, JSON.stringify(favoritesArray));
-    } catch (error) {
-      console.error('Error saving favorites to localStorage:', error);
-    }
-  }
-
-  toggleFavorite(propertyId: string, event?: Event): void {
-    if (event) {
-      event.stopPropagation();
-    }
-    const favorites = new Set(this.favoritePropertyIds());
-    if (favorites.has(propertyId)) {
-      favorites.delete(propertyId);
-    } else {
-      favorites.add(propertyId);
-    }
-    this.favoritePropertyIds.set(favorites);
-    this.saveFavorites();
-  }
-
-  onFavoriteToggle(propertyId: string): void {
-    this.toggleFavorite(propertyId);
   }
 
   onPreviousImage(propertyId: string): void {
@@ -296,10 +357,6 @@ export class CollaborationComponent implements OnInit, OnDestroy {
   onNextImage(propertyId: string): void {
     const event = new Event('click');
     this.nextImage(propertyId, event);
-  }
-
-  isFavorite(propertyId: string): boolean {
-    return this.favoritePropertyIds().has(propertyId);
   }
 
   loadCollaborationProperties(): void {
@@ -317,6 +374,32 @@ export class CollaborationComponent implements OnInit, OnDestroy {
           this.properties.set([]);
         }
       });
+  }
+
+  loadCollaborationRequests(): void {
+    this.isLoadingRequests.set(true);
+    this.collaborationService.getCollaborationRequests()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (requests) => {
+          this.requests.set(Array.isArray(requests) ? requests : []);
+          this.isLoadingRequests.set(false);
+          this.requestsLoadedOnce.set(true);
+        },
+        error: (error) => {
+          console.error('Error loading collaboration requests:', error);
+          this.requests.set([]);
+          this.isLoadingRequests.set(false);
+        }
+      });
+  }
+
+  onViewTypeChange(viewType: CollaborationViewType): void {
+    this.selectedViewType.set(viewType);
+    this.currentPage.set(1);
+    if (viewType === 'requests' && !this.requestsLoadedOnce()) {
+      this.loadCollaborationRequests();
+    }
   }
 
   loadCategoryOptions(): void {
@@ -625,9 +708,18 @@ export class CollaborationComponent implements OnInit, OnDestroy {
     }
   }
 
-  contactViaEmail(property: CollaborationProperty): void {
-    if (property.companyEmail) {
-      window.location.href = `mailto:${property.companyEmail}`;
+  // Request contact methods
+  callRequestCompany(request: CollaborationRequest): void {
+    if (request.companyPhone) {
+      window.location.href = `tel:${request.companyPhone}`;
+    }
+  }
+
+  contactRequestViaWhatsApp(request: CollaborationRequest): void {
+    if (request.companyPhone) {
+      const phone = request.companyPhone.replace(/[^\d+]/g, '');
+      const whatsappUrl = `https://wa.me/${phone}`;
+      window.open(whatsappUrl, '_blank');
     }
   }
 }

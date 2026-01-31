@@ -9,11 +9,13 @@
     </div>
 
 
-    <!-- Header Section: Filters -->
+    <!-- Header Section: Type Switcher and Filters -->
     <div class="mb-6 flex-shrink-0">
-      <div class="flex flex-col gap-2">
-        <!-- Filter Buttons Row -->
-        <div class="flex flex-wrap gap-3 items-center">
+      <div class="flex flex-col gap-4">
+        <!-- Type Switcher Tabs and Filter Buttons Row -->
+        <div class="flex flex-wrap gap-3 items-center justify-between">
+          <!-- Filter Buttons (Left Side) -->
+          <div class="flex flex-wrap gap-3 items-center">
           <!-- Category Filter -->
           <div class="w-full sm:w-[200px]">
             <z-combobox
@@ -150,13 +152,50 @@
               <span>{{ 'common.reset' | translate }}</span>
             </z-button>
           }
+          </div>
+
+          <!-- Type Switcher Tabs (Right Side) - Bien left, Demande right with colors -->
+          <div class="flex items-center bg-muted rounded-lg p-1">
+            <button
+              type="button"
+              (click)="onViewTypeChange('properties')"
+              class="px-4 py-2 text-sm font-medium rounded-md transition-colors"
+              [class.bg-orange-600]="selectedViewType() === 'properties'"
+              [class.text-white]="selectedViewType() === 'properties'"
+              [class.dark:bg-orange-500]="selectedViewType() === 'properties'"
+              [class.shadow-sm]="selectedViewType() === 'properties'"
+              [class.text-muted-foreground]="selectedViewType() !== 'properties'"
+              [class.hover:text-foreground]="selectedViewType() !== 'properties'"
+            >
+              <div class="flex items-center gap-2">
+                <z-icon zType="house" zSize="sm" />
+                <span>{{ 'collaboration.types.properties' | translate }}</span>
+              </div>
+            </button>
+            <button
+              type="button"
+              (click)="onViewTypeChange('requests')"
+              class="px-4 py-2 text-sm font-medium rounded-md transition-colors"
+              [class.bg-emerald-600]="selectedViewType() === 'requests'"
+              [class.text-white]="selectedViewType() === 'requests'"
+              [class.dark:bg-emerald-500]="selectedViewType() === 'requests'"
+              [class.shadow-sm]="selectedViewType() === 'requests'"
+              [class.text-muted-foreground]="selectedViewType() !== 'requests'"
+              [class.hover:text-foreground]="selectedViewType() !== 'requests'"
+            >
+              <div class="flex items-center gap-2">
+                <z-icon zType="file-text" zSize="sm" />
+                <span>{{ 'collaboration.types.requests' | translate }}</span>
+              </div>
+            </button>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Properties Grid -->
+    <!-- Properties/Requests Grid -->
     <div class="flex-1 min-h-0 overflow-y-auto mb-6">
-      @if (isLoading()) {
+      @if (isLoadingCurrentTab()) {
         <div class="flex items-center justify-center min-h-[400px]">
           <div class="text-center space-y-4">
             <z-icon zType="loader-circle" class="w-8 h-8 animate-spin mx-auto text-primary" />
@@ -170,25 +209,36 @@
           </div>
         </div>
       } @else {
-        <div class="flex flex-col gap-4">
-          @for (property of filteredProperties(); track property.id) {
-            <div class="w-full">
+        <!-- Properties View -->
+        @if (selectedViewType() === 'properties') {
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            @for (property of filteredProperties(); track property.id) {
               <app-collaboration-property-card
                 [property]="property"
                 [currentImageIndex]="getCurrentImageIndex(property.id)"
-                [isFavorite]="isFavorite(property.id)"
                 [images]="getPropertyImages(property)"
-                (favoriteToggle)="onFavoriteToggle($event)"
                 (previousImage)="onPreviousImage($event)"
                 (nextImage)="onNextImage($event)"
                 (viewProperty)="onViewPropertyFromCard($event)"
-                (contactEmail)="contactViaEmail($event)"
                 (contactCall)="callCompany($event)"
                 (contactWhatsApp)="contactViaWhatsApp($event)"
               />
-            </div>
-          }
-        </div>
+            }
+          </div>
+        }
+        
+        <!-- Requests View -->
+        @if (selectedViewType() === 'requests') {
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            @for (request of filteredRequests(); track request.id) {
+              <app-collaboration-request-card
+                [request]="request"
+                (contactCall)="callRequestCompany($event)"
+                (contactWhatsApp)="contactRequestViaWhatsApp($event)"
+              />
+            }
+          </div>
+        }
       }
     </div>
 
