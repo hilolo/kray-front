@@ -12,7 +12,6 @@ import { ZardFormFieldComponent } from '@shared/components/form/form.component';
 import { ZardFormControlComponent } from '@shared/components/form/form.component';
 import { ZardFormLabelComponent } from '@shared/components/form/form.component';
 import { ZardInputDirective } from '@shared/components/input/input.directive';
-import { ZardSegmentedComponent } from '@shared/components/segmented/segmented.component';
 import { ZardSwitchComponent } from '@shared/components/switch/switch.component';
 import { ChangeDetectorRef } from '@angular/core';
 import { PdfFontsService } from '@shared/services/pdf-fonts.service';
@@ -35,7 +34,6 @@ import { DocumentDataField, COMMON_FIELDS, DOCUMENT_TYPE_FIELDS } from './docume
     ZardFormControlComponent,
     ZardFormLabelComponent,
     ZardInputDirective,
-    ZardSegmentedComponent,
     ZardSwitchComponent,
     SafePipe,
   ],
@@ -78,18 +76,7 @@ export class DocumentEditComponent implements OnInit {
   readonly editorContent = signal<string>('');
   readonly isLoading = signal(false);
   readonly isSaving = signal(false);
-  
-  // Text size control
-  readonly textSize = signal<'normal' | 'large' | 'extralarge'>('normal');
-  readonly textSizeMultiplier = computed(() => {
-    switch (this.textSize()) {
-      case 'normal': return 1.0;
-      case 'large': return 1.25;
-      case 'extralarge': return 1.5;
-      default: return 1.0;
-    }
-  });
-  
+
   // PDF preview signals
   readonly pdfDataUrl = signal<string>('');
   readonly pdfMakeJson = signal<string>('');
@@ -284,16 +271,6 @@ export class DocumentEditComponent implements OnInit {
     }, 0);
   }
 
-  onTextSizeChange(size: string): void {
-    if (size === 'normal' || size === 'large' || size === 'extralarge') {
-      this.textSize.set(size);
-      // Update PDF preview when text size changes
-      setTimeout(() => {
-        this.updatePdfPreview();
-      }, 0);
-    }
-  }
-
   onDisplayLogoChange(value: boolean): void {
     this.displayLogo.set(value);
     // Update PDF preview when logo toggle changes
@@ -336,7 +313,7 @@ export class DocumentEditComponent implements OnInit {
     // Use setTimeout to ensure async processing doesn't block
     setTimeout(() => {
       this.pdfGenerationService.generatePdfFromHtml(htmlContent, {
-        textSize: this.textSize(),
+        textSize: 'normal',
         displayLogo: this.displayLogo(),
         logoBase64: this.logoBase64(),
         displayCache: this.displayCache(),

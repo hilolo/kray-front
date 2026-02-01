@@ -969,8 +969,7 @@ export class ReservationListComponent implements OnInit, OnDestroy {
 
     dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result) => {
       if (result && result.success) {
-        // Notification was sent successfully
-        this.toastService.success('Notification sent successfully');
+        // Notification was sent successfully, toast already shown by SendNotificationComponent
       }
     });
   }

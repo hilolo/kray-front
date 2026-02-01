@@ -119,26 +119,13 @@
                   </z-button>
                 }
               </div>
-              <div class="mb-2 flex items-center justify-between flex-shrink-0 min-w-0 gap-2">
+              <div class="mb-2 flex items-center flex-shrink-0 min-w-0">
                 <div class="min-w-0">
                   <h3 class="text-sm font-medium cursor-pointer hover:text-primary transition-colors truncate" (click)="onDocumentContentTitleClick()">Document Content</h3>
                   <p class="text-xs text-muted-foreground truncate">Edit your document content</p>
                 </div>
-                <div class="flex items-center gap-3 flex-shrink-0">
-                  <span class="text-xs text-muted-foreground whitespace-nowrap">Text Size:</span>
-                  <z-segmented
-                    [zOptions]="[
-                      { value: 'normal', label: 'Normal' },
-                      { value: 'large', label: 'Large' },
-                      { value: 'extralarge', label: 'Extra Large' }
-                    ]"
-                    [zDefaultValue]="textSize()"
-                    (zChange)="onTextSizeChange($event)"
-                    zSize="sm"
-                  />
-                </div>
               </div>
-              <div class="flex-1 min-h-0 border rounded-lg overflow-hidden" [style.font-size]="(textSizeMultiplier() * 100) + '%'">
+              <div class="flex-1 min-h-0 border rounded-lg overflow-hidden">
                 <z-text-editor
                   #textEditor
                   [value]="editorContent()"
